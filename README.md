@@ -9,7 +9,7 @@
   <img alt="Mode: single player first" src="https://img.shields.io/badge/mode-single--player_first-2563eb?style=flat-square" />
   <br /><br />
   <a href="README.md"><strong>🇰🇷 한국어</strong></a> &nbsp;|&nbsp; <a href="README.en.md"><strong>🇺🇸 English</strong></a>
-  <br /><sub>GitHub README: 언어별 문서 이동 · 같은 화면에서 즉시 전환: <a href="index.html">index.html (GitHub Pages에 게시하면 즉시 전환 가능)</a></sub>
+  <br /><sub>GitHub README: 언어별 문서 이동 · 같은 화면에서 즉시 전환: <a href="https://azizbekdevuz.github.io/K4RMA/">GitHub Pages</a></sub>
 </div>
 
 <div align="center">

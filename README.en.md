@@ -9,7 +9,7 @@
   <img alt="Mode: single player first" src="https://img.shields.io/badge/mode-single--player_first-2563eb?style=flat-square" />
   <br /><br />
   <a href="README.md"><strong>🇰🇷 한국어</strong></a> &nbsp;|&nbsp; <a href="README.en.md"><strong>🇺🇸 English</strong></a>
-  <br /><sub>GitHub README: choose a language page · Instant in-place switch: <a href="index.html">index.html (publish with GitHub Pages for instant switching)</a></sub>
+  <br /><sub>GitHub README: choose a language page · Instant in-place switch: <a href="https://azizbekdevuz.github.io/K4RMA/">GitHub Pages</a></sub>
 </div>
 
 <div align="center">

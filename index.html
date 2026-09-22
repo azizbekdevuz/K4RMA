@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c0e17" />
+  <meta name="description" content="K4RMA — an action boss-combat game where abilities you sacrifice return in the hands of future enemies." />
+  <title>K4RMA — What You Give Up Comes Back</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b0d16;--surface:#131725;--edge:#2a3146;--ink:#f1f4ff;--muted:#acb5cf;--red:#ff566e;--blue:#7f98ff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 50% 0%,#221626 0,transparent 36rem),var(--bg);color:var(--ink);font:16px/1.68 system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:#a9b9ff}a:hover{color:#dae0ff} .wrap{width:min(960px,calc(100% - 32px));margin:auto}
+    .top{position:sticky;top:0;z-index:3;background:#0b0d16eb;border-bottom:1px solid var(--edge);backdrop-filter:blur(14px)}
+    .bar{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:800;letter-spacing:.12em;color:var(--ink);text-decoration:none}.switch{display:flex;gap:5px;background:#191e2d;padding:4px;border:1px solid var(--edge);border-radius:12px}
+    .switch button{cursor:pointer;border:0;background:transparent;color:var(--muted);padding:8px 13px;border-radius:8px;font-weight:700;font-size:14px}.switch button[aria-pressed="true"]{background:#f1f4ff;color:#171a27}.switch button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+    .hero{text-align:center;padding-top:42px}.logo{width:min(440px,85%);height:auto}.tagline{font-size:clamp(22px,4vw,36px);font-weight:900;margin:12px auto 0;line-height:1.25}.sub{color:var(--muted);margin:4px auto 20px}.pills{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:16px 0 28px}.pills span{font-size:12px;font-weight:700;color:#d3d8ec;border:1px solid var(--edge);background:var(--surface);border-radius:999px;padding:5px 10px}
+    .art{margin:0 0 24px;border:1px solid var(--edge);background:var(--surface);border-radius:18px;overflow:hidden}.art img{display:block;width:100%;height:auto}.art figcaption{color:var(--muted);padding:9px 14px;text-align:center;font-size:12px}
+    .notice{padding:14px 18px;background:#281b28;border-left:3px solid var(--red);border-radius:7px;color:#f5d9df;margin:18px 0 27px}
+    main{padding:0 0 70px}main h2{margin:35px 0 13px;font-size:27px;letter-spacing:-.02em}main h3{margin:27px 0 9px;font-size:20px}main h2, main h3{scroll-margin-top:85px}main p,main li{color:#d7ddef}main strong{color:#fff}main blockquote{margin:16px 0;padding:4px 16px;background:#181e2d;border-left:3px solid var(--blue)}main blockquote p{margin:8px 0}main img{max-width:100%}main div[align=center]{text-align:center;overflow-x:auto}
+    main table{display:table;width:100%;border-collapse:collapse;margin:16px 0;background:var(--surface);font-size:14px}main table th,main table td{text-align:left;border:1px solid var(--edge);padding:10px 12px;vertical-align:top}main table th{background:#1f2639}main code{border:1px solid var(--edge);border-radius:5px;padding:1px 4px;background:#191e2e;color:#e4e8fc}main pre{overflow-x:auto;padding:16px;border-radius:9px;background:#1a2031}main pre code{border:0;padding:0}
+    footer{border-top:1px solid var(--edge);padding:24px 0 48px;color:var(--muted);font-size:13px;text-align:center}
+    [hidden]{display:none!important}
+    @media(max-width:640px){.wrap{width:min(100% - 24px,960px)}.hero{padding-top:23px}main table{display:block;overflow-x:auto;white-space:normal}.bar{min-height:60px}}
+  </style>
+  <script>
+    // Both translations are shipped with this static page; switching needs no server or page reload.
+    function setLanguage(lang) {
+      lang = lang === 'en' ? 'en' : 'ko';
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-lang-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.langPanel !== lang;
+      });
+      document.querySelectorAll('[data-lang-button]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.langButton === lang));
+      });
+      document.title = lang === 'ko' ? 'K4RMA — 포기한 능력이 돌아온다' : 'K4RMA — What You Give Up Comes Back';
+      try { localStorage.setItem('k4rma-language',lang); } catch (_) {}
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang',lang);
+      history.replaceState(null,'',url);
+    }
+    document.addEventListener('DOMContentLoaded',() => {
+      let saved = null;try { saved=localStorage.getItem('k4rma-language'); } catch (_) {}
+      const requested = new URLSearchParams(location.search).get('lang');
+      setLanguage(requested === 'en' || requested === 'ko' ? requested : (saved === 'en' ? 'en' : 'ko'));
+      document.querySelectorAll('[data-lang-button]').forEach(button => button.addEventListener('click',() => setLanguage(button.dataset.langButton)));
+    });
+  </script>
+</head>
+<body>
+  <header class="top"><div class="wrap bar"><a class="brand" href="#top">K4RMA</a><nav class="switch" aria-label="Language / 언어"><button type="button" data-lang-button="ko" aria-pressed="true">🇰🇷 한국어</button><button type="button" data-lang-button="en" aria-pressed="false">🇺🇸 English</button></nav></div></header>
+  <div class="wrap">
+    <section class="hero" id="top">
+      <img class="logo" src="assets/wordmark.png" alt="K4RMA" />
+      <p class="tagline">WHAT YOU GIVE UP COMES BACK.</p>
+      <p class="sub">잃어버린 능력이 다음 적의 힘이 된다.</p>
+      <div class="pills"><span>● PRE-PRODUCTION</span><span>UNITY</span><span>SINGLE-PLAYER FIRST</span><span>4-PERSON TEAM</span></div>
+      <figure class="art"><img src="assets/concept-arena.png" alt="Concept art of an adventurer facing a towering boss in a dark arena" /><figcaption>CONCEPT ART / 콘셉트 이미지 — NOT ACTUAL GAMEPLAY / 실제 게임 화면이 아닙니다.</figcaption></figure>
+    </section>
+    <aside data-lang-panel="ko" class="notice">K4RMA는 개발 준비 단계의 가제입니다. 일부 게임 규칙과 2D/3D 방향은 아직 확정되지 않았으며, 아래 내용은 구현 완료 목록이 아닙니다.</aside>
+    <aside data-lang-panel="en" class="notice" hidden>K4RMA is a working title in pre-production. Some game rules and 2D/3D choices are undecided; the features below are not claims of implementation.</aside>
+    <main data-lang-panel="ko"><h2>게임 소개</h2>
+<p><strong>K4RMA</strong>는 플레이어가 보스를 이길 때마다 자신의 능력 하나를 희생하고, 그 능력이 이후의 적에게 넘어가는 <strong>싱글플레이 우선 액션·보스 전투 게임</strong>입니다. 스테이지가 진행될수록 내 선택지가 줄어들고 적의 공격 패턴이 변화합니다. 남은 기술, 기본 공격, 회피 및 성장 요소를 활용해 마지막까지 살아남는 것이 핵심입니다.</p>
+<p><strong>핵심 질문:</strong> <em>다음 적이 사용할 기술을 알고도, 어떤 능력을 포기할 것인가?</em></p>
+<h3>핵심 게임 루프</h3>
+<p>&lt;div align=&quot;center&quot;&gt;&lt;img src=&quot;assets/game-loop.svg&quot; alt=&quot;Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat&quot; width=&quot;850&quot; /&gt;&lt;/div&gt;</p>
+<ol>
+<li><strong>시작:</strong> 기본 스탯(HP·공격력·이동 속도·공격 속도)과 여러 특수 능력을 가진 캐릭터로 시작합니다. Dash, Fireball, Shield, Heal은 <strong>예시</strong>이며 최종 구성은 미정입니다.</li>
+<li><strong>전투:</strong> 기본 공격과 남은 능력으로 적/보스와 싸웁니다. 적은 이동·추적·공격 등의 기본 AI를 사용하며, 이후 단계에서는 희생된 능력도 사용할 수 있습니다.</li>
+<li><strong>평가:</strong> 처치 수, 클리어 시간, 남은 HP, 피격 횟수 등의 플레이 결과를 점수에 반영하는 방안을 검토합니다. 점수를 기본 스탯 성장에 사용하는 방식도 논의 중입니다.</li>
+<li><strong>희생:</strong> 스테이지 클리어 후 보유 능력 중 하나를 선택해 포기합니다. 플레이어는 그 능력을 잃고, 능력은 이후 적이 사용할 수 있는 풀에 추가됩니다.</li>
+<li><strong>반복:</strong> 다음 전투에서는 이전 선택의 결과를 마주합니다. 마지막 단계까지의 난이도와 승리 가능성은 플레이 테스트로 조정합니다.</li>
+</ol>
+<h3>기획 범위와 결정 상태</h3>
+<table>
+<thead>
+<tr>
+  <th style="text-align:left">구분</th>
+  <th style="text-align:left">현재 방향</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left">핵심 차별점</td>
+  <td style="text-align:left"><strong>확정된 방향:</strong> 능력 희생 → 이후 적/보스가 해당 능력을 활용</td>
+</tr>
+<tr>
+  <td style="text-align:left">게임 방식</td>
+  <td style="text-align:left"><strong>싱글플레이를 먼저 완성</strong>하는 조작 중심 전투</td>
+</tr>
+<tr>
+  <td style="text-align:left">엔진</td>
+  <td style="text-align:left"><strong>Unity</strong>. 구현 언어는 Unity용 C#을 예상</td>
+</tr>
+<tr>
+  <td style="text-align:left">시점·그래픽</td>
+  <td style="text-align:left">3인칭 3D 가능성을 먼저 조사하고, 범위·성능·제작 난도가 맞지 않으면 2D로 전환</td>
+</tr>
+<tr>
+  <td style="text-align:left">콘텐츠 수량</td>
+  <td style="text-align:left">시작 능력 수, 전체 능력 종류, 보스/스테이지 수 <strong>미정</strong></td>
+</tr>
+<tr>
+  <td style="text-align:left">추가 메커니즘</td>
+  <td style="text-align:left">능력 조합 시너지·점수 기반 스탯 강화 <strong>검토 중</strong></td>
+</tr>
+<tr>
+  <td style="text-align:left">멀티플레이</td>
+  <td style="text-align:left"><strong>현재 개발 범위 밖</strong>. 시간이 남을 경우를 위해 확장 여지만 고려</td>
+</tr>
+</tbody>
+</table>
+<h3>첫 번째 플레이 가능한 버전</h3>
+<p>우선 <strong>캐릭터 1명 → 전투 공간 1개 → 기본 공격과 소수의 능력 → 보스 1종 → 클리어 후 능력 희생 → 다음 전투에서 적이 그 능력 사용</strong>까지 구현해 핵심 재미를 검증합니다. 멀티플레이, 많은 스테이지, 고급 모델링과 복잡한 물리 효과는 이 단계의 필수 조건이 아닙니다.</p>
+<h3>개발 원칙</h3>
+<ul>
+<li><strong>간단하게 시작하되 확장을 막지 않기.</strong> 멀티플레이 코드를 미리 만들자는 뜻이 아닙니다. 플레이어·능력·적·점수·UI를 한 곳에 뒤섞지 않고, 나중에 플레이어가 추가되어도 가능한 한 재사용할 수 있게 설계합니다.</li>
+<li><strong>역할별 동일한 원칙.</strong> 코드는 입력과 캐릭터/전투 동작을 분리하고, UI는 플레이어 수나 상태 표시가 늘어날 수 있게 구성하며, 모델·애니메이션은 특정 캐릭터 하나에만 고정하지 않고 재사용성을 고려합니다. 미래 기능 때문에 현재 MVP를 불필요하게 복잡하게 만들지는 않습니다.</li>
+<li><strong>AI는 공통 맥락을 보고 사용.</strong> AI에 작업을 맡기기 전 <a href="docs/PROJECT_CONTEXT.md"><code>docs/PROJECT_CONTEXT.md</code></a>, 현재 코드, Unity 버전, 본인 작업 범위 및 관련 인터페이스를 함께 전달합니다. 질문할 때는 원하는 동작·현재 구조·시도한 방법·오류 내용·제약 조건을 구체적으로 설명합니다. 생성된 코드는 직접 이해하고 실행·검증합니다.</li>
+<li><strong>작고 검증 가능한 단위로 개발.</strong> 핵심 동작을 먼저 확인한 뒤 기능을 추가합니다. 변경 사항은 기록하고 서로 다른 파트를 일찍 통합합니다.</li>
+</ul>
+<h3>협업 및 저장소</h3>
+<ul>
+<li><strong>GitHub:</strong> 공동 코드 저장소 및 변경 이력 관리. Aziz가 저장소/협업 설정과 통합을 담당합니다. 역할별 개발 담당자는 추후 확정합니다.</li>
+<li><strong>Unity Version Control (구 Plastic SCM):</strong> 대용량 바이너리 에셋·잠금이 필요한 경우를 포함해 적용 방식을 검토합니다. <strong>Git과 Unity Version Control을 동시에 별도 정본으로 운영하지 않습니다.</strong> 정본 저장소와 에셋 관리 방식은 팀이 합의해 문서화합니다.</li>
+<li><strong>Notion:</strong> 기획안, 회의록, 작업 분담, 개발 일정과 결정 사항 공유를 위한 예정 공간입니다.</li>
+<li><strong>협업 가이드:</strong> <a href="docs/CONTRIBUTING.md"><code>docs/CONTRIBUTING.md</code></a> · <strong>결정 기록:</strong> <a href="docs/DECISIONS.md"><code>docs/DECISIONS.md</code></a></li>
+</ul>
+<h3>개발 환경과 시작 방법</h3>
+<p>Unity 프로젝트가 아직 이 저장소에 올라오지 않았거나 에디터 버전이 합의되지 않았다면 <strong>실행 가능한 빌드는 없습니다.</strong> Unity 버전·대상 플랫폼·프로젝트 경로가 정해지면 여기에 실제 설치/실행 절차를 추가합니다. 임의의 Unity 버전 또는 미확인 실행 명령을 사용하지 마세요.</p>
+<h3>로드맵</h3>
+<table>
+<thead>
+<tr>
+  <th style="text-align:left">단계</th>
+  <th style="text-align:left">목표</th>
+  <th style="text-align:left">상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left">기획·검증</td>
+  <td style="text-align:left">규칙 정리, 2D/3D 가능성 확인, 역할 분담</td>
+  <td style="text-align:left">진행 중</td>
+</tr>
+<tr>
+  <td style="text-align:left">핵심 프로토타입</td>
+  <td style="text-align:left">희생 → 적 능력 승계 루프 검증</td>
+  <td style="text-align:left">예정</td>
+</tr>
+<tr>
+  <td style="text-align:left">플레이 가능한 MVP</td>
+  <td style="text-align:left">입력·전투·적 AI·UI·스테이지 전환 통합</td>
+  <td style="text-align:left">예정</td>
+</tr>
+<tr>
+  <td style="text-align:left">콘텐츠·밸런스</td>
+  <td style="text-align:left">능력/보스 확장, 점수·성장·시너지 여부 확정</td>
+  <td style="text-align:left">예정</td>
+</tr>
+<tr>
+  <td style="text-align:left">테스트·발표</td>
+  <td style="text-align:left">버그 수정, 플레이 테스트, 시연/문서 정리</td>
+  <td style="text-align:left">예정</td>
+</tr>
+</tbody>
+</table>
+<h3>팀 및 사용 안내</h3>
+<p><strong>SW설계기초 · 4인 팀 프로젝트.</strong> 팀원 네 명의 한국 이름이 모두 ㄱ/K로 시작하고, <code>4</code>는 네 명을 의미합니다. 프로젝트 제목 <strong>K4RMA는 팀의 최종 확인 전까지 가제</strong>입니다.</p>
+<p>팀 외부에 공유할 때는 내부 기획·코드·에셋을 팀의 동의 없이 공개하지 않습니다. 제3자 에셋을 사용할 경우 출처와 라이선스를 별도로 기록합니다. <strong>저장소 전체의 공개 라이선스는 아직 결정되지 않았습니다.</strong></p>
+</main>
+    <main data-lang-panel="en" hidden><h2>Overview</h2>
+<p><strong>K4RMA</strong> is a <strong>single-player-first action / boss-combat game</strong> in which each victory forces the player to sacrifice one ability. That ability becomes available to future enemies. As the player loses options, opponents inherit the consequences of earlier choices. Survive by combining the remaining skills, basic attacks, movement, and progression.</p>
+<p><strong>The central question:</strong> <em>Which ability will you surrender, knowing a later enemy can use it against you?</em></p>
+<h3>Core game loop</h3>
+<p>&lt;div align=&quot;center&quot;&gt;&lt;img src=&quot;assets/game-loop.svg&quot; alt=&quot;Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat&quot; width=&quot;850&quot; /&gt;&lt;/div&gt;</p>
+<ol>
+<li><strong>Begin:</strong> Start with baseline stats (HP, attack, movement speed, attack speed) and multiple special abilities. Dash, Fireball, Shield, and Heal are <strong>examples</strong>, not a final skill list.</li>
+<li><strong>Fight:</strong> Use basic attacks and remaining abilities. Enemies use basic movement/tracking/attack AI; later enemies may use previously surrendered skills.</li>
+<li><strong>Score:</strong> The team is considering kills, clear time, remaining HP, and hits taken as performance inputs. Spending score on baseline stat growth is also under discussion.</li>
+<li><strong>Sacrifice:</strong> After a clear, surrender one owned ability. It disappears from the player and enters the pool of abilities available to subsequent enemies.</li>
+<li><strong>Repeat:</strong> Face the consequences of earlier choices. Endgame difficulty and beatability will be balanced through playtesting.</li>
+</ol>
+<h3>Scope and decision status</h3>
+<table>
+<thead>
+<tr>
+  <th style="text-align:left">Area</th>
+  <th style="text-align:left">Current direction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left">Signature mechanic</td>
+  <td style="text-align:left"><strong>Agreed direction:</strong> sacrifice a skill → later enemy/boss may use it</td>
+</tr>
+<tr>
+  <td style="text-align:left">Game mode</td>
+  <td style="text-align:left"><strong>Complete single-player combat first</strong></td>
+</tr>
+<tr>
+  <td style="text-align:left">Engine</td>
+  <td style="text-align:left"><strong>Unity</strong>; Unity C# is the expected implementation language</td>
+</tr>
+<tr>
+  <td style="text-align:left">Presentation</td>
+  <td style="text-align:left">Investigate third-person 3D feasibility first; fall back to 2D if scope, performance, or skills require it</td>
+</tr>
+<tr>
+  <td style="text-align:left">Content counts</td>
+  <td style="text-align:left">Starting loadout, total abilities, stages, and boss count <strong>not decided</strong></td>
+</tr>
+<tr>
+  <td style="text-align:left">Secondary systems</td>
+  <td style="text-align:left">Skill synergies and score-driven base-stat upgrades <strong>under consideration</strong></td>
+</tr>
+<tr>
+  <td style="text-align:left">Multiplayer</td>
+  <td style="text-align:left"><strong>Out of current scope</strong>; preserve reasonable extension points only</td>
+</tr>
+</tbody>
+</table>
+<h3>First playable slice</h3>
+<p>Validate the actual hook with <strong>one player → one arena → basic attack and a few skills → one boss → surrender a skill → fight an enemy that can use it</strong>. Multiplayer, numerous stages, custom high-end models, and advanced physics are not prerequisites for this prototype.</p>
+<h3>Engineering principles</h3>
+<ul>
+<li><strong>Keep it simple without closing off future options.</strong> “Multiplayer-ready” does <strong>not</strong> mean building networking now. Avoid tying all players, abilities, enemies, scores, and UI to one global game object; keep responsibilities explicit and reusable.</li>
+<li><strong>Apply this beyond code.</strong> Keep player input separate from combat behaviors; design UI so extra player/state displays can be added; prefer reusable character models and animations over assets inseparable from one hard-coded player. Do not overengineer today's MVP for hypothetical features.</li>
+<li><strong>Give AI the whole relevant context.</strong> Before using AI, include <a href="docs/PROJECT_CONTEXT.md"><code>docs/PROJECT_CONTEXT.md</code></a>, the actual files, agreed Unity version, task boundaries, and related interfaces. Ask technical questions with the desired behavior, current architecture, attempted steps, exact errors, and constraints. Understand, run, and verify generated work before merging it.</li>
+<li><strong>Build in small, testable increments.</strong> Prove the essential loop, add features progressively, record decisions, and integrate early.</li>
+</ul>
+<h3>Collaboration and version control</h3>
+<ul>
+<li><strong>GitHub:</strong> Shared source repository and change history. Aziz owns repository/collaboration setup and integration; implementation roles remain to be assigned.</li>
+<li><strong>Unity Version Control (formerly Plastic SCM):</strong> Evaluate where asset locking/large binaries require it. <strong>Do not run Git and Unity Version Control as two competing sources of truth.</strong> Agree on and document the authoritative repository and asset workflow first.</li>
+<li><strong>Notion:</strong> Planned shared workspace for design, meeting notes, assignments, schedule, and decisions.</li>
+<li><strong>Team workflow:</strong> <a href="docs/CONTRIBUTING.md"><code>docs/CONTRIBUTING.md</code></a> · <strong>Decision log:</strong> <a href="docs/DECISIONS.md"><code>docs/DECISIONS.md</code></a></li>
+</ul>
+<h3>Setup</h3>
+<p><strong>There is no verified runnable build yet</strong> if the Unity project or selected editor version has not been committed. Once the team selects a version, target platform, and project location, replace this section with tested setup/run instructions. Do not assume an unverified Unity version or invent a run command.</p>
+<h3>Roadmap</h3>
+<table>
+<thead>
+<tr>
+  <th style="text-align:left">Phase</th>
+  <th style="text-align:left">Outcome</th>
+  <th style="text-align:left">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left">Discovery</td>
+  <td style="text-align:left">Specify core rules, assess 2D/3D, assign roles</td>
+  <td style="text-align:left">In progress</td>
+</tr>
+<tr>
+  <td style="text-align:left">Core prototype</td>
+  <td style="text-align:left">Test sacrifice → enemy inheritance loop</td>
+  <td style="text-align:left">Planned</td>
+</tr>
+<tr>
+  <td style="text-align:left">Playable MVP</td>
+  <td style="text-align:left">Integrate input, combat, enemy AI, UI, transitions</td>
+  <td style="text-align:left">Planned</td>
+</tr>
+<tr>
+  <td style="text-align:left">Content and balance</td>
+  <td style="text-align:left">Expand skills/bosses; decide scoring, upgrades, synergies</td>
+  <td style="text-align:left">Planned</td>
+</tr>
+<tr>
+  <td style="text-align:left">Verification and demo</td>
+  <td style="text-align:left">Playtest, fix defects, prepare demonstration/docs</td>
+  <td style="text-align:left">Planned</td>
+</tr>
+</tbody>
+</table>
+<h3>Team, assets, and license</h3>
+<p><strong>SW Basic Design · four-person university team.</strong> All four members' Korean names begin with ㄱ/K, and <code>4</code> represents the four members. <strong>K4RMA is a working title pending team approval.</strong> Do not share private plans, code, or assets externally without team consent. Record attribution and license terms for third-party assets. <strong>A license for the repository as a whole has not yet been selected.</strong></p>
+</main>
+  </div>
+  <footer><div class="wrap">K4RMA · SW Basic Design · Concept art is illustrative. / 콘셉트 아트는 실제 게임 화면이 아닙니다.</div></footer>
+</body>
+</html>

@@ -16,7 +16,7 @@
     .hero{text-align:center;padding-top:42px}.logo{width:min(440px,85%);height:auto}.tagline{font-size:clamp(22px,4vw,36px);font-weight:900;margin:12px auto 0;line-height:1.25}.sub{color:var(--muted);margin:4px auto 20px}.pills{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:16px 0 28px}.pills span{font-size:12px;font-weight:700;color:#d3d8ec;border:1px solid var(--edge);background:var(--surface);border-radius:999px;padding:5px 10px}
     .art{margin:0 0 24px;border:1px solid var(--edge);background:var(--surface);border-radius:18px;overflow:hidden}.art img{display:block;width:100%;height:auto}.art figcaption{color:var(--muted);padding:9px 14px;text-align:center;font-size:12px}
     .notice{padding:14px 18px;background:#281b28;border-left:3px solid var(--red);border-radius:7px;color:#f5d9df;margin:18px 0 27px}
-    main{padding:0 0 70px}main h2{margin:35px 0 13px;font-size:27px;letter-spacing:-.02em}main h3{margin:27px 0 9px;font-size:20px}main h2, main h3{scroll-margin-top:85px}main p,main li{color:#d7ddef}main strong{color:#fff}main blockquote{margin:16px 0;padding:4px 16px;background:#181e2d;border-left:3px solid var(--blue)}main blockquote p{margin:8px 0}main img{max-width:100%}main div[align=center]{text-align:center;overflow-x:auto}
+    main{padding:0 0 70px}main h2{margin:35px 0 13px;font-size:27px;letter-spacing:-.02em}main h3{margin:27px 0 9px;font-size:20px}main h2, main h3{scroll-margin-top:85px}main p,main li{color:#d7ddef}main strong{color:#fff}main blockquote{margin:16px 0;padding:4px 16px;background:#181e2d;border-left:3px solid var(--blue)}main blockquote p{margin:8px 0}main img{max-width:100%}main .game-loop{margin:14px 0 22px;text-align:center;overflow-x:auto}main .game-loop img{display:block;width:min(100%,850px);height:auto;margin:auto}
     main table{display:table;width:100%;border-collapse:collapse;margin:16px 0;background:var(--surface);font-size:14px}main table th,main table td{text-align:left;border:1px solid var(--edge);padding:10px 12px;vertical-align:top}main table th{background:#1f2639}main code{border:1px solid var(--edge);border-radius:5px;padding:1px 4px;background:#191e2e;color:#e4e8fc}main pre{overflow-x:auto;padding:16px;border-radius:9px;background:#1a2031}main pre code{border:0;padding:0}
     footer{border-top:1px solid var(--edge);padding:24px 0 48px;color:var(--muted);font-size:13px;text-align:center}
     [hidden]{display:none!important}
@@ -63,7 +63,7 @@
 <p><strong>K4RMA</strong>는 플레이어가 보스를 이길 때마다 자신의 능력 하나를 희생하고, 그 능력이 이후의 적에게 넘어가는 <strong>싱글플레이 우선 액션·보스 전투 게임</strong>입니다. 스테이지가 진행될수록 내 선택지가 줄어들고 적의 공격 패턴이 변화합니다. 남은 기술, 기본 공격, 회피 및 성장 요소를 활용해 마지막까지 살아남는 것이 핵심입니다.</p>
 <p><strong>핵심 질문:</strong> <em>다음 적이 사용할 기술을 알고도, 어떤 능력을 포기할 것인가?</em></p>
 <h3>핵심 게임 루프</h3>
-<p>&lt;div align=&quot;center&quot;&gt;&lt;img src=&quot;assets/game-loop.svg&quot; alt=&quot;Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat&quot; width=&quot;850&quot; /&gt;&lt;/div&gt;</p>
+<figure class="game-loop"><img src="assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
 <ol>
 <li><strong>시작:</strong> 기본 스탯(HP·공격력·이동 속도·공격 속도)과 여러 특수 능력을 가진 캐릭터로 시작합니다. Dash, Fireball, Shield, Heal은 <strong>예시</strong>이며 최종 구성은 미정입니다.</li>
 <li><strong>전투:</strong> 기본 공격과 남은 능력으로 적/보스와 싸웁니다. 적은 이동·추적·공격 등의 기본 AI를 사용하며, 이후 단계에서는 희생된 능력도 사용할 수 있습니다.</li>
@@ -173,7 +173,7 @@
 <p><strong>K4RMA</strong> is a <strong>single-player-first action / boss-combat game</strong> in which each victory forces the player to sacrifice one ability. That ability becomes available to future enemies. As the player loses options, opponents inherit the consequences of earlier choices. Survive by combining the remaining skills, basic attacks, movement, and progression.</p>
 <p><strong>The central question:</strong> <em>Which ability will you surrender, knowing a later enemy can use it against you?</em></p>
 <h3>Core game loop</h3>
-<p>&lt;div align=&quot;center&quot;&gt;&lt;img src=&quot;assets/game-loop.svg&quot; alt=&quot;Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat&quot; width=&quot;850&quot; /&gt;&lt;/div&gt;</p>
+<figure class="game-loop"><img src="assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
 <ol>
 <li><strong>Begin:</strong> Start with baseline stats (HP, attack, movement speed, attack speed) and multiple special abilities. Dash, Fireball, Shield, and Heal are <strong>examples</strong>, not a final skill list.</li>
 <li><strong>Fight:</strong> Use basic attacks and remaining abilities. Enemies use basic movement/tracking/attack AI; later enemies may use previously surrendered skills.</li>

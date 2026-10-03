@@ -1,0 +1,7 @@
+{
+  "name": "K4RMA.Core",
+  "rootNamespace": "KarmaPrototype",
+  "references": [],
+  "autoReferenced": true,
+  "noEngineReferences": true
+}

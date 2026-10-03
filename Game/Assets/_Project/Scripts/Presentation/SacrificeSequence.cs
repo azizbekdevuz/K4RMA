@@ -52,7 +52,7 @@ namespace K4RMA
             Vector3 guardianPoint = director.StageTwoBoss != null
                 ? director.StageTwoBoss.transform.position + Vector3.up * 0.8f
                 : altarPoint + Vector3.left * 4f;
-            FindAnyObjectByType<HudPresenter>()?.ShowMessage("The altar returns it.");
+            FindAnyObjectByType<HudPresenter>()?.ShowMessage("It enters the next guardian.");
             yield return Move(orb.transform, orb.transform.position, guardianPoint, travelSeconds);
             AudioFeedback.Play(AudioCue.Transfer);
 

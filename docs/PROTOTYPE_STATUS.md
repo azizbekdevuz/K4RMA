@@ -1,29 +1,42 @@
 # Prototype status
 
-Branch: `feat/2-5d-prototype`. Unity project: `Game/`. Editor: `6000.6.2f1`.
+Branch: `feat/prototype-ux-polish`. Unity project: `Game/`. Editor: `6000.6.2f1`.
 
-This slice is a locked side-view 2.5D graybox. `proto.dash`, `proto.projectile`, and `proto.guard` are placeholder abilities. Only `proto.projectile` is a complete transfer. The saved scene `Game/Assets/_Project/Scenes/PrototypeArena.unity` is the playable scene. Play does not rebuild it.
+This slice is a locked side-view 2.5D prototype. `proto.dash`, `proto.projectile`, and `proto.guard` are placeholder abilities. Only `proto.projectile` is a complete transfer. The saved scene `Game/Assets/_Project/Scenes/PrototypeArena.unity` is the playable scene. Play does not rebuild it.
+
+## UX polish on this branch
+
+- After Stage 1, an on-screen marker says "Go to the altar". It sits above the altar when the altar is in view, and moves to the left or right edge with `<` or `>` when the altar is outside the camera. It bobs. It hides at the altar, when the surrender sequence starts, and in every phase except the altar walk.
+- At the altar, the marker is gone and the prompt is `E  Surrender the shot`.
+- The surrender lines are "The shot leaves you." then "It enters the next guardian."
+- Stage 1's core and melee windup are pale and neutral. Stage 2 keeps the bright inherited core.
+- A successful Deflect shows the word "Deflected." for a short time.
+
+## What still needs a person to check
+
+- The arrow is obvious within a second or two after Stage 1.
+- The arrow points the right way from both sides of the arena.
+- The marker disappears as soon as the player can press E.
+- Stage 1 no longer reads as fire, and Stage 2 still reads as the changed guardian.
+- The surrender orb still reads as player, then altar, then the next guardian.
+- Deflect success is readable, and the melee windup is still readable in pale light.
 
 ## What works
 
-Verified in Unity batchmode on this machine:
+Verified in Unity batchmode on this machine. A person has playtested the earlier slice; this polish pass has not been playtested by a person in this session.
 
 - The project compiles with editor `6000.6.2f1`.
-- `PrototypeArena` contains the arena, player, stage 1 guardian, inactive stage 2 guardian, altar, side-view camera, and HUD.
+- `PrototypeArena` contains the arena, player, stage 1 guardian, inactive stage 2 guardian, altar, side-view camera, HUD, and altar guide.
 - Stage 1 boss config has no inherited ability. Stage 2 config inherits `proto.projectile`.
-- EditMode tests for the sacrifice rules: 5 passed, 0 failed.
-- Windows Mono player build succeeded.
-- That player stayed running for about 18 seconds, created a Direct3D 11 device, and initialized input and physics. `Player.log` had no exception. Unused URP post-process shaders were stripped; the graybox does not use them.
-
-The scene implements this loop: move, jump, melee, stage 1 telegraphed melee, altar surrender of prototype Projectile, stage 2 guardian shot, and K switching from shot to deflect. A person has not yet played that loop in the editor, so the feel checklist below is still open.
+- EditMode tests for the sacrifice rules: 5 passed, 0 failed, including after this polish.
 
 ## What remains
 
-- The manual playtest checklist.
 - Final 2D versus 2.5D decision (D-004).
 - Approved ability list and stage count (D-007).
 - Dash and Guard combat, and any transfer besides `proto.projectile`.
 - Stages 3 and 4, story scenes, scoring, and final art.
+- The exact gameplay meaning of an internalized technique is not decided. Deflect here is only the current prototype counter.
 
 ## Known slice limitation
 
@@ -45,7 +58,7 @@ Edit these assets. The numbers the fight uses are on the assets, and the scene r
 - `Game/Assets/_Project/Data/Prototype/PlayerTuning.asset` — move speed, jump speed, melee timing and range, player HP, projectile speed and damage, deflect duration.
 - `Game/Assets/_Project/Data/Prototype/BossStage1.asset` and `BossStage2.asset` — HP, approach, telegraph durations, melee damage, and the stage 2 projectile.
 
-Menu **K4RMA → Create Prototype Arena If Missing** creates the scene only when that file is absent. It does not run on Play and does not overwrite an existing scene.
+Menu **K4RMA → Create Prototype Arena If Missing** creates the scene only when that file is absent. It does not run on Play and does not overwrite an existing scene. **K4RMA → Apply Altar Guide** adds the guide if it is missing.
 
 ## How to open
 
@@ -56,41 +69,24 @@ Menu **K4RMA → Create Prototype Arena If Missing** creates the scene only when
 
 ## Batch commands
 
-From PowerShell. The first two were run successfully here. On this editor, `-runTests` together with `-quit` exited before the test runner started, so tests were run with the execute method instead.
+From PowerShell. On this editor, `-runTests` together with `-quit` exited before the test runner started, so tests are run with the execute method instead.
 
 ```powershell
 $unity = "C:\Program Files\Unity\Hub\Editor\6000.6.2f1\Editor\Unity.exe"
 $project = "D:\Workplace\Gaming\K4RMA\Game"
-& $unity -batchmode -nographics -quit -projectPath $project -executeMethod K4RMA.EditorTools.PrototypeSceneBuilder.CreateArenaBatch -logFile "$env:TEMP\k4rma-scene.log"
+& $unity -batchmode -nographics -quit -projectPath $project -executeMethod K4RMA.EditorTools.UxPolishPass.ApplyBatch -logFile "$env:TEMP\k4rma-ux.log"
 & $unity -batchmode -nographics -projectPath $project -executeMethod K4RMA.EditorTools.PrototypeTestRunner.RunEditMode -logFile "$env:TEMP\k4rma-tests.log"
 & $unity -batchmode -nographics -quit -projectPath $project -executeMethod K4RMA.EditorTools.PrototypeBuild.BuildWindows -logFile "$env:TEMP\k4rma-build.log"
 ```
 
 Windows player output (not committed): `Game/Builds/Windows/K4RMA-Prototype.exe`.
 
-## Manual playtest checklist
-
-Play `PrototypeArena` and note each item before treating the slice as demo-ready:
-
-- Movement responsiveness: left/right and jump start and stop without a noticeable delay.
-- Melee readability: the swing, the hit, and the target reaction are obvious.
-- Boss telegraph readability: the windup is visible early enough to react.
-- Sacrifice cause and effect: a new player can tell what was given up and what the next guardian gained without a verbal explanation.
-- Deflect versus projectile: K after the sacrifice feels like a different action, not a weaker version of the shot.
-- Stage 2 pressure: the second fight is harder, and the player still has a meaningful response.
-- 2.5D presentation: the side view and depth read clearly enough to keep exploring this direction.
-
 ## Verification log
 
 | Check | Result |
 | :--- | :--- |
-| Project created with the installed URP blank template | Passed, editor `6000.6.2f1` |
-| Script compile | Passed in the scene, test, and player batch runs. No `error CS` from project scripts |
-| Saved scene | `PrototypeArena.unity` created by the editor builder |
-| EditMode tests | Passed, 5/5, via `PrototypeTestRunner.RunEditMode` |
-| Windows standalone build | Passed. Output `Game/Builds/Windows/K4RMA-Prototype.exe` |
-| Player launch smoke test | Process stayed up for 18 seconds. No exception in `Player.log`. Not a gameplay playthrough |
-| Presentation pass | Saved into `PrototypeArena` (disciple, guardian, altar sequence, HUD, title/ending) |
-| EditMode tests after presentation | Passed, 5/5 |
-| Windows build after presentation | Passed. `Game/Builds/Windows/K4RMA-Prototype.exe` |
-| Manual playtest of the presentation | Not run by a person in this session |
+| UX polish compile and scene save | Passed. Altar guide saved. No `error CS` |
+| EditMode tests after UX polish | Passed, 5/5 |
+| Windows build after UX polish | Passed. `Game/Builds/Windows/K4RMA-Prototype.exe` |
+| Player launch after UX polish | Process stayed up. No exception in `Player.log`. Not a playthrough |
+| Human check of the altar arrow | Still needed |

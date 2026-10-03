@@ -128,7 +128,7 @@ namespace K4RMA
             if (playerHealth != null && !playerHealth.IsAlive)
                 return;
             State.Phase = RunPhase.Altar;
-            hud?.ShowMessage("The guardian has fallen. Walk to the altar.");
+            hud?.ShowMessage("The guardian has fallen.");
         }
 
         void OnStageTwoBossDied(Health _)

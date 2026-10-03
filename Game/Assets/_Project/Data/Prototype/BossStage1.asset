@@ -26,7 +26,7 @@ MonoBehaviour:
   lungeSpeed: 5.2
   hurtStunSeconds: 0.35
   deadColor: {r: 0.25, g: 0.22, b: 0.22, a: 1}
-  meleeTelegraphColor: {r: 1, g: 0.42, b: 0.12, a: 1}
+  meleeTelegraphColor: {r: 0.95, g: 0.95, b: 0.92, a: 1}
   inheritedAbilityId: 
   projectileTelegraphSeconds: 0.95
   projectileSpeed: 6.5

@@ -33,7 +33,7 @@ namespace K4RMA.EditorTools
             var steel = Material("Steel", new Color(0.78f, 0.82f, 0.86f), new Color(0.15f, 0.18f, 0.2f));
             var stone = Material("Stone", new Color(0.34f, 0.31f, 0.29f), null);
             var stoneDark = Material("StoneDark", new Color(0.22f, 0.2f, 0.19f), null);
-            var coreAmber = Material("CoreAmber", new Color(1f, 0.55f, 0.2f), new Color(1.1f, 0.4f, 0.05f));
+            var coreAmber = Material("CoreAmber", new Color(0.86f, 0.87f, 0.84f), new Color(0.35f, 0.36f, 0.34f));
             var coreCold = Material("CoreCold", new Color(0.45f, 0.9f, 1f), new Color(0.2f, 1.4f, 1.8f));
             var gold = Material("AltarGold", new Color(0.86f, 0.64f, 0.24f), new Color(0.7f, 0.35f, 0.05f));
             var deflectMat = Material("Deflect", new Color(0.55f, 0.9f, 1f), new Color(0.4f, 1.2f, 1.5f));
@@ -169,8 +169,8 @@ namespace K4RMA.EditorTools
             SetRef(pose, "boss", boss);
             SetRef(pose, "arm", arm);
             SetRef(pose, "core", core);
-            SetColor(pose, "coreColor", risen ? new Color(0.45f, 0.92f, 1f) : new Color(1f, 0.55f, 0.22f));
-            SetFloat(pose, "coreEmission", risen ? 2.4f : 1.1f);
+            SetColor(pose, "coreColor", risen ? new Color(0.45f, 0.92f, 1f) : new Color(0.86f, 0.87f, 0.84f));
+            SetFloat(pose, "coreEmission", risen ? 2.4f : 0.4f);
 
             var tint = boss.GetComponent<BodyTint>();
             if (tint != null)

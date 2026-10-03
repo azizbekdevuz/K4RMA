@@ -7,8 +7,8 @@ namespace K4RMA
         [SerializeField] BossController boss;
         [SerializeField] Transform arm;
         [SerializeField] Transform core;
-        [SerializeField] Color coreColor = new Color(1f, 0.55f, 0.2f);
-        [SerializeField] float coreEmission = 1.5f;
+        [SerializeField] Color coreColor = new Color(0.86f, 0.87f, 0.84f);
+        [SerializeField] float coreEmission = 0.4f;
 
         Quaternion armRest;
         Vector3 coreRest;

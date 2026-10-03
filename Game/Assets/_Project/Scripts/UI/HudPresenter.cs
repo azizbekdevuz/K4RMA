@@ -20,16 +20,24 @@ namespace K4RMA
         [SerializeField] Text prompt;
 
         string message = "";
+        float messageUntil;
 
-        public void ShowMessage(string text)
+        public void ShowMessage(string text, float seconds = 0f)
         {
             message = text ?? "";
+            messageUntil = seconds > 0f ? Time.unscaledTime + seconds : 0f;
             if (banner != null)
                 banner.text = message;
         }
 
         void Update()
         {
+            if (messageUntil > 0f && Time.unscaledTime >= messageUntil)
+            {
+                message = string.Empty;
+                messageUntil = 0f;
+            }
+
             DrawHealth(playerLabel, playerFill, playerHealth, "Player");
             var bossHealth = ActiveBossHealth();
             string bossName = "Guardian";
@@ -88,7 +96,7 @@ namespace K4RMA
                 case RunPhase.Altar:
                     return run.Altar != null && run.Altar.PlayerInside
                         ? "E    Surrender the shot"
-                        : "Walk to the altar";
+                        : string.Empty;
                 case RunPhase.Defeat:
                     return "R    Try again";
                 case RunPhase.SliceComplete:

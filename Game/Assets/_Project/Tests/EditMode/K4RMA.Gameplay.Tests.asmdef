@@ -1,0 +1,21 @@
+{
+  "name": "K4RMA.Gameplay.Tests",
+  "rootNamespace": "K4RMA.Tests",
+  "references": [
+    "K4RMA.Gameplay"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

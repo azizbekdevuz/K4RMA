@@ -2,6 +2,12 @@
 
 > Supply this document **with the current files and the concrete task** to any coding assistant. This document describes **intent**, not proof that a feature exists.
 
+## Prototype branch note / 프로토타입 브랜치 (2026-10-01)
+
+`feat/2-5d-prototype` is checking a locked side-view 2.5D graybox in `Game/` with Unity **6000.6.2f1**. Free-roaming 3D is outside this slice. D-004 stays open: the final 2D versus 2.5D choice is not closed. Placeholder abilities and the deflect counter are prototype data, not approved final design. Read `AGENTS.md` and `docs/PROTOTYPE_STATUS.md` before editing the playable scene.
+
+`feat/2-5d-prototype`는 `Game/`에서 Unity **6000.6.2f1**로 고정된 측면 2.5D 그레이박스를 확인합니다. 자유 이동 3D는 이 슬라이스 밖입니다. D-004는 열려 있습니다. 능력 이름과 디플렉트 반격은 최종 설계가 아닌 프로토타입 데이터입니다.
+
 ## Project identity
 - University team game; **K4RMA is a working title pending final team confirmation**.
 - Unity-based action / boss-combat project; C# expected; evaluate feasible third-person 3D first, 2D fallback.

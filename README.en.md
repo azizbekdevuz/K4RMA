@@ -68,14 +68,22 @@ Validate the actual hook with **one player → one arena → basic attack and a 
 
 ### Setup
 
-**There is no verified runnable build yet** if the Unity project or selected editor version has not been committed. Once the team selects a version, target platform, and project location, replace this section with tested setup/run instructions. Do not assume an unverified Unity version or invent a run command.
+The playable prototype on this branch is in `Game/`. Open it with **Unity 6000.6.2f1**. That pin is the working choice in D-011, not a final team-wide version vote.
+
+1. Install Unity `6000.6.2f1` with the Windows Build Support (Mono) module.
+2. Open the `Game` folder as the project.
+3. Open `Assets/_Project/Scenes/PrototypeArena.unity` and press Play.
+
+Controls: A/D or arrows to move, Space to jump, J for melee, K for the prototype projectile (Deflect after the sacrifice), E at the altar, R to restart after defeat or clear.
+
+Batch compile, EditMode tests, and the Windows player path are in [`docs/PROTOTYPE_STATUS.md`](docs/PROTOTYPE_STATUS.md). Do not commit `Game/Builds/`. Ability names and the final 2D versus 2.5D choice are still open.
 
 ### Roadmap
 
 | Phase | Outcome | Status |
 | :--- | :--- | :--- |
 | Discovery | Specify core rules, assess 2D/3D, assign roles | In progress |
-| Core prototype | Test sacrifice → enemy inheritance loop | Planned |
+| Core prototype | Test sacrifice → enemy inheritance loop | In progress on `feat/2-5d-prototype` |
 | Playable MVP | Integrate input, combat, enemy AI, UI, transitions | Planned |
 | Content and balance | Expand skills/bosses; decide scoring, upgrades, synergies | Planned |
 | Verification and demo | Playtest, fix defects, prepare demonstration/docs | Planned |

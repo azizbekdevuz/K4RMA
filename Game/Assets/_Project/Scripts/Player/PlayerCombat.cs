@@ -62,7 +62,6 @@ namespace K4RMA
             deflectTimer = 0f;
             if (boss != null && tuning != null)
                 boss.ApplyDeflectPunish(tuning.deflectPunishDamage, tuning.deflectStunSeconds);
-            FindAnyObjectByType<HudPresenter>()?.ShowMessage("Deflected.", 0.7f);
         }
 
         void TickTimers()

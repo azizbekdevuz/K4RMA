@@ -11,6 +11,7 @@ namespace K4RMA
         [SerializeField] CapsuleCollider bodyCollider;
         [SerializeField] LayerMask groundLayers;
         [SerializeField] Transform visualRoot;
+        [SerializeField] ArenaBounds arenaBounds;
 
         Rigidbody body;
         float jumpBuffer;
@@ -29,6 +30,8 @@ namespace K4RMA
             body.interpolation = RigidbodyInterpolation.Interpolate;
             if (bodyCollider == null)
                 bodyCollider = GetComponent<CapsuleCollider>();
+            if (arenaBounds == null)
+                arenaBounds = FindAnyObjectByType<ArenaBounds>();
         }
 
         void Start()
@@ -103,6 +106,16 @@ namespace K4RMA
 
             var position = body.position;
             position.z = 0f;
+            if (arenaBounds != null)
+            {
+                float padding = bodyCollider != null ? bodyCollider.radius : 0.45f;
+                float clamped = arenaBounds.ClampX(position.x, padding);
+                if (!Mathf.Approximately(clamped, position.x))
+                    velocity.x = 0f;
+                position.x = clamped;
+            }
+
+            body.linearVelocity = velocity;
             body.position = position;
         }
 

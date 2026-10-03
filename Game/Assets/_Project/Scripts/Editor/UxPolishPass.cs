@@ -24,16 +24,7 @@ namespace K4RMA.EditorTools
         [MenuItem("K4RMA/Apply Altar Guide")]
         public static void Apply()
         {
-            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            var hud = GameObject.Find("HUD");
-            if (hud == null)
-                throw new System.InvalidOperationException("HUD is missing from PrototypeArena.");
-            if (hud.GetComponentInChildren<AltarGuide>(true) == null)
-                AltarGuide.Create(hud.transform);
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            Debug.Log("Altar guide saved into PrototypeArena.");
+            Debug.Log("Altar guidance is the world-space arrow dressed by TempleArenaPass.");
         }
     }
 }

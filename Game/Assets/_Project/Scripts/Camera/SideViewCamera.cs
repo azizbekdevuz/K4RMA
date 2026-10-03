@@ -7,8 +7,9 @@ namespace K4RMA
         [SerializeField] Transform target;
         [SerializeField] Vector3 worldOffset = new Vector3(1.2f, 2.6f, -12f);
         [SerializeField] float followSharpness = 7f;
-        [SerializeField] float minX = -5.5f;
-        [SerializeField] float maxX = 5.5f;
+        [SerializeField] ArenaBounds arenaBounds;
+        [SerializeField] float minX = -8.4f;
+        [SerializeField] float maxX = 8.4f;
 
         Vector3 focusPoint;
         float focusWeight;
@@ -32,7 +33,9 @@ namespace K4RMA
             if (target == null)
                 return;
 
-            float followX = Mathf.Clamp(target.position.x, minX, maxX);
+            float left = arenaBounds != null ? arenaBounds.Left : minX;
+            float right = arenaBounds != null ? arenaBounds.Right : maxX;
+            float followX = Mathf.Clamp(target.position.x, left, right);
             float x = Mathf.Lerp(followX, focusPoint.x, focusWeight);
             Vector3 desired = new Vector3(x, target.position.y, 0f) + worldOffset;
             float blend = 1f - Mathf.Exp(-followSharpness * Time.deltaTime);

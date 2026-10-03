@@ -28,6 +28,7 @@ namespace K4RMA
         [SerializeField] int projectileLayer;
 
         Rigidbody body;
+        ArenaBounds arena;
         float stateTimer;
         float projectileCooldown;
         float knockbackTimer;
@@ -50,6 +51,7 @@ namespace K4RMA
                 body.collisionDetectionMode = CollisionDetectionMode.Continuous;
                 body.interpolation = RigidbodyInterpolation.Interpolate;
             }
+            arena = FindAnyObjectByType<ArenaBounds>();
         }
 
         void Start()
@@ -136,6 +138,8 @@ namespace K4RMA
 
             var position = body.position;
             position.z = 0f;
+            if (arena != null)
+                position.x = arena.ClampX(position.x, 0.7f);
             body.position = position;
         }
 

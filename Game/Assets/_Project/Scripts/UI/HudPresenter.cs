@@ -10,9 +10,10 @@ namespace K4RMA
         [SerializeField] Health stageOneHealth;
         [SerializeField] Health stageTwoHealth;
         [SerializeField] PlayerAbilityState abilities;
-        [SerializeField] PlayerCombat combat;
         [SerializeField] Image playerFill;
         [SerializeField] Image bossFill;
+        [SerializeField] Image interactGlyph;
+        [SerializeField] Image[] abilitySlots;
         [SerializeField] Text playerLabel;
         [SerializeField] Text bossLabel;
         [SerializeField] Text abilityLabel;
@@ -47,12 +48,20 @@ namespace K4RMA
                 bossName = run.StageOneBoss.Config.stageLabel;
             DrawHealth(bossLabel, bossFill, bossHealth, bossName);
 
-            if (abilityLabel != null)
-                abilityLabel.text = BuildAbilityText();
             if (banner != null)
-                banner.text = message;
+                banner.text = string.Empty;
+            if (abilityLabel != null)
+                abilityLabel.text = string.Empty;
             if (prompt != null)
-                prompt.text = BuildPrompt();
+                prompt.text = string.Empty;
+            if (interactGlyph != null)
+            {
+                bool showGlyph = run != null && run.State != null && run.State.Phase == RunPhase.Altar
+                    && run.Altar != null && run.Altar.PlayerInside;
+                interactGlyph.enabled = showGlyph;
+            }
+
+            PaintSlots();
         }
 
         Health ActiveBossHealth()
@@ -72,39 +81,23 @@ namespace K4RMA
                 fill.fillAmount = max <= 0 ? 0f : (float)current / max;
         }
 
-        string BuildAbilityText()
+        void PaintSlots()
         {
+            if (abilitySlots == null)
+                return;
             var state = abilities != null ? abilities.State : null;
-            bool sacrificed = state != null && state.SacrificedAbilityId == PrototypeIds.Projectile;
-            bool deflecting = state != null && state.CounterAbilityId == PrototypeIds.Deflect;
-            string shot = sacrificed
-                ? "<color=#8d8680>Projectile</color>"
-                : "<color=#d7f4ff>Projectile</color>";
-            string deflect = deflecting
-                ? (combat != null && combat.DeflectOpen ? "<color=#ffffff>Deflect</color>" : "<color=#8fdfff>Deflect</color>")
-                : "<color=#66707f>Deflect</color>";
-            return $"Dash          {shot}          Guard\n              {deflect}";
-        }
-
-        string BuildPrompt()
-        {
-            if (run == null || run.State == null)
-                return string.Empty;
-
-            switch (run.State.Phase)
+            bool surrendered = state != null && state.SacrificedAbilityId == PrototypeIds.Projectile;
+            for (int i = 0; i < abilitySlots.Length; i++)
             {
-                case RunPhase.Altar:
-                    return run.Altar != null && run.Altar.PlayerInside
-                        ? "E    Surrender the shot"
-                        : string.Empty;
-                case RunPhase.Defeat:
-                    return "R    Try again";
-                case RunPhase.SliceComplete:
-                    return "R    Again";
-                default:
-                    if (run.State.CounterAbilityId == PrototypeIds.Deflect)
-                        return combat != null && combat.DeflectOpen ? "Deflect" : "K    Deflect the shot";
-                    return string.Empty;
+                if (abilitySlots[i] == null)
+                    continue;
+                bool shotSlot = i == 1;
+                if (shotSlot && surrendered)
+                    abilitySlots[i].color = new Color(0.25f, 0.25f, 0.28f, 0.45f);
+                else if (shotSlot)
+                    abilitySlots[i].color = new Color(0.55f, 0.86f, 1f, 0.95f);
+                else
+                    abilitySlots[i].color = new Color(0.75f, 0.72f, 0.62f, 0.55f);
             }
         }
     }

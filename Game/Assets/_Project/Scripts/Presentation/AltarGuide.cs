@@ -1,132 +1,61 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace K4RMA
 {
     public class AltarGuide : MonoBehaviour
     {
         [SerializeField] RunDirector director;
-        [SerializeField] RectTransform marker;
-        [SerializeField] Text arrow;
-        [SerializeField] Text caption;
-        [SerializeField] float bobPixels = 12f;
-        [SerializeField] float pulseSpeed = 2.6f;
+        [SerializeField] Transform arrowRoot;
+        [SerializeField] float height = 2.05f;
+        [SerializeField] float pulseAmount = 0.035f;
 
-        static bool building;
-        Canvas canvas;
-        RectTransform canvasRect;
         SacrificeSequence sequence;
-
-        public static AltarGuide Create(Transform canvasParent)
-        {
-            var existing = canvasParent.GetComponentInChildren<AltarGuide>(true);
-            if (existing != null && existing.marker != null)
-                return existing;
-
-            building = true;
-            var root = new GameObject("AltarGuide", typeof(RectTransform));
-            root.transform.SetParent(canvasParent, false);
-            var markerObject = new GameObject("Marker", typeof(RectTransform));
-            markerObject.transform.SetParent(root.transform, false);
-            var markerRect = markerObject.GetComponent<RectTransform>();
-            markerRect.anchorMin = new Vector2(0.5f, 0.5f);
-            markerRect.anchorMax = new Vector2(0.5f, 0.5f);
-            markerRect.pivot = new Vector2(0.5f, 0.5f);
-            markerRect.sizeDelta = new Vector2(280f, 90f);
-
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            var arrowText = Label(markerObject.transform, "Arrow", font, 42, FontStyle.Bold, new Color(0.96f, 0.9f, 0.62f), new Vector2(0f, 18f));
-            var captionText = Label(markerObject.transform, "Caption", font, 22, FontStyle.Normal, new Color(0.96f, 0.94f, 0.88f), new Vector2(0f, -22f));
-            captionText.text = "Go to the altar";
-            arrowText.text = ">";
-
-            var guide = root.AddComponent<AltarGuide>();
-            guide.marker = markerRect;
-            guide.arrow = arrowText;
-            guide.caption = captionText;
-            markerObject.SetActive(false);
-            building = false;
-            guide.Cache();
-            return guide;
-        }
+        Vector3 baseScale = Vector3.one;
 
         void Awake()
         {
-            if (building)
-                return;
-            if (marker == null)
-            {
-                var hud = FindAnyObjectByType<HudPresenter>();
-                if (hud != null)
-                    Create(hud.transform);
-                enabled = false;
-                return;
-            }
-
-            Cache();
-        }
-
-        void Cache()
-        {
             if (director == null)
                 director = FindAnyObjectByType<RunDirector>();
-            canvas = GetComponentInParent<Canvas>();
-            canvasRect = canvas != null ? canvas.GetComponent<RectTransform>() : null;
             sequence = FindAnyObjectByType<SacrificeSequence>();
-            if (marker != null)
-                marker.gameObject.SetActive(false);
+            if (arrowRoot == null)
+                arrowRoot = CreateArrow();
+            baseScale = arrowRoot.localScale;
+            arrowRoot.gameObject.SetActive(false);
         }
 
         void LateUpdate()
         {
-            if (marker == null)
+            if (arrowRoot == null)
                 return;
             if (!ShouldShow())
             {
-                if (marker.gameObject.activeSelf)
-                    marker.gameObject.SetActive(false);
+                if (arrowRoot.gameObject.activeSelf)
+                    arrowRoot.gameObject.SetActive(false);
                 return;
             }
 
-            var view = Camera.main;
-            var altar = director.Altar;
             var player = FindAnyObjectByType<PlayerController>();
-            if (view == null || altar == null || player == null || canvasRect == null)
+            var altar = director.Altar.transform;
+            if (player == null)
             {
-                marker.gameObject.SetActive(false);
+                arrowRoot.gameObject.SetActive(false);
                 return;
             }
 
-            if (!marker.gameObject.activeSelf)
-                marker.gameObject.SetActive(true);
+            if (!arrowRoot.gameObject.activeSelf)
+                arrowRoot.gameObject.SetActive(true);
 
-            Vector3 altarPoint = altar.transform.position + Vector3.up * 2.3f;
-            Vector3 viewport = view.WorldToViewportPoint(altarPoint);
-            bool behind = viewport.z <= 0f;
-            bool onScreen = !behind && viewport.x > 0.12f && viewport.x < 0.88f && viewport.y > 0.08f && viewport.y < 0.92f;
-            float bob = Mathf.Sin(Time.unscaledTime * pulseSpeed) * bobPixels;
-            float pulse = 1f + Mathf.Sin(Time.unscaledTime * pulseSpeed) * 0.06f;
-
-            if (onScreen)
+            Vector3 toAltar = altar.position - player.transform.position;
+            toAltar.z = 0f;
+            arrowRoot.position = player.transform.position + Vector3.up * height;
+            if (toAltar.sqrMagnitude > 0.04f)
             {
-                Vector3 screen = view.WorldToScreenPoint(altarPoint);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, null, out Vector2 placed);
-                marker.anchoredPosition = placed + new Vector2(0f, 36f + bob);
-                if (arrow != null)
-                    arrow.text = "v";
-            }
-            else
-            {
-                float direction = altar.transform.position.x >= player.transform.position.x ? 1f : -1f;
-                if (behind)
-                    direction = -direction;
-                float edge = canvasRect.rect.width * 0.36f;
-                marker.anchoredPosition = new Vector2(direction * edge, bob);
-                if (arrow != null)
-                    arrow.text = direction > 0f ? ">" : "<";
+                float angle = Mathf.Atan2(toAltar.y, toAltar.x) * Mathf.Rad2Deg;
+                arrowRoot.rotation = Quaternion.Euler(0f, 0f, angle);
             }
 
-            marker.localScale = new Vector3(pulse, pulse, 1f);
+            float pulse = 1f + Mathf.Sin(Time.time * 2.2f) * pulseAmount;
+            arrowRoot.localScale = baseScale * pulse;
         }
 
         bool ShouldShow()
@@ -142,24 +71,33 @@ namespace K4RMA
             return true;
         }
 
-        static Text Label(Transform parent, string name, Font font, int size, FontStyle style, Color color, Vector2 position)
+        static Transform CreateArrow()
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-            go.transform.SetParent(parent, false);
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = position;
-            rect.sizeDelta = new Vector2(280f, 40f);
-            var text = go.GetComponent<Text>();
-            text.font = font;
-            text.fontSize = size;
-            text.fontStyle = style;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = color;
-            text.raycastTarget = false;
-            return text;
+            var root = new GameObject("PlayerAltarArrow").transform;
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            var material = shader != null ? new Material(shader) : new Material(Shader.Find("Sprites/Default"));
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", new Color(0.95f, 0.82f, 0.45f));
+            if (material.HasProperty("_EmissionColor"))
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", new Color(0.6f, 0.4f, 0.1f));
+            }
+
+            Shard(root, material, new Vector3(0.1f, 0.05f, 0f), -32f);
+            Shard(root, material, new Vector3(0.1f, -0.05f, 0f), 32f);
+            return root;
+        }
+
+        static void Shard(Transform parent, Material material, Vector3 position, float zAngle)
+        {
+            var shard = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.Destroy(shard.GetComponent<Collider>());
+            shard.transform.SetParent(parent, false);
+            shard.transform.localPosition = position;
+            shard.transform.localRotation = Quaternion.Euler(0f, 0f, zAngle);
+            shard.transform.localScale = new Vector3(0.34f, 0.055f, 0.03f);
+            shard.GetComponent<Renderer>().sharedMaterial = material;
         }
     }
 }

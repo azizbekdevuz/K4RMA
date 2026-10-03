@@ -105,7 +105,6 @@ namespace K4RMA
                 stageTwoBoss.gameObject.SetActive(true);
 
             playerHealth?.RestoreFull();
-            hud?.ShowMessage("The guardian inherited the shot. You learned Deflect.");
             return true;
         }
 
@@ -118,7 +117,6 @@ namespace K4RMA
                 stageOneBoss.enabled = false;
             if (stageTwoBoss != null)
                 stageTwoBoss.enabled = false;
-            hud?.ShowMessage("The trial is not over.");
         }
 
         void OnStageOneBossDied(Health _)
@@ -128,7 +126,6 @@ namespace K4RMA
             if (playerHealth != null && !playerHealth.IsAlive)
                 return;
             State.Phase = RunPhase.Altar;
-            hud?.ShowMessage("The guardian has fallen.");
         }
 
         void OnStageTwoBossDied(Health _)
@@ -138,7 +135,6 @@ namespace K4RMA
             if (playerHealth != null && !playerHealth.IsAlive)
                 return;
             State.Phase = RunPhase.SliceComplete;
-            hud?.ShowMessage(string.Empty);
         }
 
         static void Subscribe(BossController boss, System.Action<Health> handler)

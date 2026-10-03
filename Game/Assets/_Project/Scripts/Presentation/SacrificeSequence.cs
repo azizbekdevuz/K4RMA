@@ -30,7 +30,6 @@ namespace K4RMA
             var altar = director.Altar != null ? director.Altar.transform : null;
             Vector3 altarPoint = altar != null ? altar.position + Vector3.up * 1.8f : Vector3.up * 2f;
             camera?.SetFocus(altarPoint, 0.65f);
-            FindAnyObjectByType<HudPresenter>()?.ShowMessage("The shot leaves you.");
             AudioFeedback.Play(AudioCue.Altar);
 
             var orb = CreateOrb();
@@ -52,7 +51,6 @@ namespace K4RMA
             Vector3 guardianPoint = director.StageTwoBoss != null
                 ? director.StageTwoBoss.transform.position + Vector3.up * 0.8f
                 : altarPoint + Vector3.left * 4f;
-            FindAnyObjectByType<HudPresenter>()?.ShowMessage("It enters the next guardian.");
             yield return Move(orb.transform, orb.transform.position, guardianPoint, travelSeconds);
             AudioFeedback.Play(AudioCue.Transfer);
 

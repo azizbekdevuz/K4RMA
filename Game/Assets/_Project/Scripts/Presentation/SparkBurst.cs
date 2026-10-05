@@ -37,7 +37,11 @@ namespace K4RMA
             for (int i = 0; i < shards.Length; i++)
             {
                 var shard = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(shard.GetComponent<Collider>());
+                var shardCollider = shard.GetComponent<Collider>();
+                if (Application.isPlaying)
+                    Destroy(shardCollider);
+                else
+                    DestroyImmediate(shardCollider);
                 shard.transform.SetParent(transform, false);
                 shard.transform.localScale = Vector3.one * Random.Range(0.06f, 0.12f);
                 shard.GetComponent<Renderer>().sharedMaterial = material;

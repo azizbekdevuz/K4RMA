@@ -19,7 +19,10 @@ namespace K4RMA
         float knockbackTimer;
         float knockbackSpeed;
 
+        PlayerGuard guard;
+
         public int Facing { get; private set; } = 1;
+        public bool IsGrounded { get; private set; }
         public PlayerTuning Tuning => tuning;
 
         void Awake()
@@ -38,6 +41,15 @@ namespace K4RMA
         {
             if (health != null && tuning != null)
                 health.ConfigureMax(tuning.maxHealth);
+            ResolveGuard();
+            IsGrounded = CheckGrounded();
+        }
+
+        PlayerGuard ResolveGuard()
+        {
+            if (guard == null)
+                guard = GetComponent<PlayerGuard>();
+            return guard;
         }
 
         void Update()
@@ -72,14 +84,18 @@ namespace K4RMA
             if (tuning == null || body == null)
                 return;
 
-            bool grounded = CheckGrounded();
-            if (grounded)
+            IsGrounded = CheckGrounded();
+            if (IsGrounded)
                 coyoteTimer = tuning.coyoteTimeSeconds;
             else
                 coyoteTimer -= Time.fixedDeltaTime;
 
             var velocity = body.linearVelocity;
             bool alive = health == null || health.IsAlive;
+            float speed = tuning.moveSpeed;
+            var activeGuard = ResolveGuard();
+            if (activeGuard != null && activeGuard.IsGuarding)
+                speed *= Mathf.Clamp01(tuning.guardMoveMultiplier);
             if (knockbackTimer > 0f)
             {
                 knockbackTimer -= Time.fixedDeltaTime;
@@ -87,7 +103,7 @@ namespace K4RMA
             }
             else if (alive)
             {
-                velocity.x = (input != null ? input.MoveX : 0f) * tuning.moveSpeed;
+                velocity.x = (input != null ? input.MoveX : 0f) * speed;
             }
             else
             {

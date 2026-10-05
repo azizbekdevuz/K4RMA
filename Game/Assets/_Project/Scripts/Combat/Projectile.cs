@@ -120,9 +120,17 @@ namespace K4RMA
                 return;
             }
 
+            GameObject attacker = sourceBoss != null
+                ? sourceBoss.gameObject
+                : owner != null ? owner.gameObject : null;
+            if (!health.ApplyDamage(damage, attacker))
+            {
+                Consume();
+                return;
+            }
+
             health.GetComponentInParent<IKnockback>()?.ApplyKnockback(direction * knockback, knockbackSeconds);
             health.GetComponentInParent<BodyTint>()?.Flash(Color.white, 0.08f);
-            health.ApplyDamage(damage);
             Consume();
         }
 

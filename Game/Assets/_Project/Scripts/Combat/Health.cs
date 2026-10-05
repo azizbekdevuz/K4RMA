@@ -2,6 +2,11 @@ using UnityEngine;
 
 namespace K4RMA
 {
+    public interface IIncomingDamageFilter
+    {
+        bool TryBlockIncomingDamage(GameObject source);
+    }
+
     public class Health : MonoBehaviour
     {
         [SerializeField] int maxHealth = 100;
@@ -26,15 +31,20 @@ namespace K4RMA
             Changed?.Invoke(this);
         }
 
-        public void ApplyDamage(int amount)
+        public bool ApplyDamage(int amount, GameObject source = null)
         {
             if (!IsAlive || amount <= 0)
-                return;
+                return false;
+
+            var filter = GetComponent<IIncomingDamageFilter>();
+            if (filter != null && filter.TryBlockIncomingDamage(source))
+                return false;
 
             Current = Mathf.Max(0, Current - amount);
             Changed?.Invoke(this);
             if (Current == 0)
                 Died?.Invoke(this);
+            return true;
         }
 
         public void RestoreFull()

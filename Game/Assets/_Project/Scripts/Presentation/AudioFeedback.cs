@@ -11,7 +11,10 @@ namespace K4RMA
         DeflectReady,
         Deflect,
         Altar,
-        Transfer
+        Transfer,
+        RisingSlash,
+        Guard,
+        GuardBlock
     }
 
     public class AudioFeedback : MonoBehaviour
@@ -26,6 +29,9 @@ namespace K4RMA
         AudioClip deflect;
         AudioClip altar;
         AudioClip transfer;
+        AudioClip risingSlash;
+        AudioClip guard;
+        AudioClip guardBlock;
 
         void Awake()
         {
@@ -41,6 +47,9 @@ namespace K4RMA
             deflect = Tone(880f, 0.18f, 6f);
             altar = Tone(220f, 0.35f, 3f);
             transfer = Tone(360f, 0.45f, 2.5f);
+            risingSlash = Tone(280f, 0.16f, 8f);
+            guard = Tone(160f, 0.12f, 6f);
+            guardBlock = Tone(640f, 0.08f, 14f);
         }
 
         void OnDestroy()
@@ -63,6 +72,9 @@ namespace K4RMA
                 AudioCue.Deflect => current.deflect,
                 AudioCue.Altar => current.altar,
                 AudioCue.Transfer => current.transfer,
+                AudioCue.RisingSlash => current.risingSlash,
+                AudioCue.Guard => current.guard,
+                AudioCue.GuardBlock => current.guardBlock,
                 _ => null
             };
             if (clip != null)

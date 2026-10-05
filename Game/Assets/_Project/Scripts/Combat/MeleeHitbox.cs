@@ -30,6 +30,13 @@ namespace K4RMA
             }
         }
 
+        public LayerMask TargetLayers => targetLayers;
+
+        public void SetTargetLayers(LayerMask layers)
+        {
+            targetLayers = layers;
+        }
+
         public void SetSize(Vector3 size)
         {
             if (hitCollider == null)
@@ -48,15 +55,34 @@ namespace K4RMA
             if (hitCollider != null)
             {
                 hitCollider.enabled = true;
-                var overlaps = Physics.OverlapBox(
-                    hitCollider.bounds.center,
-                    hitCollider.bounds.extents,
-                    hitCollider.transform.rotation,
-                    targetLayers,
-                    QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < overlaps.Length; i++)
-                    TryHit(overlaps[i]);
+                // Collider.bounds stays empty until the physics step after a collider
+                // is enabled. RisingSlash leaves that volume before the step runs.
+                SampleOverlaps();
             }
+        }
+
+        void SampleOverlaps()
+        {
+            if (hitCollider == null)
+                return;
+
+            Vector3 scale = hitCollider.transform.lossyScale;
+            Vector3 halfExtents = new Vector3(
+                Mathf.Abs(hitCollider.size.x * scale.x) * 0.5f,
+                Mathf.Abs(hitCollider.size.y * scale.y) * 0.5f,
+                Mathf.Abs(hitCollider.size.z * scale.z) * 0.5f);
+            if (halfExtents.x <= 0f || halfExtents.y <= 0f || halfExtents.z <= 0f)
+                return;
+
+            Vector3 center = hitCollider.transform.TransformPoint(hitCollider.center);
+            var overlaps = Physics.OverlapBox(
+                center,
+                halfExtents,
+                hitCollider.transform.rotation,
+                targetLayers,
+                QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < overlaps.Length; i++)
+                TryHit(overlaps[i]);
         }
 
         public void End()
@@ -90,13 +116,15 @@ namespace K4RMA
             if (health.transform.root == transform.root)
                 return;
 
+            if (!health.ApplyDamage(damage, transform.root.gameObject))
+                return;
+
             float sign = Mathf.Sign(health.transform.position.x - transform.root.position.x);
             if (Mathf.Abs(sign) < 0.01f)
                 sign = 1f;
 
             health.GetComponentInParent<IKnockback>()?.ApplyKnockback(sign * knockback, knockbackSeconds);
             health.GetComponentInParent<BodyTint>()?.Flash(Color.white, 0.08f);
-            health.ApplyDamage(damage);
             ImpactFeedback.PlayHit(health.transform.position + Vector3.up * 0.4f, health.GetComponent<PlayerController>() != null);
         }
     }

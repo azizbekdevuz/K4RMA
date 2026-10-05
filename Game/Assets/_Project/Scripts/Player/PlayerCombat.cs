@@ -21,6 +21,8 @@ namespace K4RMA
         float abilityCooldown;
         float deflectTimer;
         Quaternion weaponRestRotation;
+        PlayerGuard guard;
+        PlayerRisingSlash risingSlash;
 
         public bool DeflectOpen => deflectTimer > 0f;
         public float Swing01 { get; private set; }
@@ -34,6 +36,18 @@ namespace K4RMA
                 weaponRestRotation = weapon.localRotation;
             if (melee != null && tuning != null)
                 melee.SetSize(tuning.meleeHitboxSize);
+            EnsureOriginalTechniques();
+        }
+
+        void EnsureOriginalTechniques()
+        {
+            guard = GetComponent<PlayerGuard>();
+            if (guard == null)
+                guard = gameObject.AddComponent<PlayerGuard>();
+            risingSlash = GetComponent<PlayerRisingSlash>();
+            if (risingSlash == null)
+                risingSlash = gameObject.AddComponent<PlayerRisingSlash>();
+            risingSlash.Bind(melee);
         }
 
         void Update()
@@ -51,9 +65,19 @@ namespace K4RMA
             SwingWeapon();
             UpdateDeflectRing();
 
-            if (input.AttackPressed && meleeCooldown <= 0f)
+            var choice = OriginalAttackPriority.Choose(
+                input.GuardHeld,
+                guard != null && guard.IsGuarding,
+                risingSlash != null && risingSlash.IsActive,
+                meleeTimer > 0f,
+                input.RisingSlashPressed,
+                input.AttackPressed,
+                input.AbilityPressed);
+            if (choice == OriginalAttackStart.RisingSlash)
+                risingSlash?.TryActivate();
+            else if (choice == OriginalAttackStart.Melee && meleeCooldown <= 0f)
                 StartMelee();
-            if (input.AbilityPressed && abilityCooldown <= 0f)
+            else if (choice == OriginalAttackStart.Ability && abilityCooldown <= 0f)
                 UseAbility();
         }
 
@@ -91,6 +115,7 @@ namespace K4RMA
         {
             if (abilities != null && abilities.HasDeflect)
             {
+                // Legacy slice only. This is not PiercingSlash.
                 deflectTimer = tuning.deflectDurationSeconds;
                 abilityCooldown = tuning.deflectCooldownSeconds;
                 tint?.Flash(tuning.deflectColor, tuning.deflectDurationSeconds);
@@ -99,15 +124,12 @@ namespace K4RMA
             }
 
             if (abilities != null && abilities.HasActiveProjectile)
-            {
-                FireProjectile();
-                abilityCooldown = tuning.projectileCooldownSeconds;
-            }
+                FireSwordWave();
         }
 
-        void FireProjectile()
+        void FireSwordWave()
         {
-            if (projectilePrefab == null || motor == null)
+            if (projectilePrefab == null || motor == null || tuning == null)
                 return;
 
             int facing = motor.Facing;
@@ -128,6 +150,7 @@ namespace K4RMA
                 health,
                 null,
                 tuning.projectileColor);
+            abilityCooldown = tuning.projectileCooldownSeconds;
         }
 
         void PlaceMelee()
@@ -143,7 +166,11 @@ namespace K4RMA
                 return;
             float duration = Mathf.Max(0.05f, tuning.meleeActiveSeconds);
             Swing01 = meleeTimer > 0f ? 1f - Mathf.Clamp01(meleeTimer / duration) : 0f;
-            float angle = meleeTimer > 0f ? Mathf.Lerp(-80f, 55f, Swing01) : 0f;
+            float angle = 0f;
+            if (meleeTimer > 0f)
+                angle = Mathf.Lerp(-80f, 55f, Swing01);
+            else if (risingSlash != null && risingSlash.IsActive)
+                angle = 85f;
             weapon.localRotation = weaponRestRotation * Quaternion.Euler(0f, 0f, angle);
         }
 

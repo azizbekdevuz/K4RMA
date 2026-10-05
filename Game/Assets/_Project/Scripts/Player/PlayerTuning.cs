@@ -25,7 +25,8 @@ namespace K4RMA
         public float meleeKnockback = 4f;
         public float meleeKnockbackSeconds = 0.12f;
 
-        [Header("Prototype projectile")]
+        [Header("Sword wave")]
+        [Tooltip("SwordWave cooldown. Field name is kept so the existing tuning asset stays valid.")]
         public float projectileCooldownSeconds = 0.65f;
         public float projectileSpeed = 12f;
         public int projectileDamage = 8;
@@ -33,6 +34,24 @@ namespace K4RMA
         public float projectileKnockback = 3.5f;
         public float projectileKnockbackSeconds = 0.1f;
         public Color projectileColor = new Color(0.35f, 0.86f, 1f);
+
+        [Header("Rising slash")]
+        public float risingSlashLaunchSpeed = 11f;
+        public int risingSlashDamage = 14;
+        public float risingSlashActiveSeconds = 0.22f;
+        public float risingSlashCooldownSeconds = 0.85f;
+        public float risingSlashForwardOffset = 1f;
+        public float risingSlashHeight = 0.65f;
+        public Vector3 risingSlashHitboxSize = new Vector3(0.9f, 1.6f, 0.7f);
+        public float risingSlashKnockback = 3.5f;
+        public float risingSlashKnockbackSeconds = 0.1f;
+        public Color risingSlashColor = new Color(1f, 0.82f, 0.45f);
+
+        [Header("Guard")]
+        public float guardActiveSeconds = 0.8f;
+        public float guardCooldownSeconds = 0.55f;
+        public float guardMoveMultiplier = 0.45f;
+        public Color guardColor = new Color(0.95f, 0.78f, 0.28f);
 
         [Header("Prototype deflect")]
         public float deflectDurationSeconds = 0.4f;

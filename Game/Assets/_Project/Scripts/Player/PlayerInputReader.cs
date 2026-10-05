@@ -10,6 +10,8 @@ namespace K4RMA
         public bool JumpPressed { get; private set; }
         public bool AttackPressed { get; private set; }
         public bool AbilityPressed { get; private set; }
+        public bool RisingSlashPressed { get; private set; }
+        public bool GuardHeld { get; private set; }
         public bool InteractPressed { get; private set; }
         public bool RestartPressed { get; private set; }
 
@@ -22,6 +24,8 @@ namespace K4RMA
                 JumpPressed = false;
                 AttackPressed = false;
                 AbilityPressed = false;
+                RisingSlashPressed = false;
+                GuardHeld = false;
                 InteractPressed = false;
                 RestartPressed = false;
                 return;
@@ -37,6 +41,8 @@ namespace K4RMA
             JumpPressed = keyboard.spaceKey.wasPressedThisFrame;
             AttackPressed = keyboard.jKey.wasPressedThisFrame;
             AbilityPressed = keyboard.kKey.wasPressedThisFrame;
+            RisingSlashPressed = keyboard.lKey.wasPressedThisFrame;
+            GuardHeld = keyboard.iKey.isPressed;
             InteractPressed = keyboard.eKey.wasPressedThisFrame;
             RestartPressed = keyboard.rKey.wasPressedThisFrame;
         }

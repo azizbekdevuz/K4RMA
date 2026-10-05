@@ -23,6 +23,9 @@ namespace K4RMA
         Quaternion weaponRestRotation;
         PlayerGuard guard;
         PlayerRisingSlash risingSlash;
+        PlayerPiercingSlash piercingSlash;
+        PlayerAirHover airHover;
+        PlayerCounter counter;
 
         public bool DeflectOpen => deflectTimer > 0f;
         public float Swing01 { get; private set; }
@@ -48,6 +51,16 @@ namespace K4RMA
             if (risingSlash == null)
                 risingSlash = gameObject.AddComponent<PlayerRisingSlash>();
             risingSlash.Bind(melee);
+            piercingSlash = GetComponent<PlayerPiercingSlash>();
+            if (piercingSlash == null)
+                piercingSlash = gameObject.AddComponent<PlayerPiercingSlash>();
+            piercingSlash.Bind(melee);
+            airHover = GetComponent<PlayerAirHover>();
+            if (airHover == null)
+                airHover = gameObject.AddComponent<PlayerAirHover>();
+            counter = GetComponent<PlayerCounter>();
+            if (counter == null)
+                counter = gameObject.AddComponent<PlayerCounter>();
         }
 
         void Update()
@@ -65,20 +78,35 @@ namespace K4RMA
             SwingWeapon();
             UpdateDeflectRing();
 
+            if (piercingSlash != null && piercingSlash.IsActive)
+                return;
+
+            bool legacyDeflect = abilities != null && abilities.HasDeflect;
+            bool counterOwns = PersonalizedMechanicRouting.CounterOwnsDefense(tuning.previewCounter);
+            bool risingOwns = PersonalizedMechanicRouting.RisingSlashOwnsInput(tuning.previewAirHover);
+            bool guardHeld = counterOwns ? counter != null && counter.IsWindowOpen : input.GuardHeld;
+            bool guardActive = counterOwns ? false : guard != null && guard.IsGuarding;
             var choice = OriginalAttackPriority.Choose(
-                input.GuardHeld,
-                guard != null && guard.IsGuarding,
+                guardHeld,
+                guardActive,
                 risingSlash != null && risingSlash.IsActive,
                 meleeTimer > 0f,
-                input.RisingSlashPressed,
+                risingOwns && input.RisingSlashPressed,
                 input.AttackPressed,
                 input.AbilityPressed);
             if (choice == OriginalAttackStart.RisingSlash)
                 risingSlash?.TryActivate();
             else if (choice == OriginalAttackStart.Melee && meleeCooldown <= 0f)
                 StartMelee();
-            else if (choice == OriginalAttackStart.Ability && abilityCooldown <= 0f)
+            else if (choice == OriginalAttackStart.Ability && AbilityReady(legacyDeflect))
                 UseAbility();
+        }
+
+        bool AbilityReady(bool legacyDeflect)
+        {
+            if (PersonalizedMechanicRouting.PiercingSlashOwnsAbility(tuning.previewPiercingSlash, legacyDeflect))
+                return true;
+            return abilityCooldown <= 0f;
         }
 
         public void NotifyDeflected(BossController boss)
@@ -109,13 +137,16 @@ namespace K4RMA
             meleeCooldown = tuning.meleeCooldownSeconds;
             melee?.Begin(tuning.meleeDamage, tuning.meleeKnockback, tuning.meleeKnockbackSeconds);
             AudioFeedback.Play(AudioCue.Swing);
+            if (PersonalizedMechanicRouting.AirHoverOwnsAerialAttack(tuning.previewAirHover))
+                airHover?.TryStartFromAirAttack();
         }
 
         void UseAbility()
         {
-            if (abilities != null && abilities.HasDeflect)
+            bool legacyDeflect = abilities != null && abilities.HasDeflect;
+            if (PersonalizedMechanicRouting.LegacyDeflectOwnsAbility(legacyDeflect))
             {
-                // Legacy slice only. This is not PiercingSlash.
+                // Legacy slice only. This is not PiercingSlash or Counter.
                 deflectTimer = tuning.deflectDurationSeconds;
                 abilityCooldown = tuning.deflectCooldownSeconds;
                 tint?.Flash(tuning.deflectColor, tuning.deflectDurationSeconds);
@@ -123,7 +154,16 @@ namespace K4RMA
                 return;
             }
 
-            if (abilities != null && abilities.HasActiveProjectile)
+            if (PersonalizedMechanicRouting.PiercingSlashOwnsAbility(tuning.previewPiercingSlash, legacyDeflect))
+            {
+                piercingSlash?.TryActivate();
+                return;
+            }
+
+            if (PersonalizedMechanicRouting.SwordWaveOwnsAbility(
+                tuning.previewPiercingSlash,
+                legacyDeflect,
+                abilities != null && abilities.HasActiveProjectile))
                 FireSwordWave();
         }
 
@@ -169,6 +209,8 @@ namespace K4RMA
             float angle = 0f;
             if (meleeTimer > 0f)
                 angle = Mathf.Lerp(-80f, 55f, Swing01);
+            else if (piercingSlash != null && piercingSlash.IsActive)
+                angle = Mathf.Lerp(-90f, 40f, piercingSlash.Swing01);
             else if (risingSlash != null && risingSlash.IsActive)
                 angle = 85f;
             weapon.localRotation = weaponRestRotation * Quaternion.Euler(0f, 0f, angle);

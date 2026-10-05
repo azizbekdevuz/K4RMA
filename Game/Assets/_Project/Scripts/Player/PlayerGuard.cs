@@ -40,7 +40,7 @@ namespace K4RMA
 
         void Update()
         {
-            if (health != null && !health.IsAlive)
+            if (CounterPreviewActive || (health != null && !health.IsAlive))
             {
                 timing.Reset();
                 ApplyPresentation(false);
@@ -57,8 +57,7 @@ namespace K4RMA
 
         public bool TryBlockIncomingDamage(GameObject source)
         {
-            // Source is kept for a later Counter. Guard does not use it.
-            if (!timing.IsGuarding)
+            if (CounterPreviewActive || !timing.IsGuarding)
                 return false;
 
             SparkBurst.Play(transform.position + Vector3.up * 0.9f, tuning != null ? tuning.guardColor : Color.yellow);
@@ -113,5 +112,7 @@ namespace K4RMA
             ringObject.SetActive(false);
             return ringObject.transform;
         }
+
+        bool CounterPreviewActive => tuning != null && tuning.previewCounter;
     }
 }

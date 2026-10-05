@@ -165,6 +165,17 @@ namespace K4RMA
             Enter(BossState.Hurt);
         }
 
+        public void ApplyCounterStagger(float stunSeconds)
+        {
+            if (State == BossState.Dead || health == null || !health.IsAlive)
+                return;
+
+            hurtLimit = stunSeconds > 0f ? stunSeconds : 0f;
+            melee?.End();
+            tint?.Flash(Color.white, 0.12f);
+            Enter(BossState.Hurt);
+        }
+
         bool HasProjectile =>
             config != null && config.inheritedAbilityId == PrototypeIds.Projectile;
 

@@ -36,8 +36,7 @@ namespace K4RMA
             if (!IsAlive || amount <= 0)
                 return false;
 
-            var filter = GetComponent<IIncomingDamageFilter>();
-            if (filter != null && filter.TryBlockIncomingDamage(source))
+            if (IncomingDamageBlocked(source))
                 return false;
 
             Current = Mathf.Max(0, Current - amount);
@@ -45,6 +44,18 @@ namespace K4RMA
             if (Current == 0)
                 Died?.Invoke(this);
             return true;
+        }
+
+        bool IncomingDamageBlocked(GameObject source)
+        {
+            var filters = GetComponents<IIncomingDamageFilter>();
+            for (int i = 0; i < filters.Length; i++)
+            {
+                if (filters[i] != null && filters[i].TryBlockIncomingDamage(source))
+                    return true;
+            }
+
+            return false;
         }
 
         public void RestoreFull()

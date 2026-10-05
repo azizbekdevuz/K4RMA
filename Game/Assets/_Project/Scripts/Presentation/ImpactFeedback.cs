@@ -43,6 +43,16 @@ namespace K4RMA
             AudioFeedback.Play(AudioCue.Deflect);
         }
 
+        public static void PlayCounter(Vector3 point)
+        {
+            if (current == null)
+                return;
+            SparkBurst.Play(point, new Color(0.85f, 0.95f, 1f));
+            current.Shake(current.deflectShake);
+            current.BeginHitStop();
+            AudioFeedback.Play(AudioCue.CounterSuccess);
+        }
+
         void Hit(Vector3 point, bool victimIsPlayer)
         {
             SparkBurst.Play(point, victimIsPlayer ? new Color(1f, 0.45f, 0.35f) : new Color(1f, 0.92f, 0.7f));

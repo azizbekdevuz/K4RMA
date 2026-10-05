@@ -20,9 +20,13 @@ namespace K4RMA
         float knockbackSpeed;
 
         PlayerGuard guard;
+        PlayerPiercingSlash piercingSlash;
 
         public int Facing { get; private set; } = 1;
         public bool IsGrounded { get; private set; }
+        public bool InKnockback => knockbackTimer > 0f;
+        public float BodyRadius => bodyCollider != null ? bodyCollider.radius : 0.45f;
+        public ArenaBounds Arena => arenaBounds;
         public PlayerTuning Tuning => tuning;
 
         void Awake()
@@ -62,7 +66,10 @@ namespace K4RMA
                 return;
             }
 
-            if (Mathf.Abs(input.MoveX) > 0.01f)
+            if (piercingSlash == null)
+                piercingSlash = GetComponent<PlayerPiercingSlash>();
+            bool lockFacing = piercingSlash != null && piercingSlash.IsActive;
+            if (!lockFacing && Mathf.Abs(input.MoveX) > 0.01f)
             {
                 Facing = input.MoveX > 0f ? 1 : -1;
                 if (visualRoot != null)

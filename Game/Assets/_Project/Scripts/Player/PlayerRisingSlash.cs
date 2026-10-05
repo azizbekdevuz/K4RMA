@@ -38,6 +38,13 @@ namespace K4RMA
 
         void Update()
         {
+            if (tuning != null && tuning.previewAirHover)
+            {
+                if (active > 0f)
+                    Cancel();
+                return;
+            }
+
             if (cooldown > 0f)
             {
                 cooldown -= Time.deltaTime;
@@ -64,6 +71,9 @@ namespace K4RMA
 
         public bool TryActivate()
         {
+            if (tuning != null && tuning.previewAirHover)
+                return false;
+
             bool alive = health == null || health.IsAlive;
             bool grounded = motor != null && motor.IsGrounded;
             if (!RisingSlashRules.CanActivate(alive, grounded, active > 0f, cooldown))

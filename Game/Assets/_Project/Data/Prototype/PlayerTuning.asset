@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a0d2530149669a42acf13b66efaf24c, type: 3}
   m_Name: PlayerTuning
   m_EditorClassIdentifier: K4RMA.Gameplay::K4RMA.PlayerTuning
+  previewPiercingSlash: 0
+  previewAirHover: 0
+  previewCounter: 0
   moveSpeed: 7
   jumpForce: 8
   jumpBufferSeconds: 0.12

@@ -14,7 +14,12 @@ namespace K4RMA
         Transfer,
         RisingSlash,
         Guard,
-        GuardBlock
+        GuardBlock,
+        PiercingSlash,
+        AirHover,
+        CounterWindow,
+        CounterWhiff,
+        CounterSuccess
     }
 
     public class AudioFeedback : MonoBehaviour
@@ -32,6 +37,11 @@ namespace K4RMA
         AudioClip risingSlash;
         AudioClip guard;
         AudioClip guardBlock;
+        AudioClip piercingSlash;
+        AudioClip airHover;
+        AudioClip counterWindow;
+        AudioClip counterWhiff;
+        AudioClip counterSuccess;
 
         void Awake()
         {
@@ -50,6 +60,11 @@ namespace K4RMA
             risingSlash = Tone(280f, 0.16f, 8f);
             guard = Tone(160f, 0.12f, 6f);
             guardBlock = Tone(640f, 0.08f, 14f);
+            piercingSlash = Tone(240f, 0.14f, 9f);
+            airHover = Tone(460f, 0.12f, 7f);
+            counterWindow = Tone(700f, 0.07f, 16f);
+            counterWhiff = Tone(210f, 0.09f, 12f);
+            counterSuccess = Tone(920f, 0.16f, 7f);
         }
 
         void OnDestroy()
@@ -75,6 +90,11 @@ namespace K4RMA
                 AudioCue.RisingSlash => current.risingSlash,
                 AudioCue.Guard => current.guard,
                 AudioCue.GuardBlock => current.guardBlock,
+                AudioCue.PiercingSlash => current.piercingSlash,
+                AudioCue.AirHover => current.airHover,
+                AudioCue.CounterWindow => current.counterWindow,
+                AudioCue.CounterWhiff => current.counterWhiff,
+                AudioCue.CounterSuccess => current.counterSuccess,
                 _ => null
             };
             if (clip != null)

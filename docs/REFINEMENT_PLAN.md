@@ -323,9 +323,83 @@ Tests where practical:
 
 Gate:
 
-- [ ] compile
-- [ ] tests
+- [x] compile
+- [x] tests
 - [ ] manual Stage 1 behavior check
+
+Phase 4 mechanics evidence (2026-10-05):
+
+The three personalized mechanics are playable only through prototype preview flags on `PlayerTuning`. They do not read or write `RunProgressionState`, and the altar was not changed. With all three flags off, J/K/L/I and legacy Deflect stay on the previous path. Checklist rows above stay open: this slice does not disable originals through personalization, and Stage 1 feel was not played.
+
+Dev activation, one mechanic at a time:
+
+1. Open the Unity project `D:\Workplace\Gaming\K4RMA\Game`. Do not open the scene file from Explorer.
+2. Select `Assets/_Project/Data/Prototype/PlayerTuning.asset`.
+3. Under Prototype mechanic preview, enable only the mechanic to try. Leave the others off. The asset currently stores all three as off.
+4. Open `PrototypeArena` inside the editor and press Play.
+5. Turn the flag off again before ordinary play. Saving the asset with a flag on changes the next Play session.
+
+- Piercing Slash: K, only while legacy Deflect is not active. After the old altar transfer, K remains Deflect.
+- Air Hover: jump, then J while airborne. L does not launch.
+- Counter: tap I as the hit arrives. Holding I is not Guard while this flag is on.
+
+Implementation notes, not playtest proof:
+
+- `PlayerPiercingSlash` is a short faced traversal. A miss moves at most `piercingSlashMissDistance` and stops inside `ArenaBounds`. A contacted body is damaged once through `Health.ApplyDamage`, then the player is moved to a non-overlapping exit on the far side when that exit fits, otherwise to the clear near side. Body collision with that target is ignored only during the cross and restored on finish, cancel, death, or disable.
+
+Wall sweep correction (2026-10-05):
+
+- `PiercingSlashClearance` capsule-casts the player body along the whole horizontal route, including each movement step and both candidate exits. Floor-only colliders are skipped. The contacted guardian is ignored for that route. Other solid colliders, including walls and pillars, are not.
+- If the far exit or the path to it hits solid environment, the near exit is used when that path is clear. If both are blocked, the player stops at the last unblocked point on the preferred route and is not moved into the collider. Arena clamping remains. Guardian collision-ignore is still restored when the move ends. One `Health.ApplyDamage` call per activation is unchanged.
+- `PiercingSlash_SolidWallStopsTheSweepBeforeContact`, `PiercingSlash_BlockedFarSideUsesAClearNearSide`, `PiercingSlash_WallsOnBothSidesStopOutsideTheGeometry`, `PiercingSlash_IgnoredGuardianDoesNotBlockAndAWallStillDoes`, and `PiercingSlash_OpenSweepReachesTheRequestedExit` place real colliders and call `Physics.CapsuleCast` / `Physics.OverlapCapsule`. They are not arena-number checks. Unity `6000.6.2f1` batchmode EditMode ran them on 2026-10-05 after `Game/Temp/UnityLockfile` was absent. No `-openfile`. All five passed (`Game/Logs/wall-sweep-editmode-results.xml`). That run was 82 passed, 1 failed, 0 skipped of 83. The failure is `Counter_BlocksPlayerDamageOnceAndRetaliatesOnce`: EditMode logs an error because `SparkBurst` calls `Destroy` during the counter test. That failure is outside this wall-sweep fix. The manual Stage 1 gate stays unchecked.
+- `PlayerAirHover` starts only from an airborne J. It sets vertical speed to at most 0 for `airHoverDurationSeconds`, then restores gravity. One use per airborne period, plus `airHoverCooldownSeconds`. Landing rearms. Knockback cancels it. Death, disable, and turning the preview off clear it. `PlayerRisingSlash` does not launch while the preview is on.
+- `PlayerCounter` opens a tap window. `Health.ApplyDamage` asks every `IIncomingDamageFilter` and stops before HP changes if one accepts the hit. One open window accepts one hit, retaliates once through `Health.ApplyDamage`, then closes. `BossController.ApplyCounterStagger` only enters Hurt. It does not call `ApplyDeflectPunish` and does not apply damage. Enemy health has no counter filter.
+
+Checks:
+
+- Unity batchmode EditMode did not run. The editor already had `D:\Workplace\Gaming\K4RMA\Game` open, so a second instance aborted. That editor was left open.
+- Standalone Roslyn compile of `K4RMA.Gameplay` and `K4RMA.Gameplay.Tests` finished with no `error CS`. That is not the Unity test runner. The new cases were not executed. Serialized-field warnings from that standalone compile are the usual Unity inspector fields and were not treated as failures.
+- `Game/Assets/Packages`, `Game/Assets/ProjectSettings`, and `Game/Assets/Library` were absent after the aborted batch attempt. `Game/Packages/manifest.json` and `Game/ProjectSettings/ProjectSettings.asset` were present.
+- No commit, push, or merge. Branch remained `feat/real-asset-integration` at `6f2156d`.
+
+Independent test attempt (2026-10-05, tester):
+
+- The user's Unity `6000.6.2f1` processes were left running. `Game/Temp/UnityLockfile` was held by another process. The tester did not kill those processes.
+- Command: `Unity.exe -batchmode -nographics -projectPath D:\Workplace\Gaming\K4RMA\Game -runTests -testPlatform EditMode -assemblyNames K4RMA.Gameplay.Tests`. No `-openfile`.
+- The suite was NOT executed. No `phase4-editmode-results.xml` was written. Passed, failed, and skipped counts are unknown.
+- Console abort: `Aborting batchmode due to fatal error: It looks like another Unity instance is running with this project open.` Project: `D:/Workplace/Gaming/K4RMA/Game`.
+- Log `Game/Logs/phase4-editmode.log` (2026-10-05 10:56:37Z) records the same command and ends with `Application will exit with return code 1`. It contains no `error CS` and no test summary because compilation never started.
+- After the abort, `Game/Assets/Packages`, `Game/Assets/ProjectSettings`, and `Game/Assets/Library` were absent. `Game/Packages/manifest.json` and `Game/ProjectSettings/ProjectSettings.asset` were present.
+- Three unrun cases were added to `PersonalizedTechniqueRulesTests`: `SavedPlayerTuning_PreviewFlagsAreOff`, `PreviewRouting_LeavesRunProgressionUntouched`, and `CounterStagger_DoesNotDamageAndIsNotDeflectPunish`. They are not a pass.
+- Last executed EditMode total remains the earlier run: 48 passed, 0 failed, 0 skipped (`Game/Logs/rising-slash-hit-results.xml`).
+- Compile, tests, and manual Stage 1 gates stay open. Dress Temple Arena and Apply Presentation Pass were not run.
+
+Independent retest (2026-10-05, tester):
+
+- The earlier "not run" attempt above stays as history. This retest executed the suite. `Game/Temp/UnityLockfile` was absent. The only `unity.exe` process was Unity Hub `serve`, not the editor. No editor process was killed. No `-openfile`.
+- Command: Unity `6000.6.2f1` `-batchmode -nographics -projectPath D:\Workplace\Gaming\K4RMA\Game -runTests -testPlatform EditMode -assemblyNames K4RMA.Gameplay.Tests`. Results `Game/Logs/phase4-retest-results.xml`. Log `Game/Logs/phase4-retest.log`. Started 2026-10-05 11:15:35Z.
+- Compile: log line `AssetDatabase: script compilation time: 3.012433s`. No `error CS` in that log.
+- Tests: total 83, passed 82, failed 1, skipped 0, inconclusive 0. XML result `Failed(Child)`. The editor log says `Exiting with code 2 (Failed). One or more tests failed.`
+- The only failure is `K4RMA.Tests.PersonalizedTechniqueRulesTests.Counter_BlocksPlayerDamageOnceAndRetaliatesOnce`. Message: `Unhandled log message: '[Error] Cube: Destroy may not be called from edit mode! Use DestroyImmediate instead. Destroying an object in edit mode destroys it permanently'.` Stack: `SparkBurst.Build` line 40, `SparkBurst.Play`, `PlayerCounter.Retaliate` line 134, `Health.ApplyDamage` line 39, test line 542. The XML failure is that log, not an HP assertion. Six cube errors match the six shards. `Object.Destroy` is valid in Play Mode. EditMode rejects it and the test runner treats the error log as a failure. Not changed.
+- Wall-sweep cases that passed in this same XML: `PiercingSlash_OpenSweepReachesTheRequestedExit`, `PiercingSlash_SolidWallStopsTheSweepBeforeContact`, `PiercingSlash_BlockedFarSideUsesAClearNearSide`, `PiercingSlash_WallsOnBothSidesStopOutsideTheGeometry`, `PiercingSlash_IgnoredGuardianDoesNotBlockAndAWallStillDoes`. Those five create `CapsuleCollider` / `BoxCollider` objects, call `Physics.SyncTransforms`, and go through `PiercingSlashClearance.TryMove` / `ChooseExit` (`Physics.CapsuleCastAll` and `Physics.OverlapCapsule`). They are not number-only checks. Older cases such as `PiercingSlash_WallBlocksTheFarSideAndKeepsAClearNearSide` still only call `PiercingSlashRules` with floats.
+- No automated case places a floor or ceiling collider. No case drives `PlayerPiercingSlash` through scene walls. Manual Stage 1 stays unchecked.
+- After the run, `Game/Assets/Packages`, `Game/Assets/ProjectSettings`, and `Game/Assets/Library` were absent. `Game/Packages/manifest.json` and `Game/ProjectSettings/ProjectSettings.asset` were present.
+- Branch remained `feat/real-asset-integration` at `6f2156d`. No commit, push, or merge. Dress Temple Arena and Apply Presentation Pass were not run.
+
+SparkBurst EditMode destroy fix (2026-10-05):
+
+- `SparkBurst.Build` now removes each shard collider with `DestroyImmediate` only when `Application.isPlaying` is false. Play Mode still uses `Destroy`. Counter HP assertions were not changed.
+- Unity `6000.6.2f1` batchmode EditMode reran `K4RMA.Gameplay.Tests` with the project lock absent. No `-openfile`. Results `Game/Logs/phase4-spark-results.xml`. Log `Game/Logs/phase4-spark.log`. The log says `Exiting with code 0 (Ok)`.
+- Counts: total 83, passed 83, failed 0, skipped 0, inconclusive 0. `Counter_BlocksPlayerDamageOnceAndRetaliatesOnce` passed. The manual Stage 1 gate stays unchecked.
+
+Independent final verification (2026-10-05, tester):
+
+- Source check: `SparkBurst.Build` calls `Destroy` when `Application.isPlaying` is true and `DestroyImmediate` when it is false. `Counter_BlocksPlayerDamageOnceAndRetaliatesOnce` still asserts a blocked 12 leaves the player at 100, one retaliation drops the attacker from 40 to 31, and the next 12 drops the player to 88 while the attacker stays at 31.
+- This tester ran Unity `6000.6.2f1` batchmode EditMode. `Game/Temp/UnityLockfile` was absent. No editor process was killed. No `-openfile`. Results `Game/Logs/phase4-final-results.xml`. Log `Game/Logs/phase4-final.log`. Log start 2026-10-05T11:24:06Z. Test run 2026-10-05 11:25:57Z.
+- Compile: `AssetDatabase: script compilation time: 77.078091s`. No `error CS`. Log line: `Test run completed. Exiting with code 0 (Ok).`
+- Tests: total 83, passed 83, failed 0, skipped 0, inconclusive 0. XML result `Passed`. `Counter_BlocksPlayerDamageOnceAndRetaliatesOnce` result `Passed`. No failure names.
+- After the run, `Game/Assets/Packages`, `Game/Assets/ProjectSettings`, and `Game/Assets/Library` were absent. `Game/Packages/manifest.json` and `Game/ProjectSettings/ProjectSettings.asset` were present.
+- Manual Stage 1 stays unchecked. EditMode does not prove Play Mode feel, gravity, scene collision, or readable counter feedback. HUMAN_GATE is still required.
 
 ---
 

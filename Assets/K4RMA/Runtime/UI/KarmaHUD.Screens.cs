@@ -1,79 +1,114 @@
-using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
-
 namespace KarmaPrototype
 {
     public sealed partial class KarmaHUD
     {
+        int storyPage;
         void TitleScreen()
         {
-            Panel(new Rect(170, 65, 940, 590));
-            GUI.Label(new Rect(240, 95, 800, 85), "K4RMA", title);
-            Label(255, 180, 770, 65, "네가 무의식에 새긴 힘이, 다음 수호자의 힘이 된다.", heading);
-            Label(255, 255, 770, 125,
-                "오랜 수련 끝에 세 기술을 익힌 제자에게 스승이 마지막 시험을 제안한다.\n\n수호자를 넘어설 때마다 기술 하나를 무의식에 새겨라. 그 원리는 기본 동작에 스며들고, 그 과정에서 남은 잔재는 다음 수호자에게 전달된다.", text);
-            Label(255, 401, 770, 80, "의식: 직접 꺼내 쓰는 기술 / 무의식: 기본 동작에서 발현되는 힘\n세 기술을 무의식화하고 마지막 수호자를 넘어 시험을 통과하세요.", text);
-            if (GUI.Button(new Rect(445, 515, 390, 60), "수련 시작 [Enter]", button)) game.StartRun();
-            Label(255, 606, 770, 30, "수호자의 시련 / 목표 플레이 시간 15~20분 / 키보드 조작", small);
+            Fill(new Rect(0, 0, 1280, 720), new Color(0.025f, 0.045f, 0.06f));
+            // Only quadrant 1: the K4RMA / Master & Disciple cover, never the collage.
+            Art(new Rect(30, 45, 850, 580), "WorldOverview", new Rect(0, 0, 640, 427));
+            Panel(new Rect(915, 85, 335, 550));
+            Label(945, 115, 275, 80, "스승의 원형을 넘어,\n너의 검술을 완성하라.", heading);
+            Label(945, 220, 275, 110, "네 수호자 · 세 번의 고유화\n검기 · 상승베기 · 방어\n내려놓은 원형을 넘어서는 시험", text);
+            if (GUI.Button(new Rect(945, 365, 275, 65), "수련 시작 [Enter]", button)) game.StartRun();
+            if (GUI.Button(new Rect(945, 450, 275, 55), "게임 스토리 [S]", button)) game.ShowPage(RunPhase.Story);
+            if (GUI.Button(new Rect(945, 520, 275, 55), "조작 안내 [H]", button)) game.ShowPage(RunPhase.Controls);
+        }
+        void StoryScreen()
+        {
+            // Key events are consumed once by the GUI event loop, never on repaint.
+            var ev = Event.current;
+            if (ev.type == EventType.KeyDown)
+            {
+                if (ev.keyCode == KeyCode.RightArrow || ev.keyCode == KeyCode.DownArrow) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
+                if (ev.keyCode == KeyCode.LeftArrow || ev.keyCode == KeyCode.UpArrow) storyPage = Mathf.Max(0, storyPage - 1);
+            }
+            Panel(new Rect(110, 35, 1060, 650));
+            Label(155, 60, 970, 40, "스승과 제자 · " + (storyPage + 1) + " / " + KarmaStory.Pages.Length, heading);
+            Label(155, 115, 555, 475, KarmaStory.Pages[storyPage], text);
+            string illustration = storyPage == 7 ? "PlayerSheet" : storyPage == 3 ? "PlayerRisingSlash" : storyPage >= 5 ? "SwordGuardian" : "WorldOverview";
+            Art(new Rect(745, 130, 375, 420), illustration);
+            Label(750, 565, 365, 30, "스승과 제자 · 수호자의 시험", small);
+            if (GUI.Button(new Rect(155, 615, 250, 45), "이전 [←]", button)) storyPage = Mathf.Max(0, storyPage - 1);
+            if (GUI.Button(new Rect(440, 615, 250, 45), "다음 [→]", button)) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
+            if (GUI.Button(new Rect(725, 615, 385, 45), "타이틀 [Esc]", button)) game.ReturnToTitle();
+        }
+        void ControlsScreen()
+        {
+            Panel(new Rect(35, 35, 1210, 650));
+            Label(65, 65, 730, 45, "조작 안내", heading);
+            Label(65, 135, 745, 440,
+                "A/D · ←/→ : 이동    Space : 점프    J 유지 : 검 기본 공격\n\nQ : 검기 발사    왼쪽 Shift : 상승베기    E : 원형 방어\n고유화한 원형 키는 사용할 수 없습니다.\n\n관통베기 : 같은 방향키 / WASD 두 번 (0.25초 이내) · 해당 방향으로 관통\n도약베기 : 공중 방향키 / WASD + J 새로 누르기 · 베고 추가 점프 (착지 전 1회)\n↓ / S + J : 아래로 베고 점프 · 방향 입력이 없으면 바라보는 방향\n반격 : K로 짧은 받아내기 동작 · 공격 도착 순간에만 성공\n\n고유화 : 1/2/3 선택 → Enter 확정 · Esc 취소/재선택\nEsc : 일시정지    일시정지/결과에서 R : 처음부터    T : 타이틀\n\n사망하면 네 수호자의 시험을 Stage 1부터 다시 시작합니다.", text);
+            Art(new Rect(850, 90, 345, 155), "PlayerSwordWave");
+            Label(855, 250, 340, 28, "검기 · 관통베기", small);
+            Art(new Rect(850, 285, 345, 155), "PlayerRisingSlash");
+            Label(855, 445, 340, 28, "상승베기 · 도약베기", small);
+            Art(new Rect(850, 480, 345, 155), "WardGuardian");
+            if (GUI.Button(new Rect(150, 600, 560, 55), "타이틀 [Esc]", button)) game.ReturnToTitle();
         }
         void ChoiceScreen()
         {
-            Panel(new Rect(110, 225, 1060, 430));
-            Label(145, 245, 980, 38, "다음 시련 / 무의식화할 기술 선택", heading);
-            Label(145, 291, 980, 40, "직접 발동하는 기술을 기본 동작에 새깁니다. 남은 잔재는 다음 수호자에게 전달됩니다.", text);
+            Panel(new Rect(110, 245, 1060, 405));
+            Label(145, 260, 980, 38, "시험 통과 · 원형 하나를 자신의 기술로", heading);
             for (int i = 0; i < 3; i++)
             {
                 var e = (Essence)i;
                 GUI.enabled = game.Player.Essences.HasActive(e);
-                var r = new Rect(140 + i * 340, 350, 320, 205);
-                if (GUI.Button(r, (i + 1) + " / " + names[i] + "\n\n" + ChoiceDescription(e), button)) game.Choose(e);
+                string selected = game.PendingChoice == e ? "✓ 선택 중 · " : "";
+                if (GUI.Button(new Rect(140 + i * 340, 315, 320, 170), "", button)) game.Choose(e);
+                Art(new Rect(150 + i * 340, 325, 300, 92), i == 0 ? "PlayerSwordWave" : i == 1 ? "PlayerRisingSlash" : "WardGuardian");
+                Label(152 + i * 340, 421, 296, 28, selected + (i + 1) + " / " + names[i], text);
+                Label(152 + i * 340, 450, 296, 32, "원형 종료 → " + KarmaPatternCatalog.UniqueName(e), small);
                 GUI.enabled = true;
-                Label(r.x + 6, 564, 308, 45, "다음 수호자의 합성:\n" + PreviewFusion(e), small);
             }
-            Label(145, 618, 980, 28, "무의식화 시 체력 " + game.Config.healAfterSacrifice + " 회복. 이번 도전에서는 선택을 되돌릴 수 없습니다.", small);
-        }
-        string PreviewFusion(Essence e)
-        {
-            if (!game.Player.Essences.HasActive(e)) return "이미 무의식화한 기술";
-            var returned = new List<Essence>(game.Player.Essences.SacrificeOrder);
-            returned.Add(e);
-            return returned.Count == 3 ? "두 기술 합성 + 삼중 합성 해금" : KarmaPatternCatalog.FusionSummary(returned);
+            if (game.PendingChoice.HasValue)
+            {
+                var order = new List<Essence>(game.Player.Essences.SacrificeOrder); order.Add(game.PendingChoice.Value);
+                Label(145, 495, 980, 48, "다음 수호자: " + KarmaPatternCatalog.TypeName(order) + " · 계승 원형: " + KarmaPatternCatalog.FusionSummary(order), text);
+            }
+            else Label(145, 495, 980, 48, "첫 선택이 이후 수호자의 주 타입을 결정합니다. 확정 전에는 다시 선택할 수 있습니다.", text);
+            GUI.enabled = game.PendingChoice.HasValue;
+            if (GUI.Button(new Rect(145, 555, 615, 50), "고유화 확정 · 다음 시련 [Enter]", button)) game.ConfirmChoice();
+            GUI.enabled = true;
+            if (GUI.Button(new Rect(790, 555, 340, 50), "선택 취소 [Esc]", button)) game.CancelChoice();
+            Label(145, 616, 980, 25, "확정 후 원형 복구 불가 · 체력 " + game.Config.healAfterSacrifice + " 회복", small);
         }
         string ChoiceDescription(Essence e)
         {
-            var c = game.Config;
-            if (e == Essence.Flame) return "의식: 화염탄 사용 종료\n무의식: 검 적중마다 불씨\n수호자: 메테오 + 넉백";
-            if (e == Essence.Dash) return "의식: 무적 돌진 사용 종료\n무의식: 검 적중 " + c.waveEveryHits + "회마다 검기\n수호자: 돌진 공격";
-            return "의식: 보호막 사용 종료\n무의식: " + (c.wardDamageReduction * 100).ToString("0") + "% 피해 감소 + 충격파\n수호자: 피해 감소 + 반사 충격파";
+            return "원형 직접 사용 종료\n획득: " + KarmaPatternCatalog.UniqueName(e) + "\n다음 수호자 계승: " + KarmaPatternCatalog.Name(e);
         }
         void TransitionScreen()
         {
-            Panel(new Rect(230, 290, 820, 230));
-            Label(270, 317, 740, 42, names[(int)game.LastSacrifice] + " 기술을 무의식에 새겼습니다", heading);
-            Label(270, 380, 740, 90, "기술의 원리와 감각이 기본 동작에서 발현됩니다.\n\n" + (game.StageIndex == 2 ? "세 기술을 모두 무의식화했습니다. 잔재를 지닌 마지막 수호자가 기다립니다." : "무의식화 과정에서 남은 잔재가 다음 수호자의 힘이 됩니다."), text);
+            Panel(new Rect(120, 275, 1040, 300));
+            Label(155, 300, 570, 45, names[(int)game.LastSacrifice] + " → " + KarmaPatternCatalog.UniqueName(game.LastSacrifice), heading);
+            Label(155, 360, 570, 180, "원형은 제자의 동작으로 고유화되었습니다.\n다음 수호자: " + KarmaPatternCatalog.TypeName(game.Player.Essences.SacrificeOrder)
+                + "\n계승 원형: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder)
+                + (game.StageIndex == 2 ? "\n세 고유 기술로 마지막 수호자의 시험에 도전합니다." : "\n내려놓은 원형의 흔적은 이후 수호자에게 유지됩니다."), text);
+            int variant = KarmaPatternCatalog.GuardianVisual(game.Player.Essences.SacrificeOrder);
+            if (variant >= 0)
+                Art(new Rect(760, 300, 360, 250), "GuardianEvolution", new Rect((variant % 3) * 512, (variant / 3) * 512, 512, 512));
+            else Art(new Rect(760, 300, 360, 250), "SwordGuardian");
         }
         void PauseScreen()
         {
-            Panel(new Rect(390, 260, 500, 320));
-            GUI.Label(new Rect(400, 275, 480, 75), "일시정지", title);
-            if (GUI.Button(new Rect(435, 370, 410, 65), "계속하기 [Esc]", button)) game.TogglePause();
-            if (GUI.Button(new Rect(435, 460, 410, 65), "처음부터 다시 시작", button)) game.StartRun();
+            Panel(new Rect(390, 260, 500, 360));
+            Label(425, 275, 430, 55, "일시정지", heading);
+            if (GUI.Button(new Rect(435, 345, 410, 65), "계속하기 [Esc]", button)) game.TogglePause();
+            if (GUI.Button(new Rect(435, 430, 410, 65), "처음부터 [R]", button)) game.StartRun();
+            if (GUI.Button(new Rect(435, 515, 410, 65), "타이틀 [T]", button)) game.ReturnToTitle();
         }
         void EndScreen(bool victory)
         {
-            Panel(new Rect(255, 235, 770, 400));
-            GUI.Label(new Rect(285, 250, 710, 85), victory ? "수호자의 시련을 통과했습니다" : "쓰러졌습니다", title);
-            var order = new StringBuilder();
-            foreach (var e in game.Player.Essences.SacrificeOrder)
-            { if (order.Length > 0) order.Append(" > "); order.Append(names[(int)e]); }
-            Label(300, 355, 680, 95, "시간: " + game.Elapsed.ToString("0.0") + "초   누적 피해: " + game.DamageTaken.ToString("0")
-                + "   재도전: " + game.Retries + "\n무의식화 순서: " + (order.Length > 0 ? order.ToString() : "없음"), text);
-            if (!victory && GUI.Button(new Rect(305, 475, 670, 55), "현재 스테이지 재도전 [R]", button)) game.RetryRoom();
-            if (victory)
-                Label(300, 463, 680, 62, "힘은 이제 온전히 제자의 것이 되었습니다.\n1시험 " + Clock(game.BossSplits[0]) + " / 2시험 " + Clock(game.BossSplits[1])
-                    + " / 3시험 " + Clock(game.BossSplits[2]) + " / 마지막 수호자 " + Clock(game.BossSplits[3]), text);
-            if (GUI.Button(new Rect(305, 550, 670, 55), "새 도전 / 다른 무의식화 순서 선택", button)) game.StartRun();
+            Panel(new Rect(255, 250, 770, 400));
+            Label(300, 270, 680, 55, victory ? "자신만의 검술을 완성했습니다" : "쓰러졌습니다", heading);
+            Label(300, 350, 680, 100, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0")
+                + "\n고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder)
+                + (victory ? "\n스승: 이제 그 기술들은 누구의 것이냐?\n제자: 배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다." : "\n원형과 고유화 순서를 초기화하고 Stage 1부터 다시 도전합니다."), text);
+            if (GUI.Button(new Rect(305, 480, 670, 55), "처음부터 다시 도전 [R]", button)) game.StartRun();
+            if (GUI.Button(new Rect(305, 565, 670, 55), "타이틀 [T]", button)) game.ReturnToTitle();
         }
     }
 }

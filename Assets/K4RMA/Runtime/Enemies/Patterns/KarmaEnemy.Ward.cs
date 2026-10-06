@@ -1,15 +1,26 @@
 using UnityEngine;
-
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
         void BeginWardPattern()
         {
-            state = ActionState.Ward; timer = 2.5f;
-            overlay.Begin(CombatPhase);
-            Intent = selected == EnemyAttack.EmberAegis ? "화염 보호막 / 공격 금지! 공격 시 화상·반복 넉백" : "반사 보호막 / 차단 피해를 모아 사방 충격파로 반사";
-            ShowWard(selected == EnemyAttack.EmberAegis ? game.Config.flameColor : game.Config.wardColor);
+            defenseHit = false; state = ActionState.Ward; timer = 0.8f;
+            ShowWard(game.Config.wardColor); Intent = "방어 중 · 보호가 끝나면 빈틈";
+        }
+        void EndDefense()
+        {
+            if (!defenseHit && selected != EnemyAttack.GuardCounter) { Recover(1.1f); return; }
+            ClearIndicator();
+            selected = selected != EnemyAttack.GuardCounter ? EnemyAttack.GroundStrike
+                : PrimaryType == Essence.Dash ? EnemyAttack.RisingSlash
+                : PrimaryType == Essence.Flame ? EnemyAttack.SwordWave
+                : game.Player.Essences.HasRemnant(Essence.Dash) ? EnemyAttack.RisingSlash : EnemyAttack.SwordWave;
+            direction = game.Player.Position.x < Position.x ? -1 : 1; lockedX = Position.x + direction * 1.8f;
+            state = ActionState.Telegraph; timer = Mathf.Max(0.55f, game.Config.enemyTelegraphTime);
+            Intent = KarmaPatternCatalog.Label(selected);
+            indicator = KarmaVisuals.Box(game.World, "연계 예고", Position + Vector2.up * 2,
+                new Vector2(1.2f, 0.2f), AttackColor(), 6);
         }
     }
 }

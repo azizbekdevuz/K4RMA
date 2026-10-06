@@ -19,19 +19,21 @@ namespace KarmaPrototype
             var tuning = game.Config.BossTuning;
             // A status penalty, separate from contact-hit invulnerability and active shields.
             float damage = tuning.burnTickDamage;
-            if (Essences.HasRemnant(Essence.Ward)) damage *= 1 - game.Config.wardDamageReduction;
+            // No permanent damage reduction after defense is personalized.
             float actual = Mathf.Min(Health, Mathf.Max(0, damage));
             Health -= actual; game.DamageTaken += actual;
+            CancelAirSlash();
             dashUntil = 0;
             knockbackSpeed = tuning.burnKnockbackSpeed;
             knockbackDirection = away;
             knockbackUntil = Time.time + Mathf.Min(tuning.burnKnockbackDuration, tuning.burnTickInterval * 0.7f);
-            body.velocity = new Vector2(away * tuning.burnKnockbackSpeed, Mathf.Max(1.5f, body.velocity.y));
+            body.linearVelocity = new Vector2(away * tuning.burnKnockbackSpeed, Mathf.Max(1.5f, body.linearVelocity.y));
             KarmaRemnantVFX.Impact(game, Position, Essence.Flame);
             if (Health <= 0) game.PlayerDied();
         }
         public void ClearStatus()
         {
+            CancelAirSlash();
             burn.Clear(); knockbackUntil = 0;
         }
     }

@@ -23,7 +23,7 @@ namespace KarmaPrototype
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
             shot.friendly = friendly; shot.radius = radius; shot.expiresAt = Time.time + 3;
             shot.remnant = remnant; shot.burns = burns || remnant == Essence.Flame;
-            if (remnant.HasValue) KarmaRemnantVFX.ProjectileLook(sr, remnant.Value, velocity);
+            KarmaRemnantVFX.ProjectileLook(sr, Essence.Dash, velocity);
             game.Projectiles.Add(shot);
         }
         void Update()
@@ -34,6 +34,7 @@ namespace KarmaPrototype
             Vector2 from = transform.position;
             Vector2 to = from + velocity * Time.deltaTime;
             transform.position = to;
+            if (to.x < 0 || to.x > 40 || to.y < 0 || to.y > 12) { Destroy(gameObject); return; }
             if (remnant.HasValue && Time.time >= nextTrail)
             {
                 KarmaRemnantVFX.Trail(game, from, remnant.Value, velocity);

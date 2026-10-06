@@ -21,6 +21,7 @@ namespace KarmaPrototype
         public float DamageTaken { get; set; }
         public int Retries { get; private set; }
         public readonly float[] BossSplits = new float[4];
+        public Essence? PendingChoice { get { return Player == null ? (Essence?)null : Player.Essences.Pending; } }
         public Essence LastSacrifice { get; private set; }
         public Camera GameCamera { get; private set; }
         Transform runRoot;
@@ -29,6 +30,7 @@ namespace KarmaPrototype
         void Awake()
         {
             if (config == null) { config = ScriptableObject.CreateInstance<KarmaConfig>(); ownsConfig = true; }
+            KarmaVisuals.UseMaterial(config.spriteMaterial);
             GameCamera = Camera.main;
             if (GameCamera == null)
             {
@@ -47,12 +49,25 @@ namespace KarmaPrototype
         }
         void Update()
         {
+            UpdateHitFeedback();
             if (Phase == RunPhase.Title)
             {
                 if (KarmaInput.Pressed(KeyCode.Return)) StartRun();
+                else if (KarmaInput.Pressed(KeyCode.S)) ShowPage(RunPhase.Story);
+                else if (KarmaInput.Pressed(KeyCode.H)) ShowPage(RunPhase.Controls);
                 return;
             }
-            if (KarmaInput.Pressed(KeyCode.Escape)) TogglePause();
+            if (Phase == RunPhase.Story || Phase == RunPhase.Controls)
+            {
+                if (KarmaInput.Pressed(KeyCode.Escape)) ReturnToTitle();
+                return;
+            }
+            if (KarmaInput.Pressed(KeyCode.Escape))
+            {
+                if (Phase == RunPhase.Choosing && !Paused) CancelChoice(); else TogglePause();
+            }
+            if (KarmaInput.Pressed(KeyCode.T) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { ReturnToTitle(); return; }
+            if (KarmaInput.Pressed(KeyCode.R) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { StartRun(); return; }
             if (Paused) return;
             if (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Phase == RunPhase.Choosing || Phase == RunPhase.Transition)
                 Elapsed += Time.deltaTime;
@@ -63,6 +78,7 @@ namespace KarmaPrototype
                 if (KarmaInput.Pressed(KeyCode.Alpha1)) Choose(Essence.Flame);
                 else if (KarmaInput.Pressed(KeyCode.Alpha2)) Choose(Essence.Dash);
                 else if (KarmaInput.Pressed(KeyCode.Alpha3)) Choose(Essence.Ward);
+                else if (KarmaInput.Pressed(KeyCode.Return)) ConfirmChoice();
             }
             if (Phase == RunPhase.Transition)
             {

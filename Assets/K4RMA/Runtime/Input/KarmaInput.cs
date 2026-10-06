@@ -18,6 +18,23 @@ namespace KarmaPrototype
                      - (Held(KeyCode.A) || Held(KeyCode.LeftArrow) ? 1 : 0);
             }
         }
+        public static float Vertical
+        {
+            get { return (Held(KeyCode.W) || Held(KeyCode.UpArrow) ? 1 : 0)
+                       - (Held(KeyCode.S) || Held(KeyCode.DownArrow) ? 1 : 0); }
+        }
+        // Treat keyboard aliases as a single direction, even if pressed together.
+        public static bool DirectionPressed(int direction)
+        {
+            switch (direction)
+            {
+                case 1: return Pressed(KeyCode.A) || Pressed(KeyCode.LeftArrow);
+                case 2: return Pressed(KeyCode.D) || Pressed(KeyCode.RightArrow);
+                case 3: return Pressed(KeyCode.W) || Pressed(KeyCode.UpArrow);
+                case 4: return Pressed(KeyCode.S) || Pressed(KeyCode.DownArrow);
+                default: return false;
+            }
+        }
         static bool Read(KeyCode code, bool down)
         {
 #if ENABLE_INPUT_SYSTEM
@@ -27,11 +44,18 @@ namespace KarmaPrototype
             switch (code)
             {
                 case KeyCode.A: key = Key.A; break;
+                case KeyCode.W: key = Key.W; break;
                 case KeyCode.D: key = Key.D; break;
                 case KeyCode.LeftArrow: key = Key.LeftArrow; break;
                 case KeyCode.RightArrow: key = Key.RightArrow; break;
                 case KeyCode.Space: key = Key.Space; break;
                 case KeyCode.J: key = Key.J; break;
+                case KeyCode.K: key = Key.K; break;
+                case KeyCode.S: key = Key.S; break;
+                case KeyCode.H: key = Key.H; break;
+                case KeyCode.T: key = Key.T; break;
+                case KeyCode.UpArrow: key = Key.UpArrow; break;
+                case KeyCode.DownArrow: key = Key.DownArrow; break;
                 case KeyCode.Q: key = Key.Q; break;
                 case KeyCode.E: key = Key.E; break;
                 case KeyCode.F: key = Key.F; break;

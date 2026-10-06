@@ -21,6 +21,14 @@ namespace KarmaPrototype
         public event Action<Essence> Sacrificed;
         public IReadOnlyList<Essence> SacrificeOrder { get { return progression.Order; } }
         public int Count { get { return progression.Count; } }
+        public Essence? Pending { get { return progression.Pending; } }
+        public bool Preview(Essence e) { return progression.Preview(e); }
+        public void Cancel() { progression.Cancel(); }
+        public bool Confirm(out Essence e)
+        {
+            if (!progression.Confirm(out e)) return false;
+            Sacrificed?.Invoke(e); return true;
+        }
         public bool HasRemnant(Essence e) { return progression.HasRemnant(e); }
         public bool HasActive(Essence e) { return !HasRemnant(e); }
         public float Cooldown(Essence e) { return Mathf.Max(0, readyAt[(int)e] - Time.time); }

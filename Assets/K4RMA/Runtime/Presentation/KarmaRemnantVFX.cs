@@ -67,6 +67,10 @@ namespace KarmaPrototype
             sr.sortingOrder = 2;
             return sr;
         }
+        public static SpriteRenderer CreateBladeAura(Transform parent, Color color)
+        {
+            return Draw(parent, Vector2.zero, new Vector2(2.2f, 1.5f), color, 1);
+        }
         public static void ProjectileLook(SpriteRenderer sr, Essence essence, Vector2 velocity)
         {
             sr.sprite = Shape(essence == Essence.Dash ? 1 : 2);
@@ -98,6 +102,42 @@ namespace KarmaPrototype
                     essence == Essence.Flame ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f), color, 1);
                 sr.transform.localRotation = Quaternion.Euler(0, 0, facing > 0 ? 0 : 180);
                 Animate(sr, 0.35f, 0.35f, Vector2.right * facing * 0.5f);
+            }
+        }
+        public static void SwordSlash(Transform parent, Vector2 origin, Vector2 direction,
+            float reach, float height, float seconds)
+        {
+            direction.Normalize();
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            // Broad cool silhouette under a crisp ivory blade; visible against dark wood.
+            var rim = Draw(parent, origin + direction * (reach * 0.48f), new Vector2(reach * 1.3f, height),
+                new Color(0.4f, 0.76f, 1, 0.7f), 1);
+            rim.sortingOrder = 15;
+            rim.transform.localRotation = Quaternion.Euler(0, 0, angle);
+            Animate(rim, seconds * 1.2f, 0, direction * 0.35f);
+            var blade = Draw(parent, origin + direction * (reach * 0.48f), new Vector2(reach * 1.22f, height * 0.92f),
+                new Color(1, 0.97f, 0.84f, 1), 1);
+            blade.sortingOrder = 16;
+            blade.transform.localRotation = Quaternion.Euler(0, 0, angle);
+            Animate(blade, seconds, 0, direction * 0.2f);
+            var line = KarmaVisuals.Box(parent, "Sword core", origin + direction * (reach * 0.5f),
+                new Vector2(reach, 0.065f), Color.white, 17);
+            line.transform.localRotation = Quaternion.Euler(0, 0, angle);
+            line.gameObject.AddComponent<KarmaEffect>().Initialize(seconds * 0.6f);
+        }
+        public static void SwordImpact(KarmaGame game, Vector2 point, Vector2 direction)
+        {
+            var ring = Draw(game.World, point, Vector2.one * 0.95f, new Color(1, 0.93f, 0.7f), 0);
+            ring.sortingOrder = 20; Animate(ring, 0.16f, 0.45f, Vector2.zero);
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            for (int i = 0; i < 5; i++)
+            {
+                float radians = (angle + (i - 2) * 32) * Mathf.Deg2Rad;
+                Vector2 ray = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+                var spark = Draw(game.World, point + ray * 0.1f, new Vector2(0.5f, 0.06f), Color.white, 2);
+                spark.sortingOrder = 21;
+                spark.transform.localRotation = Quaternion.Euler(0, 0, radians * Mathf.Rad2Deg);
+                Animate(spark, 0.14f, 0, ray * 2.8f);
             }
         }
         public static void Impact(KarmaGame game, Vector2 p, Essence essence)

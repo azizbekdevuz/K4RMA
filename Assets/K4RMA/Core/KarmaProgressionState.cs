@@ -13,6 +13,19 @@ namespace KarmaPrototype
         public KarmaProgressionState() { view = order.AsReadOnly(); }
         public IReadOnlyList<Essence> Order { get { return view; } }
         public int Count { get { return order.Count; } }
+        public Essence? Pending { get; private set; }
+        public bool Preview(Essence essence)
+        {
+            if (!HasActive(essence)) return false;
+            Pending = essence; return true;
+        }
+        public void Cancel() { Pending = null; }
+        public bool Confirm(out Essence essence)
+        {
+            essence = Pending ?? Essence.Flame;
+            if (!Pending.HasValue || !TryInternalize(essence)) return false;
+            Pending = null; return true;
+        }
         public bool HasRemnant(Essence essence) { return remnants[Index(essence)]; }
         public bool HasActive(Essence essence) { return !HasRemnant(essence); }
         public bool TryInternalize(Essence essence)

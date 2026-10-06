@@ -1,125 +1,102 @@
-# K4RMA 소스 저장소
+# K4RMA — 고유화 프로토타입
 
-나의 성장 방식과 보스의 성장 방식을 함께 결정하는 Unity 2D 보스 액션 프로토타입.
+2026-10-05 수정본. 첨부 요구사항 명세서(2026-10-04)와 Notion `SW설계기초`의 프로젝트 개요·스토리·6주차 회의록을 기준으로 전투와 진행을 수정했다.
 
-첨부한 `K4RMA_Unity_Modular.zip`의 코드를 기능별로 분리한 소스 배포본이다. **Unity 프로젝트 전체가 아닌 소스와 관리 도구**이며, 실제 사용 중인 Unity 프로젝트의 `Packages`, `ProjectSettings`, 저장한 씬과 설정 에셋은 팀 프로젝트에 그대로 유지한다.
+**이번 수정본은 Unity Hub에서 열 수 있는 프로젝트 폴더다.** Packages와 Editor 버전 설정을 추가했고, 빈 씬에서 Play를 누르면 K4RMA 타이틀을 생성한다. Unity 6000.6.2f1 기준. 기존 프로젝트에 적용할 수도 있다. Windows 실행 파일과 실제 화면 실행 검증은 포함하지 않는다.
 
-## 처음 실행
+## 실행
 
-1. Unity Hub에서 팀이 사용하는 버전의 2D 프로젝트 생성 또는 기존 프로젝트 열기.
-2. 신규 프로젝트에는 이 폴더의 `Assets/K4RMA`와 `Assets/K4RMA.meta`를 프로젝트의 `Assets` 아래 복사. `Assets/Assets` 형태로 넣지 않는다.
-3. 컴파일 완료 후 메뉴 **K4RMA → 플레이 씬 생성**.
-4. 생성한 씬 저장 → Play → Game 창 클릭 → Enter.
-5. **K4RMA → 로직 검사**로 Unity 관련 검사 실행.
+- 새 2D 프로젝트: `Assets/K4RMA` 및 `Assets/K4RMA.meta`를 Assets 아래 복사한다.
+- 기존 프로젝트: Unity를 종료하고 아래 이전 도구를 사용한다. 폴더를 그냥 덮어쓰면 폐기한 구 패턴 파일이 남을 수 있다.
 
-기존 코드가 있는 프로젝트는 그대로 추가 복사하면 클래스가 중복된다. 아래 이전 절차를 먼저 사용한다.
-
-## 기존 프로젝트에 적용 — 씬·설정·.meta 보존
-
-Unity 종료 후 배포 폴더에서 실행. Python 3 필요.
-
-```bash
-# 실제 수정 없이 이동할 파일 확인
+```sh
 python3 tools/migrate-source.py "/기존/Unity프로젝트"
-
-# 확인한 이동 계획 적용. 기존 스크립트 .meta/GUID 보존, 변경 전 파일 백업
 python3 tools/migrate-source.py "/기존/Unity프로젝트" --apply
 ```
 
-기존 C# 파일은 새 모듈 경로로 옮기며, 이름이 같은 기존 스크립트의 `.meta`를 새 위치에 유지한다. `Generated`, 사용자 설정 `.asset`, 저장한 `.unity` 파일은 건드리지 않는다. 중복 클래스 파일이 이미 있으면 적용 전에 중단한다. 다른 위치의 파일 이름이 동일한 경우에도 직접 확인하도록 중단한다.
+기존 스크립트 GUID, 사용자 씬·설정 에셋을 보존한다. 폐기한 메테오·삼중합성 partial 파일은 백업 후 제거하고, 돌진·연사 모듈은 상승베기·검기 모듈로 이름을 바꾼다. 백업은 `.karma-migration-backups`에 남는다. 팀이 수정한 코드는 백업과 비교한다. 기존 설정의 저장값은 유지되며 새 설정의 HP 기본값은 100이다.
 
-코드에서 유지한 이름: `KarmaPrototype` 네임스페이스, 기존 MonoBehaviour·ScriptableObject 클래스명, Config의 직렬화 필드명. 따라서 기존 설정을 코드 기본값으로 덮어쓰지 않는다. 기존 `.meta`가 애초에 없었다면 원래 GUID를 복구할 수는 없다. 이 경우 씬의 Missing Script 여부를 확인한다.
+Unity에서 `K4RMA → 플레이 씬 생성` → Play → Enter. 생성한 씬과 설정을 저장한다. `K4RMA → 로직 검사`로 Unity 연결 규칙 검사를 실행한다. 기존 씬을 계속 쓸 경우 Config의 새 `spriteMaterial`에 Sprites/Default 재질을 연결해 빌드의 셰이더 참조를 확보한다.
 
-실제 적용 후 Unity를 열어 Console 컴파일 오류, 기존 씬의 Config 연결, Play 동작을 확인한다. 매번 플레이 씬을 생성할 필요는 없다.
+## 조작
 
-백업은 프로젝트 루트 `.karma-migration-backups/실행시간/`에 저장한다. 사용자 수정 코드가 있다면 덮어쓰기 전에 Git 커밋으로 보관하고, 백업과 새 코드를 비교한다.
-
-## 파일 구조
-
-```text
-Assets/K4RMA/
-  Core/                 무의식화 상태·타입·패턴 해금·화상 시계 (Unity 의존 없음)
-  Runtime/
-    Flow/               게임 진행·재도전·카메라
-    Configuration/      체력·공격력·난이도·색·폰트
-    Player/             이동·기본 공격·피격·화상
-    Abilities/          액티브 기술·패시브 효과
-    Enemies/            보스 상태 머신·전투·상태 효과
-      Patterns/         메테오·돌진·보호막·삼중 합성·추가 기본 공격
-    Combat/             투사체·지면 강타·불길 판정
-    World/              스테이지 지형
-    Presentation/       도형·이펙트·패시브 발동 표시
-    UI/                 한국어 HUD·선택창·타이틀·결과창
-    Input/              입력 처리
-  Editor/               씬 생성·설정 초기화·검사 메뉴
-tests/CoreChecks/       Unity 없이 생산 Core 코드를 검사하는 C# 실행 파일
-tools/                  기존 코드 이전·소스 구조 검사
-docs/                   구조·협업·변경 안내·기획·플레이테스트
-.github/                자동 검사·PR 템플릿
-```
-
-## 수정할 위치
-
-| 작업 | 파일·위치 |
+| 키 | 동작 |
 |---|---|
-| 체력·공격력·쿨타임 | 씬에 연결된 `KarmaConfig.asset`의 Inspector |
-| 보스 체력·메테오 수·화상·기절 | Config의 `bossTuning` |
-| 이동·점프·독립 돌진 | `Player/KarmaPlayer.Movement.cs` |
-| 검 공격·피격 | `Player/KarmaPlayer.Combat.cs` |
-| Q 화염탄·Shift 돌진·E 보호막 | `Abilities/KarmaEssences.ActiveSkills.cs` |
-| 불씨·관통 검기·충격파 | `Abilities/KarmaEssences.PassiveEffects.cs` |
-| 무의식화 상태와 순서 | `Core/KarmaProgressionState.cs` |
-| 보스 패턴 해금·공격 순환 목록 | `Core/KarmaPatternCatalog.cs` |
-| 개별 보스 패턴 구현 | `Enemies/Patterns/KarmaEnemy.*.cs` |
-| 상태 전환·추적·접촉 피해 | `Enemies/KarmaEnemy.StateMachine.cs` |
-| 그래픽·애니메이션 교체 | `Presentation/KarmaVisuals.cs`, `KarmaRemnantVFX.cs` |
-| 한국어 문구·선택창 | `UI/KarmaHUD.Screens.cs`, `KarmaHUD.Combat.cs` |
+| A/D, 좌우 방향키 | 이동 |
+| Space | 점프 |
+| J 유지 | 기본 검 공격; 상승베기 고유화 후 공중 방향키/WASD + J를 새로 눌러 도약베기 |
+| 같은 방향키 또는 WASD 두 번 | 검기 고유화 후 관통베기 (←/→/↑/↓ 또는 A/D/W/S, 기본 0.25초 이내) |
+| Q | 원형 검기 |
+| 왼쪽 Shift | 원형 상승베기 |
+| E | 원형 방어 |
+| K | 방어 고유화 후 짧은 받아내기; 공격 도착 타이밍에 반격 |
+| 고유화 화면 1/2/3, Enter, Esc | 선택, 확정, 취소 |
+| 타이틀 S/H | 전체 스토리/조작 안내 |
+| 스토리 방향키 | 이전/다음 페이지 |
+| Esc | 일시정지 또는 안내에서 타이틀 |
+| 일시정지·결과 R/T | Stage 1부터 새 도전/타이틀 |
 
-`partial` 파일들은 **동일한 Unity 컴포넌트 하나를 역할별로 나눈 것**이다. 각 파일을 GameObject에 따로 붙이지 않는다. 주 컴포넌트는 기존처럼 `KarmaPlayer.cs`, `KarmaEnemy.cs` 등에 해당한다. 구조와 의존성은 [ARCHITECTURE](docs/ARCHITECTURE.md) 참고.
+도약베기는 상승베기 고유화 후 공중에서 방향키 또는 WASD를 누르고 J를 새로 눌러 발동한다. 누른 방향(아래·대각선 포함)으로 0.12초 동안 1.2만큼 부드럽게 베고 추가 점프한다. 순간이동 대신 물리 이동으로 지형 충돌과 화면 보간을 유지하며, 추가 점프의 높이는 일반 점프 속도의 90%이고 가로 추진력은 0.16초 동안 평소 이동으로 부드럽게 이어진다. 점프와 J를 동시에 누르는 입력도 지원한다. 방향키가 없으면 바라보는 방향으로 벤다. 착지 전 1회 사용 가능하며 착지하면 회복된다. 관통베기는 같은 방향키 또는 WASD를 빠르게 두 번 누를 때 발동하며 기본 검 쿨타임을 공유한다. 고유화된 Q/Shift/E 원형 입력은 비활성화된다.
 
-## GitHub 관리 시작
+## 수정 위치
 
-**실제 Unity 프로젝트 루트를 저장소 루트로 사용**한다. 그곳에 배포본의 `.gitignore`, `.gitattributes`, `.editorconfig`, `README.md`, `docs`, `tools`, `tests`, `.github`를 복사한다. `Assets/K4RMA`는 위 이전 도구로 적용한다. 팀이 쓰던 Packages/ProjectSettings를 이 배포본의 파일로 교체할 필요는 없다.
+| 수정하려는 것 | 담당 모듈 |
+|---|---|
+| HP, 이동, 원형 기술 수치 | Runtime/Configuration/KarmaConfig.cs 또는 씬 Config 에셋 |
+| 연속 입력·도약베기·반격·상승 공격 수치 | Runtime/Configuration/KarmaTechniqueTuning.cs / Config의 techniques |
+| 스테이지별 수호자 체력·빈도 | Runtime/Configuration/KarmaBossTuning.cs |
+| 선택·취소·확정·누적 순서 | Core/KarmaProgressionState.cs |
+| 방향키 연속 입력·추가 점프·반격 시간 규칙 | Core/KarmaTechniqueState.cs |
+| 첫 선택 타입·패턴 순서 | Core/KarmaPatternCatalog.cs |
+| Unity 이동·근접 판정 | Runtime/Player의 Movement / Combat |
+| 원형·고유화 발동 연결 | Runtime/Abilities |
+| 수호자 AI 상태 전환 | Runtime/Enemies/KarmaEnemy.StateMachine.cs |
+| 개별 수호자 검술 | Runtime/Enemies/Patterns의 GroundStrike / SwordWave / RisingSlash / Ward |
+| 키 처리 | Runtime/Input/KarmaInput.cs와 Player/Flow의 입력 연결 |
+| 화면·문구 | Runtime/UI, Core/KarmaStory.cs |
+| 외형·애니메이션·VFX | Runtime/Presentation |
+| 수련장 지형·배경 | Runtime/World/KarmaStage.cs |
 
-GitHub에 팀 저장소를 만든 뒤 다음 명령 실행. 현재 폴더는 실제 Unity 프로젝트 루트여야 한다.
+분리한 partial 파일은 같은 컴포넌트의 역할별 파일이며 각각 GameObject에 붙이지 않는다. 게임 전체 진행은 `KarmaGame`이 담당한다. 상세 의존 방향과 확장 절차는 [ARCHITECTURE](docs/ARCHITECTURE.md).
 
-```bash
-git init
-git add Assets Packages ProjectSettings README.md docs tools tests .github .gitignore .gitattributes .editorconfig
-git commit -m "Modularize K4RMA prototype source"
-git branch -M main
-git remote add origin <팀_GitHub_저장소_URL>
-git push -u origin main
-```
+## Windows 제출
 
-`.meta`는 반드시 에셋과 함께 커밋한다. `Library`, `Temp`, `Logs`, 개인 `UserSettings`는 제외한다. 생성한 씬과 `KarmaConfig.asset`도 `.meta`와 함께 커밋하면 팀원이 같은 씬·수치로 실행할 수 있다. 팀원끼리 Unity 버전과 Packages 잠금 파일을 맞춘다. 협업 절차는 [GITHUB](docs/GITHUB.md) 참고.
+Unity Hub에서 **동일 버전 Windows Build Support (Mono)**를 설치한다. `K4RMA → 플레이 씬 생성`은 생성 씬을 Build Settings에 등록한다. 기존 팀 프로젝트는 제출할 씬 하나를 첫 시작 씬으로 정리한다. `K4RMA → Windows 64-bit 빌드` 결과는 `Builds/Windows/K4RMA.exe`이며 데이터 폴더와 함께 전달한다.
 
-## 검사
+## 검증 상태
 
-```bash
+- Core 자동 검사 **355개 통과**: 6가지 순서, 선택 취소·확정, 누적 계승, 원형 비활성화, WASD/방향키 별칭·연속 입력 경계·취소, 프레임 간격별 도약베기 감속·이동량, 보스 외형 선택, 충격 정지/일시정지/화면 전환, 추가 점프 1회 제한·착지 복구, 반격 성공·실패·초기화.
+- Unity 6000.6.2f1의 실제 참조 라이브러리를 사용한 전체 C# 컴파일: 오류·경고 0. Editor 코드 포함 및 플레이어 코드 각각 검사. 기존 Input Manager 및 새 Input System 조건부 컴파일 확인.
+- 파일 구조·GUID 검사 통과. 기존 ZIP을 모사한 적용 검사에서 GUID·사용자 씬·설정 보존과 폐기 파일 백업 확인.
+- **Unity 실제 플레이, 화면 렌더링, Windows 빌드, 60 FPS와 15~20분 체감은 미검증.** 이번 배포본은 실제 Unity 프로젝트 설정과 씬이 없는 수정 소스로, 이번 변경의 Play Mode 검사는 수행하지 않았다.
+
+```sh
 python3 tools/validate-source.py
 dotnet run --project tests/CoreChecks/CoreChecks.csproj --configuration Release
 ```
 
-GitHub push/PR에서 위 두 검사를 자동 실행한다. .NET 8 SDK가 필요하며, 별도 NuGet 테스트 라이브러리를 사용하지 않는다. Unity 관련 판정은 Unity 메뉴 `K4RMA → 로직 검사`와 실제 플레이로 확인한다. **Core CI 통과가 Unity 전체 빌드 통과를 의미하지는 않는다.**
+.NET 8 SDK 필요. 현재 장비의 시스템 SDK가 7이라 검사에는 설치된 Unity의 번들 .NET 8 SDK를 사용했다. 이번 변경의 검사 결과는 [검증 기록](docs/VALIDATION.md)을 참조한다. 제출 전 [PLAYTEST](docs/PLAYTEST.md)를 실행한다. 세부 요구사항 대응과 남은 작업은 [변경 보고서](docs/CHANGELOG.md).
 
-## 조작
 
-| 입력 | 동작 |
-|---|---|
-| A/D·좌우 방향키 | 이동 |
-| Space | 점프 |
-| J 유지 | 연속 검 공격 |
-| Q / 왼쪽 Shift / E | 의식 상태의 화염탄 / 돌진 / 보호막 |
-| 보스 처치 후 문 근처 F | 무의식화 선택 |
-| 1/2/3·클릭 | 화염/돌진/방어 선택 |
-| Esc | 일시정지 |
-| 사망 후 R | 현재 스테이지 재도전 |
+## 이미지 적용 및 타격 연출 — 2026-10-06
 
-## 현재 구현 범위
+- 표지는 `WorldOverview.png`의 **왼쪽 위 첫 사분면**(K4RMA / MASTER & DISCIPLE)만 표시한다. 다른 세 장면은 표지에 나오지 않는다.
+- 원본 7개 이미지를 `Assets/K4RMA/Resources/K4RMAArtwork`에 보존했다. WebP는 내용 그대로 PNG로 변환했다. 추가 보스 참고 `k.png`도 `GuardianEvolution.png`로 포함했다.
+- 원본 플레이어 시트를 바탕으로 동작들이 겹치지 않는 `PlayerAnimation.png`를 준비했다. 대기/달리기/기본 베기/상승·아래 베기/피격/사망에 연결했다. 원본 시트는 스토리 화면에서도 확인할 수 있다.
+- 전투 배경은 1번 그림의 고정 캐릭터/검기 효과를 제거한 `DojoBackground.png`를 사용한다. 충돌 지형은 그대로 유지한다.
+- 보스는 투명한 목제/기계 수호자 그림을 사용한다. 처음 선택한 기술의 몸체를 유지하며, 추가로 계승한 검기는 푸른 궤적, 방어는 금빛 링, 상승베기는 긴 수직 칼날 효과로 더해진다. 새 참고 그림의 6가지 조합은 전환 화면에 연결했다. 장식의 금빛 링은 시각 효과이고 실제 방어 판정은 기존 방어 동작 동안에만 적용된다.
+- 기본 베기는 3.4 사거리와 2.6 높이의 판정, 긴 밝은 반달 궤적/중심선/잔상을 사용한다. `Config.techniques.longSlashReach`가 이번 기본 검 판정의 사거리 설정이다. 기존 `Config.swordReach` 대신 이 값을 조정한다.
+- 적에게 실제 피해가 들어가면 밝은 타격 불꽃과 기본 0.035초의 짧은 슬로, 0.09초의 작은 카메라 흔들림이 나온다. `hitStopSeconds`/`hitShakeStrength`를 0으로 설정해 각각 끌 수 있다. 허공 공격에서는 타격 효과가 나오지 않는다.
+- 신규 이미지 로딩/실행용 UV 및 스프라이트 분리는 `Runtime/Presentation/KarmaArtwork.cs`, 보스의 누적 효과는 `KarmaGuardianAdornment.cs`에 있다. Unity의 기존 스프라이트 importer metadata는 수정하지 않는다.
+- 원본 보존과 PNG/알파/프레임 경계 검사, 실제 Unity 참조 컴파일은 통과했다. 실제 Unity 플레이/화면 렌더링은 이번 환경에서 검증하지 않았다.
 
-이번 변경은 기존 전투를 유지하는 구조 정리다. 불씨·검기 관통, 적 화상, 추적 위치 예고 메테오, 보호막 반사, 연속 돌진, 벽 충돌 삼중 합성·기절 등을 유지한다.
 
-**첫 선택이 보스의 베이스 타입을 결정하고 이후 선택이 그 타입을 강화하는 완전한 설계는 아직 구현되지 않았다.** 현재는 기술 집합에 따른 단독·합성 패턴 해금과 일부 공격 순서 차이다. 첫 잔재 기반 타입 변형, 충전 돌진 베기, 정식 그래픽·사운드 등은 별도 구현 대상이다. [CONCEPT](docs/CONCEPT.md), [PLAYTEST](docs/PLAYTEST.md) 참고.
+## 이미지가 네모로 나오던 문제의 로딩 수정
 
-15~20분은 기존 밸런스의 목표이며 실측 보장은 아니다. 구조 변경 후 Unity 실제 실행·렌더링·전체 플레이 시간은 팀 환경에서 확인해야 한다.
+이전 코드의 PNG Resources 로딩은 Unity importer 상태에 의존했고, 실패하면 기존 네모 캐릭터로 조용히 돌아갔다. 사용 중인 프로젝트에서 실패한 정확한 경로는 확인하지 못했으므로 이를 확인된 현장 원인으로 단정하지 않는다.
+
+이번에는 원본 PNG 11장을 `Resources/K4RMAArtwork/KarmaArtwork.bytes`에 함께 넣고 TextAsset에서 PNG를 직접 읽는다. 원본 크기/알파를 그대로 유지하여 TextureImporter의 크기 변경/스프라이트 설정과 무관하게 같은 이미지를 생성한다. 정적 캐시에 null을 저장하지 않으며 Play 진입 시 캐시를 초기화한다. 파일이 누락되면 표지에 한국어 오류를 표시하고 Console에 필요한 경로를 남기며, 네모 플레이어로 조용히 대체하지 않는다.
+
+**가장 간단한 확인:** ZIP 전체 압축 해제 → Unity Hub에서 `K4RMA_Updated` 폴더 열기 → Unity에서 Play → K4RMA 표지 → Enter. 기존 프로젝트에 넣는 경우 `Assets/K4RMA` 전체를 적용해야 한다. `Runtime` 스크립트만 복사하면 이미지 묶음이 빠진다.
+
+`KarmaArtworkValidation.Run`은 Unity에서 이미지 11장 디코딩/원본 크기/9개 Sprite.Create/캐릭터·배경 연결을 확인하는 실행 검사다. 이번 환경에서 Editor 실행을 시도했으나 라이선스 초기화가 실패하여 이 실행 검사와 렌더링은 완료하지 못했다. 컴파일과 이미지 묶음 무결성 검사는 통과했다.

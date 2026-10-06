@@ -25,6 +25,17 @@ namespace KarmaPrototype.Editor
                 config = ScriptableObject.CreateInstance<KarmaConfig>();
                 AssetDatabase.CreateAsset(config, configPath);
             }
+            if (config.spriteMaterial == null)
+            {
+                const string materialPath = "Assets/K4RMA/Generated/KarmaSprite.mat";
+                var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                if (material == null)
+                {
+                    material = new Material(Shader.Find("Sprites/Default"));
+                    AssetDatabase.CreateAsset(material, materialPath);
+                }
+                config.spriteMaterial = material; EditorUtility.SetDirty(config); AssetDatabase.SaveAssets();
+            }
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject("K4RMA Game");
             var game = root.AddComponent<KarmaGame>();
@@ -34,6 +45,9 @@ namespace KarmaPrototype.Editor
             // Generate a unique path: never overwrite an existing authored scene.
             string path = AssetDatabase.GenerateUniqueAssetPath("Assets/K4RMA/Generated/KarmaPrototype.unity");
             EditorSceneManager.SaveScene(scene, path);
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            scenes.Add(new EditorBuildSettingsScene(path, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
             Selection.activeObject = root;
             Debug.Log("K4RMA 준비 완료. Play 후 Enter를 누르세요. 설정: " + configPath);
         }

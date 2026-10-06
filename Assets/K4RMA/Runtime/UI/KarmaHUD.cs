@@ -10,7 +10,7 @@ namespace KarmaPrototype
         KarmaGame game;
         GUIStyle title, heading, text, small, button;
         Font runtimeFont;
-        readonly string[] names = { "화염", "돌진", "보호막" };
+        readonly string[] names = { "검기", "상승베기", "방어" };
         readonly string[] keys = { "Q", "SHIFT", "E" };
         public void Initialize(KarmaGame director) { game = director; }
         void Styles()
@@ -42,6 +42,8 @@ namespace KarmaPrototype
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0),
                 Quaternion.identity, new Vector3(scale, scale, 1));
             if (game.Phase == RunPhase.Title) TitleScreen();
+            else if (game.Phase == RunPhase.Story) StoryScreen();
+            else if (game.Phase == RunPhase.Controls) ControlsScreen();
             else
             {
                 TopBar();
@@ -55,16 +57,35 @@ namespace KarmaPrototype
                     case RunPhase.Gate:
                         Panel(new Rect(300, 525, 680, 110));
                         Label(325, 539, 640, 35, "시험 통과", heading);
-                        Label(325, 578, 640, 44, "오른쪽 수련문으로 이동한 뒤 F를 눌러 무의식화할 기술을 고르세요.", text);
+                        Label(325, 578, 640, 44, "오른쪽 수련문으로 이동한 뒤 F를 눌러 고유화할 기술을 고르세요.", text);
                         break;
                 }
-                Label(30, 675, 1220, 30, "A/D·방향키 이동    Space 점프    J 검    Q 화염    Shift 돌진    E 보호막    Esc 일시정지", small);
+                Label(30, 675, 1220, 30, "A/D·방향키 이동    Space 점프    J 검    Q 검기    Shift 상승베기    E 방어    K 반격    Esc 일시정지", small);
             }
             GUI.matrix = saved;
         }
 
         void OnDestroy() { if (runtimeFont != null) Destroy(runtimeFont); }
 
+        static void Art(Rect bounds, string name, Rect? source = null)
+        {
+            var texture = KarmaArtwork.Texture(name);
+            if (texture == null)
+            {
+                Fill(bounds, new Color(0.22f, 0.035f, 0.035f));
+                GUI.Label(bounds, "이미지 파일 누락: " + name + "\nAssets/K4RMA 전체를 적용하세요.");
+                return;
+            }
+            Rect crop = source ?? new Rect(0, 0, texture.width, texture.height);
+            float ratio = crop.width / crop.height;
+            float width = Mathf.Min(bounds.width, bounds.height * ratio);
+            float height = width / ratio;
+            var destination = new Rect(bounds.x + (bounds.width - width) * 0.5f,
+                bounds.y + (bounds.height - height) * 0.5f, width, height);
+            Color old = GUI.color; GUI.color = Color.white;
+            GUI.DrawTextureWithTexCoords(destination, texture, KarmaArtwork.UV(texture, crop), true);
+            GUI.color = old;
+        }
         void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
         static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, 0.95f)); }

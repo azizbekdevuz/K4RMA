@@ -7,6 +7,7 @@ namespace KarmaPrototype
     {
         public void StartRun()
         {
+            ResetHitFeedback();
             Paused = false; Time.timeScale = 1;
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
             Enemies.Clear(); Projectiles.Clear();
@@ -14,12 +15,13 @@ namespace KarmaPrototype
             runRoot.SetParent(transform, false);
             var p = new GameObject("Player"); p.transform.SetParent(runRoot, false);
             Player = p.AddComponent<KarmaPlayer>(); Player.Initialize(this);
-            StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
+            Player.Essences.Cancel(); LastSacrifice = Essence.Flame; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
             for (int i = 0; i < BossSplits.Length; i++) BossSplits[i] = 0;
             LoadRoom(true);
         }
         void LoadRoom(bool fullHealth)
         {
+            ResetHitFeedback();
             if (World != null) { World.gameObject.SetActive(false); Destroy(World.gameObject); }
             Enemies.Clear(); Projectiles.Clear();
             World = new GameObject("Stage " + (StageIndex + 1)).transform;
@@ -39,13 +41,22 @@ namespace KarmaPrototype
             BossSplits[StageIndex] = enemy.FightSeconds;
             Enemies.Remove(enemy);
             if (Enemies.Count != 0) return;
-            Phase = StageIndex == 3 ? RunPhase.Victory : RunPhase.Gate;
+            Phase = StageIndex == 3 ? RunPhase.Victory : RunPhase.Choosing; Player.Essences.Cancel();
             Player.ClearStatus();
             ClearProjectiles();
         }
         public void Choose(Essence essence)
         {
-            if (Phase != RunPhase.Choosing || Paused || !Player.Essences.Sacrifice(essence)) return;
+            if (Phase != RunPhase.Choosing || Paused || !Player.Essences.HasActive(essence)) return;
+            Player.Essences.Preview(essence);
+        }
+        public void CancelChoice() { if (Phase == RunPhase.Choosing) Player.Essences.Cancel(); }
+        public void ConfirmChoice()
+        {
+            if (Phase != RunPhase.Choosing || Paused || !PendingChoice.HasValue) return;
+            Essence essence;
+            if (!Player.Essences.Confirm(out essence)) return;
+            Player.Essences.Cancel();
             LastSacrifice = essence;
             Player.Heal(config.healAfterSacrifice);
             Phase = RunPhase.Transition; transitionLeft = 2.5f;
@@ -55,7 +66,7 @@ namespace KarmaPrototype
         {
             if (Phase == RunPhase.Defeat || Phase == RunPhase.Victory) return;
             Phase = RunPhase.Defeat; ClearProjectiles();
-            if (Player != null) Player.ClearStatus();
+            if (Player != null) { Player.ClearStatus(); Player.GetComponentInChildren<KarmaCharacterAnimator>().Die(); }
         }
         void ClearProjectiles()
         {
@@ -65,7 +76,19 @@ namespace KarmaPrototype
         public void RetryRoom()
         {
             if (Phase != RunPhase.Defeat) return;
-            Paused = false; Time.timeScale = 1; Retries++; LoadRoom(true);
+            StartRun();
+        }
+        public void ShowPage(RunPhase page)
+        {
+            if (Phase == RunPhase.Title && (page == RunPhase.Story || page == RunPhase.Controls)) Phase = page;
+        }
+        public void ReturnToTitle()
+        {
+            ResetHitFeedback();
+            Paused = false; Time.timeScale = 1; ClearProjectiles();
+            if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
+            runRoot = null; World = null; Player = null; Enemies.Clear();
+            Phase = RunPhase.Title;
         }
         public void TogglePause()
         {

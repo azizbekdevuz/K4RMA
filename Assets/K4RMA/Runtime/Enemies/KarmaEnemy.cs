@@ -5,25 +5,26 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy : MonoBehaviour
     {
-        enum ActionState { Approach, Telegraph, Recover, Charge, Ward, Volley, ChargeTurn, OverdriveWindup, OverdriveCharge, Stunned, MeteorRain }
+        enum ActionState { Approach, Telegraph, Recover, Ward, Rising }
         KarmaGame game;
-        KarmaAttackOverlay overlay;
         int activeMeteors;
         Transform art;
         SpriteRenderer indicator;
         List<EnemyAttack> attacks;
         ActionState state;
-        float timer, direction, lockedX, nextTrail;
-        int turn, volleyLeft, volleyCount, remainingCharges, visiblePhase = 1;
-        bool engaged, extraPressure;
+        float timer, direction, lockedX;
+        int turn;
+        bool engaged, defenseHit, risingHitPlayer;
+        float risingElapsed, risingStartX;
+        public Essence? PrimaryType { get; private set; }
         readonly KarmaBurnState burn = new KarmaBurnState();
-        float reflectedDamage, reflectAt, nextAura, recoilRemaining;
+        
         public float BurnRemaining { get { return burn.Remaining(Time.time); } }
-        public bool Stunned { get { return state == ActionState.Stunned; } }
-        public bool Invulnerable { get { return state == ActionState.OverdriveWindup || state == ActionState.OverdriveCharge; } }
+        public bool Stunned { get { return false; } }
+        public bool Invulnerable { get { return false; } }
         public float FightSeconds { get; private set; }
         public int CombatPhase { get { return Health > MaxHealth * 0.6f ? 1 : Health > MaxHealth * 0.25f ? 2 : 3; } }
-        public bool FlameWardActive { get { return state == ActionState.Ward && selected == EnemyAttack.EmberAegis; } }
+        public bool FlameWardActive { get { return false; } }
         KarmaBossTuning Tuning { get { return game.Config.BossTuning; } }
         float Damage { get { return game.Config.enemyDamage * Tuning.damageMultiplier; } }
         EnemyAttack selected;
@@ -36,21 +37,28 @@ namespace KarmaPrototype
         public string Intent { get; private set; }
         public bool Armored
         {
-            get { return state == ActionState.Ward || (state == ActionState.Charge && selected == EnemyAttack.GuardedCharge); }
+            get { return state == ActionState.Ward; }
         }
         public void Initialize(KarmaGame director, int stage)
         {
             game = director; finalGuardian = stage == 3;
-            overlay = gameObject.AddComponent<KarmaAttackOverlay>();
-            overlay.Initialize(game, this);
             MaxHealth = Tuning.HealthFor(stage);
             Health = MaxHealth;
             DisplayName = finalGuardian ? "마지막 수호자 / 최종 시련" : new[] { "첫 번째 수호자", "두 번째 수호자", "세 번째 수호자" }[stage];
-            art = KarmaVisuals.Character(transform, finalGuardian ? new Color(0.57f, 0.28f, 0.68f) : new Color(0.67f, 0.34f, 0.36f), finalGuardian);
+            PrimaryType = KarmaPatternCatalog.Primary(game.Player.Essences.SacrificeOrder);
+            DisplayName += " · " + KarmaPatternCatalog.TypeName(game.Player.Essences.SacrificeOrder);
+            art = KarmaArtwork.Guardian(transform, game.Player.Essences.SacrificeOrder, finalGuardian);
+            bool suppliedArtwork = art != null;
+            if (art == null) art = KarmaVisuals.Character(transform, PrimaryType.HasValue ? game.Config.ColorOf(PrimaryType.Value) : new Color(0.67f, 0.34f, 0.36f), finalGuardian);
+            if (PrimaryType.HasValue && !suppliedArtwork)
+            {
+                Vector2 size = PrimaryType == Essence.Flame ? new Vector2(1.9f, 0.14f)
+                    : PrimaryType == Essence.Dash ? new Vector2(0.35f, 1.7f) : new Vector2(1.1f, 1.45f);
+                KarmaVisuals.Box(art, "주 타입 장비", new Vector2(0.65f, 0), size, game.Config.ColorOf(PrimaryType.Value), 6);
+            }
             art.localScale = Vector3.one * 1.4f;
             // Only recipes whose ingredients have returned are unlocked.
             attacks = KarmaPatternCatalog.BuildCycle(game.Player.Essences.SacrificeOrder);
-            if (!finalGuardian) attacks.Remove(EnemyAttack.Overdrive);
             foreach (var e in game.Player.Essences.SacrificeOrder)
             {
                 var orb = KarmaVisuals.Box(transform, e.ToString(), new Vector2(-0.55f + (int)e * 0.55f, 1.65f),

@@ -100,5 +100,3 @@ dotnet run --project tests/CoreChecks/CoreChecks.csproj --configuration Release
 **가장 간단한 확인:** ZIP 전체 압축 해제 → Unity Hub에서 `K4RMA_Updated` 폴더 열기 → Unity에서 Play → K4RMA 표지 → Enter. 기존 프로젝트에 넣는 경우 `Assets/K4RMA` 전체를 적용해야 한다. `Runtime` 스크립트만 복사하면 이미지 묶음이 빠진다.
 
 `KarmaArtworkValidation.Run`은 Unity에서 이미지 11장 디코딩/원본 크기/9개 Sprite.Create/캐릭터·배경 연결을 확인하는 실행 검사다. 이번 환경에서 Editor 실행을 시도했으나 라이선스 초기화가 실패하여 이 실행 검사와 렌더링은 완료하지 못했다. 컴파일과 이미지 묶음 무결성 검사는 통과했다.
-efbgerwf
-

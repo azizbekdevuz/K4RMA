@@ -1,0 +1,22 @@
+---
+description: Persistent K4RMA refinement orchestration and phase-gate rules
+alwaysApply: true
+---
+
+For all K4RMA implementation, testing, verification, planning, or phase-transition work:
+
+1. Read and obey `@docs/REFINED_GAME_SPEC.md`.
+2. Read and obey `@docs/PHASE_ORCHESTRATION.md`.
+3. Read the current state/evidence in `@docs/REFINEMENT_PLAN.md`.
+4. Use the authority order and phase state machine defined in `PHASE_ORCHESTRATION.md`.
+5. For non-trivial phase work, use the configured `implementer -> tester -> verifier` chain.
+6. Never redesign team-approved gameplay, story, technique mappings, four-stage progression, first-choice archetype rule, or cumulative inheritance.
+7. Never treat legacy Deflect as Counter or PiercingSlash.
+8. Never advance past `HUMAN_GATE`, `BLOCKED`, or `DESIGN_DECISION_REQUIRED`.
+9. A failed human gate reopens the same phase and goes through implementer -> tester -> verifier again.
+10. Never commit, push, merge, rebase, reset, stash, clean, or switch branches unless the user explicitly authorizes it.
+11. Current Unity project is the 2.5D technical prototype; final production target is 2D. Do not convert this branch to final 2D.
+12. Use `D:\Workplace\Gaming\K4RMA\Game` as the Unity project root. Never open `PrototypeArena.unity` directly with Explorer or `-openfile`.
+13. Keep `Game/Assets/Packages`, `Game/Assets/ProjectSettings`, and `Game/Assets/Library` absent; do not hide recurrence with gitignore.
+14. Automated tests are not proof of gameplay feel, visual readability, camera composition, or audio; require a human gate when those claims matter.
+15. Update `REFINEMENT_PLAN.md` with factual evidence only. Never mark unobserved human behavior as passed.

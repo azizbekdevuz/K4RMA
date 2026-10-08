@@ -127,7 +127,13 @@
 <li><strong>협업 가이드:</strong> <a href="docs/CONTRIBUTING.md"><code>docs/CONTRIBUTING.md</code></a> · <strong>결정 기록:</strong> <a href="docs/DECISIONS.md"><code>docs/DECISIONS.md</code></a></li>
 </ul>
 <h3>개발 환경과 시작 방법</h3>
-<p>Unity 프로젝트가 아직 이 저장소에 올라오지 않았거나 에디터 버전이 합의되지 않았다면 <strong>실행 가능한 빌드는 없습니다.</strong> Unity 버전·대상 플랫폼·프로젝트 경로가 정해지면 여기에 실제 설치/실행 절차를 추가합니다. 임의의 Unity 버전 또는 미확인 실행 명령을 사용하지 마세요.</p>
+<p>이 브랜치의 프로토타입은 <code>Game/</code>에 있습니다. 에디터는 <strong>Unity 6000.6.2f1</strong>입니다. 이것은 작업용 선택이며, 최종 버전 투표와 2D/2.5D 결정은 아직 열려 있습니다.</p>
+<ol>
+<li>Unity <code>6000.6.2f1</code>과 Windows Build Support(Mono)를 설치합니다.</li>
+<li><code>Game</code> 폴더를 프로젝트로 엽니다.</li>
+<li><code>Assets/_Project/Scenes/PrototypeArena.unity</code>를 열고 Play를 누릅니다.</li>
+</ol>
+<p>조작: A/D 또는 화살표, Space 점프, J 기본 공격, K 프로토타입 투사체(희생 후 디플렉트), E 제단, 패배 또는 클리어 후 R. 검증 절차는 <code>docs/PROTOTYPE_STATUS.md</code>에 있습니다. 생성된 <code>Game/Builds/</code>는 커밋하지 않습니다.</p>
 <h3>로드맵</h3>
 <table>
 <thead>
@@ -146,7 +152,7 @@
 <tr>
   <td style="text-align:left">핵심 프로토타입</td>
   <td style="text-align:left">희생 → 적 능력 승계 루프 검증</td>
-  <td style="text-align:left">예정</td>
+  <td style="text-align:left"><code>feat/2-5d-prototype</code>에서 진행 중</td>
 </tr>
 <tr>
   <td style="text-align:left">플레이 가능한 MVP</td>
@@ -237,7 +243,13 @@
 <li><strong>Team workflow:</strong> <a href="docs/CONTRIBUTING.md"><code>docs/CONTRIBUTING.md</code></a> · <strong>Decision log:</strong> <a href="docs/DECISIONS.md"><code>docs/DECISIONS.md</code></a></li>
 </ul>
 <h3>Setup</h3>
-<p><strong>There is no verified runnable build yet</strong> if the Unity project or selected editor version has not been committed. Once the team selects a version, target platform, and project location, replace this section with tested setup/run instructions. Do not assume an unverified Unity version or invent a run command.</p>
+<p>The playable prototype on this branch is in <code>Game/</code>. Open it with <strong>Unity 6000.6.2f1</strong>. That pin is a working choice, not a final team-wide version vote, and the 2D versus 2.5D decision stays open.</p>
+<ol>
+<li>Install Unity <code>6000.6.2f1</code> with Windows Build Support (Mono).</li>
+<li>Open the <code>Game</code> folder as the project.</li>
+<li>Open <code>Assets/_Project/Scenes/PrototypeArena.unity</code> and press Play.</li>
+</ol>
+<p>Controls: A/D or arrows, Space jump, J melee, K prototype projectile (Deflect after the sacrifice), E at the altar, R after defeat or clear. Verification steps are in <code>docs/PROTOTYPE_STATUS.md</code>. Do not commit <code>Game/Builds/</code>.</p>
 <h3>Roadmap</h3>
 <table>
 <thead>
@@ -256,7 +268,7 @@
 <tr>
   <td style="text-align:left">Core prototype</td>
   <td style="text-align:left">Test sacrifice → enemy inheritance loop</td>
-  <td style="text-align:left">Planned</td>
+  <td style="text-align:left">In progress on <code>feat/2-5d-prototype</code></td>
 </tr>
 <tr>
   <td style="text-align:left">Playable MVP</td>

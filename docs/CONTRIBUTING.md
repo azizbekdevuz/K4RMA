@@ -1,6 +1,6 @@
 # Contributing to K4RMA / 협업 가이드
 
-This is a working team protocol, not evidence that the Unity project is already implemented. Adjust it together once the engine version, roles, and asset workflow are confirmed.
+This is a working team protocol. On `feat/2-5d-prototype`, the Unity project is `Game/` and the playable scene is `Assets/_Project/Scenes/PrototypeArena.unity`. Adjust the protocol together if the team changes the editor version, roles, or asset workflow.
 
 ## 1. Before starting / 작업 전
 - Read `README.md`, `docs/PROJECT_CONTEXT.md`, and `docs/DECISIONS.md`.

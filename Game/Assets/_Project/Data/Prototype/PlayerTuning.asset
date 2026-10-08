@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a0d2530149669a42acf13b66efaf24c, type: 3}
+  m_Name: PlayerTuning
+  m_EditorClassIdentifier: K4RMA.Gameplay::K4RMA.PlayerTuning
+  previewPiercingSlash: 0
+  previewAirHover: 0
+  previewCounter: 0
+  moveSpeed: 7
+  jumpForce: 8
+  jumpBufferSeconds: 0.12
+  coyoteTimeSeconds: 0.08
+  groundCheckDistance: 0.2
+  maxHealth: 100
+  meleeDamage: 12
+  meleeRange: 1.15
+  meleeHitboxSize: {x: 0.85, y: 0.95, z: 0.7}
+  meleeActiveSeconds: 0.14
+  meleeCooldownSeconds: 0.42
+  meleeKnockback: 4
+  meleeKnockbackSeconds: 0.12
+  projectileCooldownSeconds: 0.65
+  projectileSpeed: 12
+  projectileDamage: 8
+  projectileLifetimeSeconds: 1.6
+  projectileKnockback: 3.5
+  projectileKnockbackSeconds: 0.1
+  projectileColor: {r: 0.35, g: 0.86, b: 1, a: 1}
+  deflectDurationSeconds: 0.26
+  deflectCooldownSeconds: 1.15
+  deflectPunishDamage: 8
+  deflectStunSeconds: 0.55
+  deflectColor: {r: 0.7, g: 0.95, b: 1, a: 1}

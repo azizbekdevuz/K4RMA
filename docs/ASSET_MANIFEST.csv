@@ -1,0 +1,17 @@
+﻿Priority,Asset,Role,Why,License,Source,Acquisition,Recommendation
+A0,Tripo player,Primary player,Custom design matches teammate concept best,Team/user generated,Local Tripo export,Manual,Use if mesh/rig is usable; visual child only
+A0,Tripo guardian,Primary guardian,Custom identity and evolving boss core,Team/user generated,Local Tripo export,Manual,Use if mesh/rig is usable; visual child only
+A1,Stylized Asia Environment Megapack,Primary arena/environment,Strongest visual match: dojo/gates/Asian props + URP shaders/particles,CC0 assets + MIT code,https://rg-poly.itch.io/stylized-asia-enviroment-megapack-unity-urp,Manual itch download,Import selectively; expect Unity 6 shader/material cleanup
+A2,LOWPO Samurai Free,Fallback player,2 rigged samurai + katana; close thematic fit,CC0,https://standout7.itch.io/lowpo-samurai,Manual itch download,Fallback only if Tripo player rig is bad
+A2,LOWPO Golem Free,Fallback guardian,Rock/Earth/Iron; humanoid rig; Mixamo compatible,CC0,https://standout7.itch.io/lowpo-golem,Manual itch download,Excellent fallback neutral guardian
+A2,Universal Animation Library 2,Humanoid animations,130+ overall; free portion; melee/locomotion; Unity retargeting,CC0,https://quaternius.com/packs/universalanimationlibrary2.html,Manual,Copy only needed free clips
+B1,Modular Sushi Restaurant Kit,Japanese structural props,"Torii, Shoji, Japanese Door, red wall, floors, arch",CC0,https://poly.pizza/bundle/Modular-Sushi-Restaurant-Kit-LJZrZsNPM7,Manual,Use selected structural pieces only
+B1,Kenney Input Prompts,Interaction UI,Real key glyphs reduce textual tutorial clutter,CC0,https://kenney.nl/assets/input-prompts,Auto helper,"Use E key sprite, maybe keyboard movement hints only"
+B1,Kenney UI Pack Adventure,HUD,Simple game-like HUD frames,CC0,https://kenney.nl/assets/ui-pack-adventure,Auto helper,Minimal HP/ability UI only
+B1,Kenney RPG Audio,Gameplay SFX,Weapon/footstep/RPG sounds,CC0,https://kenney.nl/assets/rpg-audio,Auto helper,Select only relevant clips
+B1,Kenney Impact Sounds,Hit SFX,Large CC0 impact library,CC0,https://kenney.nl/assets/impact-sounds,Auto helper,Select 2-5 useful impacts
+B1,Kenney Particle Pack,VFX textures,CC0 textures for Unity ParticleSystem,CC0,https://kenney.nl/assets/particle-pack,Auto helper,Optional; don't replace good procedural effects blindly
+B2,KayKit Dungeon Remastered,Stone fallback,200+ dungeon pieces/props,CC0,https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0,Auto,Use only missing pillars/walls/props
+B2,KayKit Adventurers,Character/animation fallback,Rigged/animated characters + weapons,CC0,https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0,Auto,Emergency fallback or animation reference
+C1,Modular Temple 3D Models,Temple fallback,Modular OBJ temple pieces,CC0,https://opengameart.org/content/modular-temple-3d-models,Auto page parser,Background/stone fallback
+C1,3TD Fantasy Ruins Pack,Ruins fallback,"Pillars, arch, ruined temple/walls",CC0,https://opengameart.org/content/3td-fantasy-ruins-pack,Auto page parser,Background silhouette only

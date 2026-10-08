@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80d76a14f39421a48bbe33329f045c73, type: 3}
+  m_Name: BossStage1
+  m_EditorClassIdentifier: K4RMA.Gameplay::K4RMA.BossEncounterConfig
+  stageLabel: Training Guardian
+  maxHealth: 60
+  approachSpeed: 3.3
+  meleeRange: 1.75
+  meleeHitboxSize: {x: 1, y: 1.1, z: 0.8}
+  meleeTelegraphSeconds: 0.8
+  meleeStrikeSeconds: 0.18
+  meleeRecoverSeconds: 0.55
+  meleeDamage: 14
+  meleeKnockback: 6.5
+  meleeKnockbackSeconds: 0.14
+  lungeSpeed: 5.2
+  hurtStunSeconds: 0.35
+  deadColor: {r: 0.25, g: 0.22, b: 0.22, a: 1}
+  meleeTelegraphColor: {r: 0.95, g: 0.95, b: 0.92, a: 1}
+  inheritedAbilityId: 
+  projectileTelegraphSeconds: 0.95
+  projectileSpeed: 6.5
+  projectileDamage: 12
+  projectileCooldownSeconds: 2.6
+  projectileLifetimeSeconds: 2.4
+  projectileReleaseSeconds: 0.2
+  projectileKnockback: 4.5
+  projectileKnockbackSeconds: 0.12
+  projectileTelegraphColor: {r: 0.4, g: 0.78, b: 1, a: 1}
+  projectileColor: {r: 1, g: 0.5, b: 0.16, a: 1}

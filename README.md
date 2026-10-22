@@ -18,6 +18,8 @@ Unity 6000.6.2f1 / C# 기반 2D 횡스크롤 싱글플레이 보스러시. 이 �
 
 ## 실행 및 조작
 
+`image/`의 Production/v3 원화를 플레이어 9포즈·수호자 4종·실외/실내 배경·메뉴 배경·기술 아이콘·적중 효과에 연결했다. 타이틀과 고유화 선택은 새 원화의 배치를 따른다.
+
 그림 교체는 **K4RMA → 이미지 설정 선택**에서 Inspector 슬롯에 Sprite/PNG를 넣는다. 기존 그림 연결은 저장소에 포함되어 있어 pull 후 다시 연결할 필요가 없다. 자세한 설정·교체·Git 공유 방법은 [이미지 교체 문서](docs/ARTWORK.md)를 참조한다.
 
 `K4RMA → 플레이 씬 생성`으로 씬·설정·표시 재질을 저장할 수 있다. 기존 씬은 기존 `KarmaGame` 설정을 사용한다. 새 보스 프로필은 `Assets/K4RMA/Runtime/Configuration/KarmaBossTuning.cs`에 있다.

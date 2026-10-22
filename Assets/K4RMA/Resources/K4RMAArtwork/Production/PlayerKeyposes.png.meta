@@ -1,0 +1,342 @@
+fileFormatVersion: 2
+guid: 1941b8fa0f8c940d592742f97ca5becc
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2405740526961056800
+    second: PlayerKeyposes_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0}
+  spritePixelsToUnits: 130
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Idle
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 724
+        width: 205
+        height: 285
+      alignment: 9
+      pivot: {x: 0.52682924, y: 0.03508772}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 28418180127294260b3c33a1fd9f62d4
+      internalID: 424788828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Move1
+      rect:
+        serializedVersion: 2
+        x: 330
+        y: 729
+        width: 265
+        height: 250
+      alignment: 9
+      pivot: {x: 0.554717, y: 0.052}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: abb920c432f7c4e7eac9b86cb6c2be9e
+      internalID: 54923388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Move2
+      rect:
+        serializedVersion: 2
+        x: 625
+        y: 734
+        width: 270
+        height: 260
+      alignment: 9
+      pivot: {x: 0.5185185, y: 0.046153847}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2df441f60251c4cada60f10105e30109
+      internalID: 1040366131
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slash1
+      rect:
+        serializedVersion: 2
+        x: 610
+        y: 509
+        width: 375
+        height: 215
+      alignment: 9
+      pivot: {x: 0.36, y: 0.055813953}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a114a5b9e5da4422cbfd27e8f19f0e25
+      internalID: 923073471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Slash2
+      rect:
+        serializedVersion: 2
+        x: 1180
+        y: 504
+        width: 355
+        height: 225
+      alignment: 9
+      pivot: {x: 0.3943662, y: 0.057777777}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e050c3dfd1d7d45ceb7c549c25f58af4
+      internalID: -952824689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Rising
+      rect:
+        serializedVersion: 2
+        x: 355
+        y: 234
+        width: 245
+        height: 280
+      alignment: 9
+      pivot: {x: 0.5102041, y: 0.05}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb71a146ca072416aa222a6e9918bc8c
+      internalID: -703626981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Falling
+      rect:
+        serializedVersion: 2
+        x: 645
+        y: 4
+        width: 285
+        height: 220
+      alignment: 9
+      pivot: {x: 0.47368422, y: 0.11363637}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b84aa6c07dc645c49c7780294cd3e4a
+      internalID: 1065545395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Hurt
+      rect:
+        serializedVersion: 2
+        x: 1215
+        y: 239
+        width: 295
+        height: 235
+      alignment: 9
+      pivot: {x: 0.5254237, y: 0.114893615}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c1a04ee12f0f74511a08048764c412b7
+      internalID: 445551805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Death
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 9
+        width: 345
+        height: 105
+      alignment: 9
+      pivot: {x: 0.4347826, y: 0.21904762}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ebfc53ca7f8b485c89ad5288fe02c97
+      internalID: 2005551413
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 080b26a603bc0440d83a93d7a9a43417
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Death: 2005551413
+      Falling: 1065545395
+      Hurt: 445551805
+      Idle: 424788828
+      Move1: 54923388
+      Move2: 1040366131
+      Rising: -703626981
+      Slash1: 923073471
+      Slash2: -952824689
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,307 @@
+[
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-sky.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-moon.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-far_mountains.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-far_forest.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-mid_forest.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-dojo.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-rocks.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-waterfall.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-water.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-floor.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true,
+    "measured_floor_top_y": 700,
+    "suggested_shift_down_pixels": 53,
+    "note": "공유 canvas 기준 바닥 상단을80%에 맞추기 위한 초기 Transform offset. 실제 Scene에서 미세 조정."
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-vegetation.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-trees.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/MountainDojo/ext-layer-silhouettes.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-outside_sky.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-moon_forest.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-back_wall_windows.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-rear_rail.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-pillars.png",
+    "canvas": [
+      1671,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-banners.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-lanterns.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-floor.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true,
+    "measured_floor_top_y": 747,
+    "suggested_shift_down_pixels": 6,
+    "note": "공유 canvas 기준 바닥 상단을80%에 맞추기 위한 초기 Transform offset. 실제 Scene에서 미세 조정."
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-front_rail.png",
+    "canvas": [
+      1672,
+      941
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  },
+  {
+    "file": "05_Environments/TrialHall/hall-layer-front_silhouette.png",
+    "canvas": [
+      1673,
+      940
+    ],
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "target_floor_normalized_y": 0.8,
+    "requires_scene_alignment": true
+  }
+]

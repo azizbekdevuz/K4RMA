@@ -30,6 +30,18 @@ namespace KarmaPrototype.Editor
                         throw new InvalidOperationException("수호자 Sprite 에셋 참조 오류: " + type);
                 if (settings.dojoBackground == null || !AssetDatabase.Contains(settings.dojoBackground))
                     throw new InvalidOperationException("배경 Sprite 에셋 참조 오류");
+                if (settings.menuBackground != null)
+                {
+                    if (settings.skillIcons == null || settings.skillIcons.Length != 6
+                        || settings.selectionCrescent == null || settings.hitEffect == null
+                        || settings.neutralGuardian == null || settings.mountainBackground == null)
+                        throw new InvalidOperationException("Production UI / 기본 수호자 / 실외 배경 연결 누락");
+                    foreach (var icon in settings.skillIcons)
+                        if (icon == null || !AssetDatabase.Contains(icon))
+                            throw new InvalidOperationException("Production 기술 아이콘 참조 오류");
+                    if (settings.Guardian(null) != settings.neutralGuardian)
+                        throw new InvalidOperationException("첫 시련 기본 수호자 선택 오류");
+                }
                 // The runtime must follow Inspector references, regardless of the PNG filename.
                 var original = settings.worldOverview;
                 try
@@ -42,6 +54,8 @@ namespace KarmaPrototype.Editor
                 var root = new GameObject("Artwork validation");
                 if (KarmaArtwork.Player(root.transform) == null || !KarmaArtwork.Background(root.transform))
                     throw new InvalidOperationException("플레이어/배경 연결 실패");
+                if (!KarmaArtwork.Background(root.transform, 0)) throw new InvalidOperationException("실외 배경 생성 실패");
+                KarmaArtwork.Guardian(root.transform, Array.Empty<Essence>(), false);
                 foreach (Essence type in Enum.GetValues(typeof(Essence)))
                     KarmaArtwork.Guardian(root.transform, new[] { type }, false);
                 var reset = typeof(KarmaArtwork).GetMethod("ResetCache", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
@@ -49,7 +63,7 @@ namespace KarmaPrototype.Editor
                 if (frames[0] == null || original == null || KarmaArtwork.Settings != settings)
                     throw new InvalidOperationException("캐시 초기화 시 공유 이미지 에셋이 파괴되었습니다.");
                 UnityEngine.Object.DestroyImmediate(root);
-                File.WriteAllText("artwork-validation.txt", "PASS: shared Inspector settings, 11 textures, 9 native player sprites, 3 guardian sprites, background, reference replacement and cache reset.\n");
+                File.WriteAllText("artwork-validation.txt", "PASS: shared Inspector settings, 11 textures, 9 native player sprites, 3 guardian sprites, backgrounds, Production icons/VFX when configured, reference replacement and cache reset.\n");
                 Debug.Log("K4RMA 이미지 연결 검사 PASS");
                 if (Application.isBatchMode) EditorApplication.Exit(0);
             }

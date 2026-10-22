@@ -78,18 +78,22 @@ namespace KarmaPrototype
         {
             return type == Essence.Flame ? "SwordGuardian" : type == Essence.Dash ? "RisingGuardian" : "WardGuardian";
         }
-        public static bool Background(Transform parent)
+        public static bool Background(Transform parent, int stage = 1)
         {
-            var sprite = Settings.dojoBackground;
-            if (sprite == null) throw new InvalidOperationException("도장 배경 슬롯이 비어 있습니다. KarmaArtworkSettings를 확인하세요.");
-            // Source floor lies around 75% image height; align it to world ground y=0.
-            for (int i = 0; i < 3; i++)
-            {
-                var go = new GameObject("Dojo artwork " + i); go.transform.SetParent(parent, false);
-                go.transform.localPosition = new Vector3(-7 + i * 27, -3.8f, 0);
-                go.transform.localScale = new Vector3(27 / sprite.bounds.size.x, 15.2f / sprite.bounds.size.y, 1);
-                var renderer = go.AddComponent<SpriteRenderer>(); renderer.sprite = sprite; renderer.sortingOrder = -20; KarmaVisuals.ApplyMaterial(renderer);
-            }
+            var sprite = stage == 0 && Settings.mountainBackground != null
+                ? Settings.mountainBackground : Settings.dojoBackground;
+            if (sprite == null) throw new InvalidOperationException("도장 배경 슬롯이 비어 있습니다.");
+            // Composites are authored scenes, not repeatable tiles. Cover the entire arena once.
+            float width = 50, height = width * sprite.rect.height / sprite.rect.width;
+            float floorFromTop = stage == 0 && Settings.mountainBackground != null ? 0.74f : 0.8f;
+            var go = new GameObject(stage == 0 ? "Mountain dojo artwork" : "Trial hall artwork");
+            go.transform.SetParent(parent, false);
+            // Account for a replacement sprite's actual pivot, too.
+            go.transform.localPosition = new Vector3(20 + (sprite.pivot.x / sprite.rect.width - 0.5f) * width,
+                (sprite.pivot.y / sprite.rect.height - (1 - floorFromTop)) * height, 0);
+            go.transform.localScale = new Vector3(width / sprite.bounds.size.x, height / sprite.bounds.size.y, 1);
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite; renderer.sortingOrder = -20; KarmaVisuals.ApplyMaterial(renderer);
             return true;
         }
     }

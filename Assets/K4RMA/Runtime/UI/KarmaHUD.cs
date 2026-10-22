@@ -8,7 +8,7 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD : MonoBehaviour
     {
         KarmaGame game;
-        GUIStyle title, heading, text, small, button;
+        GUIStyle title, heading, text, small, button, menuButton, centered;
         Font runtimeFont;
         readonly string[] names = { "검기", "상승베기", "방어" };
         readonly string[] keys = { "Q", "SHIFT", "E" };
@@ -30,8 +30,12 @@ namespace KarmaPrototype
             text = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true };
             small = new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true };
             button = new GUIStyle(GUI.skin.button) { fontSize = 18, wordWrap = true, padding = new RectOffset(15, 15, 10, 10) };
+            menuButton = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
+            menuButton.normal.textColor = new Color(0.92f, 0.9f, 0.82f);
+            menuButton.hover.textColor = Color.white;
+            centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
             foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
-            foreach (var s in new[] { title, heading, text, small, button }) if (font != null) s.font = font;
+            foreach (var s in new[] { title, heading, text, small, button, menuButton, centered }) if (font != null) s.font = font;
         }
         void OnGUI()
         {
@@ -41,12 +45,17 @@ namespace KarmaPrototype
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0),
                 Quaternion.identity, new Vector3(scale, scale, 1));
+            if (game.Phase == RunPhase.Title || game.Phase == RunPhase.Story || game.Phase == RunPhase.Controls)
+                Art(new Rect(0, 0, 1280, 720), "MenuBackground");
             if (game.Phase == RunPhase.Title) TitleScreen();
             else if (game.Phase == RunPhase.Story) StoryScreen();
             else if (game.Phase == RunPhase.Controls) ControlsScreen();
             else
             {
                 TopBar();
+                if (game.Paused || game.Phase == RunPhase.Choosing || game.Phase == RunPhase.Transition
+                    || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory)
+                    Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.78f));
                 if (game.Paused) PauseScreen();
                 else switch (game.Phase)
                 {
@@ -85,6 +94,24 @@ namespace KarmaPrototype
             Color old = GUI.color; GUI.color = Color.white;
             GUI.DrawTextureWithTexCoords(destination, texture, KarmaArtwork.UV(texture, crop), true);
             GUI.color = old;
+        }
+        static void SpriteArt(Rect bounds, Sprite sprite)
+        {
+            if (sprite == null) return;
+            float ratio = sprite.rect.width / sprite.rect.height;
+            float width = Mathf.Min(bounds.width, bounds.height * ratio), height = width / ratio;
+            var rect = new Rect(bounds.center.x - width / 2, bounds.center.y - height / 2, width, height);
+            Color old = GUI.color; GUI.color = Color.white;
+            var source = sprite.rect;
+            GUI.DrawTextureWithTexCoords(rect, sprite.texture, new Rect(source.x / sprite.texture.width,
+                source.y / sprite.texture.height, source.width / sprite.texture.width, source.height / sprite.texture.height), true);
+            GUI.color = old;
+        }
+        static Sprite SkillIcon(Essence essence, bool unique)
+        {
+            var icons = KarmaArtwork.Settings.skillIcons;
+            int index = (int)essence + (unique ? 3 : 0);
+            return icons != null && index < icons.Length ? icons[index] : null;
         }
         void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }

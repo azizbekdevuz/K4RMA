@@ -17,12 +17,21 @@ namespace KarmaPrototype
         [InspectorName("사망")] public Sprite playerDeath;
 
         [Header("수호자 외형 — Sprite를 연결하세요")]
+        [InspectorName("기본 수호자")] public Sprite neutralGuardian;
         [InspectorName("검 수호자")] public Sprite swordGuardian;
         [InspectorName("상승 수호자")] public Sprite risingGuardian;
         [InspectorName("결계 수호자")] public Sprite wardGuardian;
 
         [Header("스테이지 — Sprite를 연결하세요")]
         [InspectorName("도장 배경")] public Sprite dojoBackground;
+
+        [InspectorName("실외 도장 배경")] public Sprite mountainBackground;
+
+        [Header("Production UI / VFX")]
+        public Texture2D menuBackground;
+        public Sprite[] skillIcons;
+        public Sprite selectionCrescent;
+        public Sprite hitEffect;
 
         [Header("UI 일러스트 — PNG 텍스처를 연결하세요")]
         [InspectorName("타이틀 / 세계관")] public Texture2D worldOverview;
@@ -55,6 +64,7 @@ namespace KarmaPrototype
 
         public Sprite Guardian(Essence? type)
         {
+            if (!type.HasValue && neutralGuardian != null) return neutralGuardian;
             return type == Essence.Flame ? swordGuardian : type == Essence.Dash ? risingGuardian : wardGuardian;
         }
 
@@ -62,6 +72,7 @@ namespace KarmaPrototype
         {
             switch (name)
             {
+                case "MenuBackground": return menuBackground;
                 case "WorldOverview": return worldOverview;
                 case "PlayerSheet": return playerSheet;
                 case "PlayerSwordWave": return playerSwordWave;

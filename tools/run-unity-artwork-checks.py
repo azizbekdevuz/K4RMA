@@ -14,7 +14,9 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--initialize', action='store_true')
+parser.add_argument('--production', action='store_true', help='Import copied Production PNGs, assign settings and validate')
 parser.add_argument('--unity', type=Path)
+parser.add_argument('--licensing-ipc', help='Use an existing Unity Licensing Client channel')
 args = parser.parse_args()
 version = (root / 'ProjectSettings/ProjectVersion.txt').read_text().splitlines()[0].split(': ')[1]
 editor = args.unity or Path(f'/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity')
@@ -22,8 +24,10 @@ if not editor.exists():
     raise SystemExit('Unity executable not found. Pass --unity /path/to/Unity')
 output = root / 'output/validation/artwork'
 output.mkdir(parents=True, exist_ok=True)
-log = output / ('initialize.log' if args.initialize else 'fresh-import.log')
+log = output / ('production-import.log' if args.production else 'initialize.log' if args.initialize else 'fresh-import.log')
 method = 'KarmaPrototype.Editor.KarmaArtworkSetup.InitializeAndValidate' if args.initialize else 'KarmaPrototype.Editor.KarmaArtworkValidation.Run'
+if args.production:
+    method = 'KarmaPrototype.Editor.KarmaProductionArtworkSetup.ApplyAndValidate'
 with tempfile.TemporaryDirectory(prefix='karma-artwork-', ignore_cleanup_errors=True) as folder:
     project = Path(folder)
     for name in ('Assets', 'Packages', 'ProjectSettings'):
@@ -64,11 +68,16 @@ public static class KarmaSpritePackageInstaller
         for name in ('manifest.json', 'packages-lock.json'):
             shutil.copy2(project / 'Packages' / name, root / 'Packages' / name)
     result = subprocess.run([str(editor), '-batchmode', '-nographics', '-quit', '-projectPath', str(project),
-        '-executeMethod', method, '-logFile', str(log)], timeout=240)
+        '-executeMethod', method, '-logFile', str(log)]
+        + (['-licensingIpc', args.licensing_ipc] if args.licensing_ipc else []), timeout=240)
     verdict = project / 'artwork-validation.txt'
     if result.returncode or not verdict.exists() or not verdict.read_text().startswith('PASS:'):
         shutil.copy2(project / 'Assets/K4RMA/Resources/K4RMAArtwork/PlayerAnimation.png.meta', output / 'failed-player-import.txt')
         raise SystemExit(f'Artwork validation failed. Read {log}')
+    if args.production:
+        imported = project / 'Assets/K4RMA/Resources/K4RMAArtwork/Production'
+        for source in [*imported.rglob('*.meta'), Path(str(imported) + '.meta'), project / 'Assets/K4RMA/Resources/KarmaArtworkSettings.asset']:
+            shutil.copy2(source, root / source.relative_to(project))
     if args.initialize:
         files = list((project / 'Assets/K4RMA/Resources/K4RMAArtwork').glob('*.png.meta'))
         files += [project / 'Assets/K4RMA/Resources/KarmaArtworkSettings.asset',

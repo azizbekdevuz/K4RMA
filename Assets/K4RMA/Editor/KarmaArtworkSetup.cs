@@ -72,7 +72,7 @@ namespace KarmaPrototype.Editor
             SelectSettings();
         }
 
-        static SpriteRect Frame(string name, Rect rect, Vector2 pivot)
+        internal static SpriteRect Frame(string name, Rect rect, Vector2 pivot)
         {
             return new SpriteRect { name = name, rect = rect, pivot = pivot,
                 alignment = SpriteAlignment.Custom, spriteID = GUID.Generate() };
@@ -92,7 +92,7 @@ namespace KarmaPrototype.Editor
             return importer;
         }
 
-        static Texture2D ImportTexture(string name)
+        internal static Texture2D ImportTexture(string name)
         {
             var importer = Importer(name);
             importer.textureType = TextureImporterType.Default;
@@ -100,7 +100,7 @@ namespace KarmaPrototype.Editor
             return AssetDatabase.LoadAssetAtPath<Texture2D>(Folder + name + ".png");
         }
 
-        static void ImportSprite(string name, float pixelsPerUnit, SpriteRect[] frames)
+        internal static void ImportSprite(string name, float pixelsPerUnit, SpriteRect[] frames)
         {
             var importer = Importer(name);
             importer.textureType = TextureImporterType.Sprite;
@@ -132,7 +132,7 @@ namespace KarmaPrototype.Editor
             importer.SaveAndReimport();
         }
 
-        static Sprite Sprite(string sheet, string name)
+        internal static Sprite Sprite(string sheet, string name)
         {
             var sprite = AssetDatabase.LoadAllAssetsAtPath(Folder + sheet + ".png").OfType<Sprite>().FirstOrDefault(s => s.name == name);
             if (sprite == null) throw new InvalidOperationException("Sprite 자르기 실패: " + sheet + "/" + name

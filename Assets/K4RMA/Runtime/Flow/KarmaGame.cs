@@ -10,8 +10,8 @@ namespace KarmaPrototype
         public KarmaConfig Config { get { return config; } }
         public RunPhase Phase { get; private set; } = RunPhase.Title;
         public KarmaPlayer Player { get; private set; }
-        public readonly List<KarmaEnemy> Enemies = new List<KarmaEnemy>();
-        public readonly List<KarmaProjectile> Projectiles = new List<KarmaProjectile>();
+        [HideInInspector] public List<KarmaEnemy> Enemies = new List<KarmaEnemy>();
+        [HideInInspector] public List<KarmaProjectile> Projectiles = new List<KarmaProjectile>();
         public Transform World { get; private set; }
         public int StageIndex { get; private set; }
         public bool Paused { get; private set; }
@@ -27,6 +27,14 @@ namespace KarmaPrototype
         Transform runRoot;
         float transitionLeft;
         bool ownsConfig;
+        void OnEnable()
+        {
+            if (World == null) return;
+            KarmaStage.RefreshBoundaries(World);
+            if (Player == null || Player.Essences == null) return;
+            var guardian = World.GetComponentInChildren<KarmaEnemy>(true);
+            if (guardian != null) guardian.RestoreMissingPersonalizations(Player.Essences, StageIndex, LastSacrifice);
+        }
         void Awake()
         {
             if (config == null) { config = ScriptableObject.CreateInstance<KarmaConfig>(); ownsConfig = true; }

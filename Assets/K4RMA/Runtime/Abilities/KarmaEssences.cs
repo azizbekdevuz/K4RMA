@@ -6,9 +6,21 @@ namespace KarmaPrototype
 {
     // Unity facade: persistent progression lives in Core/KarmaProgressionState.
     // The director only asks this component to sacrifice an essence.
-    public sealed partial class KarmaEssences : MonoBehaviour
+    public sealed partial class KarmaEssences : MonoBehaviour, ISerializationCallbackReceiver
     {
-        readonly KarmaProgressionState progression = new KarmaProgressionState();
+        KarmaProgressionState progression = new KarmaProgressionState();
+        [SerializeField, HideInInspector] List<Essence> acquiredOrder = new List<Essence>();
+        public void OnBeforeSerialize()
+        {
+            acquiredOrder.Clear();
+            foreach (var essence in progression.Order) acquiredOrder.Add(essence);
+        }
+        public void OnAfterDeserialize()
+        {
+            progression = new KarmaProgressionState();
+            if (acquiredOrder == null) acquiredOrder = new List<Essence>();
+            foreach (var essence in acquiredOrder) progression.TryInternalize(essence);
+        }
         readonly float[] readyAt = new float[3];
         KarmaPlayer player;
         KarmaGame game;

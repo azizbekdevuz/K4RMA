@@ -11,7 +11,6 @@ namespace KarmaPrototype
         GUIStyle title, heading, text, small, button, menuButton, centered;
         Font runtimeFont;
         readonly string[] names = { "검기", "상승베기", "방어" };
-        readonly string[] keys = { "Q", "SHIFT", "E" };
         public void Initialize(KarmaGame director) { game = director; }
         void Styles()
         {
@@ -69,12 +68,15 @@ namespace KarmaPrototype
                         Label(325, 578, 640, 44, "오른쪽 수련문으로 이동한 뒤 F를 눌러 고유화할 기술을 고르세요.", text);
                         break;
                 }
-                Label(30, 675, 1220, 30, "A/D·방향키 이동    Space 점프    J 검    Q 검기    Shift 상승베기    E 방어    K 반격    Esc 일시정지", small);
             }
             GUI.matrix = saved;
         }
 
-        void OnDestroy() { if (runtimeFont != null) Destroy(runtimeFont); }
+        void OnDestroy()
+        {
+            if (runtimeFont != null) Destroy(runtimeFont);
+            DestroyHudSymbols();
+        }
 
         static void Art(Rect bounds, string name, Rect? source = null)
         {

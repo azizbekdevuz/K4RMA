@@ -9,6 +9,7 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--unity', type=Path, help='Unity executable')
+parser.add_argument('--licensing-ipc', help='Use an existing Unity Licensing Client channel')
 parser.add_argument('--output-dir', type=Path, default=root / 'output/validation')
 args = parser.parse_args()
 version = (root / 'ProjectSettings/ProjectVersion.txt').read_text().splitlines()[0].split(': ')[1]
@@ -25,7 +26,8 @@ with tempfile.TemporaryDirectory(prefix='karma-playchecks-') as folder:
     (project / 'Assets/Editor').mkdir(exist_ok=True)
     shutil.copy2(root / 'tests/Unity/KarmaBossPlayChecks.cs', project / 'Assets/Editor/KarmaBossPlayChecks.cs')
     result = subprocess.run([str(editor), '-batchmode', '-nographics', '-projectPath', str(project),
-        '-executeMethod', 'KarmaBossPlayChecks.Run', '-logFile', str(log)], timeout=300)
+        '-executeMethod', 'KarmaBossPlayChecks.Run', '-logFile', str(log)]
+        + (['-licensingIpc', args.licensing_ipc] if args.licensing_ipc else []), timeout=300)
     generated = project / 'boss-play-validation.txt'
     if generated.exists():
         shutil.copy2(generated, report)

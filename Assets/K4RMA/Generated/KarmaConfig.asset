@@ -24,18 +24,18 @@ MonoBehaviour:
     recoveryMultiplier: 1
     ultimateCooldown: 28
     patternTimeout: 30
-    swordSpeed: 11
+    swordSpeed: 22
     swordLifetime: 1.4
-    swordWidth: 1.2
-    swordHeight: 0.5
+    swordWidth: 2.4
+    swordHeight: 1
     counterWarning: 0.45
     swordWardDuration: 3
     swordWardResponseCooldown: 0.8
     aerialSwordCount: 5
     aerialSwordGap: 0.8
-    riseHeight: 4
-    groundBladeWidth: 5
-    groundBladeHeight: 6
+    riseHeight: 8
+    groundBladeWidth: 10
+    groundBladeHeight: 12
     crossingWarning: 0.9
     crossingReset: 1.1
     autoShieldPeriod: 12
@@ -54,28 +54,28 @@ MonoBehaviour:
     trialStunSeconds: 4
     trialExplosionMultiplier: 2.5
   playerHealth: 10000
-  moveSpeed: 7
-  jumpSpeed: 13
-  gravityScale: 3
+  moveSpeed: 14
+  jumpSpeed: 26
+  gravityScale: 6
   hitInvulnerability: 0.7
   swordDamage: 1000
   swordCooldown: 0.32
   flameCooldown: 2.2
   flameDamage: 32
-  flameSpeed: 14
+  flameSpeed: 28
   dashCooldown: 1.6
   wardCooldown: 5
   wardDuration: 1.5
   techniques:
-    longSlashReach: 3.4
-    longSlashHeight: 2.6
+    longSlashReach: 6.8
+    longSlashHeight: 5.2
     slashLife: 0.18
     hitStopSeconds: 0.035
     hitShakeSeconds: 0.09
-    hitShakeStrength: 0.075
+    hitShakeStrength: 0.15
     doubleTapWindow: 0.25
-    pierceDistance: 4
-    airSlashDistance: 1.2
+    pierceDistance: 8
+    airSlashDistance: 2.4
     airSlashDuration: 0.12
     airSlashRecovery: 0.16
     airSlashInputBuffer: 0.16
@@ -85,9 +85,9 @@ MonoBehaviour:
     counterCooldown: 1.1
     counterDamage: 38
     risingDamage: 26
-    risingSpeed: 15
+    risingSpeed: 30
   enemyDamage: 12
-  enemyMoveSpeed: 2.4
+  enemyMoveSpeed: 4.8
   enemyDecisionDelay: 1.2
   enemyTelegraphTime: 0.75
   healAfterSacrifice: 30

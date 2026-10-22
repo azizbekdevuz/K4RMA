@@ -15,7 +15,7 @@ namespace KarmaPrototype
             if (FightSeconds >= nextShield && FightSeconds >= shieldUntil)
             { shieldWarningUntil = FightSeconds + Mathf.Max(0.3f, Tuning.autoShieldWarning); }
             if (shieldWarningUntil > 0)
-                KarmaVisuals.Flash(game.World, Position, new Vector2(1.8f, 2.6f), new Color(1, 0.85f, 0.2f, 0.3f), 0.25f);
+                KarmaVisuals.Flash(game.World, Position, KarmaSpace.Units(new Vector2(1.8f, 2.6f)), new Color(1, 0.85f, 0.2f, 0.3f), 0.25f);
         }
         void RefreshAutoShield()
         {
@@ -25,8 +25,8 @@ namespace KarmaPrototype
         }
         IEnumerator HeavyStrike()
         {
-            Vector2 center = Position + Vector2.right * direction * 2;
-            Vector2 size = new Vector2(4, 2.8f);
+            Vector2 center = Position + Vector2.right * direction * KarmaSpace.Units(2);
+            Vector2 size = KarmaSpace.Units(new Vector2(4, 2.8f));
             var mark = Mark("GD02 강공격 · 패링 가능", center, size);
             state = ActionState.Telegraph; yield return Wait(1);
             Destroy(mark.gameObject); animator.Attack(); state = ActionState.Attack;
@@ -47,9 +47,9 @@ namespace KarmaPrototype
         {
             state = ActionState.Telegraph;
             var contact = new KarmaAttackContact();
-            Vector2 origin = Position + Vector2.right * direction;
-            Vector2 impact = new Vector2(Mathf.Clamp(game.Player.Position.x, 4, 36), 0.65f);
-            Vector2 size = new Vector2(1.2f, 1.2f);
+            Vector2 origin = Position + Vector2.right * direction * KarmaSpace.Scale;
+            Vector2 impact = new Vector2(Mathf.Clamp(game.Player.Position.x, KarmaStage.ArenaLeft + 4, KarmaStage.ArenaRight - 4), KarmaSpace.Units(0.65f));
+            Vector2 size = KarmaSpace.Units(new Vector2(1.2f, 1.2f));
             var mark = PathMark(origin, impact, size);
             yield return Wait(0.8f); Destroy(mark.gameObject);
             state = ActionState.Attack; animator.Attack();
@@ -61,21 +61,21 @@ namespace KarmaPrototype
             Vector2 target = game.Player.Position; // One sample for all fragments; no late tracking.
             for (int i = 0; i < count; i++)
             {
-                starts[i] = impact + new Vector2((i - (count - 1) / 2f) * 1.1f, 1.3f + i * 0.35f);
-                aims[i] = (target - starts[i]).normalized * 10;
-                paths[i] = PathMark(starts[i], starts[i] + aims[i] * 0.8f, new Vector2(0.5f, 0.5f));
+                starts[i] = impact + KarmaSpace.Units(new Vector2((i - (count - 1) / 2f) * 1.1f, 1.3f + i * 0.35f));
+                aims[i] = (target - starts[i]).normalized * KarmaSpace.Units(10);
+                paths[i] = PathMark(starts[i], starts[i] + aims[i] * 0.8f, KarmaSpace.Units(new Vector2(0.5f, 0.5f)));
             }
             Intent = "GD03 조각 조준 고정 · 한 번만 피격/기절";
             yield return Wait(Mathf.Max(0.3f, Tuning.fragmentAimWarning));
             for (int i = 0; i < count; i++)
             {
                 Destroy(paths[i].gameObject);
-                Attack(starts[i], aims[i], new Vector2(0.5f, 0.5f), 0.8f, 0.8f, contact, Tuning.fragmentStunSeconds);
+                Attack(starts[i], aims[i], KarmaSpace.Units(new Vector2(0.5f, 0.5f)), 0.8f, 0.8f, contact, Tuning.fragmentStunSeconds);
             }
             yield return Wait(0.85f);
             // Return uses separate non-damaging visuals and a fixed deadline.
             var pieces = new SpriteRenderer[count];
-            for (int i = 0; i < count; i++) pieces[i] = Mark("회수 조각 · 피해 없음", starts[i] + aims[i] * 0.8f, new Vector2(0.4f, 0.4f), false);
+            for (int i = 0; i < count; i++) pieces[i] = Mark("회수 조각 · 피해 없음", starts[i] + aims[i] * 0.8f, KarmaSpace.Units(new Vector2(0.4f, 0.4f)), false);
             Intent = "GD03 방패 회수 · 복귀 판정 없음";
             float elapsed = 0;
             while (elapsed < 0.6f && Active)
@@ -92,8 +92,8 @@ namespace KarmaPrototype
             // Front-only defense deliberately supersedes auto-shield to reward a back attack.
             shieldUntil = shieldWarningUntil = 0; frontalGuard = true;
             state = ActionState.Telegraph;
-            float x = Mathf.Clamp(Position.x + direction * 2.5f, 5, 35);
-            Vector2 center = new Vector2(x, 3), size = new Vector2(1.4f, 6);
+            float x = Mathf.Clamp(Position.x + direction * KarmaSpace.Units(2.5f), KarmaStage.ArenaLeft + 5, KarmaStage.ArenaRight - 5);
+            Vector2 center = new Vector2(x, KarmaSpace.Units(3)), size = KarmaSpace.Units(new Vector2(1.4f, 6));
             var mark = Mark("GD04 방벽 상승 · 높이 전체 위험", center, size);
             yield return Wait(0.8f);
             animator.Attack(Vector2.down); yield return Wait(0.3f);
@@ -109,22 +109,22 @@ namespace KarmaPrototype
         IEnumerator SurvivalTrial()
         {
             state = ActionState.Telegraph;
-            Mark("GD05 결계 범위 예고", new Vector2(20, 4), new Vector2(16, 8), false);
+            Mark("GD05 결계 범위 예고", new Vector2(20, KarmaSpace.Units(4)), KarmaSpace.Units(new Vector2(16, 8)), false);
             yield return Wait(1); ClearPatternObjects();
             shieldUntil = shieldWarningUntil = 0;
             // Placement is protected, then the actual trial begins with a full warning.
-            game.Player.ConfineArena(12.6f, 27.4f);
-            yield return Motion(new Vector2(20, 1.15f), 0.5f, Vector2.zero);
-            Mark("결계 좌측", new Vector2(12, 5), new Vector2(0.25f, 10), false);
-            Mark("결계 우측", new Vector2(28, 5), new Vector2(0.25f, 10), false);
+            game.Player.ConfineArena(20 - KarmaSpace.Units(7.4f), 20 + KarmaSpace.Units(7.4f));
+            yield return Motion(new Vector2(20, KarmaSpace.GuardianGroundY), 0.5f, Vector2.zero);
+            Mark("결계 좌측", new Vector2(20 - KarmaSpace.Units(8), KarmaSpace.Units(5)), KarmaSpace.Units(new Vector2(0.25f, 10)), false);
+            Mark("결계 우측", new Vector2(20 + KarmaSpace.Units(8), KarmaSpace.Units(5)), KarmaSpace.Units(new Vector2(0.25f, 10)), false);
             trial.Begin(Mathf.Clamp(Tuning.trialAttackCount, 3, 8), Tuning.trialAllowedHits);
             state = ActionState.Attack;
             for (int i = 0; i < trial.Total; i++)
             {
                 bool left = i % 2 == 0;
-                float y = i % 3 == 1 ? 3.3f : 1.05f;
-                Vector2 start = new Vector2(left ? 12.8f : 27.2f, y);
-                Vector2 velocity = new Vector2(left ? 10 : -10, 0);
+                float y = KarmaSpace.Units(i % 3 == 1 ? 3.3f : 1.05f);
+                Vector2 start = new Vector2(20 + KarmaSpace.Units(left ? -7.2f : 7.2f), y);
+                Vector2 velocity = KarmaSpace.Units(new Vector2(left ? 10 : -10, 0));
                 var mark = PathMark(start, start + velocity * 1.4f, WaveSize);
                 Intent = "GD05 " + TrialStatus + (trial.Hits > trial.Allowed ? " · 종료 후 폭발 예정" : " · 회피/반격");
                 yield return Wait(0.7f); Destroy(mark.gameObject);
@@ -139,9 +139,9 @@ namespace KarmaPrototype
             if (!passed)
             {
                 Intent = "GD05 시험 실패 · 결계 폭발 예고 / 반격 가능";
-                var mark = Mark("결계 폭발", new Vector2(20, 4), new Vector2(16, 8));
+                var mark = Mark("결계 폭발", new Vector2(20, KarmaSpace.Units(4)), KarmaSpace.Units(new Vector2(16, 8)));
                 yield return Wait(0.9f); Destroy(mark.gameObject);
-                Attack(new Vector2(20, 4), Vector2.zero, new Vector2(16, 8), 0.15f, Tuning.trialExplosionMultiplier);
+                Attack(new Vector2(20, KarmaSpace.Units(4)), Vector2.zero, KarmaSpace.Units(new Vector2(16, 8)), 0.15f, Tuning.trialExplosionMultiplier);
                 yield return Wait(0.2f); ClearPatternObjects();
                 game.Player.ReleaseArena();
                 yield return Recovery(1.5f);

@@ -49,7 +49,7 @@ namespace KarmaPrototype
             {
                 if (enemy == null || !enemy.Alive) continue;
                 var delta = enemy.Position - Position;
-                if (Mathf.Abs(delta.y) <= swordTuning.longSlashHeight * 0.5f && delta.x * Facing >= -0.35f && Mathf.Abs(delta.x) <= swordTuning.longSlashReach)
+                if (Mathf.Abs(delta.y) <= swordTuning.longSlashHeight * 0.5f && delta.x * Facing >= -KarmaSpace.PlayerHalfWidth && Mathf.Abs(delta.x) <= swordTuning.longSlashReach)
                 SwordHit(enemy, Vector2.right * Facing);
             }
         }
@@ -61,15 +61,15 @@ namespace KarmaPrototype
             Vector2 to = MoveSlash(direction, distance);
             Color color = game.Config.ColorOf(essence);
             var flash = KarmaVisuals.Box(game.World, "Directional slash", (from + to) * 0.5f,
-                new Vector2(Mathf.Max(0.2f, Vector2.Distance(from, to)), 0.3f), color, 10);
+                new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f)), color, 10);
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
-            KarmaRemnantVFX.SwordSlash(game.World, to, direction, 1.6f, 2.1f, game.Config.Techniques.slashLife);
+            KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f), game.Config.Techniques.slashLife);
             Essences.NotifyUnique(essence);
             foreach (var enemy in game.Enemies.ToArray())
             {
                 if (enemy == null || !enemy.Alive) continue;
-                if (KarmaProjectile.Intersects(from, to, enemy.Position, 1.3f))
+                if (KarmaProjectile.Intersects(from, to, enemy.Position, KarmaSpace.Units(1.3f)))
                 SwordHit(enemy, direction);
             }
         }
@@ -86,17 +86,17 @@ namespace KarmaPrototype
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
             Essences.NotifyUnique(Essence.Dash);
-            KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, 1.6f, 1.8f, tuning.airSlashDuration + 0.04f);
+            KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
         }
         void DamageAirSlash()
         {
-            Vector2 from = airSlashPrevious + airSlashDirection * 0.35f;
-            Vector2 to = Position + airSlashDirection * 0.85f;
+            Vector2 from = airSlashPrevious + airSlashDirection * KarmaSpace.Units(0.35f);
+            Vector2 to = Position + airSlashDirection * KarmaSpace.Units(0.85f);
             airSlashPrevious = Position;
             foreach (var enemy in game.Enemies.ToArray())
             {
                 if (enemy == null || !enemy.Alive || airSlashHits.Contains(enemy)) continue;
-                if (!KarmaProjectile.Intersects(from, to, enemy.Position, 0.75f)) continue;
+                if (!KarmaProjectile.Intersects(from, to, enemy.Position, KarmaSpace.Units(0.75f))) continue;
                 airSlashHits.Add(enemy);
                 SwordHit(enemy, airSlashDirection);
             }
@@ -119,19 +119,19 @@ namespace KarmaPrototype
         {
             Vector2 from = Position;
             Vector2 to = from + direction * Mathf.Max(0, distance);
-            to.x = Mathf.Clamp(to.x, 0.2f, 39.8f);
+            to.x = Mathf.Clamp(to.x, KarmaStage.ArenaLeft + KarmaSpace.PlayerHalfWidth, KarmaStage.ArenaRight - KarmaSpace.PlayerHalfWidth);
             float travel = Vector2.Distance(from, to);
             direction = travel > 0 ? (to - from).normalized : direction;
-            var hits = Physics2D.BoxCastAll(from, new Vector2(0.7f, 1.55f), 0, direction, travel);
+            var hits = Physics2D.BoxCastAll(from, KarmaSpace.PlayerSize, 0, direction, travel);
             foreach (var h in hits)
             {
                 if (h.collider.isTrigger || h.collider.GetComponent<KarmaSurface>() == null) continue;
                 // One-way platforms block only downward crossings from above.
                 if (h.collider.GetComponent<PlatformEffector2D>() != null &&
-                    (direction.y >= 0 || from.y - 0.775f < h.collider.bounds.max.y - 0.05f)) continue;
+                    (direction.y >= 0 || from.y - KarmaSpace.PlayerHalfHeight < h.collider.bounds.max.y - KarmaSpace.Units(0.05f))) continue;
                 // Ignore contacts we are moving away from (e.g. jumping off the floor).
                 if (Vector2.Dot(h.normal, direction) >= -0.001f) continue;
-                travel = Mathf.Min(travel, Mathf.Max(0, h.distance - 0.05f));
+                travel = Mathf.Min(travel, Mathf.Max(0, h.distance - KarmaSpace.Units(0.05f)));
             }
             to = from + direction * travel;
             body.position = to; transform.position = to;
@@ -140,9 +140,9 @@ namespace KarmaPrototype
         public void BeginRisingSlash()
         {
             CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
-            KarmaVisuals.Flash(game.World, Position + Vector2.up, new Vector2(1.1f, 3), game.Config.dashColor, 0.25f);
+            KarmaVisuals.Flash(game.World, Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(1.1f, 3)), game.Config.dashColor, 0.25f);
             foreach (var enemy in game.Enemies.ToArray())
-                if (enemy != null && Mathf.Abs(enemy.Position.x - Position.x) < 2.1f && enemy.Position.y >= Position.y - 1 && enemy.Position.y <= Position.y + 3)
+                if (enemy != null && Mathf.Abs(enemy.Position.x - Position.x) < KarmaSpace.Units(2.1f) && enemy.Position.y >= Position.y - KarmaSpace.Units(1) && enemy.Position.y <= Position.y + KarmaSpace.Units(3))
                     enemy.TakeDamage(game.Config.Techniques.risingDamage);
         }
         public void BeginCounter() { techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow); }
@@ -158,23 +158,23 @@ namespace KarmaPrototype
                 foreach (var enemy in game.Enemies.ToArray())
                 {
                     if (enemy == null) continue;
-                    if (Vector2.Distance(enemy.Position, Position) < 3.5f) enemy.TakeDamage(game.Config.Techniques.counterDamage);
+                    if (Vector2.Distance(enemy.Position, Position) < KarmaSpace.Units(3.5f)) enemy.TakeDamage(game.Config.Techniques.counterDamage);
                     else
                     {
                         Vector2 aim = (enemy.Position - Position).normalized;
-                        KarmaProjectile.Spawn(game, Position + aim * 0.7f, aim * 14,
-                            game.Config.Techniques.counterDamage, game.Config.wardColor, 0.25f);
+                        KarmaProjectile.Spawn(game, Position + aim * KarmaSpace.Units(0.7f), aim * KarmaSpace.Units(14),
+                            game.Config.Techniques.counterDamage, game.Config.wardColor, KarmaSpace.Units(0.25f));
                     }
                 }
                 return;
             }
-            if (Shielded) { KarmaVisuals.Flash(game.World, Position, new Vector2(1.6f, 2.1f), game.Config.wardColor); return; }
+            if (Shielded) { KarmaVisuals.Flash(game.World, Position, KarmaSpace.Units(new Vector2(1.6f, 2.1f)), game.Config.wardColor); return; }
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();
             Health -= actual; game.DamageTaken += actual;
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
-            KarmaVisuals.Flash(game.World, Position, Vector2.one, new Color(1, 0.2f, 0.3f));
+            KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));
             if (Health <= 0) game.PlayerDied();
         }
         public void TakeImpact(float damage, Vector2 source, float speed, float duration = 0.3f)
@@ -182,8 +182,8 @@ namespace KarmaPrototype
             float before = Health; TakeDamage(damage);
             if (Health >= before || Health <= 0 || !game.IsCombat) return;
             knockbackDirection = Position.x < source.x ? -1 : Position.x > source.x ? 1 : -Facing;
-            knockbackSpeed = speed; knockbackUntil = Time.time + duration;
-            body.linearVelocity = new Vector2(knockbackDirection * speed, 4);
+            knockbackSpeed = KarmaSpace.Units(speed); knockbackUntil = Time.time + duration;
+            body.linearVelocity = new Vector2(knockbackDirection * knockbackSpeed, KarmaSpace.Units(4));
         }
         public void Heal(float amount) { Health = Mathf.Min(game.Config.playerHealth, Health + amount); }
     }

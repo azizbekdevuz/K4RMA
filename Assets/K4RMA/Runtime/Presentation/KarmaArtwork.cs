@@ -8,6 +8,8 @@ namespace KarmaPrototype
     public static class KarmaArtwork
     {
         public const string SettingsResourcePath = "KarmaArtworkSettings";
+        // Enlarge the foot-pivoted artwork for the full-arena camera view.
+        const float CharacterPictureScale = KarmaSpace.Scale;
         static KarmaArtworkSettings settings;
         static readonly HashSet<string> failures = new HashSet<string>();
         public static KarmaArtworkSettings Settings
@@ -52,7 +54,8 @@ namespace KarmaPrototype
             var frames = PlayerFrames();
             var root = new GameObject("Artwork").transform; root.SetParent(parent, false);
             var picture = new GameObject("Player sprite"); picture.transform.SetParent(root, false);
-            picture.transform.localPosition = new Vector3(0, -0.775f, 0);
+            picture.transform.localPosition = new Vector3(0, -KarmaSpace.PlayerHalfHeight, 0);
+            picture.transform.localScale = Vector3.one * CharacterPictureScale;
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, frames);
@@ -64,7 +67,8 @@ namespace KarmaPrototype
             if (sprite == null) throw new InvalidOperationException("수호자 Sprite 슬롯이 비어 있습니다. KarmaArtworkSettings를 확인하세요.");
             var root = new GameObject("Artwork").transform; root.SetParent(parent, false);
             var picture = new GameObject("Guardian sprite"); picture.transform.SetParent(root, false);
-            picture.transform.localPosition = new Vector3(0, -0.89f, 0);
+            picture.transform.localPosition = new Vector3(0, -KarmaSpace.GuardianGroundY / KarmaSpace.GuardianArtScale, 0);
+            picture.transform.localScale = Vector3.one * CharacterPictureScale;
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
@@ -78,14 +82,18 @@ namespace KarmaPrototype
         {
             return type == Essence.Flame ? "SwordGuardian" : type == Essence.Dash ? "RisingGuardian" : "WardGuardian";
         }
-        public static bool Background(Transform parent, int stage = 1)
+        public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)
         {
-            var sprite = stage == 0 && Settings.mountainBackground != null
-                ? Settings.mountainBackground : Settings.dojoBackground;
+            bool mountain = stage == 0 && Settings.mountainBackground != null;
+            var original = mountain ? Settings.mountainBackground : Settings.dojoBackground;
+            var panorama = mountain ? Settings.mountainPanorama : Settings.dojoPanorama;
+            var sprite = panorama != null ? panorama : original;
             if (sprite == null) throw new InvalidOperationException("도장 배경 슬롯이 비어 있습니다.");
-            // Composites are authored scenes, not repeatable tiles. Cover the entire arena once.
-            float width = 50, height = width * sprite.rect.height / sprite.rect.width;
-            float floorFromTop = stage == 0 && Settings.mountainBackground != null ? 0.74f : 0.8f;
+            // A single authored panorama covers the scroll range without mirrored repeats.
+            float width = panorama != null ? KarmaStage.BackgroundWidth : 50;
+            float height = original != null ? 50 * original.rect.height / original.rect.width
+                : width * sprite.rect.height / sprite.rect.width;
+            float floorFromTop = mountain ? (panorama != null ? 0.724f : 0.74f) : 0.8f;
             var go = new GameObject(stage == 0 ? "Mountain dojo artwork" : "Trial hall artwork");
             go.transform.SetParent(parent, false);
             // Account for a replacement sprite's actual pivot, too.
@@ -94,6 +102,7 @@ namespace KarmaPrototype
             go.transform.localScale = new Vector3(width / sprite.bounds.size.x, height / sprite.bounds.size.y, 1);
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite; renderer.sortingOrder = -20; KarmaVisuals.ApplyMaterial(renderer);
+            if (game != null) game.FrameStageBackground(renderer.bounds);
             return true;
         }
     }

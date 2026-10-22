@@ -6,13 +6,17 @@ namespace KarmaPrototype
     public static class KarmaStage
     {
         // Boss center limits leave room for its silhouette inside the arena walls.
-        public const float BossLeftWall = 1.1f, BossRightWall = 38.9f;
-        public static readonly Vector2 Spawn = new Vector2(3, 1);
+        public const float ArenaLeft = -15, ArenaRight = 55;
+        public const float BackgroundWidth = 70;
+        public const float ArenaCenter = (ArenaLeft + ArenaRight) / 2;
+        public const float ArenaWidth = ArenaRight - ArenaLeft;
+        public const float BossLeftWall = ArenaLeft + 1.1f, BossRightWall = ArenaRight - 1.1f;
+        public static readonly Vector2 Spawn = new Vector2(3, KarmaSpace.Units(1));
         public static readonly Vector2 Gate = new Vector2(38, 1.8f);
         public static void Build(KarmaGame game, Transform parent, int stage)
         {
             Color stone = new Color(0.16f + stage * 0.014f, 0.17f, 0.23f);
-            bool suppliedBackground = KarmaArtwork.Background(parent, stage);
+            bool suppliedBackground = KarmaArtwork.Background(parent, stage, game);
             if (!suppliedBackground)
             {
             KarmaVisuals.Box(parent, "수련장 배경", new Vector2(20, 4), new Vector2(70, 26), new Color(0.09f, 0.07f, 0.10f), -20);
@@ -33,21 +37,23 @@ namespace KarmaPrototype
             }
             KarmaVisuals.Box(parent,"도장 처마",new Vector2(20,8),new Vector2(44,.5f),new Color(.3f,.12f,.12f),-8);
             }
-            Solid(parent, "Ground", new Vector2(20, -0.55f), new Vector2(44, 1.1f), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
-            Solid(parent, "Left wall", new Vector2(-1, 4), new Vector2(1, 12), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
-            Solid(parent, "Right wall", new Vector2(41, 4), new Vector2(1, 12), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
-            
-            KarmaVisuals.Box(parent, "Arena trim", new Vector2(24.5f, 0.04f), new Vector2(22, 0.08f), new Color(0.5f, 0.4f, 0.58f), 1);
-            
-            if (stage == 3)
+            Solid(parent, "Ground", new Vector2(ArenaCenter, -0.55f), new Vector2(ArenaWidth + 4, 1.1f), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
+            Solid(parent, "Left wall", new Vector2(ArenaLeft - 1, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
+            Solid(parent, "Right wall", new Vector2(ArenaRight + 1, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
+        }
+        public static void RefreshBoundaries(Transform parent)
+        {
+            // Existing Play Mode geometry must also follow updated arena limits after a script reload.
+            var ground = parent.Find("Ground");
+            if (ground != null)
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    Vector2 p = new Vector2(35.5f + i * 1.4f, 4.5f);
-                    KarmaVisuals.Box(parent, "수련 깃발", p, new Vector2(0.7f, 2.2f), game.Config.ColorOf((Essence)i), -1);
-                    KarmaVisuals.Box(parent, "깃대", p + Vector2.up * 1.2f, new Vector2(0.95f, 0.12f), stone, 0);
-                }
+                ground.localPosition = new Vector3(ArenaCenter, -0.55f, 0);
+                ground.localScale = new Vector3(ArenaWidth + 4, 1.1f, 1);
             }
+            var left = parent.Find("Left wall");
+            if (left != null) left.localPosition = new Vector3(ArenaLeft - 1, KarmaSpace.Units(4), 0);
+            var right = parent.Find("Right wall");
+            if (right != null) right.localPosition = new Vector3(ArenaRight + 1, KarmaSpace.Units(4), 0);
         }
         static BoxCollider2D Solid(Transform parent, string name, Vector2 p, Vector2 size, Color color)
         {

@@ -30,14 +30,14 @@ namespace KarmaPrototype
             body.freezeRotation = true;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 1.55f);
+            GetComponent<BoxCollider2D>().size = KarmaSpace.PlayerSize;
             Essences = gameObject.AddComponent<KarmaEssences>();
             Essences.Initialize(this, game);
             Health = game.Config.playerHealth;
             art = KarmaArtwork.Player(transform);
             if (art == null) art = KarmaVisuals.Character(transform, new Color(0.2f, 0.65f, 0.72f));
             animator = art.GetComponent<KarmaCharacterAnimator>();
-            aura = KarmaVisuals.Box(transform, "Ward", Vector2.zero, new Vector2(1.25f, 1.9f),
+            aura = KarmaVisuals.Box(transform, "Ward", Vector2.zero, KarmaSpace.Units(new Vector2(1.25f, 1.9f)),
                 game.Config.wardColor, 2);
             aura.enabled = false;
             remnantHalo = KarmaRemnantVFX.CreateWardHalo(transform, game.Config.wardColor);

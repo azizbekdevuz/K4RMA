@@ -6,8 +6,8 @@ namespace KarmaPrototype
     {
         IEnumerator GroundStrike()
         {
-            Vector2 center = Position + Vector2.right * direction * 1.8f;
-            Vector2 size = new Vector2(3.3f, 2);
+            Vector2 center = Position + Vector2.right * direction * KarmaSpace.Units(1.8f);
+            Vector2 size = KarmaSpace.Units(new Vector2(3.3f, 2));
             state = ActionState.Telegraph;
             var mark = Mark("근접 베기 범위", center, size);
             yield return Wait(Mathf.Max(0.65f, game.Config.enemyTelegraphTime));

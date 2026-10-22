@@ -16,8 +16,8 @@ namespace KarmaPrototype
                 {
                     var sr = KarmaRemnantVFX.CreateBladeAura(transform, KarmaArtwork.BossSwordColor);
                     sr.sortingOrder = 7;
-                    sr.transform.localPosition = new Vector3(i == 0 ? -0.15f : 0.15f, i == 0 ? 0.3f : -0.2f, 0);
-                    sr.transform.localScale = new Vector3(2.4f, 0.7f, 1); blades.Add(sr);
+                    sr.transform.localPosition = new Vector3(KarmaSpace.Units(i == 0 ? -0.15f : 0.15f), KarmaSpace.Units(i == 0 ? 0.3f : -0.2f), 0);
+                    sr.transform.localScale = new Vector3(KarmaSpace.Units(2.4f), KarmaSpace.Units(0.7f), 1); blades.Add(sr);
                 }
             }
             if (owned.Contains(Essence.Ward))
@@ -27,16 +27,16 @@ namespace KarmaPrototype
                     var color = KarmaArtwork.BarrierColor; color.a = 0.32f;
                     var sr = KarmaRemnantVFX.CreateWardHalo(transform, color);
                     sr.sortingOrder = 4;
-                    sr.transform.localPosition = new Vector3(i == 0 ? 0.55f : -0.35f, 0.05f, 0);
-                    sr.transform.localScale = new Vector3(i == 0 ? 1.25f : 0.8f, i == 0 ? 2.25f : 1.5f, 1);
+                    sr.transform.localPosition = new Vector3(KarmaSpace.Units(i == 0 ? 0.55f : -0.35f), KarmaSpace.Units(0.05f), 0);
+                    sr.transform.localScale = new Vector3(KarmaSpace.Units(i == 0 ? 1.25f : 0.8f), KarmaSpace.Units(i == 0 ? 2.25f : 1.5f), 1);
                     rings.Add(sr);
                 }
             }
             if (owned.Contains(Essence.Dash) && KarmaPatternCatalog.Primary(order) != Essence.Dash)
             {
                 var sr = KarmaRemnantVFX.CreateBladeAura(transform, new Color(0.74f, 0.91f, 0.85f, 0.45f));
-                sr.sortingOrder = 4; sr.transform.localPosition = new Vector3(-0.25f, 0.35f, 0);
-                sr.transform.localScale = new Vector3(1.2f, 2.6f, 1); blades.Add(sr);
+                sr.sortingOrder = 4; sr.transform.localPosition = new Vector3(KarmaSpace.Units(-0.25f), KarmaSpace.Units(0.35f), 0);
+                sr.transform.localScale = new Vector3(KarmaSpace.Units(1.2f), KarmaSpace.Units(2.6f), 1); blades.Add(sr);
             }
         }
         void Update()

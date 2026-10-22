@@ -11,8 +11,8 @@ namespace KarmaPrototype
             {
                 case Essence.Flame:
                     readyAt[0] = Time.time + c.flameCooldown;
-                    KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * 0.7f,
-                        Vector2.right * player.Facing * c.flameSpeed, c.flameDamage, c.flameColor, 0.25f);
+                    KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * KarmaSpace.Units(0.7f),
+                        Vector2.right * player.Facing * c.flameSpeed, c.flameDamage, c.flameColor, KarmaSpace.Units(0.25f));
                     break;
                 case Essence.Dash:
                     readyAt[1] = Time.time + c.dashCooldown;

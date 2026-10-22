@@ -63,19 +63,19 @@ namespace KarmaPrototype
         public static SpriteRenderer CreateWardHalo(Transform player, Color color)
         {
             color.a = 0.35f;
-            var sr = Draw(player, Vector2.zero, new Vector2(1.5f, 2.15f), color, 0);
+            var sr = Draw(player, Vector2.zero, KarmaSpace.Units(new Vector2(1.5f, 2.15f)), color, 0);
             sr.sortingOrder = 2;
             return sr;
         }
         public static SpriteRenderer CreateBladeAura(Transform parent, Color color)
         {
-            return Draw(parent, Vector2.zero, new Vector2(2.2f, 1.5f), color, 1);
+            return Draw(parent, Vector2.zero, KarmaSpace.Units(new Vector2(2.2f, 1.5f)), color, 1);
         }
         public static void ProjectileLook(SpriteRenderer sr, Vector2 velocity)
         {
             sr.sprite = Shape(1);
             sr.sortingOrder = 14;
-            sr.transform.localScale = new Vector3(1.25f, 2.3f, 1);
+            sr.transform.localScale = new Vector3(KarmaSpace.Units(1.25f), KarmaSpace.Units(2.3f), 1);
             sr.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
         }
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
@@ -84,16 +84,16 @@ namespace KarmaPrototype
             if (essence == Essence.Ward)
             {
                 // A local parry pulse; the old radial damage proc was removed.
-                float diameter = 2.2f;
+                float diameter = KarmaSpace.Units(2.2f);
                 var sr = Draw(game.World, p, Vector2.one * diameter, color, 0);
                 Animate(sr, 0.65f, 1, Vector2.zero);
             }
             else
             {
-                var sr = Draw(game.World, p + Vector2.right * facing * 0.8f,
-                    essence == Essence.Flame ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f), color, 1);
+                var sr = Draw(game.World, p + Vector2.right * facing * KarmaSpace.Units(0.8f),
+                    KarmaSpace.Units(essence == Essence.Flame ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f)), color, 1);
                 sr.transform.localRotation = Quaternion.Euler(0, 0, facing > 0 ? 0 : 180);
-                Animate(sr, 0.35f, 0.35f, Vector2.right * facing * 0.5f);
+                Animate(sr, 0.35f, 0.35f, Vector2.right * facing * KarmaSpace.Units(0.5f));
             }
         }
         public static void SwordSlash(Transform parent, Vector2 origin, Vector2 direction,
@@ -106,26 +106,27 @@ namespace KarmaPrototype
                 new Color(0.4f, 0.76f, 1, 0.7f), 1);
             rim.sortingOrder = 15;
             rim.transform.localRotation = Quaternion.Euler(0, 0, angle);
-            Animate(rim, seconds * 1.2f, 0, direction * 0.35f);
+            Animate(rim, seconds * 1.2f, 0, direction * KarmaSpace.Units(0.35f));
             var blade = Draw(parent, origin + direction * (reach * 0.48f), new Vector2(reach * 1.22f, height * 0.92f),
                 new Color(1, 0.97f, 0.84f, 1), 1);
             blade.sortingOrder = 16;
             blade.transform.localRotation = Quaternion.Euler(0, 0, angle);
-            Animate(blade, seconds, 0, direction * 0.2f);
+            Animate(blade, seconds, 0, direction * KarmaSpace.Units(0.2f));
             var line = KarmaVisuals.Box(parent, "Sword core", origin + direction * (reach * 0.5f),
-                new Vector2(reach, 0.065f), Color.white, 17);
+                new Vector2(reach, KarmaSpace.Units(0.065f)), Color.white, 17);
             line.transform.localRotation = Quaternion.Euler(0, 0, angle);
             line.gameObject.AddComponent<KarmaEffect>().Initialize(seconds * 0.6f);
         }
         public static void SwordImpact(KarmaGame game, Vector2 point, Vector2 direction)
         {
-            var ring = Draw(game.World, point, Vector2.one * 0.95f, new Color(1, 0.93f, 0.7f), 0);
+            var ring = Draw(game.World, point, Vector2.one * KarmaSpace.Units(0.95f), new Color(1, 0.93f, 0.7f), 0);
             ring.sortingOrder = 20; Animate(ring, 0.16f, 0.45f, Vector2.zero);
             var artwork = KarmaArtwork.Settings.hitEffect;
             if (artwork != null)
             {
                 var hit = new GameObject("Artwork sword impact"); hit.transform.SetParent(game.World, false);
                 hit.transform.position = point;
+                hit.transform.localScale = Vector3.one * KarmaSpace.Scale;
                 var sr = hit.AddComponent<SpriteRenderer>(); sr.sprite = artwork; sr.sortingOrder = 22;
                 KarmaVisuals.ApplyMaterial(sr);
                 hit.AddComponent<KarmaEffect>().Initialize(0.16f);
@@ -135,16 +136,16 @@ namespace KarmaPrototype
             {
                 float radians = (angle + (i - 2) * 32) * Mathf.Deg2Rad;
                 Vector2 ray = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
-                var spark = Draw(game.World, point + ray * 0.1f, new Vector2(0.5f, 0.06f), Color.white, 2);
+                var spark = Draw(game.World, point + ray * KarmaSpace.Units(0.1f), KarmaSpace.Units(new Vector2(0.5f, 0.06f)), Color.white, 2);
                 spark.sortingOrder = 21;
                 spark.transform.localRotation = Quaternion.Euler(0, 0, radians * Mathf.Rad2Deg);
-                Animate(spark, 0.14f, 0, ray * 2.8f);
+                Animate(spark, 0.14f, 0, ray * KarmaSpace.Units(2.8f));
             }
         }
         public static void Impact(KarmaGame game, Vector2 p, Essence essence)
         {
             Color color = game.Config.ColorOf(essence);
-            var sr = Draw(game.World, p, Vector2.one * (essence == Essence.Dash ? 2.2f : 1.35f), color, 0);
+            var sr = Draw(game.World, p, Vector2.one * KarmaSpace.Units(essence == Essence.Dash ? 2.2f : 1.35f), color, 0);
             Animate(sr, 0.4f, 1, Vector2.zero);
         }
         void Update()

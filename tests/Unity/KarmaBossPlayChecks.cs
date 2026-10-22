@@ -6,6 +6,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using KarmaPrototype;
 
 // Copy into an isolated project's Assets/Editor before -executeMethod KarmaBossPlayChecks.Run.
@@ -88,7 +89,7 @@ public static class KarmaBossPlayChecks
         try
         {
             if (warningError != null) throw new Exception(warningError);
-            if (!geometryChecked) { WarningGeometryChecks(); geometryChecked = true; }
+            if (!geometryChecked) { SpatialChecks(); CameraChecks(); BoundaryChecks(); ProgressionReloadChecks(); WarningGeometryChecks(); geometryChecked = true; }
             if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Play checks exceeded wall-clock deadline");
             if (!EditorApplication.isPlaying) throw new Exception("Play mode ended unexpectedly");
             if (index >= Cases.Length) { if(LifecycleChecks()) Finish(null); return; }
@@ -113,7 +114,7 @@ public static class KarmaBossPlayChecks
             Check(sawRecovery,attack+" completed through recovery");
             Check(game.World.GetComponentsInChildren<KarmaBossAttack>().Length==0,attack+" no hostile residue after recovery");
             Check(!enemy.Invulnerable && !enemy.TrialActive,attack+" shield/trial released");
-            Check(Mathf.Abs(enemy.Position.y-1.15f)<0.01f,attack+" landed");
+            Check(Mathf.Abs(enemy.Position.y-KarmaSpace.GuardianGroundY)<0.01f,attack+" landed");
             if(attack==EnemyAttack.SW05 || attack==EnemyAttack.UP04) Check(sawFullShield,attack+" protected airborne phase");
             if(attack==EnemyAttack.SW04) Check(sawResponse,"SW04 attack caused telegraphed retaliation");
             if(index==Cases.Length-1) Check(sawTrialFailure,"GD05 failure resolved after full sequence");
@@ -128,6 +129,132 @@ public static class KarmaBossPlayChecks
         if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
             && (message.Contains("Invalid vertex array") || stack.Contains("KarmaAttackWarning")))
             warningError = message;
+    }
+    static void SpatialChecks()
+    {
+        var config = game.Config;
+        var baseline = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Generated/KarmaConfig.asset");
+        Check(baseline != null, "serialized gameplay configuration exists");
+        Check(Mathf.Abs(config.jumpSpeed / config.gravityScale - 13f / 3) < 0.0001f,
+            "spatial compensation preserves jump airtime");
+        Check(Mathf.Abs(config.jumpSpeed * config.jumpSpeed / config.gravityScale - 169f / 3 * KarmaSpace.Scale) < 0.0001f,
+            "spatial compensation scales jump height");
+        Check(config.moveSpeed == baseline.moveSpeed && config.flameSpeed == baseline.flameSpeed,
+            "serialized and default movement/projectile speeds agree");
+        Check(config.Techniques.pierceDistance == baseline.Techniques.pierceDistance
+            && config.BossTuning.swordSpeed == baseline.BossTuning.swordSpeed,
+            "serialized and default skill/boss distances agree");
+        Check(game.Player.GetComponent<BoxCollider2D>().size == KarmaSpace.PlayerSize,
+            "physical body uses compensated dimensions");
+        var body = game.Player.GetComponent<Rigidbody2D>();
+        Set(game.Player, "move", 1f);
+        Call(game.Player, "FixedUpdate");
+        Check(Mathf.Abs(body.linearVelocity.x - config.moveSpeed) < 0.0001f,
+            "movement applies compensated speed to the physics body");
+        Set(game.Player, "jumpBufferedUntil", Time.time + 1f);
+        Set(game.Player, "lastGrounded", Time.time);
+        Call(game.Player, "FixedUpdate");
+        Check(Mathf.Abs(body.linearVelocity.y - config.jumpSpeed) < 0.0001f,
+            "buffered jump applies compensated vertical speed");
+        Set(game.Player, "move", 0f);
+        body.linearVelocity = Vector2.zero;
+        var art = enemy.transform.Find("Artwork");
+        var picture = art.Find("Guardian sprite");
+        Check(Mathf.Abs(art.localScale.y - KarmaSpace.GuardianArtScale) < 0.0001f,
+            "guardian keeps its larger silhouette");
+        Check(Mathf.Abs(picture.position.y - (enemy.Position.y - KarmaSpace.GuardianGroundY)) < 0.0001f,
+            "guardian foot pivot remains grounded after enlargement");
+
+    }
+    static void CameraChecks()
+    {
+        var camera = game.GameCamera;
+        float originalAspect = camera.aspect;
+        Vector2 originalPosition = game.Player.Position;
+        camera.aspect = 16f / 9;
+        game.Player.ResetForRoom(new Vector2(KarmaStage.ArenaLeft + 2, KarmaSpace.Units(1)), false);
+        for (int i = 0; i < 100; i++) Call(game, "LateUpdate");
+        Vector3 left = camera.transform.position;
+        float zoom = camera.orthographicSize;
+        game.Player.ResetForRoom(new Vector2(KarmaStage.ArenaRight - 2, KarmaSpace.Units(1)), false);
+        for (int i = 0; i < 100; i++) Call(game, "LateUpdate");
+        Vector3 right = camera.transform.position;
+        Check(right.x - left.x > 15, "camera follows horizontally through the expanded arena");
+        Check(Mathf.Abs(right.y - left.y) < 0.001f && Mathf.Abs(camera.orthographicSize - zoom) < 0.001f,
+            "horizontal scrolling preserves camera height and zoom");
+        float halfWidth = zoom * camera.aspect;
+        Check(left.x - halfWidth >= KarmaStage.ArenaLeft - 5.01f
+            && right.x + halfWidth <= KarmaStage.ArenaRight + 5.01f,
+            "camera stops at arena framing limits");
+        var backdrop = game.World.Find("Mountain dojo artwork").GetComponent<SpriteRenderer>();
+        Check(backdrop.bounds.min.x <= left.x - halfWidth + 0.001f
+            && backdrop.bounds.max.x >= right.x + halfWidth - 0.001f,
+            "one continuous panorama covers both camera extremes");
+        Check(!backdrop.flipX && game.World.Find("Mountain dojo artwork left continuation") == null
+            && game.World.Find("Mountain dojo artwork right continuation") == null,
+            "scrolling uses no mirrored background copies");
+        game.Player.ResetForRoom(originalPosition, false);
+        camera.aspect = originalAspect;
+    }
+    static void ProgressionReloadChecks()
+    {
+        var essences = game.Player.Essences;
+        var order = new System.Collections.Generic.List<Essence>(essences.SacrificeOrder);
+        string serialized = JsonUtility.ToJson(essences);
+        JsonUtility.FromJsonOverwrite(serialized, essences);
+        Check(essences.Count == order.Count, "confirmed personalization count survives Unity serialization");
+        for (int i = 0; i < order.Count; i++)
+            Check(essences.SacrificeOrder[i] == order[i] && essences.HasRemnant(order[i])
+                && !essences.HasActive(order[i]), "personalized skill ownership/order survives script reload");
+        Call(game, "LoadRoom", false);
+        enemy = game.Enemies[0];
+        game.Player.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
+        Check(essences.Count == order.Count, "room loading preserves owned skill HUD data");
+        Set(essences, "progression", new KarmaProgressionState());
+        Check(enemy.RestoreMissingPersonalizations(essences, order.Count, order[order.Count - 1]),
+            "already-lost personalization state can migrate from the guardian cycle");
+        for (int i = 0; i < order.Count; i++)
+            Check(essences.SacrificeOrder[i] == order[i], "migration restores exact acquisition order");
+        Check(!enemy.RestoreMissingPersonalizations(essences, order.Count, order[order.Count - 1]),
+            "migration leaves existing ownership unchanged");
+    }
+    static void BoundaryChecks()
+    {
+        // Apply the update to already-existing geometry, as on an Editor script reload.
+        game.World.Find("Right wall").localPosition = new Vector3(51, KarmaSpace.Units(4), 0);
+        game.World.Find("Left wall").localPosition = new Vector3(-11, KarmaSpace.Units(4), 0);
+        KarmaStage.RefreshBoundaries(game.World);
+        // Simulate real collisions in an isolated physics scene, not just camera transforms.
+        var scene = SceneManager.CreateScene("Boundary checks", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
+        var physics = scene.GetPhysicsScene2D();
+        foreach (var surface in game.World.GetComponentsInChildren<KarmaSurface>())
+        {
+            var source = surface.GetComponent<BoxCollider2D>();
+            if (source == null) continue;
+            var wall = new GameObject("Probe " + surface.name);
+            SceneManager.MoveGameObjectToScene(wall, scene);
+            wall.transform.position = surface.transform.position;
+            wall.transform.localScale = surface.transform.lossyScale;
+            var collider = wall.AddComponent<BoxCollider2D>();
+            collider.size = source.size; collider.offset = source.offset;
+        }
+        var probe = new GameObject("Movement collision probe");
+        SceneManager.MoveGameObjectToScene(probe, scene);
+        probe.AddComponent<BoxCollider2D>().size = KarmaSpace.PlayerSize;
+        var body = probe.AddComponent<Rigidbody2D>();
+        body.gravityScale = 0; body.freezeRotation = true;
+        body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        body.position = new Vector2(45, KarmaSpace.Units(1));
+        for (int i = 0; i < 100; i++)
+        { body.linearVelocity = Vector2.right * game.Config.moveSpeed; physics.Simulate(0.02f); }
+        Check(body.position.x > 52, "player passes the former right invisible wall");
+        Check(body.position.x <= KarmaStage.ArenaRight + 0.1f, "right boundary matches panorama edge");
+        body.position = new Vector2(-5, KarmaSpace.Units(1));
+        for (int i = 0; i < 100; i++)
+        { body.linearVelocity = Vector2.left * game.Config.moveSpeed; physics.Simulate(0.02f); }
+        Check(body.position.x < -12, "player passes the former left invisible wall");
+        Check(body.position.x >= KarmaStage.ArenaLeft - 0.1f, "left boundary matches panorama edge");
+        SceneManager.UnloadSceneAsync(scene);
     }
     static void WarningGeometryChecks()
     {
@@ -161,9 +288,9 @@ public static class KarmaBossPlayChecks
     static void StartCase()
     {
         Call(enemy,"InterruptPattern");
-        enemy.transform.position = new Vector3(20,1.15f,0);
-        game.Player.transform.position = new Vector3(13,1,0);
-        game.Player.GetComponent<Rigidbody2D>().position = new Vector2(13,1);
+        enemy.transform.position = new Vector3(20,KarmaSpace.GuardianGroundY,0);
+        game.Player.transform.position = new Vector3(13,KarmaSpace.Units(1),0);
+        game.Player.GetComponent<Rigidbody2D>().position = new Vector2(13,KarmaSpace.Units(1));
         Set(enemy,"engaged",true); Set(enemy,"selected",Cases[index]); Set(enemy,"direction",-1f);
         Set(enemy,"running",true); Set(enemy,"patternStarted",enemy.FightSeconds);
         Set(enemy,"nextShield",float.MaxValue);

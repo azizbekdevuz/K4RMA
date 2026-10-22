@@ -27,7 +27,7 @@ namespace KarmaPrototype
         {
             if (amount <= 0) return;
             animator.Hurt(); Health = Mathf.Max(0, Health - amount);
-            KarmaVisuals.Flash(game.World, Position, Vector2.one * 0.7f, Color.white, 0.1f);
+            KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Units(0.7f), Color.white, 0.1f);
             if (Health <= 0)
             {
                 CancelCombat(); art.SetParent(game.World, true); animator.Die();

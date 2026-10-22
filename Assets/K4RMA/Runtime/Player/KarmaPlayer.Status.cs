@@ -21,7 +21,7 @@ namespace KarmaPrototype
         public void ConfineArena(float left, float right)
         {
             CancelAirSlash(); confined = true; arenaLeft = left; arenaRight = right;
-            Vector2 p = new Vector2(Mathf.Clamp(Position.x, left + 1, right - 1), Mathf.Clamp(Position.y, 1, 6));
+            Vector2 p = new Vector2(Mathf.Clamp(Position.x, left + KarmaSpace.Units(1), right - KarmaSpace.Units(1)), Mathf.Clamp(Position.y, KarmaSpace.Units(1), KarmaSpace.Units(6)));
             body.position = p; transform.position = p; body.linearVelocity = Vector2.zero;
             invulnerableUntil = Mathf.Max(invulnerableUntil, Time.time + 0.6f);
         }
@@ -37,7 +37,7 @@ namespace KarmaPrototype
         }
         public void ResolveBarrier(float centerX, float width)
         {
-            float separation = width / 2 + 0.35f + 0.05f;
+            float separation = width / 2 + KarmaSpace.PlayerHalfWidth + KarmaSpace.Units(0.05f);
             if (Mathf.Abs(Position.x - centerX) >= separation) return;
             CancelAirSlash();
             Vector2 p = new Vector2(centerX + (Position.x < centerX ? -separation : separation), Position.y);

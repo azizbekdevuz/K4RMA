@@ -10,7 +10,7 @@ namespace KarmaPrototype
         Vector2 velocity;
         float damage, radius, expiresAt;
         public static void Spawn(KarmaGame game, Vector2 position, Vector2 velocity, float damage,
-            Color color, float radius = 0.2f)
+            Color color, float radius = 0.2f * KarmaSpace.Scale)
         {
             var sr = KarmaVisuals.Box(game.World, "Player projectile",
                 position, Vector2.one * radius * 2, color, 7);
@@ -28,10 +28,10 @@ namespace KarmaPrototype
             Vector2 from = transform.position;
             Vector2 to = from + velocity * Time.deltaTime;
             transform.position = to;
-            if (to.x < 0 || to.x > 40 || to.y < 0 || to.y > 12) { Destroy(gameObject); return; }
+            if (to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12)) { Destroy(gameObject); return; }
             foreach (var enemy in game.Enemies.ToArray())
             {
-                if (enemy == null || !enemy.Alive || !Intersects(from, to, enemy.Position, radius + 0.68f)) continue;
+                if (enemy == null || !enemy.Alive || !Intersects(from, to, enemy.Position, radius + KarmaSpace.Units(0.68f) * KarmaSpace.GuardianSizeBoost)) continue;
                 enemy.TakeDamage(damage, from);
                 // Current player projectiles stop at their first target; piercing is a melee move.
                 enabled = false; Destroy(gameObject); return;

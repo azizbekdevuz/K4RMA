@@ -26,6 +26,9 @@ namespace KarmaPrototype
         [InspectorName("도장 배경")] public Sprite dojoBackground;
 
         [InspectorName("실외 도장 배경")] public Sprite mountainBackground;
+        [Header("좌우 스크롤용 파노라마")]
+        [InspectorName("실외 파노라마")] public Sprite mountainPanorama;
+        [InspectorName("도장 파노라마")] public Sprite dojoPanorama;
 
         [Header("Production UI / VFX")]
         public Texture2D menuBackground;

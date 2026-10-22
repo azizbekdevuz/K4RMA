@@ -66,12 +66,12 @@ namespace KarmaPrototype
                     lastGrounded = -10;
                 }
             }
-            if (Position.y < -8) game.PlayerDied();
+            if (Position.y < KarmaSpace.Units(-8)) game.PlayerDied();
         }
         bool Grounded()
         {
-            int count = Physics2D.OverlapBox(Position + Vector2.down * 0.81f,
-                new Vector2(0.58f, 0.12f), 0, new ContactFilter2D { useTriggers = false }, groundHits);
+            int count = Physics2D.OverlapBox(Position + Vector2.down * KarmaSpace.Units(0.81f),
+                KarmaSpace.Units(new Vector2(0.58f, 0.12f)), 0, new ContactFilter2D { useTriggers = false }, groundHits);
             for (int i = 0; i < count; i++)
                 if (groundHits[i].GetComponent<KarmaSurface>() != null) return true;
             return false;

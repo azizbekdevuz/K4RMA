@@ -53,15 +53,41 @@ namespace KarmaPrototype
             DisplayName = (stage == 3 ? "마지막 수호자" : "수호자 " + (stage + 1)) + " · " + KarmaPatternCatalog.TypeName(game.Player.Essences.SacrificeOrder);
             art = KarmaArtwork.Guardian(transform, game.Player.Essences.SacrificeOrder, stage == 3);
             if (art == null) art = KarmaVisuals.Character(transform, PrimaryType.HasValue ? game.Config.ColorOf(PrimaryType.Value) : Color.white, stage == 3);
-            art.localScale = Vector3.one * 1.4f; animator = art.GetComponent<KarmaCharacterAnimator>();
+            art.localScale = Vector3.one * KarmaSpace.GuardianArtScale; animator = art.GetComponent<KarmaCharacterAnimator>();
             attacks = KarmaPatternCatalog.BuildCycle(game.Player.Essences.SacrificeOrder);
             effectsRoot = new GameObject("Guardian pattern objects").transform; effectsRoot.SetParent(game.World, false);
             shieldHalo = KarmaRemnantVFX.CreateWardHalo(transform, KarmaArtwork.BarrierColor);
-            shieldHalo.transform.localScale = new Vector3(2.2f, 3.1f, 1); shieldHalo.enabled = false;
+            shieldHalo.transform.localScale = new Vector3(KarmaSpace.Units(2.2f) * KarmaSpace.GuardianSizeBoost, KarmaSpace.Units(3.1f) * KarmaSpace.GuardianSizeBoost, 1); shieldHalo.enabled = false;
             timer = 1.4f; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach; Intent = "앞으로 나아가 시험을 시작하세요";
         }
         bool Inherits(Essence e) { return game.Player.Essences.HasRemnant(e); }
+        public bool RestoreMissingPersonalizations(KarmaEssences essences, int stage, Essence last)
+        {
+            // Migrate an already-running session whose old readonly progression was lost on reload.
+            // The guardian's inherited attack cycle and last confirmed choice identify the order.
+            if (essences == null || essences.Count != 0 || stage < 1 || stage > 3 || attacks == null) return false;
+            for (int code = 0; code < 27; code++)
+            {
+                var order = new List<Essence>();
+                int digits = code;
+                for (int i = 0; i < stage; i++)
+                {
+                    var essence = (Essence)(digits % 3); digits /= 3;
+                    if (order.Contains(essence)) break;
+                    order.Add(essence);
+                }
+                if (order.Count != stage || order[stage - 1] != last) continue;
+                var cycle = KarmaPatternCatalog.BuildCycle(order);
+                if (cycle.Count != attacks.Count) continue;
+                bool matches = true;
+                for (int i = 0; i < cycle.Count; i++) if (cycle[i] != attacks[i]) { matches = false; break; }
+                if (!matches) continue;
+                foreach (var essence in order) essences.Sacrifice(essence);
+                return true;
+            }
+            return false;
+        }
         bool Active { get { return !stopped && Alive && game != null && game.Phase == RunPhase.Combat; } }
     }
 }

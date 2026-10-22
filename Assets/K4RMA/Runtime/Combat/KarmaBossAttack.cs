@@ -28,7 +28,7 @@ namespace KarmaPrototype
             transform.position = to;
             owner.TryAttackHit(from, to, size, damage, contact, stun);
             remaining -= Time.deltaTime;
-            if (remaining <= 0 || to.x < 0 || to.x > 40 || to.y < 0 || to.y > 12)
+            if (remaining <= 0 || to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12))
             { gameObject.SetActive(false); Destroy(gameObject); }
         }
     }

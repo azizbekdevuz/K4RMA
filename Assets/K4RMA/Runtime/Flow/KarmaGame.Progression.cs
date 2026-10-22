@@ -30,11 +30,10 @@ namespace KarmaPrototype
             Player.ResetForRoom(KarmaStage.Spawn, fullHealth);
             var enemyObject = new GameObject(StageIndex == 3 ? "마지막 수호자" : "수호자");
             enemyObject.transform.SetParent(World, false);
-            enemyObject.transform.position = new Vector3(27, 1.15f, 0);
+            enemyObject.transform.position = new Vector3(27, KarmaSpace.GuardianGroundY, 0);
             var enemy = enemyObject.AddComponent<KarmaEnemy>(); enemy.Initialize(this, StageIndex);
             Enemies.Add(enemy);
             Phase = RunPhase.Combat;
-            GameCamera.transform.position = new Vector3(12, 4.4f, -10);
         }
         public void EnemyDefeated(KarmaEnemy enemy)
         {
@@ -67,7 +66,7 @@ namespace KarmaPrototype
             Phase = RunPhase.Defeat;
             foreach (var enemy in Enemies.ToArray()) if (enemy != null) enemy.CancelCombat();
             ClearProjectiles();
-            if (Player != null) { Player.ClearStatus(); Player.GetComponentInChildren<KarmaCharacterAnimator>().Die(); }
+            if (Player != null) { Player.ClearStatus(); Player.GetComponentInChildren<KarmaCharacterAnimator>(true).Die(); }
         }
         void ClearProjectiles()
         {

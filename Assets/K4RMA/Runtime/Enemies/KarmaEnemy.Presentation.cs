@@ -48,7 +48,7 @@ namespace KarmaPrototype
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
-            if (!KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + 0.35f, size.y / 2 + 0.775f)) return;
+            if (!KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + KarmaSpace.PlayerHalfWidth, size.y / 2 + KarmaSpace.PlayerHalfHeight)) return;
             if (!contact.TryConsume()) return;
             int parries = player.ParryCount;
             float before = player.Health;

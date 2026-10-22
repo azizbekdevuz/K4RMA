@@ -13,17 +13,17 @@ namespace KarmaPrototype
         [Min(10)] public float ultimateCooldown = 28;
         [Min(5)] public float patternTimeout = 30;
         [Header("검기형 · 초기 밸런스")]
-        [Min(1)] public float swordSpeed = 11;
+        [Min(1)] public float swordSpeed = 11 * KarmaSpace.Scale;
         [Min(0.2f)] public float swordLifetime = 1.4f;
-        [Min(0.1f)] public float swordWidth = 1.2f, swordHeight = 0.5f;
+        [Min(0.1f)] public float swordWidth = 1.2f * KarmaSpace.Scale, swordHeight = 0.5f * KarmaSpace.Scale;
         [Min(0.3f)] public float counterWarning = 0.45f;
         [Min(0.6f)] public float swordWardDuration = 3;
         [Min(0.5f)] public float swordWardResponseCooldown = 0.8f;
         [Range(1, 8)] public int aerialSwordCount = 5;
         [Min(0.5f)] public float aerialSwordGap = 0.8f;
         [Header("상승베기형")]
-        [Min(1)] public float riseHeight = 4;
-        [Min(0.5f)] public float groundBladeWidth = 5, groundBladeHeight = 6;
+        [Min(1)] public float riseHeight = 4 * KarmaSpace.Scale;
+        [Min(0.5f)] public float groundBladeWidth = 5 * KarmaSpace.Scale, groundBladeHeight = 6 * KarmaSpace.Scale;
         [Min(0.5f)] public float crossingWarning = 0.9f, crossingReset = 1.1f;
         [Header("방어형 · 미정 항목의 조정 가능한 초기값")]
         [Min(2)] public float autoShieldPeriod = 12;

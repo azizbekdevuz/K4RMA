@@ -60,7 +60,6 @@ namespace KarmaPrototype
             LastSacrifice = essence;
             Player.Heal(config.healAfterSacrifice);
             Phase = RunPhase.Transition; transitionLeft = 2.5f;
-            KarmaVisuals.Flash(World, KarmaStage.Gate, new Vector2(3, 6), config.ColorOf(essence), 2);
         }
         public void PlayerDied()
         {

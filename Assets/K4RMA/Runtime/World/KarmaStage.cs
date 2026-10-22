@@ -36,13 +36,9 @@ namespace KarmaPrototype
             Solid(parent, "Ground", new Vector2(20, -0.55f), new Vector2(44, 1.1f), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
             Solid(parent, "Left wall", new Vector2(-1, 4), new Vector2(1, 12), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
             Solid(parent, "Right wall", new Vector2(41, 4), new Vector2(1, 12), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
-            // Platforms are one-way; projectiles pass through them by design.
-            Platform(parent, new Vector2(9, 1.8f), new Vector2(3, 0.3f), stone);
-            Platform(parent, new Vector2(18, 2.2f), new Vector2(3, 0.3f), stone);
-            Platform(parent, new Vector2(30, 2.2f), new Vector2(3, 0.3f), stone);
+            
             KarmaVisuals.Box(parent, "Arena trim", new Vector2(24.5f, 0.04f), new Vector2(22, 0.08f), new Color(0.5f, 0.4f, 0.58f), 1);
-            KarmaVisuals.Box(parent, "수련문", Gate, new Vector2(0.8f, 3.6f), new Color(0.67f, 0.35f, 0.87f, 0.75f), 0);
-            KarmaVisuals.Box(parent, "수련문 문틀", Gate + Vector2.up * 1.9f, new Vector2(2.2f, 0.3f), new Color(0.7f, 0.59f, 0.37f), 1);
+            
             if (stage == 3)
             {
                 for (int i = 0; i < 3; i++)

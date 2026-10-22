@@ -1,11 +1,13 @@
 namespace KarmaPrototype
 {
-    // Values retained for compatibility with existing serialized settings.
+    // Essence values are serialized in existing assets; keep these IDs stable.
     public enum Essence { Flame = 0, Dash = 1, Ward = 2 }
     public enum RunPhase { Title, Combat, Gate, Choosing, Transition, Victory, Defeat, Story, Controls }
     public enum EnemyAttack
     {
-        GroundStrike, Bolt, FlameFan, Charge, Ward,
-        BlazingCharge, GuardedCharge, EmberAegis, Overdrive, SwordWave, RisingSlash, AirWave, GuardCounter
+        GroundStrike = 0,
+        SW01 = 13, SW02, SW03, SW04, SW05,
+        UP01, UP02, UP03, UP04, UP05,
+        GD01, GD02, GD03, GD04, GD05
     }
 }

@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 279072a9c8c045f0975d27fb4fe704ce, type: 3}
+  m_Name: KarmaArtworkSettings
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtworkSettings
+  playerIdle: {fileID: -1315018366, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerMove1: {fileID: 1901359207, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerMove2: {fileID: 1362305276, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerSlash1: {fileID: -1756613287, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerSlash2: {fileID: 1722060193, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerRising: {fileID: -1769250331, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerFalling: {fileID: 985574153, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerHurt: {fileID: 1348678454, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  playerDeath: {fileID: -1197987198, guid: 36a18359f8714485aa755b43097b2bb5, type: 3}
+  swordGuardian: {fileID: -2024968437, guid: b9bf51dc4a814829923b472314a32d9f, type: 3}
+  risingGuardian: {fileID: -45745477, guid: b9bf51dc4a814829923b472314a32d9f, type: 3}
+  wardGuardian: {fileID: -70950530, guid: b9bf51dc4a814829923b472314a32d9f, type: 3}
+  dojoBackground: {fileID: 21300000, guid: 7c60dd67c48c412daf9985ce42558d2a, type: 3}
+  worldOverview: {fileID: 2800000, guid: 73b7812532784ec4bcc2bb988cb19b0b, type: 3}
+  titleCrop:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0.5
+    height: 0.5
+  playerSheet: {fileID: 2800000, guid: 73b7812532784ec4bcc2bb988cb19b0b, type: 3}
+  playerSwordWave: {fileID: 2800000, guid: cdd4e336426649ec909283d0a7007fa4, type: 3}
+  playerRisingSlash: {fileID: 2800000, guid: 94afb13a520d4d499c01499d31fe4098, type: 3}
+  swordGuardianIllustration: {fileID: 2800000, guid: ea9b75bb7e5849b2be3da1b75cd56258, type: 3}
+  risingGuardianIllustration: {fileID: 2800000, guid: 3955beabe63f469aa1b649eb4820d3f2, type: 3}
+  wardGuardianIllustration: {fileID: 2800000, guid: 0e4b14acb27f441bbfe7ffb17e19b533, type: 3}
+  guardianEvolution: {fileID: 2800000, guid: 82f1f659c0b646eba9cdd30cd2476543, type: 3}

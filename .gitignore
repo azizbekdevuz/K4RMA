@@ -9,3 +9,9 @@ UserSettings/
 .vscode/
 .idea/
 .DS_Store
+# Unity-generated IDE workspace from the former Windows checkout
+/Game/
+
+# Local validation output
+/tests/**/bin/
+/output/validation/

@@ -16,11 +16,11 @@ Unity 프로젝트 설정에서 에셋 직렬화를 Force Text로 유지한다. 
 ```bash
 git switch main
 git pull
-git switch -c feature/meteor-pattern
+git switch -c feature/boss-patterns
 # 코드·에셋 수정과 검사
 git add Assets docs
-git commit -m "Adjust meteor warning pattern"
-git push -u origin feature/meteor-pattern
+git commit -m "Implement inherited boss patterns"
+git push -u origin feature/boss-patterns
 ```
 
 PR에서 변경 목적, 수정 모듈, 검사 결과, 씬·설정 변경을 확인한 뒤 main에 병합. 두 명이 같은 씬·설정 에셋을 동시에 편집하는 경우 담당을 조율한다. 코드 분할은 파일 충돌을 줄이지만 씬 충돌을 자동 해결하지 않는다.

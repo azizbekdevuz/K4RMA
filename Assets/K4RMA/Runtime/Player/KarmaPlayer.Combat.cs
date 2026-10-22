@@ -6,10 +6,10 @@ namespace KarmaPrototype
     {
         readonly KarmaAirSlashMotion airSlashMotion = new KarmaAirSlashMotion();
         readonly HashSet<KarmaEnemy> airSlashHits = new HashSet<KarmaEnemy>();
-        bool airSlashRunning, airSlashConnected;
+        bool airSlashRunning;
         Vector2 airSlashDirection, airSlashPrevious;
         float airSlashBufferedUntil, airRecoveryLeft, airLaunchX;
-        bool CanSword() { return game.IsCombat && Health > 0 && Time.time >= nextSword && !airSlashRunning && !KnockedBack && !Shielded && !techniques.CounterReady(Time.time); }
+        bool CanSword() { return game.IsCombat && Health > 0 && Time.time >= nextSword && !airSlashRunning && !KnockedBack && !Stunned && !Shielded && !techniques.CounterReady(Time.time); }
         Vector2 AttackDirection()
         {
             float vertical = KarmaInput.Vertical;
@@ -45,15 +45,13 @@ namespace KarmaPrototype
             var swordTuning = game.Config.Techniques;
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
                 swordTuning.longSlashReach, swordTuning.longSlashHeight, swordTuning.slashLife);
-            bool hit = false;
             foreach (var enemy in game.Enemies.ToArray())
             {
                 if (enemy == null || !enemy.Alive) continue;
                 var delta = enemy.Position - Position;
                 if (Mathf.Abs(delta.y) <= swordTuning.longSlashHeight * 0.5f && delta.x * Facing >= -0.35f && Mathf.Abs(delta.x) <= swordTuning.longSlashReach)
-                { SwordHit(enemy, Vector2.right * Facing); hit = true; }
+                SwordHit(enemy, Vector2.right * Facing);
             }
-            if (hit && game.IsCombat) Essences.OnSwordConnected();
         }
         void BeginDirectionalSlash(Vector2 direction, float distance, Essence essence)
         {
@@ -68,14 +66,12 @@ namespace KarmaPrototype
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             KarmaRemnantVFX.SwordSlash(game.World, to, direction, 1.6f, 2.1f, game.Config.Techniques.slashLife);
             Essences.NotifyUnique(essence);
-            bool hit = false;
             foreach (var enemy in game.Enemies.ToArray())
             {
                 if (enemy == null || !enemy.Alive) continue;
                 if (KarmaProjectile.Intersects(from, to, enemy.Position, 1.3f))
-                { SwordHit(enemy, direction); hit = true; }
+                SwordHit(enemy, direction);
             }
-            if (hit && game.IsCombat) Essences.OnSwordConnected();
         }
         void BeginAirSlash(Vector2 direction)
         {
@@ -83,9 +79,9 @@ namespace KarmaPrototype
             airSlashDirection = direction;
             airSlashPrevious = Position;
             airSlashMotion.Begin(tuning.airSlashDuration);
-            airSlashRunning = true; airSlashConnected = false;
+            airSlashRunning = true;
             airSlashHits.Clear(); airSlashBufferedUntil = 0; airRecoveryLeft = 0;
-            jumpBufferedUntil = 0; lastGrounded = -10; dashUntil = 0;
+            jumpBufferedUntil = 0; lastGrounded = -10;
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
@@ -103,8 +99,6 @@ namespace KarmaPrototype
                 if (!KarmaProjectile.Intersects(from, to, enemy.Position, 0.75f)) continue;
                 airSlashHits.Add(enemy);
                 SwordHit(enemy, airSlashDirection);
-                if (!airSlashConnected && game.IsCombat)
-                { Essences.OnSwordConnected(); airSlashConnected = true; }
             }
         }
         void SwordHit(KarmaEnemy enemy, Vector2 direction)
@@ -158,6 +152,7 @@ namespace KarmaPrototype
             if (!game.IsCombat || Health <= 0 || damage <= 0 || Time.time < invulnerableUntil) return;
             if (techniques.ConsumeCounter(Time.time))
             {
+                ParryCount++;
                 invulnerableUntil = Time.time + 0.12f;
                 Essences.NotifyUnique(Essence.Ward);
                 foreach (var enemy in game.Enemies.ToArray())
@@ -168,7 +163,7 @@ namespace KarmaPrototype
                     {
                         Vector2 aim = (enemy.Position - Position).normalized;
                         KarmaProjectile.Spawn(game, Position + aim * 0.7f, aim * 14,
-                            game.Config.Techniques.counterDamage, true, game.Config.wardColor, 0.25f);
+                            game.Config.Techniques.counterDamage, game.Config.wardColor, 0.25f);
                     }
                 }
                 return;

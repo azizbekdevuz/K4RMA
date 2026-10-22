@@ -12,10 +12,8 @@ namespace KarmaPrototype
         readonly float[] readyAt = new float[3];
         KarmaPlayer player;
         KarmaGame game;
-        int swordHits;
         readonly int[] procCounts = new int[3];
         readonly float[] lastProc = { -100, -100, -100 };
-        public int SwordHits { get { return swordHits; } }
         public int ProcCount(Essence e) { return procCounts[(int)e]; }
         public bool JustTriggered(Essence e) { return Time.time - lastProc[(int)e] < 0.7f; }
         public event Action<Essence> Sacrificed;
@@ -42,11 +40,9 @@ namespace KarmaPrototype
         public void ResetTemporaryState()
         {
             for (int i = 0; i < readyAt.Length; i++) readyAt[i] = 0;
-            swordHits = 0;
             for (int i = 0; i < 3; i++) { procCounts[i] = 0; lastProc[i] = -100; }
         }
 
-        // Triggered once per connected sword swing, not once per enemy.
 
     }
 }

@@ -7,7 +7,7 @@ namespace KarmaPrototype
         {
             Panel(new Rect(20, 18, 385, 140));
             Label(35, 26, 350, 35, "시련 " + (game.StageIndex + 1) + " / 4", heading);
-            Label(35, 65, 340, 25, "체력 " + Mathf.CeilToInt(game.Player.Health) + " / " + game.Config.playerHealth, small);
+            Label(35, 65, 340, 25, "체력 " + Mathf.CeilToInt(game.Player.Health) + " / " + game.Config.playerHealth + (game.Player.Stunned ? " · 기절" : ""), small);
             Bar(new Rect(35, 95, 350, 12), game.Player.Health / game.Config.playerHealth, new Color(0.3f, 0.85f, 0.74f));
             Label(35, 119, 350, 30, "고유화 " + game.Player.Essences.Count + "/3 · " + Clock(game.Elapsed), small);
             for (int i = 0; i < 3; i++)
@@ -22,10 +22,12 @@ namespace KarmaPrototype
             }
             if (game.Enemies.Count > 0 && game.Enemies[0] != null)
             {
-                var enemy = game.Enemies[0]; Panel(new Rect(440, 130, 810, 105));
+                var enemy = game.Enemies[0]; Panel(new Rect(440, 130, 810, enemy.TrialActive ? 162 : 136));
                 Label(455, 133, 780, 27, enemy.DisplayName + " · " + Mathf.CeilToInt(enemy.Health) + " / " + enemy.MaxHealth, text);
                 Bar(new Rect(455, 167, 780, 9), enemy.Health / enemy.MaxHealth, new Color(0.85f, 0.35f, 0.48f));
                 Label(455, 182, 780, 25, enemy.Intent, small);
+                Label(455, 235, 780, 25, enemy.DefenseStatus, small);
+                if (enemy.TrialActive) Label(455, 261, 780, 25, enemy.TrialStatus, small);
                 Label(455, 208, 780, 25, "수호자 계승 원형: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder), small);
             }
         }

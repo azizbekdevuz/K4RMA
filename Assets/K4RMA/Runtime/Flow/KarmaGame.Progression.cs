@@ -65,7 +65,9 @@ namespace KarmaPrototype
         public void PlayerDied()
         {
             if (Phase == RunPhase.Defeat || Phase == RunPhase.Victory) return;
-            Phase = RunPhase.Defeat; ClearProjectiles();
+            Phase = RunPhase.Defeat;
+            foreach (var enemy in Enemies.ToArray()) if (enemy != null) enemy.CancelCombat();
+            ClearProjectiles();
             if (Player != null) { Player.ClearStatus(); Player.GetComponentInChildren<KarmaCharacterAnimator>().Die(); }
         }
         void ClearProjectiles()

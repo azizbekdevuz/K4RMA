@@ -18,35 +18,68 @@ namespace KarmaPrototype
             if (order[1] == Essence.Flame) return basic + 1;
             return basic + 2;
         }
-        public static bool IsFusion(EnemyAttack a) { return a == EnemyAttack.AirWave || a == EnemyAttack.GuardCounter; }
-        public static bool IsCharge(EnemyAttack a) { return false; }
-        static EnemyAttack Original(Essence e) { return e == Essence.Flame ? EnemyAttack.SwordWave : e == Essence.Dash ? EnemyAttack.RisingSlash : EnemyAttack.Ward; }
+        public static bool IsUltimate(EnemyAttack a)
+        { return a == EnemyAttack.SW05 || a == EnemyAttack.UP05 || a == EnemyAttack.GD05; }
         public static List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> returned)
         {
             var result = new List<EnemyAttack>();
             var owned = new HashSet<Essence>(returned);
             if (returned.Count == 0) { result.Add(EnemyAttack.GroundStrike); return result; }
-            // First inheritance remains the center; later originals are inserted in selection order.
-            var main = Original(returned[0]);
-            result.Add(main); result.Add(EnemyAttack.GroundStrike);
-            var added = new HashSet<Essence> { returned[0] };
-            for (int i = 1; i < returned.Count; i++)
-                if (added.Add(returned[i])) { result.Add(Original(returned[i])); result.Add(main); }
-            if (owned.Contains(Essence.Flame) && owned.Contains(Essence.Dash)) result.Add(EnemyAttack.AirWave);
-            if (owned.Contains(Essence.Ward) && owned.Count > 1) result.Add(EnemyAttack.GuardCounter);
+            switch (returned[0])
+            {
+                case Essence.Flame:
+                    result.Add(EnemyAttack.SW01); result.Add(EnemyAttack.SW02);
+                    if (owned.Contains(Essence.Dash)) result.Add(EnemyAttack.SW03);
+                    if (owned.Contains(Essence.Ward)) result.Add(EnemyAttack.SW04);
+                    if (owned.Count == 3) result.Add(EnemyAttack.SW05);
+                    break;
+                case Essence.Dash:
+                    result.Add(EnemyAttack.UP01); result.Add(EnemyAttack.UP02);
+                    if (owned.Contains(Essence.Flame)) result.Add(EnemyAttack.UP03);
+                    if (owned.Contains(Essence.Ward)) result.Add(EnemyAttack.UP04);
+                    if (owned.Count == 3) result.Add(EnemyAttack.UP05);
+                    break;
+                case Essence.Ward:
+                    // GD01 is a separate periodic defense, never an attack in this cycle.
+                    result.Add(EnemyAttack.GroundStrike); result.Add(EnemyAttack.GD02);
+                    if (owned.Contains(Essence.Flame)) result.Add(EnemyAttack.GD03);
+                    if (owned.Contains(Essence.Dash)) result.Add(EnemyAttack.GD04);
+                    if (owned.Count == 3) result.Add(EnemyAttack.GD05);
+                    break;
+            }
             return result;
+        }
+        public static bool CanSelect(EnemyAttack attack, EnemyAttack previous, float distance,
+            bool airborne, bool lineOfSight, bool shield, bool escapeRoute, bool ultimateReady)
+        {
+            if (IsUltimate(attack)) return ultimateReady && !IsUltimate(previous);
+            if (attack == EnemyAttack.SW01 || attack == EnemyAttack.SW03) return distance >= 4;
+            if (attack == EnemyAttack.SW02) return lineOfSight;
+            if (attack == EnemyAttack.UP02) return previous != attack && (airborne || distance <= 8);
+            if (attack == EnemyAttack.UP03 || attack == EnemyAttack.GD04) return escapeRoute;
+            if (attack == EnemyAttack.GD02) return shield && distance <= 5;
+            return true;
         }
         public static string Label(EnemyAttack a)
         {
             switch (a)
             {
-                case EnemyAttack.GroundStrike: return "근접 베기 예고 · 검 앞에서 벗어나세요";
-                case EnemyAttack.SwordWave: return "검기 예고 · 점프로 피하거나 타이밍에 반격";
-                case EnemyAttack.RisingSlash: return "상승베기 예고 · 도약 경로에서 벗어나세요";
-                case EnemyAttack.AirWave: return "공중 검기 예고 · 높이와 발사 방향을 읽으세요";
-                case EnemyAttack.Ward: return "방어 · 공격을 멈추고 빈틈을 기다리세요";
-                case EnemyAttack.GuardCounter: return "방어 후 계승 기술 연계 · 준비 동작을 읽으세요";
-                default: return "공격 예고";
+                case EnemyAttack.SW01: return "SW01 엇갈린 검기 · 낮은 검기 다음 높은 검기";
+                case EnemyAttack.SW02: return "SW02 조준 일섬 · 조준 고정 후 사선 이탈";
+                case EnemyAttack.SW03: return "SW03 검흔 상승 · 검기 후 바닥 검흔에서 이탈";
+                case EnemyAttack.SW04: return "SW04 반격 검막 · 사출 유도 후 회피";
+                case EnemyAttack.SW05: return "SW05 공중 검 사출 · 순차 조준을 피하고 착지 반격";
+                case EnemyAttack.UP01: return "UP01 상승 내려찍기 · 착지 후 낮은 충격파";
+                case EnemyAttack.UP02: return "UP02 공중 추격 · 목표 고정 후 수평 이동/낙하";
+                case EnemyAttack.UP03: return "UP03 지면 검기 상승 · 등 뒤 또는 범위 밖으로";
+                case EnemyAttack.UP04: return "UP04 방어막 내려찍기 · 착지 파편을 점프로";
+                case EnemyAttack.UP05: return "UP05 연속 횡단 · 지상/공중/지상/내려찍기";
+                case EnemyAttack.GD01: return "GD01 자동방어막 생성";
+                case EnemyAttack.GD02: return "GD02 강공격 · K 반격 성공 시 방어막 파괴";
+                case EnemyAttack.GD03: return "GD03 분열 방패 · 조각 조준 고정 후 이탈";
+                case EnemyAttack.GD04: return "GD04 방벽 상승 · 등 뒤로 이동";
+                case EnemyAttack.GD05: return "GD05 결계 생존 시험";
+                default: return "근접 베기 · 검 앞에서 벗어나세요";
             }
         }
         public static string FusionSummary(IReadOnlyList<Essence> order)

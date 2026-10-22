@@ -1,5 +1,0 @@
-﻿<Solution>
-  <Project Path="K4RMA.Gameplay.csproj" />
-  <Project Path="K4RMA.Gameplay.Editor.csproj" />
-  <Project Path="K4RMA.Gameplay.Tests.csproj" />
-</Solution>

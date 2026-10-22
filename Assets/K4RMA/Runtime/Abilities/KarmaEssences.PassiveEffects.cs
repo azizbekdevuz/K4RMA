@@ -3,7 +3,6 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEssences
     {
-        public void OnSwordConnected() { swordHits++; }
         public void NotifyUnique(Essence e) { ShowProc(e); }
         void ShowProc(Essence e)
         {

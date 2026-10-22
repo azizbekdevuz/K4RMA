@@ -1,14 +1,20 @@
+using System.Collections;
 using UnityEngine;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
-        void ExecuteGroundStrike()
+        IEnumerator GroundStrike()
         {
-            KarmaVisuals.Flash(game.World, new Vector2(lockedX, Position.y), new Vector2(3.3f, 0.35f), Color.white, 0.2f);
-            if (Mathf.Abs(game.Player.Position.x - lockedX) < 1.8f && Mathf.Abs(game.Player.Position.y - Position.y) < 1.5f)
-                game.Player.TakeImpact(Damage, Position, 5);
-            Recover(0.9f);
+            Vector2 center = Position + Vector2.right * direction * 1.8f;
+            Vector2 size = new Vector2(3.3f, 2);
+            state = ActionState.Telegraph;
+            var mark = Mark("근접 베기 범위", center, size);
+            yield return Wait(Mathf.Max(0.65f, game.Config.enemyTelegraphTime));
+            Destroy(mark.gameObject); animator.Attack(); state = ActionState.Attack;
+            Attack(center, Vector2.zero, size, 0.2f);
+            yield return Wait(0.2f);
+            yield return Recovery(0.9f);
         }
     }
 }

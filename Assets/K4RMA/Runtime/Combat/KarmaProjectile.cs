@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace KarmaPrototype
@@ -10,20 +9,15 @@ namespace KarmaPrototype
         KarmaGame game;
         Vector2 velocity;
         float damage, radius, expiresAt;
-        bool friendly, burns;
-        Essence? remnant;
-        float nextTrail;
-        readonly HashSet<KarmaEnemy> hitEnemies = new HashSet<KarmaEnemy>();
         public static void Spawn(KarmaGame game, Vector2 position, Vector2 velocity, float damage,
-            bool friendly, Color color, float radius = 0.2f, Essence? remnant = null, bool burns = false)
+            Color color, float radius = 0.2f)
         {
-            var sr = KarmaVisuals.Box(game.World, friendly ? "Player projectile" : "Enemy projectile",
+            var sr = KarmaVisuals.Box(game.World, "Player projectile",
                 position, Vector2.one * radius * 2, color, 7);
             var shot = sr.gameObject.AddComponent<KarmaProjectile>();
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
-            shot.friendly = friendly; shot.radius = radius; shot.expiresAt = Time.time + 3;
-            shot.remnant = remnant; shot.burns = burns || remnant == Essence.Flame;
-            KarmaRemnantVFX.ProjectileLook(sr, Essence.Dash, velocity);
+            shot.radius = radius; shot.expiresAt = Time.time + 3;
+            KarmaRemnantVFX.ProjectileLook(sr, velocity);
             game.Projectiles.Add(shot);
         }
         void Update()
@@ -35,40 +29,12 @@ namespace KarmaPrototype
             Vector2 to = from + velocity * Time.deltaTime;
             transform.position = to;
             if (to.x < 0 || to.x > 40 || to.y < 0 || to.y > 12) { Destroy(gameObject); return; }
-            if (remnant.HasValue && Time.time >= nextTrail)
+            foreach (var enemy in game.Enemies.ToArray())
             {
-                KarmaRemnantVFX.Trail(game, from, remnant.Value, velocity);
-                nextTrail = Time.time + 0.06f;
-            }
-            if (friendly)
-            {
-                foreach (var enemy in game.Enemies.ToArray())
-                {
-                    if (enemy != null && enemy.Alive && !hitEnemies.Contains(enemy)
-                        && Intersects(from, to, enemy.Position, radius + 0.68f))
-                    {
-                        hitEnemies.Add(enemy);
-                        if (remnant.HasValue) KarmaRemnantVFX.Impact(game, enemy.Position, remnant.Value);
-                        enemy.TakeDamage(damage);
-                        if (burns && enemy != null && enemy.Alive) enemy.ApplyBurn();
-                        // Internalized attacks pierce; each target is damaged once per projectile.
-                        if (!remnant.HasValue) { Destroy(gameObject); return; }
-                    }
-                }
-            }
-            else if (game.Player != null && Intersects(from, to, game.Player.Position, radius + 0.5f))
-            {
-                game.Player.TakeDamage(damage);
-                Destroy(gameObject);
-            }
-        }
-        public static void ClearHostile(KarmaGame game)
-        {
-            foreach (var shot in game.Projectiles.ToArray())
-            {
-                if (shot == null || shot.friendly) continue;
-                shot.enabled = false;
-                Destroy(shot.gameObject);
+                if (enemy == null || !enemy.Alive || !Intersects(from, to, enemy.Position, radius + 0.68f)) continue;
+                enemy.TakeDamage(damage, from);
+                // Current player projectiles stop at their first target; piercing is a melee move.
+                enabled = false; Destroy(gameObject); return;
             }
         }
         public static bool Intersects(Vector2 from, Vector2 to, Vector2 center, float radius)

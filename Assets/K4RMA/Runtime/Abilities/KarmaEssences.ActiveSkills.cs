@@ -5,14 +5,14 @@ namespace KarmaPrototype
     {
         public void TryUse(Essence e)
         {
-            if (!game.IsCombat || player.KnockedBack || !HasActive(e) || Cooldown(e) > 0) return;
+            if (!game.IsCombat || player.KnockedBack || player.Stunned || !HasActive(e) || Cooldown(e) > 0) return;
             var c = game.Config;
             switch (e)
             {
                 case Essence.Flame:
                     readyAt[0] = Time.time + c.flameCooldown;
                     KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * 0.7f,
-                        Vector2.right * player.Facing * c.flameSpeed, c.flameDamage, true, c.flameColor, 0.25f);
+                        Vector2.right * player.Facing * c.flameSpeed, c.flameDamage, c.flameColor, 0.25f);
                     break;
                 case Essence.Dash:
                     readyAt[1] = Time.time + c.dashCooldown;
@@ -24,7 +24,7 @@ namespace KarmaPrototype
         }
         public void TryCounter()
         {
-            if (!game.IsCombat || player.KnockedBack || !HasRemnant(Essence.Ward) || Cooldown(Essence.Ward) > 0) return;
+            if (!game.IsCombat || player.KnockedBack || player.Stunned || !HasRemnant(Essence.Ward) || Cooldown(Essence.Ward) > 0) return;
             readyAt[2] = Time.time + game.Config.Techniques.counterCooldown;
             player.BeginCounter();
         }

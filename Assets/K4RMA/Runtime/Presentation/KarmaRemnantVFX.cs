@@ -71,28 +71,20 @@ namespace KarmaPrototype
         {
             return Draw(parent, Vector2.zero, new Vector2(2.2f, 1.5f), color, 1);
         }
-        public static void ProjectileLook(SpriteRenderer sr, Essence essence, Vector2 velocity)
+        public static void ProjectileLook(SpriteRenderer sr, Vector2 velocity)
         {
-            sr.sprite = Shape(essence == Essence.Dash ? 1 : 2);
+            sr.sprite = Shape(1);
             sr.sortingOrder = 14;
-            sr.transform.localScale = essence == Essence.Dash ? new Vector3(1.25f, 2.3f, 1) : new Vector3(0.85f, 0.48f, 1);
+            sr.transform.localScale = new Vector3(1.25f, 2.3f, 1);
             sr.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
-        }
-        public static void Trail(KarmaGame game, Vector2 p, Essence essence, Vector2 velocity)
-        {
-            Color color = game.Config.ColorOf(essence); color.a = 0.5f;
-            var sr = Draw(game.World, p, essence == Essence.Dash ? new Vector2(1, 1.9f) : new Vector2(0.65f, 0.32f),
-                color, essence == Essence.Dash ? 1 : 2);
-            sr.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
-            Animate(sr, 0.22f, 0.3f, Vector2.zero);
         }
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
         {
             Color color = game.Config.ColorOf(essence);
             if (essence == Essence.Ward)
             {
-                // Outline expands to the same radius as the existing instantaneous damage query.
-                float diameter = game.Config.wardBurstRadius * 2 / 0.82f;
+                // A local parry pulse; the old radial damage proc was removed.
+                float diameter = 2.2f;
                 var sr = Draw(game.World, p, Vector2.one * diameter, color, 0);
                 Animate(sr, 0.65f, 1, Vector2.zero);
             }

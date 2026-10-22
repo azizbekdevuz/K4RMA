@@ -8,8 +8,7 @@ namespace KarmaPrototype
         void TitleScreen()
         {
             Fill(new Rect(0, 0, 1280, 720), new Color(0.025f, 0.045f, 0.06f));
-            // Only quadrant 1: the K4RMA / Master & Disciple cover, never the collage.
-            Art(new Rect(30, 45, 850, 580), "WorldOverview", new Rect(0, 0, 640, 427));
+            Art(new Rect(30, 45, 850, 580), "WorldOverview", KarmaArtwork.Settings.TitleSource);
             Panel(new Rect(915, 85, 335, 550));
             Label(945, 115, 275, 80, "스승의 원형을 넘어,\n너의 검술을 완성하라.", heading);
             Label(945, 220, 275, 110, "네 수호자 · 세 번의 고유화\n검기 · 상승베기 · 방어\n내려놓은 원형을 넘어서는 시험", text);
@@ -89,7 +88,15 @@ namespace KarmaPrototype
                 + (game.StageIndex == 2 ? "\n세 고유 기술로 마지막 수호자의 시험에 도전합니다." : "\n내려놓은 원형의 흔적은 이후 수호자에게 유지됩니다."), text);
             int variant = KarmaPatternCatalog.GuardianVisual(game.Player.Essences.SacrificeOrder);
             if (variant >= 0)
-                Art(new Rect(760, 300, 360, 250), "GuardianEvolution", new Rect((variant % 3) * 512, (variant / 3) * 512, 512, 512));
+            {
+                var sheet = KarmaArtwork.Texture("GuardianEvolution");
+                if (sheet != null)
+                {
+                    float width = sheet.width / 3f, height = sheet.height / 2f;
+                    Art(new Rect(760, 300, 360, 250), "GuardianEvolution",
+                        new Rect((variant % 3) * width, (variant / 3) * height, width, height));
+                }
+            }
             else Art(new Rect(760, 300, 360, 250), "SwordGuardian");
         }
         void PauseScreen()

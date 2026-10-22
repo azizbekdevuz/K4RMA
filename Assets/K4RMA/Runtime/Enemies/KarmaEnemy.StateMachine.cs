@@ -1,51 +1,119 @@
+using System.Collections;
 using UnityEngine;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
+        int cycleIndex;
         void Update()
         {
-            if (game == null || !game.IsCombat || !Alive) return;
-            UpdateBurn(); if (!Alive || !game.IsCombat) return;
+            if (game == null || stopped) return;
+            if (game.Paused) return;
+            if (!Active) { CancelCombat(); return; }
             if (!engaged)
             {
                 if (game.Player.Position.x < 12) { Intent = "앞으로 나아가 시험을 시작하세요"; return; }
                 engaged = true;
             }
-            art.GetComponent<KarmaCharacterAnimator>().Pose(state == ActionState.Approach ? 1 : 0, state == ActionState.Rising);
-            float dt = Time.deltaTime; FightSeconds += dt; timer -= dt;
-            float dx = game.Player.Position.x - Position.x;
-            if (state == ActionState.Approach || state == ActionState.Recover)
-                art.localScale = new Vector3(dx < 0 ? -1.4f : 1.4f, 1.4f, 1);
-            switch (state)
+            float dt = Time.deltaTime; FightSeconds += dt;
+            if (pendingParry)
             {
-                case ActionState.Approach:
-                    float preferred = PrimaryType == Essence.Flame ? 7f : PrimaryType == Essence.Ward ? 3.8f : 2.8f;
-                    if (Mathf.Abs(dx) > preferred) Move(Mathf.Sign(dx) * game.Config.enemyMoveSpeed * Tuning.moveMultiplier * dt);
-                    else if (PrimaryType == Essence.Flame && Mathf.Abs(dx) < 4.5f) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
-                    if (timer <= 0) BeginAttack(); break;
-                case ActionState.Telegraph:
-                    if (timer <= 0) ExecuteAttack(); break;
-                case ActionState.Rising:
-                    TickRising(dt); break;
-                case ActionState.Ward:
-                    if (timer <= 0) EndDefense(); break;
-                case ActionState.Recover:
-                    if (timer <= 0)
-                    {
-                        state = ActionState.Approach;
-                        timer = Mathf.Max(0.4f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * (Enraged ? 0.75f : 1));
-                        Intent = "접근 중";
-                    }
-                    break;
+                pendingParry = false; InterruptPattern();
+                state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, Tuning.parryStunSeconds);
+                Intent = "패링 성공 · 방어막 파괴 / 무력화";
             }
-            // Recover an externally displaced guardian without trapping the run.
-            if (Position.y < -2 || Position.y > 12)
-            { transform.position = new Vector3(Mathf.Clamp(Position.x, 1.5f, 38.5f), 1.15f, 0); Recover(1); }
+            UpdateAutoShield();
+            shieldHalo.enabled = Armored || shieldWarningUntil > 0;
+            shieldHalo.color = shieldWarningUntil > 0
+                ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
+                : fullShield ? Color.white : swordWard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
+            animator.Pose(state == ActionState.Approach ? 1 : 0, Position.y > 1.5f);
+            if (Stunned)
+            {
+                if (FightSeconds < stunnedUntil) return;
+                state = ActionState.Approach; timer = 0.8f;
+            }
+            if (running)
+            {
+                if (FightSeconds - patternStarted > Mathf.Max(5, Tuning.patternTimeout) || Position.y < -2 || Position.y > 12)
+                { InterruptPattern(); state = ActionState.Approach; timer = 1.2f; Intent = "자세 복구 · 빈틈"; }
+                return;
+            }
+            float dx = game.Player.Position.x - Position.x;
+            art.localScale = new Vector3(dx < 0 ? -1.4f : 1.4f, 1.4f, 1);
+            float preferred = PrimaryType == Essence.Flame ? 7 : PrimaryType == Essence.Ward ? 3 : 3.5f;
+            if (Mathf.Abs(dx) > preferred) Move(Mathf.Sign(dx) * game.Config.enemyMoveSpeed * Tuning.moveMultiplier * dt);
+            else if (PrimaryType == Essence.Flame && Mathf.Abs(dx) < 4.2f) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
+            timer -= dt;
+            if (timer <= 0) BeginAttack();
+        }
+        void BeginAttack()
+        {
+            float distance = Mathf.Abs(game.Player.Position.x - Position.x);
+            bool escape = Position.x > 5 && Position.x < 35;
+            bool sight = ClearShot(Position, game.Player.Position);
+            selected = EnemyAttack.GroundStrike;
+            for (int i = 0; i < attacks.Count; i++)
+            {
+                var candidate = attacks[cycleIndex++ % attacks.Count];
+                if (!KarmaPatternCatalog.CanSelect(candidate, previous, distance, game.Player.Airborne,
+                    sight, FightSeconds < shieldUntil, escape, FightSeconds >= nextUltimate)) continue;
+                selected = candidate; break;
+            }
+            previous = selected;
+            if (KarmaPatternCatalog.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
+            direction = game.Player.Position.x < Position.x ? -1 : 1;
+            art.localScale = new Vector3(direction * 1.4f, 1.4f, 1);
+            running = true; patternStarted = FightSeconds;
+            Intent = KarmaPatternCatalog.Label(selected);
+            StartCoroutine(RunPattern());
+        }
+        IEnumerator RunPattern()
+        {
+            yield return ExecuteAttack();
+            if (!Active) yield break;
+            ClearPatternObjects();
+            fullShield = frontalGuard = swordWard = false;
+            state = ActionState.Approach; running = false;
+            timer = Mathf.Max(0.4f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier);
+        }
+        IEnumerator Wait(float seconds)
+        {
+            float elapsed = 0;
+            while (elapsed < seconds && Active)
+            { yield return null; if (!game.Paused) elapsed += Time.deltaTime; }
+        }
+        IEnumerator Recovery(float seconds, bool keepAutoShield = false, string message = null)
+        {
+            ClearPatternObjects(); fullShield = frontalGuard = swordWard = false;
+            // A real, stationary attack opportunity: auto-shield cannot conceal it.
+            if (!keepAutoShield) shieldUntil = shieldWarningUntil = 0;
+            state = ActionState.Recover; Intent = message ?? "빈틈 발생 · 지금 공격하세요";
+            yield return Wait(seconds * Mathf.Max(1, Tuning.recoveryMultiplier));
         }
         void Move(float distance)
+        { transform.position = new Vector3(Mathf.Clamp(Position.x + distance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Position.y, 0); }
+        bool ClearShot(Vector2 from, Vector2 to)
         {
-            transform.position = new Vector3(Mathf.Clamp(Position.x + distance, 1.5f, 38.5f), Position.y, 0);
+            foreach (var hit in Physics2D.LinecastAll(from, to))
+                if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null) return false;
+            return true;
         }
+        void InterruptPattern()
+        {
+            StopAllCoroutines(); ClearPatternObjects();
+            trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
+            fullShield = frontalGuard = swordWard = running = pendingParry = false;
+            shieldUntil = shieldWarningUntil = 0;
+            transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), 1.15f, 0);
+        }
+        public void CancelCombat()
+        {
+            if (stopped) return;
+            stopped = true; InterruptPattern();
+            if (shieldHalo != null) shieldHalo.enabled = false;
+        }
+        void OnDisable() { if (game != null) CancelCombat(); }
+        void OnDestroy() { if (effectsRoot != null) Destroy(effectsRoot.gameObject); }
     }
 }

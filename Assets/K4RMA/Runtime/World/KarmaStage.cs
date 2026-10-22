@@ -5,7 +5,7 @@ namespace KarmaPrototype
     // Stage geometry and scenery only: no progression or combat rules.
     public static class KarmaStage
     {
-        // Inner wall faces (-0.5, 40.5), minus/plus the overdrive shield half-width (1.6).
+        // Boss center limits leave room for its silhouette inside the arena walls.
         public const float BossLeftWall = 1.1f, BossRightWall = 38.9f;
         public static readonly Vector2 Spawn = new Vector2(3, 1);
         public static readonly Vector2 Gate = new Vector2(38, 1.8f);

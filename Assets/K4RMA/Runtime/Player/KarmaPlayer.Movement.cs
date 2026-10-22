@@ -15,6 +15,12 @@ namespace KarmaPrototype
                 return;
             }
             if (!airSlashRunning && Grounded() && body.linearVelocity.y <= 0.1f) { lastGrounded = Time.time; techniques.Land(); }
+            if (Stunned)
+            {
+                body.gravityScale = game.Config.gravityScale;
+                body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+                return;
+            }
             if (KnockedBack)
             {
                 CancelAirSlash();
@@ -41,11 +47,6 @@ namespace KarmaPrototype
                     airLaunchX = airSlashDirection.x * game.Config.moveSpeed * tuning.airSlashHorizontalBoost;
                     body.linearVelocity = new Vector2(airLaunchX, game.Config.jumpSpeed * tuning.airSlashJumpScale);
                 }
-            }
-            else if (Dashing)
-            {
-                body.gravityScale = 0;
-                body.linearVelocity = new Vector2(dashFacing * game.Config.dashSpeed, 0);
             }
             else
             {
@@ -75,18 +76,17 @@ namespace KarmaPrototype
                 if (groundHits[i].GetComponent<KarmaSurface>() != null) return true;
             return false;
         }
-        public void BeginDash(float seconds) { dashUntil = Time.time + seconds; dashFacing = Facing; }
         public void ResetForRoom(Vector2 position, bool restoreHealth)
         {
             transform.position = position;
             body.position = position;
             body.linearVelocity = Vector2.zero;
             move = 0; jumpBufferedUntil = 0; lastGrounded = -10; nextSword = 0;
-            invulnerableUntil = dashUntil = wardUntil = 0;
+            invulnerableUntil = wardUntil = 0;
             CancelAirSlash();
             techniques.Reset();
             ClearStatus();
-            Facing = 1;
+            Facing = 1; ParryCount = 0;
             Essences.ResetTemporaryState();
             if (restoreHealth) Health = game.Config.playerHealth;
         }

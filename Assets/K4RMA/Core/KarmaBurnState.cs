@@ -27,4 +27,6 @@ namespace KarmaPrototype
         }
         public void Clear() { applied = false; endsAt = nextTick = 0; }
     }
+
+    
 }

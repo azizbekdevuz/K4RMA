@@ -41,6 +41,7 @@ namespace KarmaPrototype
         {
             Vector2 from = Position; float elapsed = 0;
             var ledger = contact ?? new KarmaAttackContact();
+<<<<<<< HEAD
             Vector2 heading = target - from;
             if (Mathf.Abs(heading.x) > 0.01f) { direction = Mathf.Sign(heading.x); art.localScale = new Vector3(Facing * Mathf.Abs(art.localScale.x), art.localScale.y, art.localScale.z); }
             state = ActionState.Attack; animator.Attack(heading.normalized);
@@ -52,6 +53,10 @@ namespace KarmaPrototype
                 // AirSlash is authored upright: mirror horizontally without turning rising art upside down.
                 sweep.transform.parent.localScale = new Vector3(Facing, 1, 1);
             }
+=======
+            state = ActionState.Attack; animator.Attack((target - from).normalized);
+            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(effectsRoot,Position,KarmaArtAtlas.Effects(1)[CurrentPattern%12],hitSize==Vector2.zero?KarmaSpace.Units(new Vector2(2,2)):hitSize,duration);
+>>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             while (elapsed < duration && Active)
             {
                 if (game.Paused) { yield return null; continue; }

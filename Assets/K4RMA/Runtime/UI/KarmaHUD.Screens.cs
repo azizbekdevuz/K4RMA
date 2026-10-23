@@ -87,7 +87,11 @@ namespace KarmaPrototype
             Label(155, 360, 570, 180, "원형은 제자의 동작으로 고유화되었습니다.\n다음 수호자: " + KarmaPatternCatalog.TypeName(game.Player.Essences.SacrificeOrder)
                 + "\n계승 원형: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder)
                 + (game.StageIndex == 2 ? "\n세 고유 기술로 마지막 수호자의 시험에 도전합니다." : "\n내려놓은 원형의 흔적은 이후 수호자에게 유지됩니다."), text);
+<<<<<<< HEAD
             SpriteArt(new Rect(780, 295, 310, 260), KarmaArtwork.GuardianPreview(game.Player.Essences.SacrificeOrder));
+=======
+            SpriteArt(new Rect(780,295,310,260),KarmaArtwork.Settings.useCompleteArtwork?KarmaArtAtlas.Inheritance(game.Player.Essences.SacrificeOrder):KarmaArtwork.Settings.Guardian(KarmaPatternCatalog.Primary(game.Player.Essences.SacrificeOrder)));
+>>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             SpriteArt(new Rect(650, 300, 65, 65), SkillIcon(game.LastSacrifice, true));
         }
         void PauseScreen()

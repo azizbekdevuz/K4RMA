@@ -51,10 +51,20 @@ namespace KarmaPrototype
         static SpriteRenderer Draw(Transform parent, Vector2 p, Vector2 size, Color color, int kind)
         {
             var sr = KarmaVisuals.Box(parent, "Remnant VFX", p, size, color, 14);
+<<<<<<< HEAD
             string pose = kind == 0 ? "Barrier" : kind == 1 ? "Slash" : "PierceTrail";
             if (KarmaSheetEffects.Apply(sr, "PlayerVFX", pose, size)) sr.color = new Color(1, 1, 1, color.a);
             else sr.sprite = Shape(kind);
+=======
+            sr.sprite = KarmaArtwork.Settings.useCompleteArtwork?KarmaArtAtlas.Effects(0)[kind==0?7:kind==1?1:5]:Shape(kind);
+            FitArtwork(sr,size);
+>>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             return sr;
+        }
+        static void FitArtwork(SpriteRenderer sr,Vector2 size)
+        {
+            var bounds=sr.sprite.bounds.size;
+            sr.transform.localScale=new Vector3(size.x/bounds.x,size.y/bounds.y,1);
         }
         static void Animate(SpriteRenderer sr, float seconds, float growth, Vector2 drift)
         {
@@ -75,10 +85,14 @@ namespace KarmaPrototype
         }
         public static void ProjectileLook(SpriteRenderer sr, Vector2 velocity)
         {
-            sr.sprite = Shape(1);
+            sr.sprite = KarmaArtwork.Settings.useCompleteArtwork?KarmaArtAtlas.Effects(0)[9]:Shape(1);
             sr.sortingOrder = 14;
+<<<<<<< HEAD
             sr.transform.localScale = new Vector3(KarmaSpace.Units(1.25f), KarmaSpace.Units(2.3f), 1);
             if (KarmaSheetEffects.Apply(sr, "PlayerVFX", "Wave", KarmaSpace.Units(new Vector2(2.3f, 1.25f)), true)) sr.color = Color.white;
+=======
+            FitArtwork(sr,KarmaSpace.Units(new Vector2(2.3f,1.25f)));
+>>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             sr.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
         }
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
@@ -135,7 +149,7 @@ namespace KarmaPrototype
                 Vector2.one * KarmaSpace.Units(1.1f), 0.18f) != null) return;
             var ring = Draw(game.World, point, Vector2.one * KarmaSpace.Units(0.95f), new Color(1, 0.93f, 0.7f), 0);
             ring.sortingOrder = 20; Animate(ring, 0.16f, 0.45f, Vector2.zero);
-            var artwork = KarmaArtwork.Settings.hitEffect;
+            var artwork = KarmaArtwork.Settings.useCompleteArtwork?KarmaArtAtlas.Effects(3)[UnityEngine.Random.Range(0,4)]:KarmaArtwork.Settings.hitEffect;
             if (artwork != null)
             {
                 var hit = new GameObject("Artwork sword impact"); hit.transform.SetParent(game.World, false);

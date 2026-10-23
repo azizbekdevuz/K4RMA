@@ -12,6 +12,7 @@ namespace KarmaPrototype
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
             Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null)
         {
+<<<<<<< HEAD
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
             var attack = go.AddComponent<KarmaBossAttack>();
             var picture = new GameObject("Directional attack artwork"); picture.transform.SetParent(go.transform, false);
@@ -25,6 +26,12 @@ namespace KarmaPrototype
             var burst = KarmaCombatVFX.Burst(root, at, sr.sprite, "Guardian launch/" + pose,
                 new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y) * 1.15f, 0.24f, angle, color);
             burst.transform.parent.localScale = new Vector3(sr.flipX ? -1 : 1, 1, 1);
+=======
+            var sr = KarmaVisuals.Box(root, "유효 보스 공격", at, size, color, 10);
+            if(KarmaArtwork.Settings.useCompleteArtwork)
+            { sr.enabled=false; KarmaArtworkVFX.Attack(sr.transform,velocity,size,life,owner.CurrentPattern); }
+            var attack = sr.gameObject.AddComponent<KarmaBossAttack>();
+>>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;
             attack.remaining = life; attack.damage = damage; attack.contact = contact ?? new KarmaAttackContact(); attack.stun = stun;
             return attack;

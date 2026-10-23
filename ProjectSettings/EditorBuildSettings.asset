@@ -4,5 +4,14 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/K4RMA/Generated/KarmaPrototype 1.unity
+    guid: aa7dd2ad193ac1a4d94042009a9cb226
+  - enabled: 1
+    path: Assets/K4RMA/Generated/KarmaPrototype 2.unity
+    guid: 8bb638c224f261848a1b37e5e24ad85b
+  - enabled: 1
+    path: Assets/K4RMA/Generated/KarmaPrototype 3.unity
+    guid: 13d7ac6715dd66a41924e890b6628f17
   m_configObjects: {}

@@ -9,61 +9,8 @@ namespace KarmaPrototype
     {
         public void Initialize(IReadOnlyList<Essence> order)
         {
-<<<<<<< HEAD
             if (order.Count < 2) return;
             GetComponent<KarmaCharacterAnimator>().SetGuardianAppearance(KarmaArtwork.GuardianPreview(order));
-=======
-            var owned = new HashSet<Essence>(order);
-            if(KarmaArtwork.Settings.useCompleteArtwork) foreach(var essence in owned)
-            {
-                var go=new GameObject("계승 원화 "+essence);go.transform.SetParent(transform,false);
-                var sr=go.AddComponent<SpriteRenderer>();KarmaVisuals.ApplyMaterial(sr);
-                sr.sprite=KarmaArtAtlas.Variant(essence==Essence.Flame?13:essence==Essence.Dash?14:15);sr.sortingOrder=6;
-                go.transform.localPosition=new Vector3(essence==Essence.Ward?0.35f:-0.3f,0.25f,0);
-                go.transform.localScale=Vector3.one*0.4f;
-            }
-            if (owned.Contains(Essence.Flame))
-            {
-                for (int i = 0; i < 2; i++)
-                {
-                    var sr = KarmaRemnantVFX.CreateBladeAura(transform, KarmaArtwork.BossSwordColor);
-                    sr.sortingOrder = 7;
-                    sr.transform.localPosition = new Vector3(KarmaSpace.Units(i == 0 ? -0.15f : 0.15f), KarmaSpace.Units(i == 0 ? 0.3f : -0.2f), 0);
-                    sr.transform.localScale = new Vector3(KarmaSpace.Units(2.4f), KarmaSpace.Units(0.7f), 1); blades.Add(sr);
-                }
-            }
-            if (owned.Contains(Essence.Ward))
-            {
-                for (int i = 0; i < 2; i++)
-                {
-                    var color = KarmaArtwork.BarrierColor; color.a = 0.32f;
-                    var sr = KarmaRemnantVFX.CreateWardHalo(transform, color);
-                    sr.sortingOrder = 4;
-                    sr.transform.localPosition = new Vector3(KarmaSpace.Units(i == 0 ? 0.55f : -0.35f), KarmaSpace.Units(0.05f), 0);
-                    sr.transform.localScale = new Vector3(KarmaSpace.Units(i == 0 ? 1.25f : 0.8f), KarmaSpace.Units(i == 0 ? 2.25f : 1.5f), 1);
-                    rings.Add(sr);
-                }
-            }
-            if (owned.Contains(Essence.Dash) && KarmaPatternCatalog.Primary(order) != Essence.Dash)
-            {
-                var sr = KarmaRemnantVFX.CreateBladeAura(transform, new Color(0.74f, 0.91f, 0.85f, 0.45f));
-                sr.sortingOrder = 4; sr.transform.localPosition = new Vector3(KarmaSpace.Units(-0.25f), KarmaSpace.Units(0.35f), 0);
-                sr.transform.localScale = new Vector3(KarmaSpace.Units(1.2f), KarmaSpace.Units(2.6f), 1); blades.Add(sr);
-            }
-        }
-        void Update()
-        {
-            for (int i = 0; i < blades.Count; i++)
-            {
-                var sr = blades[i];
-                sr.transform.localRotation = Quaternion.Euler(0, 0, i == 2 ? 65 : Mathf.Sin(Time.time * 1.7f + i * 2) * 14);
-                var c = sr.color; c.a = 0.38f + Mathf.Sin(Time.time * 2 + i) * 0.08f; sr.color = c;
-            }
-            foreach (var sr in rings)
-            {
-                var c = sr.color; c.a = 0.26f + Mathf.Sin(Time.time * 2.2f) * 0.06f; sr.color = c;
-            }
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
         }
     }
 }

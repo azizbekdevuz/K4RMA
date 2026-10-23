@@ -4,6 +4,15 @@ from pathlib import Path
 import re
 
 root = Path(__file__).resolve().parents[1]
+# Git can commit unresolved marker text even when its index has no unmerged entries.
+# Reject it before Unity tries to compile C# or deserialize YAML assets.
+for folder in ('Assets', 'Packages', 'ProjectSettings', 'tools', 'tests', 'docs'):
+    for source in (root / folder).rglob('*'):
+        if not source.is_file() or source.suffix not in ('.cs', '.asset', '.prefab', '.unity', '.mat', '.meta', '.json', '.md', '.py'):
+            continue
+        for line_number, line in enumerate(source.read_text().splitlines(), 1):
+            if re.match(r'^(?:<{7}|={7}|>{7}|\|{7})(?: .*)?$', line):
+                raise SystemExit(f'Unresolved merge conflict: {source.relative_to(root)}:{line_number}')
 assets = root / 'Assets'
 guids = {}
 for meta in assets.rglob('*.meta'):

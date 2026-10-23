@@ -92,11 +92,7 @@ namespace KarmaPrototype
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
-<<<<<<< HEAD
             animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
-=======
-            animator.SpecialPose(direction.y<0?16:direction.y>0?19:18,tuning.airSlashDuration);
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             Essences.NotifyUnique(Essence.Dash);
             KarmaArtworkVFX.Player(game,Position,direction.y<0?4:3,direction);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
@@ -160,7 +156,6 @@ namespace KarmaPrototype
                 if (enemy != null && enemy.Alive && enemy.OverlapsDamageArea(Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4))))
                     enemy.TakeDamage(game.Config.Techniques.risingDamage);
         }
-<<<<<<< HEAD
         public void BeginSwordWave() { animator.PlayPose("SwordWave", 0.25f); }
         public void BeginCounter()
         {
@@ -171,10 +166,6 @@ namespace KarmaPrototype
         {
             wardUntil = Time.time + seconds; animator.PlayPose("Guard", seconds);
         }
-=======
-        public void BeginCounter() { KarmaArtworkVFX.Player(game,Position,6,Vector2.right*Facing); techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow); }
-        public void BeginWard(float seconds) { KarmaArtworkVFX.Player(game,Position,7,Vector2.right*Facing,seconds); wardUntil = Time.time + seconds; }
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
         public void TakeDamage(float damage)
         {
             if (!game.IsCombat || Health <= 0 || damage <= 0 || Time.time < invulnerableUntil) return;
@@ -198,15 +189,11 @@ namespace KarmaPrototype
                 }
                 return;
             }
-<<<<<<< HEAD
             if (Shielded)
             {
                 KarmaSheetEffects.Spawn(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
                 return;
             }
-=======
-            if (Shielded) { animator.SpecialPose(5,0.14f); KarmaArtworkVFX.Player(game,Position,5,Vector2.right*Facing); KarmaVisuals.Flash(game.World, Position, KarmaSpace.Units(new Vector2(1.6f, 2.1f)), game.Config.wardColor); return; }
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();

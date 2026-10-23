@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 279072a9c8c045f0975d27fb4fe704ce, type: 3}
   m_Name: KarmaArtworkSettings
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtworkSettings
-<<<<<<< HEAD
+  useCompleteArtwork: 0
   spriteLibrary: {fileID: 11400000, guid: 3639d9b9c82684a51a69dc4581b11c4e, type: 2}
   playerIdle: {fileID: -1166498298, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
   playerMove1: {fileID: 817887777, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
@@ -27,22 +27,6 @@ MonoBehaviour:
   swordGuardian: {fileID: -1121073146, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
   risingGuardian: {fileID: 851959632, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
   wardGuardian: {fileID: 1341530238, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-=======
-  useCompleteArtwork: 1
-  playerIdle: {fileID: 424788828, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerMove1: {fileID: 54923388, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerMove2: {fileID: 1040366131, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerSlash1: {fileID: 923073471, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerSlash2: {fileID: -952824689, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerRising: {fileID: -703626981, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerFalling: {fileID: 1065545395, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerHurt: {fileID: 445551805, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  playerDeath: {fileID: 2005551413, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
-  neutralGuardian: {fileID: 616227310, guid: 975d388f3f853414795ffd38b3a51689, type: 3}
-  swordGuardian: {fileID: 238163752, guid: 20a149b3d83d84eb8a79dbb30c73e533, type: 3}
-  risingGuardian: {fileID: 733995381, guid: a8ace34894e054231bab1dbe85f7c9a9, type: 3}
-  wardGuardian: {fileID: 1730291477, guid: fd0719f74cb4447fab72fe27aaa95c0c, type: 3}
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
   dojoBackground: {fileID: 21300000, guid: 105788dea150a46078f38ce8d5054b63, type: 3}
   mountainBackground: {fileID: 21300000, guid: f50e2414a6e4a472396c88342242ada4, type: 3}
   mountainPanorama: {fileID: 21300000, guid: 925f5a6797694273bcb485ea98c3e612, type: 3}

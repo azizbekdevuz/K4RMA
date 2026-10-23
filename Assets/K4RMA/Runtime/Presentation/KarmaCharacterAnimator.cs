@@ -74,11 +74,7 @@ namespace KarmaPrototype
         {
             if (deathAt >= 0)
             {
-<<<<<<< HEAD
                 if (poses.ContainsKey("Death")) ShowPose("Death");
-=======
-                if(picture!=null && (completePlayer||completeGuardian)) picture.sprite=frames[completeGuardian?frames.Length-1:15];
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
                 else if (picture != null && frames.Length >= 9) picture.sprite = frames[8];
                 else transform.localRotation = Quaternion.Euler(0,0,Mathf.Min(85,(Time.time-deathAt)*200));
                 return;
@@ -120,7 +116,6 @@ namespace KarmaPrototype
                     else if (Mathf.Abs(movement) > 0.1f) frame = (int)(Time.time * 9) % 2 == 0 ? 1 : 2;
                 }
                 picture.sprite = frames[frame];
-<<<<<<< HEAD
                 if (sheet == "Player" && poses.Count > 0)
                 {
                     if (wasAirborne && !airborne) landedUntil = Time.time + 0.1f;
@@ -137,9 +132,6 @@ namespace KarmaPrototype
                         : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
                     ShowPose(pose);
                 }
-=======
-                if(completePlayer||completeGuardian)picture.transform.localScale=Vector3.one*KarmaSpace.Scale*(1+(frame==0?Mathf.Sin(Time.time*2)*0.006f:0));
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
                 float bob = airborne ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;
                 picture.transform.localPosition = pictureHome + Vector3.up * bob;
                 picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;

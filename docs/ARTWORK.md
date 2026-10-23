@@ -1,6 +1,5 @@
 # 이미지 교체 방법
 
-<<<<<<< HEAD
 ## 시트 내부 그림을 개별 스프라이트로 사용하기 (2026-10-23)
 
 `Assets/K4RMA/Resources/K4RMAArtwork/Sheets/`의 PNG는 **Sprite Mode: Multiple**이다.
@@ -43,48 +42,6 @@ unity command script.run --caller plugin --skill sprite-editor -- --file tools/P
 재생성 후 위 Unity 임포트 명령을 실행하면 같은 Sprite ID로 갱신된다.
 `output/validation/sprites/Unity-PlayerVFX.png`, `Unity-PersonalizationVFX.png`, `Unity-HitVFX.png`에서
 실제 Unity 메시의 완전한 끝부분을 확인할 수 있다. 일회성 스킬 이펙트와 플레이어 검기는 원본 비율을 유지한다.
-=======
-## 전체 원본 연결 (2026-10-23)
-
-`image/`의 PNG/JPEG **63개**를 경로가 명시된 레지스트리에 등록했다.
-Unity가 처음 스크립트를 가져올 때 원본을 복사·임포트하고, 빌드 직전에도 누락을 확인한다.
-원본 `image/` 폴더와 `Assets/`를 함께 pull한다. 최초 임포트가 끝난 뒤 Play한다.
-
-| 원본 | 연결 |
-| --- | --- |
-| 플레이어 keyposes | 20개 영역: 이동·공중·베기·상승·하강·관통·도약·방어·반격·피격·사망 상태 |
-| 기본/검기/상승/방어 수호자 | 8/12/12/12개 영역. 공격 예고·실행·회복·이동·피격·무력화·사망 포즈 전환. 측면/후면 뷰는 별도 애니메이션 프레임으로 순환하지 않음 |
-| 플레이어/수호자/피격/고유화 VFX | 12/12/8/12개 독립 효과 영역. 행동별 Sprite 표시 + 확대·페이드. 공격 판정과 이펙트 자식 Transform 분리 |
-| 계승 atlas | 계승 부품 + 고유화 완료 화면의 계승 조합별 일러스트 |
-| 실외/실내 배경 | 13/10개 레이어. 원경 이동 보간, 바닥 오프셋. 공통 캔버스 좌표 유지 |
-| 소품 atlas | 16개 영역을 네 시련에 4개씩 장식 배치 |
-| UI/HUD/기술 아이콘 | 기존 선택 UI 아이콘 유지 + 원본 HUD 프레임·고유 기술 아이콘 연결 |
-| 합성 배경·메뉴·UI Components | 기존 저장된 Inspector 연결 및 배경 대체 경로 유지 |
-| 목업·화면 구성·스타일 가이드·참고 사진 23개 | Editor의 `CompleteArtInventory.asset`에 원본 참조. 가짜 버튼·텍스트를 실제 조작 화면 위에 표시하지 않음 |
-
-게임용 40개는 `Assets/K4RMA/Resources/K4RMAComplete/`,
-참고용 23개는 `Assets/K4RMA/Editor/ArtReferences/`에 생성된다.
-두 폴더와 Editor 인벤토리는 원본으로 재생성하므로 Git에서 제외한다.
-참고용 이미지는 빌드에 포함하지 않는다. 모든 원본 연결 상태는
-`Assets/K4RMA/Editor/CompleteArtInventory.asset`의 Source/Usage/Image로 확인한다.
-
-`KarmaArtworkSettings.useCompleteArtwork`가 켜져 있으면 전체 원본 기반 표시를 사용한다.
-끄면 기존 9개 플레이어 포즈·수호자 Sprite·합성 배경 설정으로 돌아간다.
-기존 Inspector 슬롯·PNG의 Sprite importer 메타데이터는 변경하지 않는다.
-추가 포즈는 검토한 픽셀 사각형과 발 Pivot에서 런타임 Sprite를 만들고 캐시한다.
-
-**원본은 연속 애니메이션이 아닌 핵심 포즈/독립 VFX 시트다.**
-포즈 전환·이동·크기·알파 보간을 연결한 것으로, 없는 중간 프레임을 추가 생성하지는 않았다.
-레이어 합성·발 위치·이펙트 크기는 실제 Play에서 최종 시각 확인이 필요하다.
-
-검증:
-- `python3 tools/validate-complete-art.py`: 원본 경로, PNG 실제 크기, 모든 정적 Sprite 영역, 스크립트 GUID 확인
-- `python3 tools/check-unity-compile.py`: Unity player/editor C# 컴파일
-- `python3 tools/run-unity-artwork-checks.py`: 임시 프로젝트에서 원본 임포트·Sprite 생성·기존 Inspector 참조 검사
-- `KarmaPrototype.Editor.KarmaCompleteArtImport.Validate`: 전체 원본 + 영역 + 리소스 확인, `complete-art-validation.txt` 출력
-
-### 이전 10개 이미지 연결 기록
->>>>>>> e8d524ec86dec83deb348c14c41617b54d84da4c
 
 ## image 폴더 원화 연결 (2026-10-22)
 

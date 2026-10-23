@@ -13,55 +13,58 @@ MonoBehaviour:
   m_Name: KarmaConfig
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaConfig
   bossTuning:
-    stageOneHealth: 4800
-    stageTwoHealth: 8000
-    stageThreeHealth: 11000
-    finalHealth: 18000
+    stageOneHealth: 1050
+    stageTwoHealth: 1550
+    stageThreeHealth: 2050
+    finalHealth: 2800
     healthMultiplier: 1
-    damageMultiplier: 1.25
-    moveMultiplier: 1.45
-    decisionMultiplier: 0.8
-    recoveryMultiplier: 1
-    ultimateCooldown: 28
+    damageMultiplier: 1.15
+    moveMultiplier: 1.7
+    decisionMultiplier: 0.42
+    recoveryMultiplier: 0.72
+    enrageThreshold: 0.5
+    enrageTempo: 0.82
+    warningMultiplier: 0.9
+    ultimateCooldown: 20
     patternTimeout: 30
-    swordSpeed: 22
-    swordLifetime: 1.4
+    swordSpeed: 32
+    swordLifetime: 1.65
     swordWidth: 2.4
     swordHeight: 1
     counterWarning: 0.45
     swordWardDuration: 3
     swordWardResponseCooldown: 0.8
-    aerialSwordCount: 5
-    aerialSwordGap: 0.8
+    aerialSwordCount: 7
+    aerialSwordGap: 0.4
     riseHeight: 8
     groundBladeWidth: 10
     groundBladeHeight: 12
-    crossingWarning: 0.9
-    crossingReset: 1.1
-    autoShieldPeriod: 12
+    crossingWarning: 0.65
+    crossingReset: 0.65
+    autoShieldPeriod: 8
     autoShieldWarning: 0.8
     autoShieldDuration: 5
     shieldDamageMultiplier: 0.3
     dodgeRefreshesShield: 0
     parryStunSeconds: 2
     fragmentStunSeconds: 1
-    shieldFragments: 3
-    fragmentAimWarning: 0.7
+    shieldFragments: 4
+    fragmentAimWarning: 0.5
     barrierRecovery: 1.2
-    trialAttackCount: 5
+    trialAttackCount: 7
     trialAllowedHits: 1
-    trialAttackGap: 1.4
+    trialAttackGap: 0.65
     trialStunSeconds: 4
     trialExplosionMultiplier: 2.5
-  playerHealth: 10000
+  playerHealth: 160
   moveSpeed: 14
   jumpSpeed: 26
   gravityScale: 6
   hitInvulnerability: 0.7
-  swordDamage: 1000
+  swordDamage: 60
   swordCooldown: 0.32
   flameCooldown: 2.2
-  flameDamage: 32
+  flameDamage: 72
   flameSpeed: 28
   dashCooldown: 1.6
   wardCooldown: 5
@@ -83,14 +86,14 @@ MonoBehaviour:
     airSlashHorizontalBoost: 1.5
     counterWindow: 0.18
     counterCooldown: 1.1
-    counterDamage: 38
-    risingDamage: 26
+    counterDamage: 85
+    risingDamage: 60
     risingSpeed: 30
-  enemyDamage: 12
+  enemyDamage: 14
   enemyMoveSpeed: 4.8
   enemyDecisionDelay: 1.2
   enemyTelegraphTime: 0.75
-  healAfterSacrifice: 30
+  healAfterSacrifice: 45
   koreanFont: {fileID: 0}
   spriteMaterial: {fileID: 2100000, guid: 1c46e35ad003c436ba8b625a9e519730, type: 2}
   flameColor: {r: 1, g: 0.38, b: 0.18, a: 1}

@@ -3,6 +3,38 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
+        SpriteRenderer[] damageRenderers;
+        // Only the guardian artwork contributes: attack VFX and shield halos are separate objects.
+        public Bounds DamageBounds
+        {
+            get
+            {
+                if (damageRenderers == null || damageRenderers.Length == 0)
+                    damageRenderers = art.GetComponentsInChildren<SpriteRenderer>();
+                Bounds bounds = default;
+                bool found = false;
+                foreach (var renderer in damageRenderers)
+                {
+                    if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer.sprite == null) continue;
+                    if (!found) { bounds = renderer.bounds; found = true; }
+                    else bounds.Encapsulate(renderer.bounds);
+                }
+                return found ? bounds : new Bounds(Position, KarmaSpace.Units(new Vector2(1.4f, 2.3f)));
+            }
+        }
+        public bool OverlapsDamageArea(Vector2 center, Vector2 size)
+        {
+            var bounds = DamageBounds;
+            return Mathf.Abs(center.x - bounds.center.x) <= size.x / 2 + bounds.extents.x
+                && Mathf.Abs(center.y - bounds.center.y) <= size.y / 2 + bounds.extents.y;
+        }
+        public bool IntersectsDamagePath(Vector2 from, Vector2 to, float radius)
+        {
+            var bounds = DamageBounds;
+            return KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, bounds.center.x, bounds.center.y,
+                bounds.extents.x + radius, bounds.extents.y + radius);
+        }
+        public Vector2 ClosestDamagePoint(Vector2 source) { return DamageBounds.ClosestPoint(source); }
         public void TakeDamage(float amount) { TakeDamage(amount, game.Player.Position); }
         public void TakeDamage(float amount, Vector2 source)
         {

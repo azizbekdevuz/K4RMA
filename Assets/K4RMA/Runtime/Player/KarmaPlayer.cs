@@ -40,6 +40,7 @@ namespace KarmaPrototype
             aura = KarmaVisuals.Box(transform, "Ward", Vector2.zero, KarmaSpace.Units(new Vector2(1.25f, 1.9f)),
                 game.Config.wardColor, 2);
             aura.enabled = false;
+            KarmaSheetEffects.Apply(aura, "PlayerVFX", "Guard", KarmaSpace.Units(new Vector2(1.5f, 2.15f)));
             remnantHalo = KarmaRemnantVFX.CreateWardHalo(transform, game.Config.wardColor);
             remnantHalo.enabled = false;
         }
@@ -51,7 +52,7 @@ namespace KarmaPrototype
             aura.enabled = Shielded;
             remnantHalo.enabled = techniques.CounterReady(Time.time);
             art.gameObject.SetActive(Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
-            animator.Pose(move, Airborne);
+            animator.Pose(move, Airborne, body.linearVelocity.y);
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             move = KarmaInput.Horizontal;

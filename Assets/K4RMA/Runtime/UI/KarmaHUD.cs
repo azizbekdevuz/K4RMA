@@ -75,7 +75,6 @@ namespace KarmaPrototype
         void OnDestroy()
         {
             if (runtimeFont != null) Destroy(runtimeFont);
-            DestroyHudSymbols();
         }
 
         static void Art(Rect bounds, string name, Rect? source = null)
@@ -97,13 +96,13 @@ namespace KarmaPrototype
             GUI.DrawTextureWithTexCoords(destination, texture, KarmaArtwork.UV(texture, crop), true);
             GUI.color = old;
         }
-        static void SpriteArt(Rect bounds, Sprite sprite)
+        static void SpriteArt(Rect bounds, Sprite sprite, Color? tint = null)
         {
             if (sprite == null) return;
             float ratio = sprite.rect.width / sprite.rect.height;
             float width = Mathf.Min(bounds.width, bounds.height * ratio), height = width / ratio;
             var rect = new Rect(bounds.center.x - width / 2, bounds.center.y - height / 2, width, height);
-            Color old = GUI.color; GUI.color = Color.white;
+            Color old = GUI.color; GUI.color = tint ?? Color.white;
             var source = sprite.rect;
             GUI.DrawTextureWithTexCoords(rect, sprite.texture, new Rect(source.x / sprite.texture.width,
                 source.y / sprite.texture.height, source.width / sprite.texture.width, source.height / sprite.texture.height), true);

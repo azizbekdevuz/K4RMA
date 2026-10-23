@@ -17,6 +17,7 @@ namespace KarmaPrototype
         {
             Color stone = new Color(0.16f + stage * 0.014f, 0.17f, 0.23f);
             bool suppliedBackground = KarmaArtwork.Background(parent, stage, game);
+            BuildArtworkProps(parent, stage);
             if (!suppliedBackground)
             {
             KarmaVisuals.Box(parent, "수련장 배경", new Vector2(20, 4), new Vector2(70, 26), new Color(0.09f, 0.07f, 0.10f), -20);
@@ -40,6 +41,27 @@ namespace KarmaPrototype
             Solid(parent, "Ground", new Vector2(ArenaCenter, -0.55f), new Vector2(ArenaWidth + 4, 1.1f), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
             Solid(parent, "Left wall", new Vector2(ArenaLeft - 1, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
             Solid(parent, "Right wall", new Vector2(ArenaRight + 1, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
+        }
+        static void BuildArtworkProps(Transform parent, int stage)
+        {
+            string[] names = stage == 0
+                ? new[] { "Gate", "Steps", "Well", "Rope", "LeftTree", "RightTree", "Leaves", "Rocks", "Bush", "Wood" }
+                : new[] { "Lantern", "TrainingPost", "WaveBanner", "RiseBanner", "WardBanner", "Rail" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                var sprite = KarmaArtwork.Sprite("Props", names[i]);
+                if (sprite == null) continue;
+                // Decoration stays behind actors and never adds terrain/collision.
+                var prop = new GameObject("Scenery/" + names[i]).transform; prop.SetParent(parent, false);
+                bool tall = names[i].Contains("Tree") || names[i] == "Gate" || names[i].Contains("Banner");
+                float scale = (tall ? 6 : 2.2f) / sprite.bounds.size.y;
+                float x = i % 2 == 0 ? ArenaLeft + 1 + i * 1.5f : ArenaRight - 1 - i * 1.5f;
+                float y = names[i].Contains("Banner") || names[i] == "Lantern" ? 5 : 0;
+                prop.localPosition = new Vector3(x, y, 0);
+                prop.localScale = Vector3.one * scale;
+                var renderer = prop.gameObject.AddComponent<SpriteRenderer>();
+                renderer.sprite = sprite; renderer.sortingOrder = -8; KarmaVisuals.ApplyMaterial(renderer);
+            }
         }
         public static void RefreshBoundaries(Transform parent)
         {

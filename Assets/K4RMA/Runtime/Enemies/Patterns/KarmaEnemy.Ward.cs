@@ -28,10 +28,12 @@ namespace KarmaPrototype
             Vector2 center = Position + Vector2.right * direction * KarmaSpace.Units(2);
             Vector2 size = KarmaSpace.Units(new Vector2(4, 2.8f));
             var mark = Mark("GD02 강공격 · 패링 가능", center, size);
-            state = ActionState.Telegraph; yield return Wait(1);
+            state = ActionState.Telegraph; yield return Wait(Warning(0.9f));
             Destroy(mark.gameObject); animator.Attack(); state = ActionState.Attack;
             int parries = game.Player.ParryCount; float health = game.Player.Health;
-            TryAttackHit(center, center, size, Damage * 1.5f, new KarmaAttackContact(), 0);
+            var contact = new KarmaAttackContact();
+            Attack(center, Vector2.zero, size, 0.18f, 1.5f, contact);
+            TryAttackHit(center, center, size, Damage * 1.5f, contact, 0);
             if (game.Player.ParryCount != parries) yield break;
             bool refreshed = Tuning.dodgeRefreshesShield || game.Player.Health < health;
             if (refreshed)
@@ -40,6 +42,16 @@ namespace KarmaPrototype
                 Intent = "GD02 강공격 적중 · 자동방어막 갱신";
             }
             yield return Wait(0.2f);
+            if (Enraged)
+            {
+                Vector2 waveAt = new Vector2(Position.x, KarmaSpace.Units(0.65f));
+                Vector2 waveSize = KarmaSpace.Units(new Vector2(1.2f, 0.65f));
+                var warning = PathMark(waveAt, waveAt + Vector2.right * direction * KarmaSpace.Units(10), waveSize);
+                Intent = "강공격 후 지면 충격파 · 점프로";
+                yield return Wait(Warning(0.6f)); Destroy(warning.gameObject);
+                Attack(waveAt, Vector2.right * direction * KarmaSpace.Units(14), waveSize, 0.7f, 0.75f);
+                yield return Wait(0.75f);
+            }
             // The update refresh is useful during the visible result. Recovery then exposes the boss.
             yield return Recovery(1.4f, refreshed);
         }
@@ -51,7 +63,7 @@ namespace KarmaPrototype
             Vector2 impact = new Vector2(Mathf.Clamp(game.Player.Position.x, KarmaStage.ArenaLeft + 4, KarmaStage.ArenaRight - 4), KarmaSpace.Units(0.65f));
             Vector2 size = KarmaSpace.Units(new Vector2(1.2f, 1.2f));
             var mark = PathMark(origin, impact, size);
-            yield return Wait(0.8f); Destroy(mark.gameObject);
+            yield return Wait(Warning(0.8f)); Destroy(mark.gameObject);
             state = ActionState.Attack; animator.Attack();
             Attack(origin, (impact - origin) / 0.5f, size, 0.5f, 0.8f, contact, Tuning.fragmentStunSeconds);
             yield return Wait(0.55f);
@@ -66,7 +78,7 @@ namespace KarmaPrototype
                 paths[i] = PathMark(starts[i], starts[i] + aims[i] * 0.8f, KarmaSpace.Units(new Vector2(0.5f, 0.5f)));
             }
             Intent = "GD03 조각 조준 고정 · 한 번만 피격/기절";
-            yield return Wait(Mathf.Max(0.3f, Tuning.fragmentAimWarning));
+            yield return Wait(Warning(Tuning.fragmentAimWarning));
             for (int i = 0; i < count; i++)
             {
                 Destroy(paths[i].gameObject);
@@ -95,7 +107,7 @@ namespace KarmaPrototype
             float x = Mathf.Clamp(Position.x + direction * KarmaSpace.Units(2.5f), KarmaStage.ArenaLeft + 5, KarmaStage.ArenaRight - 5);
             Vector2 center = new Vector2(x, KarmaSpace.Units(3)), size = KarmaSpace.Units(new Vector2(1.4f, 6));
             var mark = Mark("GD04 방벽 상승 · 높이 전체 위험", center, size);
-            yield return Wait(0.8f);
+            yield return Wait(Warning(0.8f));
             animator.Attack(Vector2.down); yield return Wait(0.3f);
             Destroy(mark.gameObject); state = ActionState.Attack;
             Attack(center, Vector2.zero, size, 0.4f);
@@ -127,11 +139,11 @@ namespace KarmaPrototype
                 Vector2 velocity = KarmaSpace.Units(new Vector2(left ? 10 : -10, 0));
                 var mark = PathMark(start, start + velocity * 1.4f, WaveSize);
                 Intent = "GD05 " + TrialStatus + (trial.Hits > trial.Allowed ? " · 종료 후 폭발 예정" : " · 회피/반격");
-                yield return Wait(0.7f); Destroy(mark.gameObject);
+                yield return Wait(Warning(0.7f)); Destroy(mark.gameObject);
                 Attack(start, velocity, WaveSize, 1.4f, 0.65f);
                 yield return Wait(1.45f);
                 trial.CompleteAttack();
-                yield return Wait(Mathf.Max(0.8f, Tuning.trialAttackGap));
+                yield return Wait(Mathf.Max(0.4f, Tuning.trialAttackGap * Tempo));
             }
             // Snapshot only after the final attack expires. Threshold crossing never ends early.
             bool passed = trial.Passed;

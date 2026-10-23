@@ -1,5 +1,48 @@
 # 이미지 교체 방법
 
+## 시트 내부 그림을 개별 스프라이트로 사용하기 (2026-10-23)
+
+`Assets/K4RMA/Resources/K4RMAArtwork/Sheets/`의 PNG는 **Sprite Mode: Multiple**이다.
+Project 창에서 PNG 왼쪽 화살표를 펼치면 포즈·효과·부품을 각각 드래그해서 사용할 수 있다.
+`KarmaSpriteLibrary.asset`에는 37개 시트/레이어의 이름과 Sprite 참조 208개가 저장되어 있고,
+`KarmaArtworkSettings.asset`의 `Sprite Library` 필드가 이 에셋을 참조한다.
+
+| 분리된 자료 | Sprite 수 | 실제 연결 |
+| --- | ---: | --- |
+| Player | 20 | 대기·달리기·점프·정점·낙하·착지·공격 준비/베기/후속/회복·검기·가드·반격·피격·사망·고유 기술 |
+| Neutral / Wave / Rise / Ward | 8 / 12 / 12 / 12 | 수호자 전조·공격·회복·방어·기절·피격·사망; 측면/후면도 개별 선택 가능 |
+| PlayerVFX / GuardianVFX / PersonalizationVFX / HitVFX | 12 / 12 / 12 / 8 | 공격·투사체·상승·방어·고유화·적중 효과, 나머지 변형도 재사용 가능 |
+| Inheritance | 16 | 13개 외형은 고유화 완료 화면에서 순서에 맞춰 선택, 3개 부품은 계승 수호자에 장착 |
+| Props | 16 | 실외·실내 가장자리의 장식; 충돌 판정 없음 |
+| HUD / SkillIcons / UI | 15 / 6 / 24 | 체력 다이아몬드·고유 기술 아이콘·선택 표시·타이틀 장식; 다른 UI 조각도 선택 가능 |
+| ExteriorLayers / HallLayers | 13 / 10 | 배경 레이어를 각각 등록; 현재 플레이 배경은 합성 파노라마 사용 |
+
+핵심 포즈는 연속 프레임 애니메이션이 아니므로 상황에 맞춰 포즈를 전환한다.
+캐릭터·VFX·UI 시트의 모든 슬롯을 분리했으며, 한 화면에서 모든 변형을 동시에 표시하지 않는다.
+원본 사진·아트디렉션·전체 화면 목업은 제작 참고 자료로 보존한다.
+
+분리 사각형·발 Pivot·겹친 포즈를 분리하는 렌더 윤곽선은 `tools/sprite-slices.json`에 기록되어 있다.
+원본 PNG와 기존 `.meta`는 보존했다. 새 `Sheets/` PNG와 `.meta`, 두 설정 에셋을 함께 공유한다.
+이미지 연결만 바꾸려면 라이브러리의 해당 Sprite 참조를 교체한다. 같은 포즈 이름을 유지하면 코드가 새 그림을 사용한다.
+
+시트 재분리는 연결된 Unity 에디터에서 실행한다. 같은 이름의 Sprite ID를 재사용하므로 재적용해도 참조가 유지된다.
+
+```sh
+unity command script.run --caller plugin --skill sprite-editor --timeout 120 -- --file tools/ImportSpriteSheets.cs --entry ImportSpriteSheets.Main --timeout 110
+unity command eval --caller plugin --skill sprite-editor 'KarmaPrototype.Editor.KarmaArtworkValidation.Run();'
+unity command script.run --caller plugin --skill sprite-editor -- --file tools/PreviewSpriteSheets.cs --entry PreviewSpriteSheets.Main
+```
+
+미리보기는 `output/validation/sprites/Unity-*.png`에 실제 Unity 메시로 렌더링한다.
+윤곽선을 다시 추출하려면 Pillow를 설치한 Python에서 `python3 tools/build-sprite-outlines.py`를 실행한 뒤 재분리한다.
+
+플레이어/고유화/적중 VFX 32개는 균일한 칸이 아닌 실제 그림 범위로 분리한다.
+`tools/build-vfx-outlines.py`는 긴 꼬리와 분리된 빛 조각을 포함한 여러 렌더 윤곽을 생성하며,
+잘라 둔 영역 안에 이웃 이펙트가 섞이지 않게 한다. 원본 PNG는 변경하지 않는다.
+재생성 후 위 Unity 임포트 명령을 실행하면 같은 Sprite ID로 갱신된다.
+`output/validation/sprites/Unity-PlayerVFX.png`, `Unity-PersonalizationVFX.png`, `Unity-HitVFX.png`에서
+실제 Unity 메시의 완전한 끝부분을 확인할 수 있다. 일회성 스킬 이펙트와 플레이어 검기는 원본 비율을 유지한다.
+
 ## image 폴더 원화 연결 (2026-10-22)
 
 `image/K4RMA_Production_Art_v1`과 `image/K4RMA_UI_Screens_v3`에서 실제 게임에 사용할 PNG 10개를
@@ -110,3 +153,7 @@ Unity는 `.meta`의 GUID와 Sprite ID로 연결을 저장하므로, 팀원은 pu
 `python3 tools/run-unity-artwork-checks.py`는 프로젝트를 임시 폴더에 복사하고 Unity에서 새로 가져와
 설정 참조, 모든 그림, 플레이어/수호자/배경 생성, 슬롯 교체 및 캐시 초기화를 검사한다.
 현재 씬과 사용자 설정은 변경하지 않는다. 로그는 `output/validation/artwork/`에 남긴다.
+
+## 보스 이펙트 방향
+
+`KarmaBossAttack.ConfigureVisual`은 투사체의 +X축을 속도 방향에 맞추고, 제자리 참격/기둥은 수직을 유지하면서 시선에 따라 `flipX`를 적용한다. 그림은 공격 루트 아래 별도 Transform에 둬 회전이 충돌 박스를 바꾸지 않는다. 발사 섬광과 잔상도 같은 방향/반전을 사용한다. `tools/build-vfx-outlines.py`는 보스 효과 12개도 원본 픽셀 범위에서 분리한다.

@@ -14,6 +14,7 @@ namespace KarmaPrototype.Editor
                 var settings = AssetDatabase.LoadAssetAtPath<KarmaArtworkSettings>(KarmaArtworkSetup.SettingsPath);
                 if (settings == null || KarmaArtwork.Settings != settings)
                     throw new InvalidOperationException("Resources 이미지 설정 에셋 연결 실패");
+                ValidateSheets(settings.spriteLibrary);
                 string[] names = { "WorldOverview", "PlayerAnimation", "PlayerSheet", "GuardianSprites", "DojoBackground", "PlayerSwordWave", "PlayerRisingSlash", "WardGuardian", "RisingGuardian", "SwordGuardian", "GuardianEvolution" };
                 foreach (string name in names)
                 {
@@ -63,7 +64,7 @@ namespace KarmaPrototype.Editor
                 if (frames[0] == null || original == null || KarmaArtwork.Settings != settings)
                     throw new InvalidOperationException("캐시 초기화 시 공유 이미지 에셋이 파괴되었습니다.");
                 UnityEngine.Object.DestroyImmediate(root);
-                File.WriteAllText("artwork-validation.txt", "PASS: shared Inspector settings, 11 textures, 9 native player sprites, 3 guardian sprites, backgrounds, Production icons/VFX when configured, reference replacement and cache reset.\n");
+                File.WriteAllText("artwork-validation.txt", "PASS: shared Inspector settings, 208 named sprites across 37 sheets/layers, player/guardian poses, VFX/UI/props/inheritance, native sprite geometry, reference replacement and cache reset.\n");
                 Debug.Log("K4RMA 이미지 연결 검사 PASS");
                 if (Application.isBatchMode) EditorApplication.Exit(0);
             }
@@ -74,6 +75,30 @@ namespace KarmaPrototype.Editor
                 if (Application.isBatchMode) EditorApplication.Exit(1);
                 else throw;
             }
+        }
+        static void ValidateSheets(KarmaSpriteLibrary library)
+        {
+            if (library == null) throw new InvalidOperationException("스프라이트 라이브러리 연결 누락");
+            var keys = new System.Collections.Generic.HashSet<string>();
+            int total = 0;
+            foreach (var sheet in library.sheets)
+            {
+                if (sheet == null || string.IsNullOrEmpty(sheet.id) || sheet.sprites == null)
+                    throw new InvalidOperationException("잘못된 스프라이트 시트");
+                foreach (var sprite in sheet.sprites)
+                {
+                    if (sprite == null || !AssetDatabase.Contains(sprite) || sprite.vertices.Length < 3 || sprite.triangles.Length < 3)
+                        throw new InvalidOperationException("Sprite 참조 또는 렌더 메시 누락: " + sheet.id);
+                    if (!keys.Add(sheet.id + "/" + sprite.name) || library.Get(sheet.id, sprite.name) != sprite)
+                        throw new InvalidOperationException("Sprite 이름 중복 또는 검색 실패: " + sheet.id + "/" + sprite.name);
+                    if (sprite.rect.xMin < 0 || sprite.rect.yMin < 0 || sprite.rect.xMax > sprite.texture.width || sprite.rect.yMax > sprite.texture.height)
+                        throw new InvalidOperationException("Sprite가 이미지 영역을 벗어났습니다: " + sprite.name);
+                    total++;
+                }
+            }
+            if (total != 208 || library.All("Player").Length != 20 || library.All("Neutral").Length != 8
+                || library.All("Wave").Length != 12 || library.All("Rise").Length != 12 || library.All("Ward").Length != 12)
+                throw new InvalidOperationException("포즈 또는 시트 분리 누락");
         }
     }
 }

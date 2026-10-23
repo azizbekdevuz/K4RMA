@@ -18,6 +18,7 @@ namespace KarmaPrototype
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
             shot.radius = radius; shot.expiresAt = Time.time + 3;
             KarmaRemnantVFX.ProjectileLook(sr, velocity);
+            KarmaCombatVFX.AttachAttack(sr, velocity, new Color(0.35f, 0.75f, 1));
             game.Projectiles.Add(shot);
         }
         void Update()
@@ -31,7 +32,7 @@ namespace KarmaPrototype
             if (to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12)) { Destroy(gameObject); return; }
             foreach (var enemy in game.Enemies.ToArray())
             {
-                if (enemy == null || !enemy.Alive || !Intersects(from, to, enemy.Position, radius + KarmaSpace.Units(0.68f) * KarmaSpace.GuardianSizeBoost)) continue;
+                if (enemy == null || !enemy.Alive || !enemy.IntersectsDamagePath(from, to, radius)) continue;
                 enemy.TakeDamage(damage, from);
                 // Current player projectiles stop at their first target; piercing is a melee move.
                 enabled = false; Destroy(gameObject); return;

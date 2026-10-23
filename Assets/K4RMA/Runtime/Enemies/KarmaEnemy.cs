@@ -16,6 +16,7 @@ namespace KarmaPrototype
         float shieldUntil, nextShield, shieldWarningUntil;
         float swordWardUntil, nextWardResponse;
         bool engaged, running, stopped, fullShield, frontalGuard, swordWard, pendingParry;
+        bool announcedEnrage;
         readonly KarmaTrialState trial = new KarmaTrialState();
         KarmaBossTuning Tuning { get { return game.Config.BossTuning; } }
         float Damage { get { return game.Config.enemyDamage * Tuning.damageMultiplier; } }
@@ -23,6 +24,10 @@ namespace KarmaPrototype
         public float Health { get; private set; }
         public float MaxHealth { get; private set; }
         public bool Alive { get { return Health > 0; } }
+        public bool Enraged { get { return Alive && Health <= MaxHealth * Tuning.enrageThreshold; } }
+        float Tempo { get { return Enraged ? Mathf.Clamp(Tuning.enrageTempo, 0.65f, 1) : 1; } }
+        float Warning(float seconds) { return Mathf.Max(0.28f, seconds * Mathf.Clamp(Tuning.warningMultiplier, 0.65f, 1.5f) * Tempo); }
+        public int Facing { get { return direction < 0 ? -1 : 1; } }
         public Vector2 Position { get { return transform.position; } }
         public string DisplayName { get; private set; }
         public string Intent { get; private set; }

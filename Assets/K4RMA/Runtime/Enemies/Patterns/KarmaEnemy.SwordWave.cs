@@ -9,17 +9,20 @@ namespace KarmaPrototype
         IEnumerator StaggeredWaves(bool scars)
         {
             state = ActionState.Telegraph;
-            // Two fixed, vertically disjoint lanes. Ground is safe from the second shot.
+            // Alternating lanes force repeated jump/landing decisions.
             Vector2 first = new Vector2(Position.x + direction * KarmaSpace.Scale, KarmaSpace.Units(1.05f));
             Vector2 second = new Vector2(Position.x + direction * KarmaSpace.Scale, KarmaSpace.Units(3.3f));
             Vector2 velocity = Vector2.right * direction * Mathf.Max(KarmaSpace.Scale, Tuning.swordSpeed);
-            var low = PathMark(first, first + velocity * WaveLife, WaveSize);
-            var high = PathMark(second, second + velocity * WaveLife, WaveSize);
-            yield return Wait(0.7f);
-            state = ActionState.Attack; animator.Attack(); Destroy(low.gameObject);
-            Attack(first, velocity, WaveSize, WaveLife);
-            yield return Wait(0.65f);
-            Destroy(high.gameObject); Attack(second, velocity, WaveSize, WaveLife);
+            int shots = Enraged ? 4 : 3;
+            for (int i = 0; i < shots; i++)
+            {
+                Vector2 origin = i % 2 == 0 ? first : second;
+                var mark = PathMark(origin, origin + velocity * WaveLife, WaveSize);
+                Intent = "교차 검기 " + (i + 1) + "/" + shots + (i % 2 == 0 ? " · 낮은 검기 / 점프" : " · 높은 검기 / 착지");
+                yield return Wait(i == 0 ? Warning(0.65f) : Mathf.Max(0.42f, 0.54f * Tempo));
+                state = ActionState.Attack; animator.Attack(); Destroy(mark.gameObject);
+                Attack(origin, velocity, WaveSize, WaveLife);
+            }
             yield return Wait(WaveLife);
             if (scars)
             {
@@ -33,8 +36,8 @@ namespace KarmaPrototype
                 Vector2 a = new Vector2(x - (pair ? KarmaSpace.Units(2.7f) : 0), KarmaSpace.Units(2.5f)), b = new Vector2(x + KarmaSpace.Units(2.7f), KarmaSpace.Units(2.5f));
                 Mark("검흔 상승 범위", a, size);
                 if (pair) Mark("검흔 상승 범위", b, size);
-                Intent = "SW03 검흔 고정 · 0.8초 후 상승 / 검흔 사이로";
-                yield return Wait(0.8f); ClearPatternObjects();
+                Intent = "SW03 검흔 고정 · 상승 예고 / 검흔 사이로";
+                yield return Wait(Warning(0.75f)); ClearPatternObjects();
                 Attack(a, Vector2.zero, size, 0.25f);
                 if (pair) Attack(b, Vector2.zero, size, 0.25f);
                 yield return Wait(0.25f);
@@ -43,41 +46,51 @@ namespace KarmaPrototype
         }
         IEnumerator AimedWave()
         {
-            state = ActionState.Telegraph;
-            Vector2 origin = Position + Vector2.right * direction * KarmaSpace.Scale;
-            Vector2 aim = Vector2.right * direction;
-            Vector2 size = WaveSize * 1.5f;
-            SpriteRenderer marker = null;
-            float elapsed = 0;
-            while (elapsed < 0.6f && Active)
+            int shots = Enraged ? 3 : 2;
+            for (int i = 0; i < shots && Active; i++)
             {
-                if (game.Paused) { yield return null; continue; }
-                aim = (game.Player.Position - origin).normalized;
-                if (aim.sqrMagnitude < 0.01f) aim = Vector2.right * direction;
-                if (marker == null) marker = PathMark(origin, origin + aim * Tuning.swordSpeed * WaveLife, size, false);
-                else marker.GetComponent<KarmaAttackWarning>().SetPath(marker, origin, origin + aim * Tuning.swordSpeed * WaveLife, size);
-                elapsed += Time.deltaTime; yield return null;
+                state = ActionState.Telegraph;
+                Vector2 origin = Position + Vector2.right * direction * KarmaSpace.Scale;
+                Vector2 aim = Vector2.right * direction;
+                Vector2 size = WaveSize * 1.35f;
+                float speed = Tuning.swordSpeed * 1.25f;
+                SpriteRenderer marker = null;
+                float elapsed = 0;
+                while (elapsed < 0.4f * Tempo && Active)
+                {
+                    if (game.Paused) { yield return null; continue; }
+                    aim = (game.Player.Position - origin).normalized;
+                    if (aim.sqrMagnitude < 0.01f) aim = Vector2.right * direction;
+                    if (marker == null) marker = PathMark(origin, origin + aim * speed * WaveLife, size, false);
+                    else marker.GetComponent<KarmaAttackWarning>().SetPath(marker, origin, origin + aim * speed * WaveLife, size);
+                    elapsed += Time.deltaTime; yield return null;
+                }
+                if (marker != null) Destroy(marker.gameObject);
+                marker = PathMark(origin, origin + aim * speed * WaveLife, size);
+                Intent = "SW02 조준 " + (i + 1) + "/" + shots + " 고정 · 사선 밖으로";
+                yield return Wait(Warning(0.4f)); Destroy(marker.gameObject);
+                state = ActionState.Attack; animator.Attack(aim);
+                Attack(origin, aim * speed, size, WaveLife, 1.15f);
+                yield return Wait(0.16f);
             }
-            if (marker != null) Destroy(marker.gameObject);
-            marker = PathMark(origin, origin + aim * Tuning.swordSpeed * WaveLife, size);
-            Intent = "SW02 조준 고정 · 지금 사선 밖으로";
-            yield return Wait(0.3f); Destroy(marker.gameObject);
-            state = ActionState.Attack; animator.Attack(aim);
-            Attack(origin, aim * Tuning.swordSpeed, size, WaveLife, 1.3f);
             yield return Wait(WaveLife);
-            yield return Recovery(1.3f);
+            yield return Recovery(1.1f);
         }
         bool wardResponsePending;
         IEnumerator CounterWard()
         {
             state = ActionState.Telegraph;
             var formation = Mark("검막 형성", Position, KarmaSpace.Units(new Vector2(3, 3)));
-            yield return Wait(0.7f); Destroy(formation.gameObject);
+            yield return Wait(Warning(0.7f)); Destroy(formation.gameObject);
             state = ActionState.Attack; swordWard = true; wardResponsePending = false;
             swordWardUntil = FightSeconds + Mathf.Max(0.6f, Tuning.swordWardDuration);
             nextWardResponse = FightSeconds;
             var blades = new SpriteRenderer[4];
-            for (int i = 0; i < blades.Length; i++) blades[i] = Mark("회전 검막 · 접촉 피해 없음", Position, KarmaSpace.Units(new Vector2(0.2f, 0.8f)));
+            for (int i = 0; i < blades.Length; i++)
+            {
+                blades[i] = KarmaVisuals.Box(effectsRoot, "회전 검막 · 접촉 피해 없음", Position, Vector2.one, Color.white, 13);
+                KarmaSheetEffects.Apply(blades[i], "GuardianVFX", "Blade", KarmaSpace.Units(new Vector2(1.2f, 0.5f)));
+            }
             while (FightSeconds < swordWardUntil && Active)
             {
                 for (int i = 0; i < blades.Length; i++)
@@ -118,9 +131,9 @@ namespace KarmaPrototype
                 Vector2 aim = (game.Player.Position - origin).normalized;
                 var mark = PathMark(origin, origin + aim * Tuning.swordSpeed * WaveLife, WaveSize);
                 Intent = "SW05 구형 무적 · 사출 " + (i + 1) + "/" + Tuning.aerialSwordCount + " 방향 고정";
-                yield return Wait(0.45f); Destroy(mark.gameObject);
+                yield return Wait(Warning(0.5f)); Destroy(mark.gameObject);
                 Attack(origin, aim * Tuning.swordSpeed, WaveSize, WaveLife);
-                yield return Wait(Mathf.Max(0.5f, Tuning.aerialSwordGap));
+                yield return Wait(Mathf.Max(0.28f, Tuning.aerialSwordGap * Tempo));
             }
             ClearPatternObjects(); fullShield = false;
             yield return Motion(ground, 0.5f, Vector2.zero);

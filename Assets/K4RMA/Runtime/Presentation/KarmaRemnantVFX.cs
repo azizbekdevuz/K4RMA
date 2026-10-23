@@ -51,7 +51,9 @@ namespace KarmaPrototype
         static SpriteRenderer Draw(Transform parent, Vector2 p, Vector2 size, Color color, int kind)
         {
             var sr = KarmaVisuals.Box(parent, "Remnant VFX", p, size, color, 14);
-            sr.sprite = Shape(kind);
+            string pose = kind == 0 ? "Barrier" : kind == 1 ? "Slash" : "PierceTrail";
+            if (KarmaSheetEffects.Apply(sr, "PlayerVFX", pose, size)) sr.color = new Color(1, 1, 1, color.a);
+            else sr.sprite = Shape(kind);
             return sr;
         }
         static void Animate(SpriteRenderer sr, float seconds, float growth, Vector2 drift)
@@ -76,10 +78,14 @@ namespace KarmaPrototype
             sr.sprite = Shape(1);
             sr.sortingOrder = 14;
             sr.transform.localScale = new Vector3(KarmaSpace.Units(1.25f), KarmaSpace.Units(2.3f), 1);
+            if (KarmaSheetEffects.Apply(sr, "PlayerVFX", "Wave", KarmaSpace.Units(new Vector2(2.3f, 1.25f)), true)) sr.color = Color.white;
             sr.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
         }
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
         {
+            string pose = essence == Essence.Ward ? "Counter" : essence == Essence.Flame ? "Pierce" : "AirSlash";
+            KarmaSheetEffects.Spawn(game.World, p, "PersonalizationVFX", pose,
+                KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, facing > 0 ? 0 : 180);
             Color color = game.Config.ColorOf(essence);
             if (essence == Essence.Ward)
             {
@@ -101,6 +107,11 @@ namespace KarmaPrototype
         {
             direction.Normalize();
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            string pose = direction.y > 0.25f ? "Rising" : direction.y < -0.25f ? "AirSlash" : "FollowThrough";
+            Vector2 effectSize = pose == "Rising" ? new Vector2(height, reach * 1.3f) : new Vector2(reach * 1.3f, height);
+            float effectAngle = angle - (pose == "Rising" ? 90 : 0);
+            if (KarmaSheetEffects.Spawn(parent, origin + direction * (reach * 0.48f), "PlayerVFX", pose,
+                effectSize, seconds, effectAngle) != null) return;
             // Broad cool silhouette under a crisp ivory blade; visible against dark wood.
             var rim = Draw(parent, origin + direction * (reach * 0.48f), new Vector2(reach * 1.3f, height),
                 new Color(0.4f, 0.76f, 1, 0.7f), 1);
@@ -119,6 +130,9 @@ namespace KarmaPrototype
         }
         public static void SwordImpact(KarmaGame game, Vector2 point, Vector2 direction)
         {
+            string pose = Mathf.Abs(direction.y) > 0.5f ? "Cross" : "Burst";
+            if (KarmaSheetEffects.Spawn(game.World, point, "HitVFX", pose,
+                Vector2.one * KarmaSpace.Units(1.1f), 0.18f) != null) return;
             var ring = Draw(game.World, point, Vector2.one * KarmaSpace.Units(0.95f), new Color(1, 0.93f, 0.7f), 0);
             ring.sortingOrder = 20; Animate(ring, 0.16f, 0.45f, Vector2.zero);
             var artwork = KarmaArtwork.Settings.hitEffect;
@@ -144,6 +158,8 @@ namespace KarmaPrototype
         }
         public static void Impact(KarmaGame game, Vector2 p, Essence essence)
         {
+            KarmaSheetEffects.Spawn(game.World, p, "HitVFX", essence == Essence.Ward ? "Ring" : essence == Essence.Dash ? "Cross" : "Crescent",
+                Vector2.one * KarmaSpace.Units(1.5f), 0.25f);
             Color color = game.Config.ColorOf(essence);
             var sr = Draw(game.World, p, Vector2.one * KarmaSpace.Units(essence == Essence.Dash ? 2.2f : 1.35f), color, 0);
             Animate(sr, 0.4f, 1, Vector2.zero);

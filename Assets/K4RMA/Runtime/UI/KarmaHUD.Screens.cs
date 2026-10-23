@@ -10,6 +10,7 @@ namespace KarmaPrototype
             Fill(new Rect(0, 0, 1280, 720), new Color(0.02f, 0.03f, 0.07f, 0.25f));
             Label(330, 160, 620, 100, "K4RMA", title);
             Label(330, 270, 620, 35, "네 수호자 · 세 번의 고유화", centered);
+            SpriteArt(new Rect(460, 320, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             if (GUI.Button(new Rect(480, 365, 320, 55), "시작 [Enter]", menuButton)) game.StartRun();
             if (GUI.Button(new Rect(480, 430, 320, 55), "게임 스토리 [S]", menuButton)) game.ShowPage(RunPhase.Story);
             if (GUI.Button(new Rect(480, 495, 320, 55), "조작 안내 [H]", menuButton)) game.ShowPage(RunPhase.Controls);
@@ -62,6 +63,7 @@ namespace KarmaPrototype
                 SpriteArt(new Rect(centerX - 45, 340, 90, 80), SkillIcon(e, false));
                 Label(centerX - 80, 430, 160, 35, (i + 1) + " · " + names[i], centered);
                 if (selected) SpriteArt(new Rect(centerX - 10, 480, 20, 25), KarmaArtwork.Settings.selectionCrescent);
+                SpriteArt(new Rect(centerX - 12, 312, 24, 24), KarmaArtwork.Sprite("UI", selected ? "FilledSlot" : "EmptySlot"));
             }
             if (game.PendingChoice.HasValue)
             {
@@ -85,8 +87,7 @@ namespace KarmaPrototype
             Label(155, 360, 570, 180, "원형은 제자의 동작으로 고유화되었습니다.\n다음 수호자: " + KarmaPatternCatalog.TypeName(game.Player.Essences.SacrificeOrder)
                 + "\n계승 원형: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder)
                 + (game.StageIndex == 2 ? "\n세 고유 기술로 마지막 수호자의 시험에 도전합니다." : "\n내려놓은 원형의 흔적은 이후 수호자에게 유지됩니다."), text);
-            SpriteArt(new Rect(780, 295, 310, 260), KarmaArtwork.Settings.Guardian(
-                KarmaPatternCatalog.Primary(game.Player.Essences.SacrificeOrder)));
+            SpriteArt(new Rect(780, 295, 310, 260), KarmaArtwork.GuardianPreview(game.Player.Essences.SacrificeOrder));
             SpriteArt(new Rect(650, 300, 65, 65), SkillIcon(game.LastSacrifice, true));
         }
         void PauseScreen()

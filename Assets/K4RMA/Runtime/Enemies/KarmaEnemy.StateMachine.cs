@@ -16,6 +16,11 @@ namespace KarmaPrototype
                 engaged = true;
             }
             float dt = Time.deltaTime; FightSeconds += dt;
+            if (Enraged && !announcedEnrage)
+            {
+                announcedEnrage = true;
+                KarmaSheetEffects.Spawn(effectsRoot, Position, "PersonalizationVFX", "Fusion", KarmaSpace.Units(new Vector2(4, 4)), 0.7f);
+            }
             if (pendingParry)
             {
                 pendingParry = false; InterruptPattern();
@@ -27,7 +32,7 @@ namespace KarmaPrototype
             shieldHalo.color = shieldWarningUntil > 0
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
                 : fullShield ? Color.white : swordWard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
-            animator.Pose(state == ActionState.Approach ? 1 : 0, Position.y > KarmaSpace.Units(1.5f));
+            animator.GuardianPose(state.ToString(), selected, Position.y > KarmaSpace.Units(1.5f), Armored);
             if (Stunned)
             {
                 if (FightSeconds < stunnedUntil) return;
@@ -75,7 +80,7 @@ namespace KarmaPrototype
             ClearPatternObjects();
             fullShield = frontalGuard = swordWard = false;
             state = ActionState.Approach; running = false;
-            timer = Mathf.Max(0.4f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier);
+            timer = Mathf.Max(0.22f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * Tempo);
         }
         IEnumerator Wait(float seconds)
         {
@@ -89,7 +94,7 @@ namespace KarmaPrototype
             // A real, stationary attack opportunity: auto-shield cannot conceal it.
             if (!keepAutoShield) shieldUntil = shieldWarningUntil = 0;
             state = ActionState.Recover; Intent = message ?? "빈틈 발생 · 지금 공격하세요";
-            yield return Wait(seconds * Mathf.Max(1, Tuning.recoveryMultiplier));
+            yield return Wait(Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo));
         }
         void Move(float distance)
         { transform.position = new Vector3(Mathf.Clamp(Position.x + distance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Position.y, 0); }

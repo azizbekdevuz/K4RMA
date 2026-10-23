@@ -7,8 +7,12 @@ namespace KarmaPrototype
     public sealed class KarmaAttackWarning : MonoBehaviour
     {
         Sprite shape;
+        SpriteRenderer visual;
+        LineRenderer edge, arrow;
+        Color baseColor;
         public void SetPath(SpriteRenderer renderer, Vector2 from, Vector2 to, Vector2 size)
         {
+            if (visual == null) { visual = renderer; baseColor = renderer.color; }
             Vector2 center = (from + to) / 2;
             Vector2 bounds = new Vector2(Mathf.Abs(to.x - from.x) + size.x, Mathf.Abs(to.y - from.y) + size.y);
             var points = new List<Vector2>(8);
@@ -49,6 +53,40 @@ namespace KarmaPrototype
             }
             shape.OverrideGeometry(vertices, triangles);
             transform.localPosition = center; transform.localScale = new Vector3(bounds.x, bounds.y, 1);
+            if (edge == null)
+            {
+                var go = new GameObject("Locked danger outline"); go.transform.SetParent(transform, false);
+                edge = go.AddComponent<LineRenderer>(); edge.useWorldSpace = false; edge.loop = true;
+                edge.sharedMaterial = KarmaCombatVFX.GlowMaterial != null ? KarmaCombatVFX.GlowMaterial : renderer.sharedMaterial;
+                edge.sortingOrder = 16; edge.numCornerVertices = 2;
+            }
+            edge.positionCount = hull.Count;
+            for (int i = 0; i < hull.Count; i++) edge.SetPosition(i, new Vector3((hull[i].x - center.x) / bounds.x, (hull[i].y - center.y) / bounds.y, 0));
+            if (arrow == null)
+            {
+                var go = new GameObject("Attack direction"); go.transform.SetParent(transform, false);
+                arrow = go.AddComponent<LineRenderer>(); arrow.useWorldSpace = false;
+                arrow.sharedMaterial = edge.sharedMaterial; arrow.sortingOrder = 17; arrow.numCornerVertices = 2;
+            }
+            arrow.enabled = (to - from).sqrMagnitude > 0.01f;
+            if (arrow.enabled)
+            {
+                Vector2 axis = (to - from).normalized, normal = new Vector2(-axis.y, axis.x);
+                float length = Mathf.Min(KarmaSpace.Units(0.5f), Vector2.Distance(from, to) * 0.2f, Mathf.Min(size.x, size.y) * 0.45f);
+                Vector2 tip = Vector2.Lerp(from, to, 0.7f);
+                var head = new[] { tip - axis * length + normal * length, tip, tip - axis * length - normal * length };
+                arrow.positionCount = 3;
+                for (int i = 0; i < 3; i++) arrow.SetPosition(i, new Vector3((head[i].x - center.x) / bounds.x, (head[i].y - center.y) / bounds.y, 0));
+            }
+        }
+        void Update()
+        {
+            if (visual == null || edge == null) return;
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 15);
+            var fill = baseColor; fill.a = baseColor.a * (0.6f + pulse * 0.35f); visual.color = fill;
+            var color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.7f + pulse * 0.3f);
+            arrow.startColor = arrow.endColor = color; arrow.widthMultiplier = KarmaSpace.Units(0.055f);
+            edge.startColor = edge.endColor = color; edge.widthMultiplier = KarmaSpace.Units(0.035f + pulse * 0.015f);
         }
         static float Cross(Vector2 a, Vector2 b) { return a.x * b.y - a.y * b.x; }
         void OnDestroy() { if (shape != null) Destroy(shape); }

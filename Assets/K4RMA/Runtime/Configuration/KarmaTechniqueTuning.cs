@@ -23,8 +23,8 @@ namespace KarmaPrototype
         [Min(0)] public float airSlashHorizontalBoost = 1.5f;
         [Min(0.05f)] public float counterWindow = 0.18f;
         [Min(0.2f)] public float counterCooldown = 1.1f;
-        [Min(1)] public float counterDamage = 38;
-        [Min(1)] public float risingDamage = 26;
+        [Min(1)] public float counterDamage = 85;
+        [Min(1)] public float risingDamage = 60;
         [Min(1)] public float risingSpeed = 15 * KarmaSpace.Scale;
     }
 }

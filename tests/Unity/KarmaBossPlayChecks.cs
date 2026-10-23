@@ -19,7 +19,9 @@ public static class KarmaBossPlayChecks
     static readonly EnemyAttack[] Cases = {
         EnemyAttack.GroundStrike, EnemyAttack.SW01, EnemyAttack.SW02, EnemyAttack.SW03, EnemyAttack.SW04, EnemyAttack.SW05,
         EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.UP03, EnemyAttack.UP04, EnemyAttack.UP05,
-        EnemyAttack.GD02, EnemyAttack.GD03, EnemyAttack.GD04, EnemyAttack.GD05, EnemyAttack.GD05 };
+        EnemyAttack.GD02, EnemyAttack.GD03, EnemyAttack.GD04, EnemyAttack.GD05, EnemyAttack.GD05,
+        EnemyAttack.GroundStrike, EnemyAttack.SW02, EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.GD02 };
+    const int FailureCase = 15, EnrageStart = 16;
     static KarmaGame game;
     static KarmaEnemy enemy;
     static int index, assertions, ticks, lifecycleStage, waitFrame;
@@ -89,7 +91,7 @@ public static class KarmaBossPlayChecks
         try
         {
             if (warningError != null) throw new Exception(warningError);
-            if (!geometryChecked) { SpatialChecks(); CameraChecks(); BoundaryChecks(); ProgressionReloadChecks(); WarningGeometryChecks(); geometryChecked = true; }
+            if (!geometryChecked) { SpatialChecks(); CameraChecks(); BoundaryChecks(); ProgressionReloadChecks(); WarningGeometryChecks(); BossDamageBoundsChecks(); geometryChecked = true; }
             if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Play checks exceeded wall-clock deadline");
             if (!EditorApplication.isPlaying) throw new Exception("Play mode ended unexpectedly");
             if (index >= Cases.Length) { if(LifecycleChecks()) Finish(null); return; }
@@ -103,7 +105,7 @@ public static class KarmaBossPlayChecks
             { enemy.TakeDamage(1); responseTriggered = true; }
             if (attack == EnemyAttack.SW04 && responseTriggered && enemy.GetComponentInParent<KarmaGame>() != null)
                 sawResponse |= game.World.GetComponentsInChildren<KarmaBossAttack>().Length > 0;
-            if (index == Cases.Length-1 && enemy.TrialActive && !injectedFailure)
+            if (index == FailureCase && enemy.TrialActive && !injectedFailure)
             {
                 var trial = Get<KarmaTrialState>(enemy,"trial");
                 for(int i=0;i<=trial.Allowed;i++) trial.Hit();
@@ -117,7 +119,8 @@ public static class KarmaBossPlayChecks
             Check(Mathf.Abs(enemy.Position.y-KarmaSpace.GuardianGroundY)<0.01f,attack+" landed");
             if(attack==EnemyAttack.SW05 || attack==EnemyAttack.UP04) Check(sawFullShield,attack+" protected airborne phase");
             if(attack==EnemyAttack.SW04) Check(sawResponse,"SW04 attack caused telegraphed retaliation");
-            if(index==Cases.Length-1) Check(sawTrialFailure,"GD05 failure resolved after full sequence");
+            if(index==FailureCase) Check(sawTrialFailure,"GD05 failure resolved after full sequence");
+            if(index>=EnrageStart) Check(enemy.Enraged,"enhanced sequence ran below half health");
             Check(Time.time-startedAt < 29,attack+" no watchdog recovery");
             Debug.Log("PLAY PASS "+index+" "+attack);
             index++; started=false;
@@ -132,9 +135,19 @@ public static class KarmaBossPlayChecks
     }
     static void SpatialChecks()
     {
+        BossVisualChecks();
         var config = game.Config;
         var baseline = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Generated/KarmaConfig.asset");
         Check(baseline != null, "serialized gameplay configuration exists");
+        Check(baseline.playerHealth == 160 && baseline.swordDamage == 60,
+            "serialized difficulty does not retain the 10000 HP / 1000 damage values");
+        Check(baseline.flameDamage == 72 && baseline.Techniques.risingDamage == 60
+            && baseline.Techniques.counterDamage == 85 && baseline.healAfterSacrifice == 45,
+            "skill damage and transition healing use the revised player balance");
+        Check(KarmaCombatVFX.GlowMaterial != null, "additive combat material is included in Resources");
+        foreach (Transform child in enemy.transform.Find("Artwork"))
+            Check(child.name != "SwordPart" && child.name != "WardPart" && child.name != "RisePart",
+                "guardian has no duplicate fixed-position equipment");
         Check(Mathf.Abs(config.jumpSpeed / config.gravityScale - 13f / 3) < 0.0001f,
             "spatial compensation preserves jump airtime");
         Check(Mathf.Abs(config.jumpSpeed * config.jumpSpeed / config.gravityScale - 169f / 3 * KarmaSpace.Scale) < 0.0001f,
@@ -165,6 +178,110 @@ public static class KarmaBossPlayChecks
         Check(Mathf.Abs(picture.position.y - (enemy.Position.y - KarmaSpace.GuardianGroundY)) < 0.0001f,
             "guardian foot pivot remains grounded after enlargement");
 
+    }
+    static void BossDamageBoundsChecks()
+    {
+        Call(enemy, "InterruptPattern");
+        var art = enemy.transform.Find("Artwork");
+        var picture = art.Find("Guardian sprite").GetComponent<SpriteRenderer>();
+        var originalSprite = picture.sprite;
+        Vector3 originalScale = art.localScale;
+        Vector2 originalPosition = enemy.Position, playerPosition = game.Player.Position;
+        float health = enemy.Health;
+        int facing = game.Player.Facing;
+        foreach (string sheet in new[] { "Neutral", "Wave", "Rise", "Ward", "Inheritance" })
+            foreach (var sprite in KarmaArtwork.Settings.spriteLibrary.All(sheet))
+                foreach (int side in new[] { -1, 1 })
+                {
+                    picture.sprite = sprite;
+                    art.localScale = new Vector3(side * Mathf.Abs(originalScale.x), originalScale.y, originalScale.z);
+                    var bounds = picture.bounds;
+                    Vector2 head = new Vector2(bounds.center.x, bounds.max.y - 0.01f);
+                    Vector2 foot = new Vector2(bounds.center.x, bounds.min.y + 0.01f);
+                    Check(enemy.IntersectsDamagePath(head + Vector2.left * 20, head + Vector2.right * 20, 0),
+                        sheet + "/" + sprite.name + " head hit in facing " + side);
+                    Check(enemy.OverlapsDamageArea(foot, Vector2.one * 0.02f), "foot/hem remains hittable");
+                    Check(!enemy.IntersectsDamagePath(head + Vector2.up, head + Vector2.up + Vector2.right, 0.1f),
+                        "attack entirely above artwork still misses");
+                }
+        picture.sprite = originalSprite; art.localScale = originalScale;
+        // Real damage entry points at the upper edge, far above the old foot-centered circle.
+        var body = game.Player.GetComponent<Rigidbody2D>();
+        Action place = () =>
+        {
+            var bounds = enemy.DamageBounds;
+            Vector2 at = new Vector2(bounds.min.x - 0.3f, bounds.max.y - 0.05f);
+            game.Player.transform.position = at; body.position = at;
+            typeof(KarmaPlayer).GetProperty("Facing").SetValue(game.Player, 1);
+            Set(game.Player, "nextSword", 0f);
+        };
+        place(); float before = enemy.Health;
+        Call(game.Player, "Attack");
+        Check(enemy.Health < before, "normal sword damages the head");
+        place(); before = enemy.Health;
+        KarmaProjectile.Spawn(game, game.Player.Position, Vector2.right * 200, 1, Color.white, 0.1f);
+        var shot = game.Projectiles[game.Projectiles.Count - 1];
+        Call(shot, "Update");
+        Check(enemy.Health < before && !shot.enabled, "swept projectile damages the head and stops");
+        place(); before = enemy.Health;
+        Call(game.Player, "BeginDirectionalSlash", Vector2.right, 1f, Essence.Flame);
+        Check(enemy.Health < before, "directional slash damages upper artwork");
+        place(); before = enemy.Health;
+        Set(game.Player, "airSlashDirection", Vector2.right);
+        Set(game.Player, "airSlashPrevious", game.Player.Position);
+        Get<System.Collections.Generic.HashSet<KarmaEnemy>>(game.Player, "airSlashHits").Clear();
+        Call(game.Player, "DamageAirSlash");
+        Check(enemy.Health < before, "air slash damages upper artwork");
+        before = enemy.Health; Call(game.Player, "DamageAirSlash");
+        Check(enemy.Health == before, "air slash still damages each boss only once");
+        place(); before = enemy.Health; game.Player.BeginRisingSlash();
+        Check(enemy.Health < before, "rising slash damages upper artwork");
+        place(); before = enemy.Health; Set(game.Player, "invulnerableUntil", 0f);
+        game.Player.BeginCounter(); game.Player.TakeDamage(1);
+        Check(enemy.Health < before, "counter measures range from the visible body");
+        // World bounds must follow a boss moving through the air as well.
+        var originalBounds = enemy.DamageBounds;
+        enemy.transform.position += new Vector3(4, 5, 0);
+        Check(Vector3.Distance(enemy.DamageBounds.center, originalBounds.center + new Vector3(4, 5, 0)) < 0.001f,
+            "hurt bounds follow airborne motion");
+        enemy.transform.position = originalPosition;
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, health);
+        game.Player.transform.position = playerPosition; body.position = playerPosition; body.linearVelocity = Vector2.zero;
+        typeof(KarmaPlayer).GetProperty("Facing").SetValue(game.Player, facing);
+        Set(game.Player, "nextSword", 0f); Set(game.Player, "invulnerableUntil", 0f);
+        Call(game.Player, "CancelAirSlash"); Call(enemy, "InterruptPattern");
+    }
+    static void BossVisualChecks()
+    {
+        var root = new GameObject("Boss visual orientation probe");
+        var renderer = root.AddComponent<SpriteRenderer>();
+        var size = new Vector2(3, 2);
+        foreach (var velocity in new[] { Vector2.right, Vector2.left, Vector2.up, Vector2.down,
+            new Vector2(1, 1), new Vector2(-1, 1), new Vector2(1, -1), new Vector2(-1, -1) })
+        {
+            KarmaBossAttack.ConfigureVisual(renderer, velocity, size, -1, "Wave");
+            Check(Vector2.Dot(renderer.transform.right, velocity.normalized) > 0.999f,
+                "moving boss effect aligns with velocity " + velocity);
+            Check(!renderer.flipX, "projectile orientation has no second facing flip");
+            Check(Mathf.Abs(renderer.transform.localScale.x - renderer.transform.localScale.y) < 0.0001f,
+                "boss artwork preserves sprite proportions");
+            Check(renderer.bounds.size.x <= size.x * 1.151f && renderer.bounds.size.y <= size.y * 1.151f,
+                "rotated boss effect stays within its reviewed world footprint");
+        }
+        foreach (string pose in new[] { "Cleave", "Pillar", "GroundRing" })
+            foreach (int facing in new[] { -1, 1 })
+            {
+                KarmaBossAttack.ConfigureVisual(renderer, Vector2.zero, size, facing, pose);
+                Check(renderer.flipX == (facing < 0), "static boss effect mirrors with facing " + pose);
+                Check(Vector2.Dot(renderer.transform.up, Vector2.up) > 0.999f, "pillar/slash remains upright");
+            }
+        UnityEngine.Object.Destroy(root);
+        var attack = KarmaBossAttack.Spawn(game, enemy, Get<Transform>(enemy, "effectsRoot"),
+            enemy.Position, new Vector2(-3, 2), size, 1, 1, Color.yellow, null, 0);
+        Check(attack.transform.localScale == Vector3.one && attack.transform.rotation == Quaternion.identity,
+            "boss hit-box root is unaffected by art rotation or scale");
+        Check(attack.Visual.transform.parent == attack.transform, "boss artwork has its own transform");
+        UnityEngine.Object.Destroy(attack.gameObject);
     }
     static void CameraChecks()
     {
@@ -288,6 +405,7 @@ public static class KarmaBossPlayChecks
     static void StartCase()
     {
         Call(enemy,"InterruptPattern");
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * (index >= EnrageStart ? 0.45f : 1));
         enemy.transform.position = new Vector3(20,KarmaSpace.GuardianGroundY,0);
         game.Player.transform.position = new Vector3(13,KarmaSpace.Units(1),0);
         game.Player.GetComponent<Rigidbody2D>().position = new Vector2(13,KarmaSpace.Units(1));

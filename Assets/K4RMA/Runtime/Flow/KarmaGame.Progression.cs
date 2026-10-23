@@ -59,6 +59,8 @@ namespace KarmaPrototype
             LastSacrifice = essence;
             Player.Heal(config.healAfterSacrifice);
             Phase = RunPhase.Transition; transitionLeft = 2.5f;
+            KarmaSheetEffects.Spawn(World, Player.Position, "PersonalizationVFX", "Awaken",
+                Vector2.one * KarmaSpace.Units(3), 1.2f);
         }
         public void PlayerDied()
         {

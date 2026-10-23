@@ -5,6 +5,8 @@ namespace KarmaPrototype
     [CreateAssetMenu(menuName = "K4RMA/이미지 설정", fileName = "KarmaArtworkSettings")]
     public sealed class KarmaArtworkSettings : ScriptableObject
     {
+        [Header("개별 포즈 · VFX · UI · 소품 스프라이트")]
+        public KarmaSpriteLibrary spriteLibrary;
         [Header("플레이어 동작 — Sprite를 연결하세요")]
         [InspectorName("대기")] public Sprite playerIdle;
         [InspectorName("이동 1 / 공중")] public Sprite playerMove1;

@@ -41,6 +41,10 @@ namespace KarmaPrototype
             return new Rect(topLeft.x / texture.width, 1 - (topLeft.y + topLeft.height) / texture.height,
                 topLeft.width / texture.width, topLeft.height / texture.height);
         }
+        public static Sprite Sprite(string sheet, string pose)
+        {
+            return Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
+        }
         public static Sprite[] PlayerFrames()
         {
             var frames = Settings.PlayerFrames();
@@ -59,6 +63,7 @@ namespace KarmaPrototype
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, frames);
+            animator.ConfigureSheet("Player");
             return root;
         }
         public static Transform Guardian(Transform parent, IReadOnlyList<Essence> order, bool final)
@@ -72,6 +77,8 @@ namespace KarmaPrototype
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
+            var primary = KarmaPatternCatalog.Primary(order);
+            animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward");
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
             root.gameObject.AddComponent<KarmaGuardianAdornment>().Initialize(order);
             return root;
@@ -81,6 +88,16 @@ namespace KarmaPrototype
         public static string GuardianIllustration(Essence? type)
         {
             return type == Essence.Flame ? "SwordGuardian" : type == Essence.Dash ? "RisingGuardian" : "WardGuardian";
+        }
+        public static Sprite GuardianPreview(IReadOnlyList<Essence> order)
+        {
+            var primary = KarmaPatternCatalog.Primary(order);
+            if (!primary.HasValue) return Sprite("Inheritance", "Neutral") ?? Settings.Guardian(null);
+            string name = primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward";
+            if (order.Count == 3) name += "Final";
+            else if (order.Count == 2)
+                name += order[1] == Essence.Flame ? "Wave" : order[1] == Essence.Dash ? "Rise" : "Ward";
+            return Sprite("Inheritance", name) ?? Settings.Guardian(primary);
         }
         public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)
         {

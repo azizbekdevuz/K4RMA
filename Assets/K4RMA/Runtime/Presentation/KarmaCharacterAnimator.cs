@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 namespace KarmaPrototype
 {
     public sealed class KarmaCharacterAnimator : MonoBehaviour
@@ -10,6 +11,34 @@ namespace KarmaPrototype
         Vector3 pictureHome;
         Color pictureColor;
         float actionUntil, hurtUntil, deathAt = -1;
+        readonly Dictionary<string, Sprite> poses = new Dictionary<string, Sprite>();
+        string sheet, explicitPose;
+        float poseUntil, landedUntil;
+        bool wasAirborne;
+        Vector3 guardianPreviousPosition;
+        Sprite guardianAppearance;
+        Vector3 pictureScale;
+        float appearanceScale = 1;
+        public string CurrentPose { get; private set; }
+        public void ConfigureSheet(string name)
+        {
+            sheet = name; poses.Clear();
+            guardianPreviousPosition = transform.position;
+            var library = KarmaArtwork.Settings.spriteLibrary;
+            if (library == null) return;
+            foreach (var sprite in library.All(name)) if (sprite != null) poses[sprite.name] = sprite;
+        }
+        public void PlayPose(string name, float seconds)
+        {
+            explicitPose = name; poseUntil = Time.time + seconds;
+            ShowPose(name);
+        }
+        void ShowPose(string name)
+        {
+            if (picture == null || !poses.TryGetValue(name, out var sprite)) return;
+            picture.sprite = sprite; CurrentPose = name;
+            picture.transform.localScale = pictureScale;
+        }
         public void Initialize()
         {
             blade = transform.Find("Katana"); leftBoot = transform.Find("Boot L"); rightBoot = transform.Find("Boot R");
@@ -18,16 +47,24 @@ namespace KarmaPrototype
         {
             picture = renderer; frames = poses; picture.sprite = frames[0];
             pictureHome = picture.transform.localPosition; pictureColor = picture.color;
+            pictureScale = picture.transform.localScale;
+        }
+        public void SetGuardianAppearance(Sprite sprite)
+        {
+            if (sprite == null || picture == null) return;
+            guardianAppearance = sprite;
+            appearanceScale = picture.sprite.bounds.size.y / Mathf.Max(0.01f, sprite.bounds.size.y);
         }
         public void Attack() { Attack(Vector2.right); }
         public void Attack(Vector2 direction) { slashDirection = direction; actionUntil = Time.time + 0.18f; }
         public void Hurt() { hurtUntil = Time.time + 0.16f; }
         public void Die() { deathAt = Time.time; }
-        public void Pose(float movement, bool airborne)
+        public void Pose(float movement, bool airborne, float verticalSpeed = 0)
         {
             if (deathAt >= 0)
             {
-                if (picture != null && frames.Length >= 9) picture.sprite = frames[8];
+                if (poses.ContainsKey("Death")) ShowPose("Death");
+                else if (picture != null && frames.Length >= 9) picture.sprite = frames[8];
                 else transform.localRotation = Quaternion.Euler(0,0,Mathf.Min(85,(Time.time-deathAt)*200));
                 return;
             }
@@ -43,6 +80,22 @@ namespace KarmaPrototype
                     else if (Mathf.Abs(movement) > 0.1f) frame = (int)(Time.time * 9) % 2 == 0 ? 1 : 2;
                 }
                 picture.sprite = frames[frame];
+                if (sheet == "Player" && poses.Count > 0)
+                {
+                    if (wasAirborne && !airborne) landedUntil = Time.time + 0.1f;
+                    wasAirborne = airborne;
+                    string pose = Time.time < hurtUntil ? "Hurt"
+                        : Time.time < poseUntil ? (explicitPose == "Pierce" && poseUntil - Time.time > 0.15f ? "Dash" : explicitPose)
+                        : Time.time < actionUntil ? (slashDirection.y < -0.25f ? "AirSlash"
+                            : slashDirection.y > 0.25f ? "Rising"
+                            : actionUntil - Time.time > 0.13f ? "Windup"
+                            : actionUntil - Time.time > 0.07f ? "Slash" : "FollowThrough")
+                        : actionUntil > 0 && Time.time < actionUntil + 0.08f ? "Recovery"
+                        : airborne ? (verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
+                        : Time.time < landedUntil ? "Land"
+                        : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
+                    ShowPose(pose);
+                }
                 float bob = airborne ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;
                 picture.transform.localPosition = pictureHome + Vector3.up * bob;
                 picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
@@ -54,6 +107,35 @@ namespace KarmaPrototype
             if (rightBoot != null) rightBoot.localRotation = Quaternion.Euler(0,0,-step);
             if (blade != null) blade.localRotation = Quaternion.Euler(0,0,Time.time < actionUntil ? -65 + (actionUntil-Time.time)*650 : airborne ? 30 : 15);
             transform.localRotation = Quaternion.Euler(0,0,Time.time < hurtUntil ? -12 : 0);
+        }
+        public void GuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
+        {
+            // Poses follow the actual combat state, including long attacks and recovery.
+            if (picture == null || deathAt >= 0) return;
+            string pose;
+            if (Time.time < hurtUntil) pose = "Hurt";
+            else if (action == "Stunned") pose = sheet == "Neutral" ? "Kneel" : sheet == "Ward" ? "Crouch" : "Hurt";
+            else if (action == "Recover") pose = sheet == "Ward" ? "Recover" : sheet == "Rise" ? "Landing" : sheet == "Wave" ? "FollowThrough" : "Recovery";
+            else if (action == "Telegraph") pose = armored && poses.ContainsKey("Guard") ? "Guard" : "Windup";
+            else if (action == "Attack")
+            {
+                if (sheet == "Rise") pose = airborne ? "AirSlash" : attack == EnemyAttack.UP01 || attack == EnemyAttack.UP03 ? "Rising" : "Slash";
+                else if (sheet == "Ward") pose = attack == EnemyAttack.GD02 ? "ShieldBash" : attack == EnemyAttack.GD03 ? "Thrust" : "Windup";
+                else if (sheet == "Wave") pose = attack == EnemyAttack.SW01 || attack == EnemyAttack.SW02 ? "Wave" : airborne ? "Rising" : "Slash";
+                else pose = "Slash";
+            }
+            else pose = armored && poses.ContainsKey("Guard") ? "Guard"
+                : (transform.position - guardianPreviousPosition).sqrMagnitude > 0.00001f
+                    ? sheet == "Rise" ? "Dash" : "Move" : "Idle";
+            if (!poses.ContainsKey(pose)) pose = "Idle";
+            ShowPose(pose);
+            bool composed = guardianAppearance != null && (pose == "Idle" || pose == "Guard");
+            if (composed) picture.sprite = guardianAppearance;
+            picture.transform.localScale = pictureScale * (composed ? appearanceScale : 1);
+            guardianPreviousPosition = transform.position;
+            picture.transform.localPosition = pictureHome;
+            picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            transform.localRotation = Quaternion.identity;
         }
         void Update() { if (deathAt >= 0) Pose(0,false); }
     }

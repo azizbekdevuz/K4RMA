@@ -64,7 +64,7 @@ namespace KarmaPrototype
         {
             switch (a)
             {
-                case EnemyAttack.SW01: return "SW01 엇갈린 검기 · 낮은 검기 다음 높은 검기";
+                case EnemyAttack.SW01: return "SW01 교차 연사 · 낮은 검기/높은 검기를 반복 회피";
                 case EnemyAttack.SW02: return "SW02 조준 일섬 · 조준 고정 후 사선 이탈";
                 case EnemyAttack.SW03: return "SW03 검흔 상승 · 검기 후 바닥 검흔에서 이탈";
                 case EnemyAttack.SW04: return "SW04 반격 검막 · 사출 유도 후 회피";
@@ -79,7 +79,7 @@ namespace KarmaPrototype
                 case EnemyAttack.GD03: return "GD03 분열 방패 · 조각 조준 고정 후 이탈";
                 case EnemyAttack.GD04: return "GD04 방벽 상승 · 등 뒤로 이동";
                 case EnemyAttack.GD05: return "GD05 결계 생존 시험";
-                default: return "근접 베기 · 검 앞에서 벗어나세요";
+                default: return "연속 베기 · 접근 후 연타 / 마무리 뒤 반격";
             }
         }
         public static string FusionSummary(IReadOnlyList<Essence> order)

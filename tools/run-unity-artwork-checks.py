@@ -30,7 +30,7 @@ if args.production:
     method = 'KarmaPrototype.Editor.KarmaProductionArtworkSetup.ApplyAndValidate'
 with tempfile.TemporaryDirectory(prefix='karma-artwork-', ignore_cleanup_errors=True) as folder:
     project = Path(folder)
-    for name in ('Assets', 'Packages', 'ProjectSettings'):
+    for name in ('Assets', 'Packages', 'ProjectSettings', 'image'):
         shutil.copytree(root / name, project / name)
     if args.initialize and 'com.unity.2d.sprite' not in json.loads((project / 'Packages/manifest.json').read_text())['dependencies']:
         bootstrap = project / 'Assets/Editor/KarmaSpritePackageInstaller.cs'

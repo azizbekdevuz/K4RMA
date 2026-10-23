@@ -51,6 +51,7 @@ namespace KarmaPrototype
             aura.enabled = Shielded;
             remnantHalo.enabled = techniques.CounterReady(Time.time);
             art.gameObject.SetActive(Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
+            animator.PlayerMotion(body.linearVelocity.y,Shielded,techniques.CounterReady(Time.time));
             animator.Pose(move, Airborne);
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }

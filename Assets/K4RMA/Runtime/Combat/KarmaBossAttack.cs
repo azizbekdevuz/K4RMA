@@ -13,6 +13,8 @@ namespace KarmaPrototype
             Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun)
         {
             var sr = KarmaVisuals.Box(root, "유효 보스 공격", at, size, color, 10);
+            if(KarmaArtwork.Settings.useCompleteArtwork)
+            { sr.enabled=false; KarmaArtworkVFX.Attack(sr.transform,velocity,size,life,owner.CurrentPattern); }
             var attack = sr.gameObject.AddComponent<KarmaBossAttack>();
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;
             attack.remaining = life; attack.damage = damage; attack.contact = contact ?? new KarmaAttackContact(); attack.stun = stun;

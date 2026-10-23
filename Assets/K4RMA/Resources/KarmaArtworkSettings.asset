@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 279072a9c8c045f0975d27fb4fe704ce, type: 3}
   m_Name: KarmaArtworkSettings
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtworkSettings
+  useCompleteArtwork: 1
   playerIdle: {fileID: 424788828, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
   playerMove1: {fileID: 54923388, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}
   playerMove2: {fileID: 1040366131, guid: 1941b8fa0f8c940d592742f97ca5becc, type: 3}

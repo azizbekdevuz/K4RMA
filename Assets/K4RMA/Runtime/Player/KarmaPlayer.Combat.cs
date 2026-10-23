@@ -41,6 +41,7 @@ namespace KarmaPrototype
                 return;
             }
             animator.Attack();
+            KarmaArtworkVFX.Player(game,Position,Airborne?11:0,Vector2.right*Facing);
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
@@ -57,6 +58,7 @@ namespace KarmaPrototype
         {
             animator.Attack(direction); nextSword = Time.time + game.Config.swordCooldown;
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
+            animator.SpecialPose(direction.y>0?19:direction.y<0?6:17,0.18f);
             Vector2 from = Position;
             Vector2 to = MoveSlash(direction, distance);
             Color color = game.Config.ColorOf(essence);
@@ -65,6 +67,7 @@ namespace KarmaPrototype
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f), game.Config.Techniques.slashLife);
+            KarmaArtworkVFX.Player(game,to,direction.y>0?3:direction.y<0?4:10,direction);
             Essences.NotifyUnique(essence);
             foreach (var enemy in game.Enemies.ToArray())
             {
@@ -85,7 +88,9 @@ namespace KarmaPrototype
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
+            animator.SpecialPose(direction.y<0?16:direction.y>0?19:18,tuning.airSlashDuration);
             Essences.NotifyUnique(Essence.Dash);
+            KarmaArtworkVFX.Player(game,Position,direction.y<0?4:3,direction);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
         }
         void DamageAirSlash()
@@ -139,19 +144,21 @@ namespace KarmaPrototype
         }
         public void BeginRisingSlash()
         {
+            KarmaArtworkVFX.Player(game,Position,3,Vector2.up);
             CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
             KarmaVisuals.Flash(game.World, Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(1.1f, 3)), game.Config.dashColor, 0.25f);
             foreach (var enemy in game.Enemies.ToArray())
                 if (enemy != null && Mathf.Abs(enemy.Position.x - Position.x) < KarmaSpace.Units(2.1f) && enemy.Position.y >= Position.y - KarmaSpace.Units(1) && enemy.Position.y <= Position.y + KarmaSpace.Units(3))
                     enemy.TakeDamage(game.Config.Techniques.risingDamage);
         }
-        public void BeginCounter() { techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow); }
-        public void BeginWard(float seconds) { wardUntil = Time.time + seconds; }
+        public void BeginCounter() { KarmaArtworkVFX.Player(game,Position,6,Vector2.right*Facing); techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow); }
+        public void BeginWard(float seconds) { KarmaArtworkVFX.Player(game,Position,7,Vector2.right*Facing,seconds); wardUntil = Time.time + seconds; }
         public void TakeDamage(float damage)
         {
             if (!game.IsCombat || Health <= 0 || damage <= 0 || Time.time < invulnerableUntil) return;
             if (techniques.ConsumeCounter(Time.time))
             {
+                KarmaArtworkVFX.Player(game,Position,8,Vector2.right*Facing);
                 ParryCount++;
                 invulnerableUntil = Time.time + 0.12f;
                 Essences.NotifyUnique(Essence.Ward);
@@ -168,10 +175,11 @@ namespace KarmaPrototype
                 }
                 return;
             }
-            if (Shielded) { KarmaVisuals.Flash(game.World, Position, KarmaSpace.Units(new Vector2(1.6f, 2.1f)), game.Config.wardColor); return; }
+            if (Shielded) { animator.SpecialPose(5,0.14f); KarmaArtworkVFX.Player(game,Position,5,Vector2.right*Facing); KarmaVisuals.Flash(game.World, Position, KarmaSpace.Units(new Vector2(1.6f, 2.1f)), game.Config.wardColor); return; }
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();
+            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(game.World,Position,KarmaArtAtlas.Effects(3)[4+UnityEngine.Random.Range(0,4)],Vector2.one*KarmaSpace.Units(1.5f),0.2f);
             Health -= actual; game.DamageTaken += actual;
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
             KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));

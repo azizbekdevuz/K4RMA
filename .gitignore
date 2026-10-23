@@ -15,3 +15,11 @@ UserSettings/
 # Local validation output
 /tests/**/bin/
 /output/validation/
+
+# Generated from versioned image sources on Editor import
+/Assets/K4RMA/Resources/K4RMAComplete/
+/Assets/K4RMA/Resources/K4RMAComplete.meta
+/Assets/K4RMA/Editor/ArtReferences/
+/Assets/K4RMA/Editor/ArtReferences.meta
+/Assets/K4RMA/Editor/CompleteArtInventory.asset*
+

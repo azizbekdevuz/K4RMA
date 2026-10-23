@@ -10,6 +10,14 @@ namespace KarmaPrototype
         public void Initialize(IReadOnlyList<Essence> order)
         {
             var owned = new HashSet<Essence>(order);
+            if(KarmaArtwork.Settings.useCompleteArtwork) foreach(var essence in owned)
+            {
+                var go=new GameObject("계승 원화 "+essence);go.transform.SetParent(transform,false);
+                var sr=go.AddComponent<SpriteRenderer>();KarmaVisuals.ApplyMaterial(sr);
+                sr.sprite=KarmaArtAtlas.Variant(essence==Essence.Flame?13:essence==Essence.Dash?14:15);sr.sortingOrder=6;
+                go.transform.localPosition=new Vector3(essence==Essence.Ward?0.35f:-0.3f,0.25f,0);
+                go.transform.localScale=Vector3.one*0.4f;
+            }
             if (owned.Contains(Essence.Flame))
             {
                 for (int i = 0; i < 2; i++)

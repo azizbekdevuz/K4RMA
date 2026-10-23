@@ -34,7 +34,8 @@ namespace KarmaPrototype
                 Color color = HudIvory;
                 color.a = cooling ? 0.35f : 1;
                 if (game.Player.Essences.JustTriggered(essence)) color = Color.white;
-                HudSymbol(r, uniqueSymbols[(int)essence], color);
+                if(KarmaArtwork.Settings.useCompleteArtwork) HudSprite(r,KarmaArtAtlas.Icon((int)essence+3),color);
+                else HudSymbol(r, uniqueSymbols[(int)essence], color);
 
             }
 
@@ -46,6 +47,7 @@ namespace KarmaPrototype
             const float left = 330, width = 620, y = 56;
             Fill(new Rect(left - 16, 16, width + 32, 62), new Color(0.015f, 0.025f, 0.045f, 0.65f));
             Label(left, 20, width, 27, enemy.DisplayName, centered);
+            if(KarmaArtwork.Settings.useCompleteArtwork) SpriteArt(new Rect(left-12,y-10,width+24,28),KarmaArtAtlas.Hud(2));
             Fill(new Rect(left, y - 2, width, 12), new Color(0.015f, 0.025f, 0.045f, 0.95f));
             Color track = new Color(HudIvory.r, HudIvory.g, HudIvory.b, 0.65f);
             Fill(new Rect(left, y - 2, width, 0.8f), track);
@@ -55,6 +57,12 @@ namespace KarmaPrototype
             Fill(new Rect(left + width + 2, y - 5, 1.2f, 20), HudIvory);
         }
 
+        static void HudSprite(Rect rect,Sprite sprite,Color color)
+        {
+            Color old=GUI.color;GUI.color=color;var crop=sprite.rect;var texture=sprite.texture;
+            GUI.DrawTextureWithTexCoords(rect,texture,new Rect(crop.x/texture.width,crop.y/texture.height,crop.width/texture.width,crop.height/texture.height),true);
+            GUI.color=old;
+        }
         static void HudSymbol(Rect rect, Texture2D texture, Color color)
         {
             Color saved = GUI.color;

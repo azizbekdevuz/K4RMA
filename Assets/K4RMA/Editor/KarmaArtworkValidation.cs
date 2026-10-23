@@ -11,6 +11,7 @@ namespace KarmaPrototype.Editor
         {
             try
             {
+                KarmaCompleteArtImport.Validate();
                 var settings = AssetDatabase.LoadAssetAtPath<KarmaArtworkSettings>(KarmaArtworkSetup.SettingsPath);
                 if (settings == null || KarmaArtwork.Settings != settings)
                     throw new InvalidOperationException("Resources 이미지 설정 에셋 연결 실패");

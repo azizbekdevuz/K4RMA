@@ -51,14 +51,16 @@ namespace KarmaPrototype
         }
         public static Transform Player(Transform parent)
         {
-            var frames = PlayerFrames();
+            var frames = Settings.useCompleteArtwork ? KarmaArtAtlas.Player() : PlayerFrames();
             var root = new GameObject("Artwork").transform; root.SetParent(parent, false);
             var picture = new GameObject("Player sprite"); picture.transform.SetParent(root, false);
             picture.transform.localPosition = new Vector3(0, -KarmaSpace.PlayerHalfHeight, 0);
             picture.transform.localScale = Vector3.one * CharacterPictureScale;
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
-            animator.Initialize(); animator.ConfigureSprites(renderer, frames);
+            animator.Initialize();
+            if (Settings.useCompleteArtwork) animator.ConfigureComplete(renderer, frames, false);
+            else animator.ConfigureSprites(renderer, frames);
             return root;
         }
         public static Transform Guardian(Transform parent, IReadOnlyList<Essence> order, bool final)
@@ -71,7 +73,9 @@ namespace KarmaPrototype
             picture.transform.localScale = Vector3.one * CharacterPictureScale;
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
-            animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
+            animator.Initialize();
+            if (Settings.useCompleteArtwork) animator.ConfigureComplete(renderer, KarmaArtAtlas.Guardian(KarmaPatternCatalog.Primary(order)), true);
+            else animator.ConfigureSprites(renderer, new[] { sprite });
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
             root.gameObject.AddComponent<KarmaGuardianAdornment>().Initialize(order);
             return root;
@@ -84,6 +88,7 @@ namespace KarmaPrototype
         }
         public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)
         {
+            if (Settings.useCompleteArtwork && KarmaLayeredScenery.Build(parent, stage, game)) return true;
             bool mountain = stage == 0 && Settings.mountainBackground != null;
             var original = mountain ? Settings.mountainBackground : Settings.dojoBackground;
             var panorama = mountain ? Settings.mountainPanorama : Settings.dojoPanorama;

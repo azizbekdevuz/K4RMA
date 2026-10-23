@@ -30,6 +30,7 @@ namespace KarmaPrototype
             var mark = Mark("GD02 강공격 · 패링 가능", center, size);
             state = ActionState.Telegraph; yield return Wait(1);
             Destroy(mark.gameObject); animator.Attack(); state = ActionState.Attack;
+            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(effectsRoot,center,KarmaArtAtlas.Effects(1)[5],size,0.2f);
             int parries = game.Player.ParryCount; float health = game.Player.Health;
             TryAttackHit(center, center, size, Damage * 1.5f, new KarmaAttackContact(), 0);
             if (game.Player.ParryCount != parries) yield break;

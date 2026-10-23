@@ -27,6 +27,7 @@ namespace KarmaPrototype
             shieldHalo.color = shieldWarningUntil > 0
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
                 : fullShield ? Color.white : swordWard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
+            animator.GuardianState((int)state, Armored);
             animator.Pose(state == ActionState.Approach ? 1 : 0, Position.y > KarmaSpace.Units(1.5f));
             if (Stunned)
             {

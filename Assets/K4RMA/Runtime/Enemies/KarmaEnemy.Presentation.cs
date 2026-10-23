@@ -33,6 +33,7 @@ namespace KarmaPrototype
             Vector2 from = Position; float elapsed = 0;
             var ledger = contact ?? new KarmaAttackContact();
             state = ActionState.Attack; animator.Attack((target - from).normalized);
+            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(effectsRoot,Position,KarmaArtAtlas.Effects(1)[CurrentPattern%12],hitSize==Vector2.zero?KarmaSpace.Units(new Vector2(2,2)):hitSize,duration);
             while (elapsed < duration && Active)
             {
                 if (game.Paused) { yield return null; continue; }

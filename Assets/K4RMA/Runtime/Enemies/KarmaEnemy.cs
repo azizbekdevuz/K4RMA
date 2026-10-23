@@ -11,6 +11,7 @@ namespace KarmaPrototype
         SpriteRenderer shieldHalo;
         List<EnemyAttack> attacks;
         ActionState state;
+        internal int CurrentPattern { get { return (int)selected; } }
         EnemyAttack selected, previous = (EnemyAttack)(-1);
         float timer, direction, patternStarted, nextUltimate, stunnedUntil;
         float shieldUntil, nextShield, shieldWarningUntil;

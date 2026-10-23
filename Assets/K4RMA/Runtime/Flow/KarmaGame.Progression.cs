@@ -57,6 +57,7 @@ namespace KarmaPrototype
             if (!Player.Essences.Confirm(out essence)) return;
             Player.Essences.Cancel();
             LastSacrifice = essence;
+            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Personalize(this,Player.Position,essence);
             Player.Heal(config.healAfterSacrifice);
             Phase = RunPhase.Transition; transitionLeft = 2.5f;
         }

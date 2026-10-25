@@ -34,7 +34,12 @@ namespace KarmaPrototype
                 color.a = cooling ? 0.35f : 1;
                 if (game.Player.Essences.JustTriggered(essence)) color = Color.white;
                 SpriteArt(r, SkillIcon(essence, true), color);
-
+            }
+            if (game.Player.Essences.HasRemnant(Essence.Dash))
+            {
+                string hang = game.Player.Hovering ? "체공 중 · J를 떼면 낙하"
+                    : game.Player.HoverReady ? "체공 가능 · 공중 J" : "체공 · 착지 후";
+                Label(43, 112, 220, 22, hang, small);
             }
 
             if (game.Enemies.Count == 0 || game.Enemies[0] == null) return;

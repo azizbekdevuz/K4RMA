@@ -14,14 +14,47 @@ namespace KarmaPrototype
                 body.gravityScale = 0;
                 return;
             }
-            if (!airSlashRunning && Grounded() && body.linearVelocity.y <= 0.1f) { lastGrounded = Time.time; techniques.Land(); }
+            if (!airSlashRunning && !techniques.Hovering && Grounded() && body.linearVelocity.y <= 0.1f)
+            { lastGrounded = Time.time; techniques.Land(); }
             if (Stunned)
             {
+                if (techniques.Hovering) EndHover(false);
                 body.gravityScale = game.Config.gravityScale;
                 body.linearVelocity = new Vector2(0, body.linearVelocity.y);
                 return;
             }
-            if (airSlashRunning)
+            if (KnockedBack)
+            {
+                CancelAirSlash();
+                body.gravityScale = game.Config.gravityScale;
+                body.linearVelocity = new Vector2(
+                    knockbackDirection * knockbackSpeed,
+                    body.linearVelocity.y
+                );
+            }
+            else if (techniques.Hovering && game.IsCombat)
+            {
+                bool drop = techniques.ShouldEndHover(
+                    Time.time,
+                    KarmaInput.Held(KarmaAction.Attack)
+                );
+
+                bool landed = Grounded() && body.linearVelocity.y <= 0.05f;
+
+                if (drop || landed)
+                {
+                    EndHover(drop && !landed);
+                }
+                else
+                {
+                    body.gravityScale = 0;
+                    body.linearVelocity = new Vector2(
+                        move * game.Config.moveSpeed * 0.82f,
+                        0
+                    );
+                }
+            }
+            else if (airSlashRunning)
             {
                 DamageAirSlash();
                 if (!game.IsCombat) { CancelAirSlash(); return; }

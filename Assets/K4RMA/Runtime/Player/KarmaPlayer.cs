@@ -60,12 +60,26 @@ namespace KarmaPrototype
             if (game.IsCombat)
             {
                 ReadUniqueDirectionTap();
-                if (KarmaInput.Pressed(KarmaAction.Attack)) airSlashBufferedUntil = Time.time + game.Config.Techniques.airSlashInputBuffer;
-                if (KarmaInput.Held(KarmaAction.Attack) || airSlashBufferedUntil > Time.time) Attack();
-                if (KarmaInput.Pressed(KarmaAction.SwordWave)) Essences.TryUse(Essence.Flame);
-                if (KarmaInput.Pressed(KarmaAction.RisingSlash)) Essences.TryUse(Essence.Dash);
-                if (KarmaInput.Pressed(KarmaAction.Ward)) Essences.TryUse(Essence.Ward);
-                if (KarmaInput.Pressed(KarmaAction.Counter)) Essences.TryCounter();
+                if (KarmaInput.Pressed(KarmaAction.Attack))
+                    airSlashBufferedUntil = Time.time + game.Config.Techniques.airSlashInputBuffer;
+
+                if (risingSlashUntil > Time.time)
+                    StrikeRisingSlash();
+
+                if (KarmaInput.Held(KarmaAction.Attack) || airSlashBufferedUntil > Time.time)
+                    Attack();
+
+                if (KarmaInput.Pressed(KarmaAction.SwordWave))
+                    Essences.TryUse(Essence.Flame);
+
+                if (KarmaInput.Pressed(KarmaAction.RisingSlash))
+                    Essences.TryUse(Essence.Dash);
+
+                if (KarmaInput.Pressed(KarmaAction.Ward))
+                    Essences.TryUse(Essence.Ward);
+
+                if (KarmaInput.Pressed(KarmaAction.Counter))
+                    Essences.TryCounter();
             }
             else techniques.ClearDirectionTap();
         }

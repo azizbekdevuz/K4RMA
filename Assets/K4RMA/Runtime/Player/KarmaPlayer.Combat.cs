@@ -8,8 +8,24 @@ namespace KarmaPrototype
         readonly HashSet<KarmaEnemy> airSlashHits = new HashSet<KarmaEnemy>();
         bool airSlashRunning;
         Vector2 airSlashDirection, airSlashPrevious;
-        float airSlashBufferedUntil, airRecoveryLeft, airLaunchX;
-        bool CanSword() { return game.IsCombat && Health > 0 && Time.time >= nextSword && !airSlashRunning && !Stunned && !Shielded && !techniques.CounterReady(Time.time); }
+        float airSlashBufferedUntil, airRecoveryLeft, airLaunchX, risingSlashUntil;
+        bool risingSlashHit;
+
+        public bool HoverReady { get { return techniques.HoverReady; } }
+        public bool Hovering { get { return techniques.Hovering; } }
+
+        bool CanSword()
+        {
+            return game.IsCombat
+                && Health > 0
+                && Time.time >= nextSword
+                && !airSlashRunning
+                && !techniques.Hovering
+                && !KnockedBack
+                && !Stunned
+                && !Shielded
+                && !techniques.CounterReady(Time.time);
+        }
         Vector2 AttackDirection()
         {
             float vertical = KarmaInput.Vertical;
@@ -35,13 +51,10 @@ namespace KarmaPrototype
             // Preserve a simultaneous jump + attack press through the takeoff frame.
             if (Essences.HasRemnant(Essence.Dash) && airSlashBufferedUntil > Time.time &&
                 jumpBufferedUntil > Time.time && !Airborne) return;
-            if (Essences.HasRemnant(Essence.Dash) && Airborne && airSlashBufferedUntil > Time.time && techniques.TryAirSlash())
-            {
-                BeginAirSlash(AttackDirection());
-                return;
-            }
+            if (Essences.HasRemnant(Essence.Dash) && Airborne && !techniques.Hovering &&
+                airSlashBufferedUntil > Time.time && BeginHover()) return;
             animator.Attack();
-            KarmaArtworkVFX.Player(game,Position,Airborne?11:0,Vector2.right*Facing);
+            KarmaArtworkVFX.Player(game, Position, Airborne ? 11 : 0, Vector2.right * Facing);
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
@@ -70,13 +83,13 @@ namespace KarmaPrototype
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f), game.Config.Techniques.slashLife);
-            KarmaArtworkVFX.Player(game,to,direction.y>0?3:direction.y<0?4:10,direction);
+            KarmaArtworkVFX.Player(game, to, direction.y > 0 ? 3 : direction.y < 0 ? 4 : 10, direction);
             Essences.NotifyUnique(essence);
             foreach (var enemy in game.Enemies.ToArray())
             {
                 if (enemy == null || !enemy.Alive) continue;
                 if (enemy.IntersectsDamagePath(from, to, KarmaSpace.Units(1.3f)))
-                SwordHit(enemy, direction);
+                    SwordHit(enemy, direction);
             }
         }
         void BeginAirSlash(Vector2 direction)
@@ -93,7 +106,7 @@ namespace KarmaPrototype
             animator.Attack(direction);
             animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
             Essences.NotifyUnique(Essence.Dash);
-            KarmaArtworkVFX.Player(game,Position,direction.y<0?4:3,direction);
+            KarmaArtworkVFX.Player(game, Position, direction.y < 0 ? 4 : 3, direction);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
         }
         void DamageAirSlash()
@@ -118,10 +131,68 @@ namespace KarmaPrototype
             KarmaRemnantVFX.SwordImpact(game, point, direction);
             game.SwordHitFeedback();
         }
+        bool BeginHover()
+        {
+            var tuning = game.Config.Techniques;
+            float duration = tuning.hoverDuration > 0.05f ? tuning.hoverDuration : 0.72f;
+            float minimum = tuning.hoverMinimumHold > 0.05f ? tuning.hoverMinimumHold : 0.16f;
+            if (!techniques.TryBeginHover(Time.time, duration, minimum)) return false;
+            airSlashBufferedUntil = 0;
+            airSlashRunning = false;
+            airRecoveryLeft = 0;
+            body.gravityScale = 0;
+            body.linearVelocity = new Vector2(body.linearVelocity.x, 0);
+            animator.Attack(Vector2.right * Facing);
+            animator.PlayPose("Apex", duration);
+            Essences.NotifyUnique(Essence.Dash);
+            KarmaArtworkVFX.Player(game, Position, 11, Vector2.up);
+            KarmaCombatVFX.SpawnSprite(
+                game.World,
+                Position + Vector2.up * KarmaSpace.Units(0.2f),
+                "PlayerVFX",
+                "AirSlash",
+                KarmaSpace.Units(new Vector2(1.5f, 1.1f)),
+                0.28f
+            );
+            Vector2 center = Position + Vector2.up * KarmaSpace.Units(0.35f);
+            Vector2 size = KarmaSpace.Units(new Vector2(1.7f, 1.15f));
+            foreach (var enemy in game.Enemies.ToArray())
+            {
+                if (enemy == null || !enemy.Alive) continue;
+                if (enemy.OverlapsDamageArea(center, size)) SwordHit(enemy, Vector2.up);
+            }
+            return true;
+        }
+        void EndHover(bool drop)
+        {
+            if (!techniques.Hovering) return;
+            techniques.EndHover();
+            if (body == null || game == null) return;
+            body.gravityScale = game.Config.gravityScale;
+            if (drop) body.linearVelocity = new Vector2(body.linearVelocity.x, -KarmaSpace.Units(1.2f));
+            if (Grounded()) techniques.Land();
+        }
+        void StrikeRisingSlash()
+        {
+            if (risingSlashHit || Time.time > risingSlashUntil) return;
+            Vector2 center = Position + Vector2.up * KarmaSpace.Scale;
+            Vector2 size = KarmaSpace.Units(new Vector2(4.2f, 4f));
+            foreach (var enemy in game.Enemies.ToArray())
+            {
+                if (enemy == null || !enemy.Alive) continue;
+                if (!enemy.OverlapsDamageArea(center, size)) continue;
+                risingSlashHit = true;
+                enemy.TakeDamage(game.Config.Techniques.risingDamage);
+                KarmaRemnantVFX.SwordImpact(game, enemy.ClosestDamagePoint(Position), Vector2.up);
+                game.SwordHitFeedback();
+                return;
+            }
+        }
         void CancelAirSlash()
         {
             airSlashRunning = false; airSlashMotion.Reset(); airSlashHits.Clear();
             airSlashBufferedUntil = airRecoveryLeft = 0;
+            if (techniques.Hovering) EndHover(false);
         }
         Vector2 MoveSlash(Vector2 direction, float distance)
         {
@@ -147,13 +218,29 @@ namespace KarmaPrototype
         }
         public void BeginRisingSlash()
         {
-            KarmaArtworkVFX.Player(game,Position,3,Vector2.up);
-            CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
-            KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
-                KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);
-            foreach (var enemy in game.Enemies.ToArray())
-                if (enemy != null && enemy.Alive && enemy.OverlapsDamageArea(Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4))))
-                    enemy.TakeDamage(game.Config.Techniques.risingDamage);
+            KarmaArtworkVFX.Player(game, Position, 3, Vector2.up);
+
+            CancelAirSlash();
+            animator.Attack(Vector2.up);
+
+            body.linearVelocity = new Vector2(
+                body.linearVelocity.x,
+                game.Config.Techniques.risingSpeed
+            );
+
+            risingSlashHit = false;
+            risingSlashUntil = Time.time + 0.22f;
+
+            KarmaCombatVFX.SpawnSprite(
+                game.World,
+                Position + Vector2.up * KarmaSpace.Scale,
+                "PlayerVFX",
+                "Rising",
+                KarmaSpace.Units(new Vector2(1.8f, 3)),
+                0.25f
+            );
+
+            StrikeRisingSlash();
         }
         public void BeginSwordWave() { animator.PlayPose("SwordWave", 0.25f); }
         public void BeginCounter()
@@ -170,7 +257,7 @@ namespace KarmaPrototype
             if (!game.IsCombat || Health <= 0 || damage <= 0 || Time.time < invulnerableUntil) return;
             if (techniques.ConsumeCounter(Time.time))
             {
-                KarmaArtworkVFX.Player(game,Position,8,Vector2.right*Facing);
+                KarmaArtworkVFX.Player(game, Position, 8, Vector2.right * Facing);
                 ParryCount++;
                 animator.PlayPose("Riposte", 0.3f);
                 invulnerableUntil = Time.time + 0.12f;
@@ -196,7 +283,7 @@ namespace KarmaPrototype
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();
-            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(game.World,Position,KarmaArtAtlas.Effects(3)[4+UnityEngine.Random.Range(0,4)],Vector2.one*KarmaSpace.Units(1.5f),0.2f);
+            if (KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(game.World, Position, KarmaArtAtlas.Effects(3)[4 + UnityEngine.Random.Range(0, 4)], Vector2.one * KarmaSpace.Units(1.5f), 0.2f);
             Health -= actual; game.DamageTaken += actual;
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
             KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));

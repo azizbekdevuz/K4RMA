@@ -26,5 +26,7 @@ namespace KarmaPrototype
         [Min(1)] public float counterDamage = 85;
         [Min(1)] public float risingDamage = 60;
         [Min(1)] public float risingSpeed = 15 * KarmaSpace.Scale;
+        [Min(0.2f)] public float hoverDuration = 0.72f;
+        [Min(0.05f)] public float hoverMinimumHold = 0.16f;
     }
 }

@@ -1,4 +1,4 @@
-using System.Text;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,18 +12,35 @@ namespace KarmaPrototype
         Font runtimeFont;
         readonly string[] names = { "검기", "상승베기", "방어" };
         public void Initialize(KarmaGame director) { game = director; }
+        Font ResolveFont()
+        {
+            if (game.Config.koreanFont != null) return game.Config.koreanFont;
+
+            var installed = new HashSet<string>(Font.GetOSInstalledFontNames(), StringComparer.OrdinalIgnoreCase);
+            bool mac = Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer;
+            var candidates = new List<string>(mac
+                ? new[] { "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕" }
+                : new[] { "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo" });
+            candidates.AddRange(new[] { "Noto Sans CJK KR", "Noto Sans KR", "NanumGothic", "Arial Unicode MS" });
+            foreach (string candidate in candidates)
+            {
+                if (!installed.Contains(candidate)) continue;
+                // Do not pass unavailable OS faces to Unity's font fallback chain.
+                var font = Font.CreateDynamicFontFromOSFont(candidate, 18);
+                if (font != null && font.HasCharacter('가'))
+                {
+                    runtimeFont = font;
+                    return font;
+                }
+                if (font != null) Destroy(font);
+            }
+            Debug.LogWarning("K4RMA: 사용 가능한 한글 UI 폰트를 찾지 못했습니다. KarmaConfig의 한글 UI 폰트를 연결하세요.", this);
+            return null;
+        }
         void Styles()
         {
             if (title != null) return;
-            Font font = game.Config.koreanFont;
-            if (font == null)
-            {
-                runtimeFont = Font.CreateDynamicFontFromOSFont(new[] {
-                    "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕",
-                    "Noto Sans CJK KR", "Noto Sans KR", "NanumGothic", "Arial Unicode MS"
-                }, 18);
-                font = runtimeFont;
-            }
+            Font font = ResolveFont();
             title = new GUIStyle(GUI.skin.label) { fontSize = 36, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             heading = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, wordWrap = true };
             text = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true };

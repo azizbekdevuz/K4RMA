@@ -1,14 +1,66 @@
 #!/usr/bin/env python3
-"""Compile with installed Unity references and its bundled C# compiler; no package restore."""
+"""Compile this Unity project.
+
+The default run opens the repository in the installed Unity editor and fails if
+that editor reports C# errors. A Roslyn command against a hand-built file list
+is not full-project compilation and must not be reported as Safe Mode clearance.
+Use --roslyn-only only as a local syntax check.
+"""
 import argparse
 from pathlib import Path
 import subprocess
 import tempfile
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--unity-contents', type=Path, help='Path to Unity.app/Contents (macOS)')
+parser.add_argument('--unity-contents', type=Path, help='Path to Unity.app/Contents (macOS) or Editor/Data (Windows)')
+parser.add_argument('--unity-editor', type=Path, help='Unity executable. Defaults to the editor for ProjectSettings/ProjectVersion.txt')
+parser.add_argument('--roslyn-only', action='store_true', help='Compile a script list with csc. This does not clear Safe Mode')
+parser.add_argument('--log', type=Path, help='Editor log path')
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
+version = (root / 'ProjectSettings/ProjectVersion.txt').read_text().splitlines()[0].split(': ')[1]
+
+
+def editor_executable():
+    if args.unity_editor:
+        return args.unity_editor
+    candidates = [
+        Path(f'C:/Program Files/Unity/Hub/Editor/{version}/Editor/Unity.exe'),
+        Path(f'/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity'),
+    ]
+    return next((path for path in candidates if path.exists()), None)
+
+
+def compile_with_editor():
+    editor = editor_executable()
+    if editor is None:
+        raise SystemExit(f'Unity {version} editor not found. Pass --unity-editor. Roslyn-only is not a substitute.')
+    log = args.log or (root / 'output/validation/unity-editor-compile.log')
+    log.parent.mkdir(parents=True, exist_ok=True)
+    if log.exists():
+        log.unlink()
+    result = subprocess.run([
+        str(editor), '-batchmode', '-nographics', '-quit',
+        '-projectPath', str(root), '-logFile', str(log),
+    ])
+    text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
+    errors = [line for line in text.splitlines() if ': error CS' in line]
+    blocked = 'another Unity instance' in text or 'is already open' in text.lower()
+    if blocked:
+        raise SystemExit(f'Unity could not open this project because another editor has it open. Log: {log}')
+    if result.returncode or errors or 'Scripts have compiler errors' in text:
+        preview = '\n'.join(errors[:30]) or 'Unity exited without a clean script compile.'
+        raise SystemExit(f'FAIL: full-project Unity compile\n{preview}\nLog: {log}')
+    if 'Exiting batchmode successfully' not in text and 'Batchmode quit successfully' not in text:
+        raise SystemExit(f'FAIL: Unity did not report a successful batch quit. Log: {log}')
+    print(f'PASS: Unity {version} full-project compile. Safe Mode script errors were not reported.')
+    print(f'Log: {log}')
+
+
+if not args.roslyn_only:
+    compile_with_editor()
+    raise SystemExit(0)
+
 contents = args.unity_contents
 if contents is None:
     candidates = list(Path('/Applications/Unity/Hub/Editor').glob('*/Unity.app/Contents'))
@@ -46,4 +98,4 @@ with tempfile.TemporaryDirectory(prefix='karma-compile-') as temp:
         response = Path(temp) / f'{target}.rsp'
         response.write_text('\n'.join(f'"{arg}"' for arg in flags))
         subprocess.run([str(sdk / 'dotnet'), str(compiler), '@' + str(response)], check=True)
-        print(f'PASS: Unity {target} compile (warnings treated as errors)')
+        print(f'PASS: Roslyn {target} subset only. This does not prove the Unity project leaves Safe Mode.')

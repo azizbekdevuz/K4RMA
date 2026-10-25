@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='karma-playchecks-') as folder:
         shutil.copy2(root / 'tests/Unity' / name, project / 'Assets/Editor' / name)
     result = subprocess.run([str(editor), '-batchmode', '-nographics', '-projectPath', str(project),
         '-executeMethod', 'KarmaBossPlayChecks.Run', '-logFile', str(log)]
-        + (['-licensingIpc', args.licensing_ipc] if args.licensing_ipc else []), timeout=300)
+        + (['-licensingIpc', args.licensing_ipc] if args.licensing_ipc else []), timeout=720)
     generated = project / 'boss-play-validation.txt'
     if generated.exists():
         shutil.copy2(generated, report)

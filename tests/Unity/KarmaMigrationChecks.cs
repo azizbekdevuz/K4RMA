@@ -17,7 +17,7 @@ public static class KarmaMigrationChecks
         var sprite = KarmaVisuals.DefaultMaterial;
         Check(sprite != null && sprite.shader.name == "Universal Render Pipeline/2D/Sprite-Unlit-Default",
             "empty-scene fallback material is included in Resources");
-        var saved = AssetDatabase.LoadAssetAtPath<Material>("Assets/K4RMA/Generated/KarmaSprite.mat");
+        var saved = AssetDatabase.LoadAssetAtPath<Material>("Assets/K4RMA/Settings/KarmaSprite.mat");
         Check(saved != null && saved.shader == sprite.shader, "existing scenes use the URP sprite shader");
         Check(!ShaderUtil.ShaderHasError(sprite.shader), "sprite shader compiles");
         Check(KarmaCombatVFX.GlowMaterial != null && !ShaderUtil.ShaderHasError(KarmaCombatVFX.GlowMaterial.shader),

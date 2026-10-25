@@ -9,7 +9,9 @@ import sys
 root=Path(__file__).resolve().parents[1]
 registry=(root/'Assets/K4RMA/Runtime/Presentation/KarmaArtSources.cs').read_text()
 files=re.findall(r'^\s*"(K4RMA_[^"]+\.(?:png|jpeg|jpg))",$',registry,re.M)
-actual={p.relative_to(root/'image').as_posix() for p in (root/'image').rglob('*') if p.suffix.lower() in ('.png','.jpeg','.jpg')}
+# HSIMAGE contains reference-only artwork, outside the imported K4RMA packs.
+actual={p.relative_to(root/'image').as_posix() for p in (root/'image').rglob('*')
+        if p.suffix.lower() in ('.png','.jpeg','.jpg') and p.relative_to(root/'image').parts[0] != 'HSIMAGE'}
 assert len(files)==len(set(files)) and set(files)==actual, 'Source registry differs from image originals'
 dimensions={}
 for relative in files:

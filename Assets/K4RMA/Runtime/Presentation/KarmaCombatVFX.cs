@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 namespace KarmaPrototype
@@ -6,11 +6,10 @@ namespace KarmaPrototype
     // Layered sprite animation, additive light and moving fragments. No damage logic.
     public sealed class KarmaCombatVFX : MonoBehaviour
     {
-        sealed class Mote
+        struct Mote
         {
             public SpriteRenderer renderer;
             public Vector3 velocity;
-            public Color color;
         }
         static Material glowMaterial;
         public static Material GlowMaterial
@@ -18,12 +17,33 @@ namespace KarmaPrototype
             get { if (glowMaterial == null) glowMaterial = Resources.Load<Material>("KarmaCombatGlow"); return glowMaterial; }
         }
         SpriteRenderer core, glow, echo;
-        readonly List<Mote> motes = new List<Mote>();
+        Mote[] motes = Array.Empty<Mote>();
         Vector3 scale;
         Color tint;
         float age, life, trailAt;
         bool sustained, moving;
         Transform trailRoot;
+
+        public static bool ApplySprite(SpriteRenderer renderer, string sheet, string pose, Vector2 size, bool preserveAspect = false)
+        {
+            var sprite = KarmaArtwork.Sprite(sheet, pose);
+            if (sprite == null) return false;
+            renderer.sprite = sprite;
+            float x = size.x / sprite.bounds.size.x, y = size.y / sprite.bounds.size.y;
+            if (preserveAspect) x = y = Mathf.Min(x, y);
+            renderer.transform.localScale = new Vector3(x, y, 1);
+            return true;
+        }
+        public static SpriteRenderer SpawnSprite(Transform parent, Vector2 at, string sheet, string pose,
+            Vector2 size, float seconds, float angle = 0)
+        {
+            var sprite = KarmaArtwork.Sprite(sheet, pose);
+            if (sprite == null) return null;
+            Color tint = sheet == "HitVFX" ? new Color(1, 0.75f, 0.32f)
+                : sheet == "PersonalizationVFX" ? new Color(0.58f, 0.85f, 1)
+                : new Color(0.35f, 0.7f, 1);
+            return Burst(parent, at, sprite, sheet + "/" + pose, size, seconds, angle, tint);
+        }
 
         static SpriteRenderer Layer(Transform parent, string name, Sprite sprite, int order, Color color, bool additive)
         {
@@ -47,6 +67,7 @@ namespace KarmaPrototype
             fx.echo = Layer(root.transform, "Sweeping echo", sprite, 20, new Color(color.r, color.g, color.b, 0.6f), true);
             fx.echo.transform.localScale = fx.scale * 1.28f;
             int particles = name.Contains("Hit") || name.Contains("Impact") ? 9 : 5;
+            fx.motes = new Mote[particles];
             for (int i = 0; i < particles; i++)
             {
                 float radians = (i * 137.508f + 19) * Mathf.Deg2Rad;
@@ -55,7 +76,7 @@ namespace KarmaPrototype
                     new Vector2(Mathf.Clamp(size.magnitude * 0.065f, 0.2f, 0.8f), 0.045f * KarmaSpace.Scale), color, 24);
                 sr.transform.localRotation = Quaternion.Euler(0, 0, radians * Mathf.Rad2Deg);
                 if (GlowMaterial != null) sr.sharedMaterial = GlowMaterial;
-                fx.motes.Add(new Mote { renderer = sr, color = color, velocity = direction * Mathf.Min(13, size.magnitude * 2) });
+                fx.motes[i] = new Mote { renderer = sr, velocity = direction * Mathf.Min(13, size.magnitude * 2) };
             }
             return fx.core;
         }
@@ -98,11 +119,12 @@ namespace KarmaPrototype
             echo.color = new Color(tint.r, tint.g, tint.b, fade * 0.45f);
             echo.transform.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(-15, 10, t));
             echo.transform.localScale = scale * Mathf.Lerp(0.9f, 1.35f, t);
-            foreach (var mote in motes)
+            for (int i = 0; i < motes.Length; i++)
             {
+                ref var mote = ref motes[i];
                 mote.renderer.transform.localPosition += mote.velocity * Time.deltaTime;
                 mote.velocity *= Mathf.Exp(-5 * Time.deltaTime);
-                mote.renderer.color = new Color(mote.color.r, mote.color.g, mote.color.b, fade * (1 - t));
+                mote.renderer.color = new Color(tint.r, tint.g, tint.b, fade * (1 - t));
             }
         }
     }

@@ -219,15 +219,6 @@ namespace KarmaPrototype
             var rects=new Rect[16];for(int i=0;i<16;i++)rects[i]=new Rect(i%4*384+3,i/4*256+3,378,250);
             return Cut("03_Variants/guardian-inheritance-atlas.png",rects,125,true)[Mathf.Clamp(index,0,15)];
         }
-        public static Sprite Inheritance(IReadOnlyList<Essence> order)
-        {
-            if(order.Count==0)return Variant(12);
-            Essence primary=order[0];int index=primary==Essence.Flame?0:primary==Essence.Dash?4:8;
-            bool wave=false,rise=false;foreach(var e in order){wave|=e==Essence.Flame;rise|=e==Essence.Dash;}
-            if(order.Count==3)index+=3;
-            else if(order.Count==2)index+=primary==Essence.Flame?(rise?1:2):primary==Essence.Dash?(wave?1:2):(wave?1:2);
-            return Variant(index);
-        }
         public static Sprite Full(string path)
         {
             Sprite[] result;string key="full:"+path;if(cache.TryGetValue(key,out result))return result[0];

@@ -21,13 +21,7 @@ namespace KarmaPrototype
                 body.linearVelocity = new Vector2(0, body.linearVelocity.y);
                 return;
             }
-            if (KnockedBack)
-            {
-                CancelAirSlash();
-                body.gravityScale = game.Config.gravityScale;
-                body.linearVelocity = new Vector2(knockbackDirection * knockbackSpeed, body.linearVelocity.y);
-            }
-            else if (airSlashRunning)
+            if (airSlashRunning)
             {
                 DamageAirSlash();
                 if (!game.IsCombat) { CancelAirSlash(); return; }

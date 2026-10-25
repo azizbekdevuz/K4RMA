@@ -138,7 +138,7 @@ public static class KarmaBossPlayChecks
     {
         BossVisualChecks();
         var config = game.Config;
-        var baseline = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Generated/KarmaConfig.asset");
+        var baseline = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Settings/KarmaConfig.asset");
         Check(baseline != null, "serialized gameplay configuration exists");
         Check(baseline.playerHealth == 160 && baseline.swordDamage == 60,
             "serialized difficulty does not retain the 10000 HP / 1000 damage values");

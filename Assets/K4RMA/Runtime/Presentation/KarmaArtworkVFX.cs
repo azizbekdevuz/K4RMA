@@ -18,12 +18,6 @@ namespace KarmaPrototype
             fx.fullSize=new Vector3(size.x/bounds.x,size.y/bounds.y,1);go.transform.localScale=fx.fullSize;
             return fx;
         }
-        public static void Attack(Transform root,Vector2 velocity,Vector2 size,float life,int pattern)
-        {
-            var fx=Spawn(root,Vector2.zero,KarmaArtAtlas.Effects(1)[Mathf.Abs(pattern)%12],size,life);
-            fx.fullSize=new Vector3(fx.fullSize.x/Mathf.Max(0.001f,root.localScale.x),fx.fullSize.y/Mathf.Max(0.001f,root.localScale.y),1);
-            fx.transform.localScale=fx.fullSize;fx.visual.flipX=velocity.x<0;
-        }
         public static void Personalize(KarmaGame game,Vector2 point,Essence essence)
         {
             var effects=KarmaArtAtlas.Effects(2);

@@ -9,17 +9,6 @@ namespace KarmaPrototype
         Sprite[] frames;
         Sprite[] runFrames;
         float runAt;
-        bool completePlayer, completeGuardian;
-        int guardianState, specialPose;
-        float stateAt, verticalSpeed, specialUntil;
-        bool guardianGuard, playerGuard, playerCounter;
-        public void ConfigureComplete(SpriteRenderer renderer, Sprite[] poses, bool guardian)
-        { ConfigureSprites(renderer, poses); completeGuardian=guardian;completePlayer=!guardian; }
-        public void GuardianState(int value,bool guard)
-        { if(guardianState!=value)stateAt=Time.time;guardianState=value;guardianGuard=guard; }
-        public void PlayerMotion(float velocity,bool guard,bool counter)
-        { verticalSpeed=velocity;playerGuard=guard;playerCounter=counter; }
-        public void SpecialPose(int index,float seconds){specialPose=index;specialUntil=Time.time+seconds;}
         Vector2 slashDirection = Vector2.right;
         Vector3 pictureHome;
         Color pictureColor;
@@ -92,32 +81,7 @@ namespace KarmaPrototype
             if (picture != null)
             {
                 int frame = 0;
-                if(completeGuardian)
-                {
-                    bool neutral=frames.Length==8;
-                    if(Time.time<hurtUntil)frame=neutral?5:10;
-                    else if(guardianState==4)frame=neutral?6:8;
-                    else if(guardianState==1)frame=neutral?2:4;
-                    else if(guardianState==2||Time.time<actionUntil)frame=neutral?3:airborne?9:5+(int)((Time.time-stateAt)*8)%3;
-                    else if(guardianState==3)frame=neutral?4:8;
-                    else if(guardianGuard)frame=4;
-                    else if(Mathf.Abs(movement)>0.1f)frame=neutral?1:3;
-                }
-                else if(completePlayer)
-                {
-                    if(Time.time<hurtUntil)frame=14;
-                    else if(Time.time<specialUntil)frame=specialPose;
-                    else if(playerCounter)frame=13;
-                    else if(playerGuard)frame=12;
-                    else if(Time.time<actionUntil)
-                    {
-                        float t=Mathf.Clamp01(1-(actionUntil-Time.time)/0.18f);
-                        frame=slashDirection.y< -0.25f?(t<0.5f?16:19):slashDirection.y>0.25f?(t<0.5f?11:12):(t<0.25f?8:t<0.5f?7:t<0.75f?9:10);
-                    }
-                    else if(airborne)frame=verticalSpeed< -0.1f?4:3;
-                    else if(Mathf.Abs(movement)>0.1f)frame=1+(int)(Time.time*9)%2;
-                }
-                else if (frames.Length > 1)
+                if (frames.Length > 1)
                 {
                     if (Time.time < hurtUntil && frames.Length >= 9) frame = 7;
                     else if (Time.time < actionUntil)

@@ -1,20 +1,59 @@
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-UserSettings/
+# Unity caches and local editor state
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+/Assets/AssetStoreTools*
 
+# Builds, validation reports and .NET test intermediates
+/[Bb]uild/
+/[Bb]uilds/
+/output/
+/tests/**/bin/
+/tests/**/obj/
+
+# IDE state and Unity-generated solution/project files
 .vscode/
 .idea/
-.DS_Store
-# Unity-generated IDE workspace from the former Windows checkout
+.vs/
+.consulo/
+/*.csproj
+/*.sln
+/*.slnx
+/*.sln.DotSettings
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.pidb.meta
+*.booproj
+*.svd
+*.pdb
+*.pdb.meta
+*.mdb
+*.mdb.meta
+*.opendb
+*.VC.db
 /Game/
 
-# Local validation output
-/tests/**/bin/
-/output/validation/
+# OS files and local secrets
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+.env
+.env.*
+!.env.example
+/.aws/
+
+# Unity recovery output
+/sysinfo.txt
+/[Cc]rashReports/
+/Assets/StreamingAssets/aa.meta
+/Assets/StreamingAssets/aa/
 
 # Generated from versioned image sources on Editor import
 /Assets/K4RMA/Resources/K4RMAComplete/
@@ -22,4 +61,3 @@ UserSettings/
 /Assets/K4RMA/Editor/ArtReferences/
 /Assets/K4RMA/Editor/ArtReferences.meta
 /Assets/K4RMA/Editor/CompleteArtInventory.asset*
-

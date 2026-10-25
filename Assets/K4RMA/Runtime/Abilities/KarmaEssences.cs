@@ -6,7 +6,7 @@ namespace KarmaPrototype
 {
     // Unity facade: persistent progression lives in Core/KarmaProgressionState.
     // The director only asks this component to sacrifice an essence.
-    public sealed partial class KarmaEssences : MonoBehaviour, ISerializationCallbackReceiver
+    public sealed class KarmaEssences : MonoBehaviour, ISerializationCallbackReceiver
     {
         KarmaProgressionState progression = new KarmaProgressionState();
         [SerializeField, HideInInspector] List<Essence> acquiredOrder = new List<Essence>();
@@ -24,9 +24,12 @@ namespace KarmaPrototype
         readonly float[] readyAt = new float[3];
         KarmaPlayer player;
         KarmaGame game;
-        readonly int[] procCounts = new int[3];
         readonly float[] lastProc = { -100, -100, -100 };
-        public int ProcCount(Essence e) { return procCounts[(int)e]; }
+        public void NotifyUnique(Essence e)
+        {
+            lastProc[(int)e] = Time.time;
+            KarmaRemnantVFX.Proc(game, player.Position, player.Facing, e);
+        }
         public bool JustTriggered(Essence e) { return Time.time - lastProc[(int)e] < 0.7f; }
         public event Action<Essence> Sacrificed;
         public IReadOnlyList<Essence> SacrificeOrder { get { return progression.Order; } }
@@ -52,9 +55,35 @@ namespace KarmaPrototype
         public void ResetTemporaryState()
         {
             for (int i = 0; i < readyAt.Length; i++) readyAt[i] = 0;
-            for (int i = 0; i < 3; i++) { procCounts[i] = 0; lastProc[i] = -100; }
+            for (int i = 0; i < lastProc.Length; i++) lastProc[i] = -100;
         }
 
-
+        public void TryUse(Essence e)
+        {
+            if (!game.IsCombat || player.Stunned || !HasActive(e) || Cooldown(e) > 0) return;
+            var c = game.Config;
+            switch (e)
+            {
+                case Essence.Flame:
+                    KarmaArtworkVFX.Player(game,player.Position,2,Vector2.right*player.Facing);
+                    readyAt[0] = Time.time + c.flameCooldown;
+                    player.BeginSwordWave();
+                    KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * KarmaSpace.Units(0.7f),
+                        Vector2.right * player.Facing * c.flameSpeed, c.flameDamage, c.flameColor, KarmaSpace.Units(0.25f));
+                    break;
+                case Essence.Dash:
+                    readyAt[1] = Time.time + c.dashCooldown;
+                    player.BeginRisingSlash(); break;
+                case Essence.Ward:
+                    readyAt[2] = Time.time + c.wardCooldown;
+                    player.BeginWard(c.wardDuration); break;
+            }
+        }
+        public void TryCounter()
+        {
+            if (!game.IsCombat || player.Stunned || !HasRemnant(Essence.Ward) || Cooldown(Essence.Ward) > 0) return;
+            readyAt[2] = Time.time + game.Config.Techniques.counterCooldown;
+            player.BeginCounter();
+        }
     }
 }

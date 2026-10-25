@@ -9,7 +9,7 @@ public static class ApplyCombatTuning
     public static string Main()
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play Mode before saving tuning.");
-        var config = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Generated/KarmaConfig.asset");
+        var config = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Settings/KarmaConfig.asset");
         Undo.RecordObject(config, "Player combat balance");
         config.playerHealth = 160; config.swordDamage = 60; config.enemyDamage = 14;
         config.flameDamage = 72; config.healAfterSacrifice = 45;

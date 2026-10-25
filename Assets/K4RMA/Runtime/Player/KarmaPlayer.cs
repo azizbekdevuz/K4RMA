@@ -15,8 +15,6 @@ namespace KarmaPrototype
         float move, jumpBufferedUntil, lastGrounded = -10, nextSword, invulnerableUntil, wardUntil;
         readonly KarmaTechniqueState techniques = new KarmaTechniqueState();
         public bool Airborne { get { return body.linearVelocity.y > 0.1f || !Grounded(); } }
-        float knockbackUntil, knockbackDirection, knockbackSpeed;
-        public bool KnockedBack { get { return Time.time < knockbackUntil; } }
         public KarmaEssences Essences { get; private set; }
         public float Health { get; private set; }
         public int Facing { get; private set; } = 1;
@@ -40,7 +38,7 @@ namespace KarmaPrototype
             aura = KarmaVisuals.Box(transform, "Ward", Vector2.zero, KarmaSpace.Units(new Vector2(1.25f, 1.9f)),
                 game.Config.wardColor, 2);
             aura.enabled = false;
-            KarmaSheetEffects.Apply(aura, "PlayerVFX", "Guard", KarmaSpace.Units(new Vector2(1.5f, 2.15f)));
+            KarmaCombatVFX.ApplySprite(aura, "PlayerVFX", "Guard", KarmaSpace.Units(new Vector2(1.5f, 2.15f)));
             remnantHalo = KarmaRemnantVFX.CreateWardHalo(transform, game.Config.wardColor);
             remnantHalo.enabled = false;
         }
@@ -56,7 +54,7 @@ namespace KarmaPrototype
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             move = KarmaInput.Horizontal;
-            if (move != 0 && !KnockedBack) Facing = move > 0 ? 1 : -1;
+            if (move != 0) Facing = move > 0 ? 1 : -1;
             art.localScale = new Vector3(Facing, 1, 1);
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;
             if (game.IsCombat)

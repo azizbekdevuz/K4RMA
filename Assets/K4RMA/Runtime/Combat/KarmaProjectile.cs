@@ -30,8 +30,10 @@ namespace KarmaPrototype
             Vector2 to = from + velocity * Time.deltaTime;
             transform.position = to;
             if (to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12)) { Destroy(gameObject); return; }
-            foreach (var enemy in game.Enemies.ToArray())
+            // Damage can remove the hit enemy; this path returns immediately afterward.
+            for (int i = 0; i < game.Enemies.Count; i++)
             {
+                var enemy = game.Enemies[i];
                 if (enemy == null || !enemy.Alive || !enemy.IntersectsDamagePath(from, to, radius)) continue;
                 enemy.TakeDamage(damage, from);
                 // Current player projectiles stop at their first target; piercing is a melee move.

@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
-using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,9 +15,17 @@ namespace KarmaPrototype.Editor
         {
             if (EditorApplication.isPlaying) { Debug.LogWarning("먼저 플레이 모드를 종료하세요."); return; }
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
-            Directory.CreateDirectory("Assets/K4RMA/Generated");
+            const string path = "Assets/K4RMA/Scenes/KarmaPrototype.unity";
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null)
+            {
+                EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                RegisterScene(path);
+                return;
+            }
+            Directory.CreateDirectory("Assets/K4RMA/Scenes");
+            Directory.CreateDirectory("Assets/K4RMA/Settings");
             AssetDatabase.Refresh();
-            const string configPath = "Assets/K4RMA/Generated/KarmaConfig.asset";
+            const string configPath = "Assets/K4RMA/Settings/KarmaConfig.asset";
             var config = AssetDatabase.LoadAssetAtPath<KarmaConfig>(configPath);
             if (config == null)
             {
@@ -35,19 +42,21 @@ namespace KarmaPrototype.Editor
             var serialized = new SerializedObject(game);
             serialized.FindProperty("config").objectReferenceValue = config;
             serialized.ApplyModifiedProperties();
-            // Generate a unique path: never overwrite an existing authored scene.
-            string path = AssetDatabase.GenerateUniqueAssetPath("Assets/K4RMA/Generated/KarmaPrototype.unity");
             EditorSceneManager.SaveScene(scene, path);
-            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-            scenes.Add(new EditorBuildSettingsScene(path, true));
-            EditorBuildSettings.scenes = scenes.ToArray();
+            RegisterScene(path);
             Selection.activeObject = root;
             Debug.Log("K4RMA 준비 완료. Play 후 Enter를 누르세요. 설정: " + configPath);
         }
 
+        static void RegisterScene(string path)
+        {
+            if (EditorBuildSettings.scenes.Any(scene => scene.path == path)) return;
+            EditorBuildSettings.scenes = EditorBuildSettings.scenes
+                .Concat(new[] { new EditorBuildSettingsScene(path, true) }).ToArray();
+        }
+
         [MenuItem("K4RMA/로직 검사")]
         public static void RunChecks() { KarmaChecks.Run(); }
-
 
         [MenuItem("K4RMA/선택한 설정의 보스 난이도 초기화")]
         public static void ResetBossTuning()
@@ -58,7 +67,7 @@ namespace KarmaPrototype.Editor
             Undo.RecordObject(config, "보스 난이도 초기화");
             config.bossTuning = new KarmaBossTuning();
             EditorUtility.SetDirty(config); AssetDatabase.SaveAssets();
-            Debug.Log("보스 난이도·화상을 기본 프로필로 초기화했습니다. 폰트와 플레이어 설정은 유지합니다.");
+            Debug.Log("보스 난이도를 기본 프로필로 초기화했습니다. 폰트와 플레이어 설정은 유지합니다.");
         }
     }
 }

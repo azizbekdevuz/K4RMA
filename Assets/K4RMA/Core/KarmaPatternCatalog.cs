@@ -7,17 +7,6 @@ namespace KarmaPrototype
         public static string UniqueName(Essence e) { return e == Essence.Flame ? "관통베기" : e == Essence.Dash ? "도약베기" : "반격"; }
         public static Essence? Primary(IReadOnlyList<Essence> order) { return order.Count == 0 ? (Essence?)null : order[0]; }
         public static string TypeName(IReadOnlyList<Essence> order) { return order.Count == 0 ? "기본형" : Name(order[0]) + "형"; }
-        // Index into the 3x2 reference sheet. Sword-primary uses its separate atlas.
-        public static int GuardianVisual(IReadOnlyList<Essence> order)
-        {
-            var primary = Primary(order);
-            if (primary == Essence.Flame) return -1;
-            int basic = primary == Essence.Dash ? 3 : 0;
-            if (order.Count < 2) return basic;
-            // Preserve the first secondary silhouette at the final trial.
-            if (order[1] == Essence.Flame) return basic + 1;
-            return basic + 2;
-        }
         public static bool IsUltimate(EnemyAttack a)
         { return a == EnemyAttack.SW05 || a == EnemyAttack.UP05 || a == EnemyAttack.GD05; }
         public static List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> returned)

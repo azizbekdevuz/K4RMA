@@ -80,15 +80,11 @@ namespace KarmaPrototype
             var primary = KarmaPatternCatalog.Primary(order);
             animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward");
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
-            root.gameObject.AddComponent<KarmaGuardianAdornment>().Initialize(order);
+            if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order));
             return root;
         }
         public static readonly Color BossSwordColor = new Color(0.42f, 0.68f, 1);
         public static readonly Color BarrierColor = new Color(1, 0.83f, 0.48f);
-        public static string GuardianIllustration(Essence? type)
-        {
-            return type == Essence.Flame ? "SwordGuardian" : type == Essence.Dash ? "RisingGuardian" : "WardGuardian";
-        }
         public static Sprite GuardianPreview(IReadOnlyList<Essence> order)
         {
             var primary = KarmaPatternCatalog.Primary(order);

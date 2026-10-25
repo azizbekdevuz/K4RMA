@@ -138,10 +138,5 @@ namespace KarmaPrototype
         {
             Color old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = old;
         }
-        static void Bar(Rect r, float fraction, Color c)
-        {
-            Fill(r, new Color(0.19f, 0.2f, 0.25f));
-            r.width *= Mathf.Clamp01(fraction); Fill(r, c);
-        }
     }
 }

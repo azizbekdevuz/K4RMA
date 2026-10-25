@@ -16,6 +16,8 @@ for folder in ('Assets', 'Packages', 'ProjectSettings', 'tools', 'tests', 'docs'
 assets = root / 'Assets'
 guids = {}
 for meta in assets.rglob('*.meta'):
+    if not meta.with_suffix('').exists():
+        raise SystemExit(f'Orphaned metadata: {meta.relative_to(root)}')
     match = re.search(r'^guid: ([a-f0-9]{32})$', meta.read_text(), re.M)
     if not match:
         raise SystemExit(f'Missing GUID: {meta.relative_to(root)}')
@@ -26,6 +28,17 @@ for meta in assets.rglob('*.meta'):
 for script in assets.rglob('*.cs'):
     if not Path(str(script) + '.meta').exists():
         raise SystemExit(f'Missing script metadata: {script}')
+# Build scene paths must follow moves as well as their GUIDs.
+build_settings = (root / 'ProjectSettings/EditorBuildSettings.asset').read_text()
+build_scenes = re.findall(r'path: (.+)\n\s+guid: ([a-f0-9]{32})', build_settings)
+seen_scenes = set()
+for path, guid in build_scenes:
+    if path in seen_scenes:
+        raise SystemExit(f'Duplicate build scene: {path}')
+    seen_scenes.add(path)
+    meta = root / (path + '.meta')
+    if not (root / path).is_file() or guids.get(guid) != meta:
+        raise SystemExit(f'Invalid build scene path/GUID: {path}')
 # URP materials, renderer data and Volume profiles reference package assets.
 # Validate against imported package metadata as well as project-owned assets.
 package_guids = set()

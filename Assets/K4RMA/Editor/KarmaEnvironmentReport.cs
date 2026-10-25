@@ -46,7 +46,7 @@ namespace KarmaPrototype.Editor
             var warnings = new List<string>();
             var settings = AssetDatabase.LoadAssetAtPath<KarmaArtworkSettings>(KarmaArtworkSetup.SettingsPath);
             var game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
-            var config = game != null ? game.Config : AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Generated/KarmaConfig.asset");
+            var config = game != null ? game.Config : AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Settings/KarmaConfig.asset");
             var camera = game != null ? game.GameCamera : Camera.main;
             var sprites = new List<SpriteInfo>();
             if (settings == null) warnings.Add("KarmaArtworkSettings is missing");
@@ -84,7 +84,7 @@ namespace KarmaPrototype.Editor
                 configAsset = config != null ? AssetDatabase.GetAssetPath(config) : "missing",
                 sourceHash = HashFiles(Directory.GetFiles("Assets/K4RMA", "*.cs", SearchOption.AllDirectories)),
                 artworkHash = HashFiles(Directory.GetFiles("Assets/K4RMA/Resources", "*", SearchOption.AllDirectories)
-                    .Concat(new[] { "Assets/K4RMA/Generated/KarmaConfig.asset" })),
+                    .Concat(new[] { "Assets/K4RMA/Settings/KarmaConfig.asset" })),
                 sprites = sprites.ToArray(), warnings = warnings.ToArray(), liveGuardians = live.ToArray()
             };
             return JsonUtility.ToJson(report, true);

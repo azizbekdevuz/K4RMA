@@ -75,10 +75,6 @@ namespace KarmaPrototype
             GUI.enabled = true;
             if (GUI.Button(new Rect(490, 625, 300, 40), "선택 취소 [Esc]", menuButton)) game.CancelChoice();
         }
-        string ChoiceDescription(Essence e)
-        {
-            return "원형 직접 사용 종료\n획득: " + KarmaPatternCatalog.UniqueName(e) + "\n다음 수호자 계승: " + KarmaPatternCatalog.Name(e);
-        }
         void TransitionScreen()
         {
             Panel(new Rect(120, 275, 1040, 300));

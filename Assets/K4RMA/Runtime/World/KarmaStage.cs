@@ -83,12 +83,5 @@ namespace KarmaPrototype
             sr.gameObject.AddComponent<KarmaSurface>();
             return sr.gameObject.AddComponent<BoxCollider2D>();
         }
-        static void Platform(Transform parent, Vector2 p, Vector2 size, Color color)
-        {
-            var box = Solid(parent, "One-way platform", p, size, color);
-            var effector = box.gameObject.AddComponent<PlatformEffector2D>();
-            effector.useOneWay = true; effector.surfaceArc = 180;
-            box.usedByEffector = true;
-        }
     }
 }

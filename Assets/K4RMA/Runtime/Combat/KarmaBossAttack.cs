@@ -39,7 +39,7 @@ namespace KarmaPrototype
         public static void ConfigureVisual(SpriteRenderer sr, Vector2 velocity, Vector2 size, int facing, string pose)
         {
             bool moving = velocity.sqrMagnitude > 0.01f;
-            KarmaSheetEffects.Apply(sr, "GuardianVFX", pose, size * 1.15f, pose != "Pillar");
+            KarmaCombatVFX.ApplySprite(sr, "GuardianVFX", pose, size * 1.15f, pose != "Pillar");
             if (moving)
             {
                 // Fit the rotated sprite to the world-space footprint, including diagonal shots.

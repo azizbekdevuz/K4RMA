@@ -89,7 +89,7 @@ namespace KarmaPrototype
             for (int i = 0; i < blades.Length; i++)
             {
                 blades[i] = KarmaVisuals.Box(effectsRoot, "회전 검막 · 접촉 피해 없음", Position, Vector2.one, Color.white, 13);
-                KarmaSheetEffects.Apply(blades[i], "GuardianVFX", "Blade", KarmaSpace.Units(new Vector2(1.2f, 0.5f)));
+                KarmaCombatVFX.ApplySprite(blades[i], "GuardianVFX", "Blade", KarmaSpace.Units(new Vector2(1.2f, 0.5f)));
             }
             while (FightSeconds < swordWardUntil && Active)
             {

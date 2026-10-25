@@ -2,7 +2,7 @@
 """Review-sized effect slices, including detached highlights and complete tails.
 
 Only writes Sprite Editor input metadata. Source PNG pixels remain unchanged.
-Requires Pillow; apply with tools/ImportSpriteSheets.cs in the live Unity Editor.
+Requires Pillow; apply with tools/unity/ImportSpriteSheets.cs in the live Unity Editor.
 """
 import json
 from collections import defaultdict

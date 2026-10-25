@@ -9,7 +9,7 @@ namespace KarmaPrototype
         bool airSlashRunning;
         Vector2 airSlashDirection, airSlashPrevious;
         float airSlashBufferedUntil, airRecoveryLeft, airLaunchX, risingSlashUntil;
-        bool risingSlashHit;
+        bool risingSlashHit, attackSuppressedUntilRelease;
 
         public bool HoverReady { get { return techniques.HoverReady; } }
         public bool Hovering { get { return techniques.Hovering; } }
@@ -21,7 +21,6 @@ namespace KarmaPrototype
                 && Time.time >= nextSword
                 && !airSlashRunning
                 && !techniques.Hovering
-                && !KnockedBack
                 && !Stunned
                 && !Shielded
                 && !techniques.CounterReady(Time.time);
@@ -138,6 +137,7 @@ namespace KarmaPrototype
             float minimum = tuning.hoverMinimumHold > 0.05f ? tuning.hoverMinimumHold : 0.16f;
             if (!techniques.TryBeginHover(Time.time, duration, minimum)) return false;
             airSlashBufferedUntil = 0;
+            risingSlashUntil = 0;
             airSlashRunning = false;
             airRecoveryLeft = 0;
             body.gravityScale = 0;
@@ -170,6 +170,8 @@ namespace KarmaPrototype
             if (body == null || game == null) return;
             body.gravityScale = game.Config.gravityScale;
             if (drop) body.linearVelocity = new Vector2(body.linearVelocity.x, -KarmaSpace.Units(1.2f));
+            attackSuppressedUntilRelease = true;
+            risingSlashUntil = 0;
             if (Grounded()) techniques.Land();
         }
         void StrikeRisingSlash()
@@ -192,6 +194,8 @@ namespace KarmaPrototype
         {
             airSlashRunning = false; airSlashMotion.Reset(); airSlashHits.Clear();
             airSlashBufferedUntil = airRecoveryLeft = 0;
+            risingSlashUntil = 0;
+            risingSlashHit = false;
             if (techniques.Hovering) EndHover(false);
         }
         Vector2 MoveSlash(Vector2 direction, float distance)

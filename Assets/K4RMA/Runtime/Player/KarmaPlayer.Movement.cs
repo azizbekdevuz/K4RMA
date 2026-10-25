@@ -23,16 +23,7 @@ namespace KarmaPrototype
                 body.linearVelocity = new Vector2(0, body.linearVelocity.y);
                 return;
             }
-            if (KnockedBack)
-            {
-                CancelAirSlash();
-                body.gravityScale = game.Config.gravityScale;
-                body.linearVelocity = new Vector2(
-                    knockbackDirection * knockbackSpeed,
-                    body.linearVelocity.y
-                );
-            }
-            else if (techniques.Hovering && game.IsCombat)
+            if (techniques.Hovering && game.IsCombat)
             {
                 bool drop = techniques.ShouldEndHover(
                     Time.time,

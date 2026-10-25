@@ -63,10 +63,14 @@ namespace KarmaPrototype
                 if (KarmaInput.Pressed(KarmaAction.Attack))
                     airSlashBufferedUntil = Time.time + game.Config.Techniques.airSlashInputBuffer;
 
-                if (risingSlashUntil > Time.time)
+                if (attackSuppressedUntilRelease)
+                {
+                    if (!KarmaInput.Held(KarmaAction.Attack)) attackSuppressedUntilRelease = false;
+                }
+                else if (risingSlashUntil > Time.time)
                     StrikeRisingSlash();
 
-                if (KarmaInput.Held(KarmaAction.Attack) || airSlashBufferedUntil > Time.time)
+                if (!attackSuppressedUntilRelease && (KarmaInput.Held(KarmaAction.Attack) || airSlashBufferedUntil > Time.time))
                     Attack();
 
                 if (KarmaInput.Pressed(KarmaAction.SwordWave))

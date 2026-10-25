@@ -24,15 +24,16 @@ namespace KarmaPrototype
             yield return Wait(Warning(0.55f)); Destroy(drop.gameObject);
             yield return Motion(landing, 0.3f, bodyAttackSize);
             fullShield = false; Destroy(left.gameObject); Destroy(right.gameObject);
-            // UP04 replaces the normal shockwave with shield fragments.
-            // Any later eruption has its own locked warning.
+            // The pair shares one contact so overlapping waves cannot hit twice.
+            // UP04 fragments replace the shockwave. They are not added on top of it.
+            var groundContact = new KarmaAttackContact();
             foreach (float side in new[] { -1f, 1f })
             {
-                var shot = Attack(new Vector2(landing.x, KarmaSpace.Units(0.55f)), Vector2.right * side * KarmaSpace.Units(10), KarmaSpace.Units(new Vector2(1.1f, 0.65f)), 0.9f);
+                var shot = Attack(new Vector2(landing.x, KarmaSpace.Units(0.55f)), Vector2.right * side * KarmaSpace.Units(10), KarmaSpace.Units(new Vector2(1.1f, 0.65f)), 0.9f, 1, groundContact);
                 shot.name = shield ? "착지 방어막 파편" : "착지 지면 충격파";
                 if (shield) shot.Visual.color = KarmaArtwork.BarrierColor;
             }
-            if (shield || Enraged)
+            if (!shield && Enraged)
             {
                 yield return Wait(0.2f);
                 Vector2 aftershock = new Vector2(Mathf.Clamp(game.Player.Position.x, KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.Units(2.5f));
@@ -69,7 +70,11 @@ namespace KarmaPrototype
             yield return Motion(target, 0.45f, bodyAttackSize);
             // Return is presentation only: no unannounced falling hit box.
             yield return Motion(new Vector2(target.x, KarmaSpace.GuardianGroundY), 0.4f, Vector2.zero);
-            if (recover && Enraged) { yield return Wait(0.18f); yield return AirPursuit(false); }
+            if (recover && Enraged)
+            {
+                yield return Wait(Mathf.Max(0.45f, Tuning.crossingReset * Tempo));
+                yield return AirPursuit(false);
+            }
             if (recover) yield return Recovery(1);
         }
         IEnumerator GroundBlade()
@@ -105,16 +110,17 @@ namespace KarmaPrototype
             Intent = "UP05 최종 낙하 위치 고정 · 범위 밖으로";
             yield return Wait(0.8f); Destroy(mark.gameObject);
             yield return Motion(landing, 0.45f, bodyAttackSize);
-            yield return Recovery(3);
+            yield return Recovery(3f, false, "UP05 탈진 · 지금 공격하세요");
         }
         IEnumerator GroundCrossing(float fromX, float toX)
         {
             yield return Motion(new Vector2(fromX, KarmaSpace.GuardianGroundY), 0.45f, Vector2.zero);
             Vector2 target = new Vector2(toX, KarmaSpace.GuardianGroundY);
-            var mark = PathMark(Position, target, KarmaSpace.Units(new Vector2(1.4f, 1.4f)));
+            Vector2 slashSize = KarmaSpace.Units(new Vector2(1.6f, 0.85f));
+            var mark = PathMark(Position, target, slashSize);
             Intent = "UP05 지상 횡단 고정 · 점프/체공";
             yield return Wait(Warning(Tuning.crossingWarning)); Destroy(mark.gameObject);
-            yield return Motion(target, 1.1f / KarmaSpace.Scale, KarmaSpace.Units(new Vector2(1.4f, 1.4f)));
+            yield return Motion(target, 1.1f / KarmaSpace.Scale, slashSize);
             yield return Wait(1.1f * (1 - 1 / KarmaSpace.Scale));
         }
     }

@@ -46,7 +46,10 @@ namespace KarmaPrototype
         }
         public void ClearStatus()
         {
-            CancelAirSlash(); stunUntil = 0; ReleaseArena();
+            CancelAirSlash();
+            attackSuppressedUntilRelease = false;
+            stunUntil = 0;
+            ReleaseArena();
         }
     }
 }

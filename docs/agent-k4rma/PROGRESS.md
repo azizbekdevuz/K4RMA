@@ -52,6 +52,7 @@ Not started. Combat HUD only gained a 체공 state label.
 - `562a973` `docs: record rising slash implementation progress`
 - `dc268a6` `fix(player): resolve undefined knockback state references` — editor batch compile passed. Isolated Play Mode 21 runs, 599 assertions. The earlier Roslyn pass ran before `48f563d` removed the unused knockback fields, and the rising-slash patch kept those references.
 - `554b0bc` `fix(build): require a clean Unity editor compile`
+- Handoff: attack suppression is cleared when combat status resets, so a new run does not keep the previous 체공 hold lock.
 
 ## Current blockers
 

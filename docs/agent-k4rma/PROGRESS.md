@@ -6,7 +6,7 @@
 - Baseline before Task 1: `ec0436215c540f42c20e3114039b1fe7fd9be49e`
 - Unity: `6000.6.2f1` (`770e33f6875c`)
 - Current task: Task 1 implemented
-- Task 1 status: Player 체공 and UP01–UP05 refinements are in local commits. Play Mode regression passed. Human feel playtest not run.
+- Task 1 status: Rising-slash combat is in local commits. The editor batch compile of this repository passed after the knockback repair. Human feel playtest not run.
 - Task 2 status: Not started
 - Play Mode this session: Passed in an isolated project copy. The working scenes were not played by hand.
 
@@ -34,11 +34,11 @@ Details: `docs/agent-k4rma/SOURCE_OF_TRUTH.md`.
 | UP04 | Refined | Shield ends on landing. Fragments replace the shockwave |
 | UP05 | Refined | Same phase order. Low slash height. Exhaustion recovery message |
 | Combat feedback and polish | Partial | Existing sheet VFX and poses. No new generated character frames |
-| Unity compilation | Passed | Player scripts, warnings as errors, Unity Roslyn |
+| Unity compilation | Passed | Editor 6000.6.2f1 batchmode on this repository. No `error CS`. Earlier Roslyn-only pass did not see the missing knockback fields |
 | Core checks | Passed | 402 assertions |
 | Source reference check | Passed | 63 scripts, 240 GUIDs |
-| Play Mode regression | Passed | 21 pattern runs, 599 assertions, isolated copy |
-| Human gameplay feel | Requires human playtest | Not played by hand in the editor |
+| Play Mode regression | Passed | Isolated copy after the repair: 21 pattern runs, 599 assertions |
+| Human gameplay feel | Requires human playtest | Batchmode does not show the Game view |
 
 ## Task 2 — UI/UX
 
@@ -46,9 +46,12 @@ Not started. Combat HUD only gained a 체공 state label.
 
 ## Local commits
 
-- `153bbec` `docs: record verified workspace baseline` — paths and branch identity. Play Mode not run.
-- `3045ca4` `feat(player): replace personalized air burst with aerial hang-time` — core checks 402. Player compile passed.
-- `44c1de5` `fix(boss): keep rising-slash hazards single-hit and low` — isolated Play Mode 21 runs, 599 assertions.
+- `93ee71c` `docs: record verified workspace baseline`
+- `15816c7` `feat(player): replace personalized air burst with aerial hang-time`
+- `c742a6f` `fix(boss): keep rising-slash hazards single-hit and low`
+- `562a973` `docs: record rising slash implementation progress`
+- `dc268a6` `fix(player): resolve undefined knockback state references` — editor batch compile passed. Isolated Play Mode 21 runs, 599 assertions. The earlier Roslyn pass ran before `48f563d` removed the unused knockback fields, and the rising-slash patch kept those references.
+- `554b0bc` `fix(build): require a clean Unity editor compile`
 
 ## Current blockers
 
@@ -62,10 +65,10 @@ Task 2 starts in a fresh session after this combat is accepted. Do not continue 
 
 ## Validation rules
 
-- Core checks: Passed.
-- Player script compile: Passed.
-- Source reference check: Passed.
-- Isolated Play Mode regression: Passed.
+- Full-project Unity 6000.6.2f1 editor compile: Passed.
+- A Roslyn file-list compile is not that result. `tools/check-unity-compile.py` now fails unless the editor batch compile is clean.
+- Core checks: Passed, 402 assertions.
+- Isolated Play Mode regression: Passed, 21 runs, 599 assertions.
 - Hand-played combat feel: Requires human playtest.
 
 ## Handoff instructions

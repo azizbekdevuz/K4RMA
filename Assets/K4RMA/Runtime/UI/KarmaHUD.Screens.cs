@@ -5,6 +5,12 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD
     {
         int storyPage;
+        void Update()
+        {
+            if (game == null || game.Phase != RunPhase.Story) return;
+            if (KarmaInput.Pressed(KarmaAction.NextPage)) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
+            if (KarmaInput.Pressed(KarmaAction.PreviousPage)) storyPage = Mathf.Max(0, storyPage - 1);
+        }
         void TitleScreen()
         {
             Fill(new Rect(0, 0, 1280, 720), new Color(0.02f, 0.03f, 0.07f, 0.25f));
@@ -17,13 +23,6 @@ namespace KarmaPrototype
         }
         void StoryScreen()
         {
-            // Key events are consumed once by the GUI event loop, never on repaint.
-            var ev = Event.current;
-            if (ev.type == EventType.KeyDown)
-            {
-                if (ev.keyCode == KeyCode.RightArrow || ev.keyCode == KeyCode.DownArrow) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
-                if (ev.keyCode == KeyCode.LeftArrow || ev.keyCode == KeyCode.UpArrow) storyPage = Mathf.Max(0, storyPage - 1);
-            }
             Panel(new Rect(110, 35, 1060, 650));
             Label(155, 60, 970, 40, "스승과 제자 · " + (storyPage + 1) + " / " + KarmaStory.Pages.Length, heading);
             Label(155, 115, 555, 475, KarmaStory.Pages[storyPage], text);

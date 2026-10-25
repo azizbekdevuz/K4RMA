@@ -7,6 +7,8 @@ namespace KarmaPrototype
         Transform blade, leftBoot, rightBoot;
         SpriteRenderer picture;
         Sprite[] frames;
+        Sprite[] runFrames;
+        float runAt;
         bool completePlayer, completeGuardian;
         int guardianState, specialPose;
         float stateAt, verticalSpeed, specialUntil;
@@ -34,10 +36,18 @@ namespace KarmaPrototype
         public void ConfigureSheet(string name)
         {
             sheet = name; poses.Clear();
+            runFrames = null;
             guardianPreviousPosition = transform.position;
             var library = KarmaArtwork.Settings.spriteLibrary;
             if (library == null) return;
             foreach (var sprite in library.All(name)) if (sprite != null) poses[sprite.name] = sprite;
+            if (name == "Player" && poses.TryGetValue("Run", out var run))
+            {
+                // The second movement key pose is also used for jump takeoff in
+                // the original sheet. Prefer a dedicated Run2 when supplied.
+                if (!poses.TryGetValue("Run2", out var next)) next = KarmaArtwork.Settings.playerMove2;
+                runFrames = next != null && next != run ? new[] { run, next } : new[] { run };
+            }
         }
         public void PlayPose(string name, float seconds)
         {
@@ -130,7 +140,13 @@ namespace KarmaPrototype
                         : airborne ? (verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
                         : Time.time < landedUntil ? "Land"
                         : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
-                    ShowPose(pose);
+                    if (pose == "Run" && runFrames != null)
+                    {
+                        if (CurrentPose != "Run") runAt = Time.time;
+                        ShowPose("Run");
+                        picture.sprite = runFrames[(int)((Time.time - runAt) * 9) % runFrames.Length];
+                    }
+                    else ShowPose(pose);
                 }
                 float bob = airborne ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;
                 picture.transform.localPosition = pictureHome + Vector3.up * bob;

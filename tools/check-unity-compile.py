@@ -20,6 +20,10 @@ sdk = contents / 'Resources/Scripting/DotNetSdk'
 compiler = next((sdk / 'sdk').glob('*/Roslyn/bincore/csc.dll'))
 refs = list((sdk / 'packs/NETStandard.Library.Ref').glob('*/ref/netstandard2.1/*.dll'))
 refs += list((contents / 'Resources/Scripting/Managed/UnityEngine').glob('*.dll'))
+input_system = root / 'Library/ScriptAssemblies/Unity.InputSystem.dll'
+if not input_system.exists():
+    raise SystemExit('Import the project in Unity first to compile the Input System package')
+refs.append(input_system)
 if not refs:
     raise SystemExit('Unity reference assemblies not found')
 with tempfile.TemporaryDirectory(prefix='karma-compile-') as temp:
@@ -35,9 +39,9 @@ with tempfile.TemporaryDirectory(prefix='karma-compile-') as temp:
             elif candidates:
                 target_refs.append(candidates[0])
         sources = [p for p in (root / 'Assets/K4RMA').rglob('*.cs') if target == 'editor' or 'Editor' not in p.parts]
-        flags = ['-nologo', '-target:library', '-langversion:9', '-warnaserror+', f'-out:{temp}/Karma.{target}.dll']
+        flags = ['-nologo', '-target:library', '-langversion:9', '-warnaserror+', '-define:ENABLE_INPUT_SYSTEM', f'-out:{temp}/Karma.{target}.dll']
         if target == 'editor':
-            flags += ['-define:UNITY_EDITOR']
+            flags += ['-define:UNITY_EDITOR,ENABLE_INPUT_SYSTEM']
         flags += [f'-r:{p}' for p in target_refs] + [str(p) for p in sources]
         response = Path(temp) / f'{target}.rsp'
         response.write_text('\n'.join(f'"{arg}"' for arg in flags))

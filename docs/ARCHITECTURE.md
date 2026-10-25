@@ -8,7 +8,7 @@
 - Runtime: Unity 입력·씬·물리·시간·효과. Core의 결과를 사용해 전투 실행.
 - Editor: 씬과 설정 생성, 생산 코드 검사.
 
-Core에는 `K4RMA.Core.asmdef`를 두고 `noEngineReferences: true` 적용. Runtime과 Editor는 기존 Unity 기본 어셈블리를 사용한다. 현재 코드의 선택적 Input System 참조와 기존 컴포넌트 어셈블리를 유지하기 위한 결정이다. Core는 Runtime이나 UnityEngine을 참조하지 않는다.
+Core에는 `K4RMA.Core.asmdef`를 두고 `noEngineReferences: true` 적용. Runtime과 Editor는 기존 Unity 기본 어셈블리를 사용한다. Input System 패키지와 기존 컴포넌트 어셈블리 참조를 유지한다. Core는 Runtime이나 UnityEngine을 참조하지 않는다.
 
 ## 컴포넌트 구성
 
@@ -61,3 +61,11 @@ Core에는 `K4RMA.Core.asmdef`를 두고 `noEngineReferences: true` 적용. Runt
 
 - Unity 어셈블리 정의: https://docs.unity.com/en-us/engine/6000.6/manual/scripting/compilation-and-code-reload/script-compilation/assembly-definition-files/file-format
 - Unity Auto Referenced: https://docs.unity.com/en-us/engine/6000.6/manual/scripting/compilation-and-code-reload/script-compilation/assembly-definition-files/assembly-definitions-referencing
+
+## URP / Input System
+
+`feat/2d-prototype`의 전투·고유화·진행 규칙과 키 배치를 유지한다. `KarmaInput`은 코드로 생성하는 `InputActionMap`과 `KarmaAction`을 공유하며 구 Input Manager에 의존하지 않는다. 이동의 양쪽 방향은 상쇄하고, WASD/방향키 별칭을 함께 눌러도 방향은 한 번만 처리한다. 한 별칭을 유지한 상태에서 다른 별칭을 새로 누른 경우의 연타 입력도 보존한다. 스토리 방향키 입력은 `KarmaHUD.Update`에서 읽어 IMGUI의 Layout/Repaint 중복 처리를 피한다. 액션은 일시정지 중에도 활성 상태이며 Play 진입 시 이전 맵을 해제·초기화해 도메인 리로드 비활성 설정을 지원한다.
+
+기존 `Generated/KarmaSprite.mat`와 빈 씬용 `Resources/KarmaSpriteUnlit.mat`는 URP 2D Sprite Unlit을 사용한다. 기존 조명 없는 표시를 유지하며 Resources 재질 참조로 빌드에서도 기본 셰이더를 포함한다. `KarmaCombatGlow`는 URP HLSL과 가산 합성을 사용하며 SpriteRenderer와 전조 LineRenderer에서 공유한다. Quality별 파이프라인은 Graphics 설정의 URP 2D Renderer를 상속한다.
+
+`tools/check-unity-compile.py`는 임포트된 `Unity.InputSystem.dll`을 참조한다. `tools/validate-source.py`는 URP 패키지의 GUID를 확인하므로 먼저 프로젝트를 Unity에서 임포트해야 한다. `tools/run-unity-playchecks.py`는 임시 프로젝트에서 `KarmaMigrationChecks`의 키 바인딩·동시 입력·메뉴·일시정지 검사 후 기존 보스 회귀 검사를 실행한다. 입력 검사의 수동 업데이트/포커스 설정은 테스트 중에만 적용하고 복구한다.

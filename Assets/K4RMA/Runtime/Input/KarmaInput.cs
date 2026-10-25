@@ -1,77 +1,101 @@
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
+using UnityEngine.InputSystem.Controls;
 
 namespace KarmaPrototype
 {
-    // Both legacy Input Manager and the new Input System are supported.
+    public enum KarmaAction
+    {
+        Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Ward,
+        Interact, Pause, Confirm, Restart, Title, Story, Controls, ChooseFlame, ChooseDash, ChooseWard,
+        PreviousPage, NextPage
+    }
+
+    // Shared actions stay enabled in menus and while Time.timeScale is zero.
     public static class KarmaInput
     {
-        public static bool Held(KeyCode code) { return Read(code, false); }
-        public static bool Pressed(KeyCode code) { return Read(code, true); }
-        public static float Horizontal
+        static InputActionMap map;
+        static InputAction[] actions;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Reset()
         {
-            get
-            {
-                return (Held(KeyCode.D) || Held(KeyCode.RightArrow) ? 1 : 0)
-                     - (Held(KeyCode.A) || Held(KeyCode.LeftArrow) ? 1 : 0);
-            }
+            // Also runs when entering Play with domain reload disabled.
+            if (map != null) map.Dispose();
+            map = null;
+            actions = null;
+            Application.quitting -= Reset;
         }
-        public static float Vertical
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void Initialize()
         {
-            get { return (Held(KeyCode.W) || Held(KeyCode.UpArrow) ? 1 : 0)
-                       - (Held(KeyCode.S) || Held(KeyCode.DownArrow) ? 1 : 0); }
+            if (map != null) return;
+            map = new InputActionMap("K4RMA");
+            actions = new InputAction[System.Enum.GetValues(typeof(KarmaAction)).Length];
+            Bind(KarmaAction.Left, "a", "leftArrow");
+            Bind(KarmaAction.Right, "d", "rightArrow");
+            Bind(KarmaAction.Up, "w", "upArrow");
+            Bind(KarmaAction.Down, "s", "downArrow");
+            Bind(KarmaAction.Jump, "space");
+            Bind(KarmaAction.Attack, "j");
+            Bind(KarmaAction.Counter, "k");
+            Bind(KarmaAction.SwordWave, "q");
+            Bind(KarmaAction.RisingSlash, "leftShift");
+            Bind(KarmaAction.Ward, "e");
+            Bind(KarmaAction.Interact, "f");
+            Bind(KarmaAction.Pause, "escape");
+            Bind(KarmaAction.Confirm, "enter");
+            Bind(KarmaAction.Restart, "r");
+            Bind(KarmaAction.Title, "t");
+            Bind(KarmaAction.Story, "s");
+            Bind(KarmaAction.Controls, "h");
+            Bind(KarmaAction.ChooseFlame, "1");
+            Bind(KarmaAction.ChooseDash, "2");
+            Bind(KarmaAction.ChooseWard, "3");
+            Bind(KarmaAction.PreviousPage, "leftArrow", "upArrow");
+            Bind(KarmaAction.NextPage, "rightArrow", "downArrow");
+            map.Enable();
+            Application.quitting += Reset;
         }
-        // Treat keyboard aliases as a single direction, even if pressed together.
+
+        static void Bind(KarmaAction id, params string[] keys)
+        {
+            var action = map.AddAction(id.ToString(), InputActionType.Button);
+            foreach (var key in keys) action.AddBinding("<Keyboard>/" + key);
+            actions[(int)id] = action;
+        }
+
+        public static bool Held(KarmaAction id)
+        {
+            Initialize();
+            return actions[(int)id].IsPressed();
+        }
+
+        public static bool Pressed(KarmaAction id)
+        {
+            Initialize();
+            // Preserve alias edges: pressing an arrow while its WASD alias is held
+            // still counts, but simultaneous aliases count as one direction.
+            foreach (var control in actions[(int)id].controls)
+                if (control is ButtonControl button && button.wasPressedThisFrame) return true;
+            return false;
+        }
+
+        // Opposing directions cancel; diagonal inputs retain both cardinal axes.
+        public static float Horizontal => (Held(KarmaAction.Right) ? 1 : 0) - (Held(KarmaAction.Left) ? 1 : 0);
+        public static float Vertical => (Held(KarmaAction.Up) ? 1 : 0) - (Held(KarmaAction.Down) ? 1 : 0);
+
         public static bool DirectionPressed(int direction)
         {
             switch (direction)
             {
-                case 1: return Pressed(KeyCode.A) || Pressed(KeyCode.LeftArrow);
-                case 2: return Pressed(KeyCode.D) || Pressed(KeyCode.RightArrow);
-                case 3: return Pressed(KeyCode.W) || Pressed(KeyCode.UpArrow);
-                case 4: return Pressed(KeyCode.S) || Pressed(KeyCode.DownArrow);
+                case 1: return Pressed(KarmaAction.Left);
+                case 2: return Pressed(KarmaAction.Right);
+                case 3: return Pressed(KarmaAction.Up);
+                case 4: return Pressed(KarmaAction.Down);
                 default: return false;
             }
-        }
-        static bool Read(KeyCode code, bool down)
-        {
-#if ENABLE_INPUT_SYSTEM
-            var keyboard = Keyboard.current;
-            if (keyboard == null) return false;
-            Key key;
-            switch (code)
-            {
-                case KeyCode.A: key = Key.A; break;
-                case KeyCode.W: key = Key.W; break;
-                case KeyCode.D: key = Key.D; break;
-                case KeyCode.LeftArrow: key = Key.LeftArrow; break;
-                case KeyCode.RightArrow: key = Key.RightArrow; break;
-                case KeyCode.Space: key = Key.Space; break;
-                case KeyCode.J: key = Key.J; break;
-                case KeyCode.K: key = Key.K; break;
-                case KeyCode.S: key = Key.S; break;
-                case KeyCode.H: key = Key.H; break;
-                case KeyCode.T: key = Key.T; break;
-                case KeyCode.UpArrow: key = Key.UpArrow; break;
-                case KeyCode.DownArrow: key = Key.DownArrow; break;
-                case KeyCode.Q: key = Key.Q; break;
-                case KeyCode.E: key = Key.E; break;
-                case KeyCode.F: key = Key.F; break;
-                case KeyCode.R: key = Key.R; break;
-                case KeyCode.LeftShift: key = Key.LeftShift; break;
-                case KeyCode.Escape: key = Key.Escape; break;
-                case KeyCode.Return: key = Key.Enter; break;
-                case KeyCode.Alpha1: key = Key.Digit1; break;
-                case KeyCode.Alpha2: key = Key.Digit2; break;
-                case KeyCode.Alpha3: key = Key.Digit3; break;
-                default: return false;
-            }
-            return down ? keyboard[key].wasPressedThisFrame : keyboard[key].isPressed;
-#else
-            return down ? Input.GetKeyDown(code) : Input.GetKey(code);
-#endif
         }
     }
 }

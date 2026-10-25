@@ -72,6 +72,7 @@ public static class KarmaBossPlayChecks
             Application.runInBackground = true;
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             if (game == null) game = new GameObject("Play check game").AddComponent<KarmaGame>();
+            KarmaMigrationChecks.Run(game);
             game.Config.playerHealth = 1000000;
             game.StartRun();
             game.Player.Essences.Sacrifice(Essence.Flame);

@@ -27,14 +27,7 @@ namespace KarmaPrototype.Editor
             }
             if (config.spriteMaterial == null)
             {
-                const string materialPath = "Assets/K4RMA/Generated/KarmaSprite.mat";
-                var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
-                if (material == null)
-                {
-                    material = new Material(Shader.Find("Sprites/Default"));
-                    AssetDatabase.CreateAsset(material, materialPath);
-                }
-                config.spriteMaterial = material; EditorUtility.SetDirty(config); AssetDatabase.SaveAssets();
+                config.spriteMaterial = KarmaVisuals.DefaultMaterial; EditorUtility.SetDirty(config); AssetDatabase.SaveAssets();
             }
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject("K4RMA Game");

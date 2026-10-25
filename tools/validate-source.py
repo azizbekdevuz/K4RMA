@@ -26,10 +26,18 @@ for meta in assets.rglob('*.meta'):
 for script in assets.rglob('*.cs'):
     if not Path(str(script) + '.meta').exists():
         raise SystemExit(f'Missing script metadata: {script}')
+# URP materials, renderer data and Volume profiles reference package assets.
+# Validate against imported package metadata as well as project-owned assets.
+package_guids = set()
+for folder in (root / 'Packages', root / 'Library/PackageCache'):
+    for meta in folder.rglob('*.meta'):
+        match = re.search(r'^guid: ([a-f0-9]{32})$', meta.read_text(encoding='utf-8-sig'), re.M)
+        if match:
+            package_guids.add(match.group(1))
 for asset in assets.rglob('*'):
     if asset.suffix not in ('.unity', '.prefab', '.asset', '.mat'):
         continue
     for guid in re.findall(r'guid: ([a-f0-9]{32})', asset.read_text()):
-        if guid not in guids and not guid.startswith('0000000000000000'):
+        if guid not in guids and guid not in package_guids and not guid.startswith('0000000000000000'):
             raise SystemExit(f'Unknown serialized asset reference {guid}: {asset}')
 print(f'PASS: {len(list(assets.rglob("*.cs")))} scripts, {len(guids)} unique asset GUIDs')

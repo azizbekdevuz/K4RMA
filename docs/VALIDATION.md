@@ -1,5 +1,19 @@
 # 검증 기록
 
+## 2026-10-25 · 달리기 프레임 덮어쓰기 수정
+
+- 플레이어 이동 프레임을 선택한 뒤 `ShowPose("Run")`이 단일 Sprite로 다시 덮어쓰던 경로를 수정했다. 기존 두 이동 포즈를 9fps로 반복하고, 정지 후 재출발하면 첫 프레임부터 시작한다. 별도 `Run2` 포즈가 있으면 우선 사용한다.
+- `tools/CheckPlayerRun.cs`의 `Main` 검사 9개 통과: 두 프레임 전환/반복, 발 기준점, 좌우 이동, 정지/재출발, 점프·공격 우선순위. `Play` 검사는 실제 Input System 입력으로 플레이어가 7.85 유닛 이동하며 두 Sprite를 표시하는 것을 확인했다. 임시 키보드와 포커스 설정은 검사 종료 시 복구한다.
+- 플레이어/에디터 컴파일 및 소스·GUID 검사 통과.
+
+## 2026-10-25 · URP 2D / 새 Input System 호환
+
+- GitHub `origin/feat/2d-prototype`를 fetch해 비교했다. 현재 브랜치의 보스 위치·한글 폰트 수정과 기존 전투/진행 로직을 유지했다.
+- 기존/기본 스프라이트 재질을 URP 2D Sprite Unlit으로 연결하고 가산 VFX 셰이더를 URP HLSL로 포팅했다. 열린 에디터에서 `Renderer2DData`, 저장된 재질 참조, 셰이더 오류 없음과 실제 전투 프레임 진행을 확인했다. 플레이어·보스·배경 및 SpriteRenderer/LineRenderer 가산 합성을 화면으로 확인했다. 캡처는 `output/validation/urp-combat.png`, `output/validation/urp-vfx.png`에 있다.
+- `KarmaMigrationChecks` 통과: 전체 키 바인딩, 좌우 상쇄/대각선, WASD와 방향키 동시/교대 입력, J 유지/재입력, 스토리 페이지, Enter 시작, Esc 일시정지, 정지 중 T 복귀. 헤드리스 검사는 입력을 수동 갱신하고 포커스를 무시하며 종료 시 설정을 복구한다.
+- 플레이어/에디터 C# 컴파일(경고를 오류로 처리), 63개 스크립트·245개 프로젝트 GUID 및 패키지 참조 검사 통과. Core **394개 assertion**, 기존 보스 Play Mode **21개 패턴·599개 assertion** 통과.
+- Core 검사는 설치된 기본 .NET 7 대신 Unity 번들 .NET 8 SDK로 실행했다. Windows 실행 파일 빌드 및 전체 플레이 시간/난도 검증은 이번 범위에 포함하지 않았다.
+
 ## 2026-10-23 · 병합 충돌로 인한 컴파일 오류 복구
 
 - 병합 커밋에 남은 충돌 표시를 C# 12개·이미지 설정 에셋·문서에서 정리했다. 최신 Sprite Library 연결, 보스 전체 피격 범위, 방향별 VFX를 유지하며 이전 원본 카탈로그 렌더 경로는 기본 비활성화했다.

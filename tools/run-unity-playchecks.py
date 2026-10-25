@@ -24,7 +24,8 @@ with tempfile.TemporaryDirectory(prefix='karma-playchecks-') as folder:
     for name in ('Assets', 'Packages', 'ProjectSettings', 'image'):
         shutil.copytree(root / name, project / name)
     (project / 'Assets/Editor').mkdir(exist_ok=True)
-    shutil.copy2(root / 'tests/Unity/KarmaBossPlayChecks.cs', project / 'Assets/Editor/KarmaBossPlayChecks.cs')
+    for name in ('KarmaBossPlayChecks.cs', 'KarmaMigrationChecks.cs'):
+        shutil.copy2(root / 'tests/Unity' / name, project / 'Assets/Editor' / name)
     result = subprocess.run([str(editor), '-batchmode', '-nographics', '-projectPath', str(project),
         '-executeMethod', 'KarmaBossPlayChecks.Run', '-logFile', str(log)]
         + (['-licensingIpc', args.licensing_ipc] if args.licensing_ipc else []), timeout=300)

@@ -7,14 +7,11 @@ namespace KarmaPrototype
     {
         static Sprite square;
         static Material material;
-        public static void UseMaterial(Material value) { material = value; }
+        public static Material DefaultMaterial => Resources.Load<Material>("KarmaSpriteUnlit");
+        public static void UseMaterial(Material value) { material = value != null ? value : DefaultMaterial; }
         public static void ApplyMaterial(SpriteRenderer renderer)
         {
-            if (material == null)
-            {
-                var shader = Shader.Find("Sprites/Default");
-                if (shader != null) material = new Material(shader);
-            }
+            if (material == null) material = DefaultMaterial;
             if (material != null) renderer.sharedMaterial = material;
         }
         public static SpriteRenderer Box(Transform parent, string name, Vector2 position,
@@ -27,9 +24,6 @@ namespace KarmaPrototype
                 texture.SetPixel(0, 0, Color.white);
                 texture.Apply();
                 square = Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1);
-                // Unlit in both Built-in and Universal pipelines.
-                var shader = Shader.Find("Sprites/Default");
-                if (material == null && shader != null) material = new Material(shader);
             }
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -39,7 +33,7 @@ namespace KarmaPrototype
             renderer.sprite = square;
             renderer.color = color;
             renderer.sortingOrder = order;
-            if (material != null) renderer.sharedMaterial = material;
+            ApplyMaterial(renderer);
             return renderer;
         }
         public static void Flash(Transform parent, Vector2 position, Vector2 size, Color color, float life = 0.18f)

@@ -1,6 +1,6 @@
 # K4RMA
 
-Unity 6000.6.2f1 / C# 기반 2D 횡스크롤 싱글플레이 보스러시. 이 저장소 루트를 Unity Hub에서 연다. 빈 씬에서 Play를 누르면 타이틀이 생성되며 Enter로 시작한다.
+Unity 6000.6.2f1 / URP 17.6 / Input System 1.20 / C# 기반 2D 횡스크롤 싱글플레이 보스러시. 이 저장소 루트를 Unity Hub에서 연다. 빈 씬에서 Play를 누르면 타이틀이 생성되며 Enter로 시작한다.
 
 2026-10-22: 저장소의 요구사항 명세서(2026-10-10)와 Notion SW설계기초의 보스 패턴 v0.2에 맞춰 타입별 보스 패턴을 구현했다. Stage 1은 기본 검술, Stage 2부터 첫 고유화 기술이 타입을 고정하며 후속 원형이 해당 타입의 계승 패턴을 해금한다.
 
@@ -50,7 +50,7 @@ dotnet run --project tests/CoreChecks --configuration Release
 python3 tools/run-unity-playchecks.py
 ```
 
-Core 검사는 .NET 8을 사용한다. Unity 검사 도구는 macOS 설치 경로를 자동 선택하며, 다른 경로는 각각 `--unity-contents` 또는 `--unity`로 지정한다. Play Mode 검사는 임시 프로젝트 복사본에서 실행하므로 작업 중인 씬을 바꾸지 않는다.
+Core 검사는 .NET 8을 사용한다. 기본 `dotnet`이 구버전이면 Unity 설치 폴더의 `Contents/Resources/Scripting/DotNetSdk/dotnet`을 사용할 수 있다. Unity 검사 도구는 macOS 설치 경로를 자동 선택하며, 다른 경로는 각각 `--unity-contents` 또는 `--unity`로 지정한다. Play Mode 검사는 임시 프로젝트 복사본에서 실행하므로 작업 중인 씬을 바꾸지 않는다.
 
 검증 결과와 범위는 [검증 기록](docs/VALIDATION.md), 수동 확인은 [플레이테스트](docs/PLAYTEST.md)를 참조한다. 자동 검사 통과는 실제 화면 가독성·회피 난도·15~20분 플레이 시간·Windows 빌드 성능 검증을 대신하지 않는다.
 

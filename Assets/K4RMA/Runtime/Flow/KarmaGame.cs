@@ -60,40 +60,40 @@ namespace KarmaPrototype
             UpdateHitFeedback();
             if (Phase == RunPhase.Title)
             {
-                if (KarmaInput.Pressed(KeyCode.Return)) StartRun();
-                else if (KarmaInput.Pressed(KeyCode.S)) ShowPage(RunPhase.Story);
-                else if (KarmaInput.Pressed(KeyCode.H)) ShowPage(RunPhase.Controls);
+                if (KarmaInput.Pressed(KarmaAction.Confirm)) StartRun();
+                else if (KarmaInput.Pressed(KarmaAction.Story)) ShowPage(RunPhase.Story);
+                else if (KarmaInput.Pressed(KarmaAction.Controls)) ShowPage(RunPhase.Controls);
                 return;
             }
             if (Phase == RunPhase.Story || Phase == RunPhase.Controls)
             {
-                if (KarmaInput.Pressed(KeyCode.Escape)) ReturnToTitle();
+                if (KarmaInput.Pressed(KarmaAction.Pause)) ReturnToTitle();
                 return;
             }
-            if (KarmaInput.Pressed(KeyCode.Escape))
+            if (KarmaInput.Pressed(KarmaAction.Pause))
             {
                 if (Phase == RunPhase.Choosing && !Paused) CancelChoice(); else TogglePause();
             }
-            if (KarmaInput.Pressed(KeyCode.T) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { ReturnToTitle(); return; }
-            if (KarmaInput.Pressed(KeyCode.R) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { StartRun(); return; }
+            if (KarmaInput.Pressed(KarmaAction.Title) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { ReturnToTitle(); return; }
+            if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { StartRun(); return; }
             if (Paused) return;
             if (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Phase == RunPhase.Choosing || Phase == RunPhase.Transition)
                 Elapsed += Time.deltaTime;
-            if (Phase == RunPhase.Gate && Player.Position.x > 35.5f && KarmaInput.Pressed(KeyCode.F))
+            if (Phase == RunPhase.Gate && Player.Position.x > 35.5f && KarmaInput.Pressed(KarmaAction.Interact))
                 Phase = RunPhase.Choosing;
             if (Phase == RunPhase.Choosing)
             {
-                if (KarmaInput.Pressed(KeyCode.Alpha1)) Choose(Essence.Flame);
-                else if (KarmaInput.Pressed(KeyCode.Alpha2)) Choose(Essence.Dash);
-                else if (KarmaInput.Pressed(KeyCode.Alpha3)) Choose(Essence.Ward);
-                else if (KarmaInput.Pressed(KeyCode.Return)) ConfirmChoice();
+                if (KarmaInput.Pressed(KarmaAction.ChooseFlame)) Choose(Essence.Flame);
+                else if (KarmaInput.Pressed(KarmaAction.ChooseDash)) Choose(Essence.Dash);
+                else if (KarmaInput.Pressed(KarmaAction.ChooseWard)) Choose(Essence.Ward);
+                else if (KarmaInput.Pressed(KarmaAction.Confirm)) ConfirmChoice();
             }
             if (Phase == RunPhase.Transition)
             {
                 transitionLeft -= Time.deltaTime;
                 if (transitionLeft <= 0) { StageIndex++; LoadRoom(false); }
             }
-            if (Phase == RunPhase.Defeat && KarmaInput.Pressed(KeyCode.R)) RetryRoom();
+            if (Phase == RunPhase.Defeat && KarmaInput.Pressed(KarmaAction.Restart)) RetryRoom();
         }
 
         void OnDisable() { Time.timeScale = 1; }

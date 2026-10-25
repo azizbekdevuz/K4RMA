@@ -1,0 +1,65 @@
+---
+description: K4RMA permanent project identity, development constraints, and source authority
+alwaysApply: true
+---
+
+# K4RMA Core Engineering Rules
+
+You are developing an existing Unity 2D side-scrolling boss-rush game called K4RMA.
+
+## Source authority
+
+- Follow the latest explicitly approved and locked team decisions.
+- Preserve official requirements unless a verified later team decision changes them.
+- Inspect the actual source before assuming architecture, behavior, asset identity, or implementation status.
+- Treat older presentations, chats, and prototypes as historical evidence, not automatically current authority.
+- Cross-reference related documents, transcripts, Notion exports, artwork, and code when necessary.
+- Never fabricate agreements, gameplay rules, completed tests, or source content.
+- Record material conflicts with exact source paths; preserve approved behavior when unresolved.
+- Never edit official requirements or locked game-design documents.
+
+## Game identity
+
+- Preserve K4RMA's established story, Japanese-fantasy training-ground aesthetic, characters, original visual palette, and sword-combat identity.
+- Preserve the four-stage boss-rush progression and three-technique personalization/inheritance concept.
+- Do not invent unrelated gameplay systems, mechanics, characters, story changes, or progression features.
+- The actual canonical artwork is authoritative, not AI-generated interpretations.
+
+## Unity engineering
+
+- Prefer existing architecture and conventions.
+- Build modular, readable, maintainable C# appropriate to the project's actual complexity.
+- Separate combat mechanics, state, data, effects, and UI presentation where justified.
+- Preserve Unity `.meta` files, GUIDs, prefabs, scenes, and serialized references.
+- Avoid unnecessary singleton frameworks, duplicate systems, broad rewrites, and overengineering.
+- Maintain keyboard controls, game progression, performance, and existing functioning behavior.
+- Validate code and Unity asset references using accessible tools.
+- Never claim play-mode, visual, or human playtesting that was not actually performed.
+
+## Canonical visual assets
+
+- Character and Guardian identity is immutable: original hair, face, eyes, colors, outfit, silhouette, and proportions must remain faithful to approved source assets.
+- Search all original sheets, source archives, and branch snapshots before declaring a canonical frame missing.
+- Prefer exact frame reuse, source-derived sprite slicing, and compatible Unity animation.
+- Never call generative approximations pixel-identical.
+- New UI assets and non-character VFX are allowed when stylistically consistent and verifiable.
+- Never silently replace original art.
+
+## Scope and collaboration
+
+- Work on `feat/real-asset-integration`; inspect `feat/boss-sword` as the expected reference baseline.
+- Verify branch and working tree state before editing.
+- Task 1 owns boss 상승베기 behavior and essential dependencies.
+- Task 2 owns approved UI/UX and presentation changes, subject to teammate ownership and integration safety.
+- Change shared or unrelated files only when technically necessary and justified.
+- Preserve teammate work and minimize merge conflicts.
+
+## Execution behavior
+
+- Deliver working game improvements, not just plans or documentation.
+- Use focused cycles: inspect, implement, validate, fix, polish, continue.
+- Perform necessary investigation without allowing documentation to consume the development session.
+- Continue safe independent work when another component is blocked.
+- Follow `.cursor/rules/k4rma-git.mdc` for all changes.
+- Keep progress in `docs/agent-k4rma/PROGRESS.md`.
+- Finish with exact completed work, validation evidence, remaining blockers, and honest readiness status.

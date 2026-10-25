@@ -1,0 +1,98 @@
+---
+description: K4RMA safe Git workflow and professional atomic Conventional Commits
+alwaysApply: true
+---
+
+# K4RMA Git Workflow
+
+## Branch safety
+
+- Work exclusively on the current `feat/real-asset-integration` branch.
+- Before edits, inspect `git status`, current branch, and relevant diffs.
+- Preserve all pre-existing uncommitted and staged changes.
+- Never automatically checkout/switch branches, reset, stash, discard, rebase, merge, push, force-push, or rewrite history.
+- Never commit unrelated teammate files, temporary caches, generated builds, secrets, or local-only editor settings.
+
+## Required commit behavior
+
+After completing and validating each meaningful, logically coherent feature or bug fix:
+
+1. Inspect the working tree and exact diff.
+2. Group all necessary implementation, prefab, scene, asset, metadata, and relevant documentation changes belonging to that single unit of work.
+3. Stage ONLY those intended paths or hunks using explicit `git add -- <paths>` or selective staging.
+4. Inspect `git diff --cached`.
+5. Confirm no unrelated or pre-existing modifications are included.
+6. Run the available relevant validation.
+7. Create one local commit for the completed logical change.
+8. Verify the commit exists and the remaining working tree changes are understood.
+9. Continue to the next feature or fix.
+
+Do not commit each file separately. Do not mix unrelated fixes in one commit. Do not defer all completed features into one giant final commit.
+
+If existing user changes overlap the same files, isolate only agent-owned hunks safely. If isolation cannot be guaranteed, do not commit that mixed change; record why and continue safe work.
+
+Do not commit broken, unfinished, or known-failing implementation solely to create progress. A coherent feature may contain multiple scripts, scenes, assets, and `.meta` files.
+
+## Commit messages
+
+Use Conventional Commits:
+
+`<type>(<scope>): <imperative summary>`
+
+Valid common types:
+- `feat` — new gameplay or UI functionality
+- `fix` — correction of a defect
+- `refactor` — behavior-preserving code restructuring
+- `perf` — verified performance improvement
+- `test` — automated test changes
+- `docs` — documentation-only change
+- `chore` — maintenance and project configuration
+
+Typical scopes: `boss`, `combat`, `ui`, `hud`, `assets`, `scene`, `build`.
+
+Rules:
+- English only.
+- One concise subject line.
+- Imperative present tense.
+- Lowercase summary.
+- No trailing period.
+- Describe the actual completed result.
+- Prefer a subject under 72 characters.
+- No vague messages such as "update", "changes", "fix stuff", or "final version".
+- No fabricated claims in commit messages.
+- No unnecessary body, footers, or attribution.
+
+Examples:
+
+`feat(boss): implement locked aerial pursuit trajectory`
+
+`fix(boss): clear active hitboxes when attack is interrupted`
+
+`feat(boss): add recoverable exhaustion after final slam`
+
+`feat(ui): redesign Guardian technique selection`
+
+`fix(ui): prevent duplicate confirmation input`
+
+`refactor(combat): separate attack timing from hit detection`
+
+## Prohibited remote actions
+
+NEVER execute:
+- `git push`
+- `git push --force`
+- `git merge`
+- `git rebase`
+- remote branch modifications
+- automated pull request creation
+
+Unless the user explicitly issues a separate authorization, all commits remain local.
+
+## Final reporting
+
+Report:
+- Commit hashes and their one-line messages.
+- Relevant uncommitted changes, if any.
+- Tests and validation completed.
+- Remaining blockers.
+- Confirmation that nothing was pushed.

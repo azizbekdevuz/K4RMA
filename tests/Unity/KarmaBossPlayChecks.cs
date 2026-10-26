@@ -424,7 +424,7 @@ public static class KarmaBossPlayChecks
         {
             Call(enemy,"InterruptPattern");
             typeof(KarmaEnemy).GetProperty("PrimaryType").SetValue(enemy,(Essence?)Essence.Ward);
-            Set(enemy,"engaged",true); Set(enemy,"running",true);
+            Set(enemy,"engaged",true); Set(enemy,"running",false); Set(enemy,"timer",float.MaxValue);
             Set(enemy,"patternStarted",enemy.FightSeconds);
             Set(enemy,"nextShield",enemy.FightSeconds+0.2f);
             lifecycleStage++; return false;

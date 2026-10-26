@@ -65,6 +65,9 @@ static class Program
         Check(KarmaBossGeometry.SweptBox(10,10,0,0,5,5,1,1),"reversed segment hit");
         var contact = new KarmaAttackContact();
         Check(contact.TryConsume(),"first fragment contact");
+        Check(!contact.DealtDamage,"contact consumed by a parry or immunity is not damage");
+        contact.RecordDamage();
+        Check(contact.DealtDamage,"actual damage is remembered independently of later healing");
         for (int i=0;i<100;i++) Check(!contact.TryConsume(),"remaining frames/fragments cannot stun again");
         var trial = new KarmaTrialState();
         trial.Hit(); Check(trial.Hits == 0,"outside trial ignored");

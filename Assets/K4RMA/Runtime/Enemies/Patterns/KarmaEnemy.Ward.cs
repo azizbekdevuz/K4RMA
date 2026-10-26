@@ -12,7 +12,8 @@ namespace KarmaPrototype
                 if (FightSeconds >= shieldWarningUntil) RefreshAutoShield();
                 return;
             }
-            if (FightSeconds >= nextShield && FightSeconds >= shieldUntil)
+            // Begin between attacks so an in-flight recovery cannot erase the new shield.
+            if (!running && FightSeconds >= nextShield && FightSeconds >= shieldUntil)
             { shieldWarningUntil = FightSeconds + Mathf.Max(0.3f, Tuning.autoShieldWarning); }
             if (shieldWarningUntil > 0)
                 KarmaVisuals.Flash(game.World, Position, KarmaSpace.Units(new Vector2(1.8f, 2.6f)), new Color(1, 0.85f, 0.2f, 0.3f), 0.25f);
@@ -31,18 +32,20 @@ namespace KarmaPrototype
             state = ActionState.Telegraph; yield return Wait(Warning(0.9f));
             Destroy(mark.gameObject); animator.Attack(); state = ActionState.Attack;
             if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(effectsRoot,center,KarmaArtAtlas.Effects(1)[5],size,0.2f);
-            int parries = game.Player.ParryCount; float health = game.Player.Health;
+            int parries = game.Player.ParryCount;
             var contact = new KarmaAttackContact();
             Attack(center, Vector2.zero, size, 0.18f, 1.5f, contact);
             TryAttackHit(center, center, size, Damage * 1.5f, contact, 0);
             if (game.Player.ParryCount != parries) yield break;
-            bool refreshed = Tuning.dodgeRefreshesShield || game.Player.Health < health;
+            // Include contacts made after the first frame of the active hit box.
+            yield return Wait(0.2f);
+            if (!Active || pendingParry) yield break;
+            bool refreshed = Tuning.dodgeRefreshesShield || contact.DealtDamage;
             if (refreshed)
             {
                 RefreshAutoShield();
                 Intent = "GD02 강공격 적중 · 자동방어막 갱신";
             }
-            yield return Wait(0.2f);
             if (Enraged)
             {
                 Vector2 waveAt = new Vector2(Position.x, KarmaSpace.Units(0.65f));
@@ -88,7 +91,12 @@ namespace KarmaPrototype
             yield return Wait(0.85f);
             // Return uses separate non-damaging visuals and a fixed deadline.
             var pieces = new SpriteRenderer[count];
-            for (int i = 0; i < count; i++) pieces[i] = Mark("회수 조각 · 피해 없음", starts[i] + aims[i] * 0.8f, KarmaSpace.Units(new Vector2(0.4f, 0.4f)), false);
+            for (int i = 0; i < count; i++)
+            {
+                pieces[i] = KarmaVisuals.Box(effectsRoot, "회수 조각 · 피해 없음", starts[i] + aims[i] * 0.8f,
+                    Vector2.one, new Color(0.3f, 0.85f, 1, 0.65f), 8);
+                KarmaCombatVFX.ApplySprite(pieces[i], "GuardianVFX", "Ward", KarmaSpace.Units(new Vector2(0.4f, 0.4f)), true);
+            }
             Intent = "GD03 방패 회수 · 복귀 판정 없음";
             float elapsed = 0;
             while (elapsed < 0.6f && Active)
@@ -115,7 +123,7 @@ namespace KarmaPrototype
             yield return Wait(0.4f); ClearPatternObjects();
             var wall = Mark("완성 방벽 · 이동 차단/피해 없음", center, size, false);
             game.Player.ResolveBarrier(x, size.x);
-            wall.gameObject.AddComponent<KarmaSurface>(); wall.gameObject.AddComponent<BoxCollider2D>();
+            wall.gameObject.AddComponent<KarmaSurface>(); wall.gameObject.AddComponent<BoxCollider2D>().size = Vector2.one;
             yield return Wait(0.5f);
             yield return Recovery(Mathf.Max(0.3f, Tuning.barrierRecovery));
         }
@@ -162,7 +170,8 @@ namespace KarmaPrototype
             else
             {
                 game.Player.ReleaseArena();
-                yield return Recovery(Mathf.Max(1, Tuning.trialStunSeconds), false, "GD05 시험 성공 · 무력화 / 지금 공격하세요");
+                yield return Recovery(Mathf.Max(1, Tuning.trialStunSeconds), false,
+                    "GD05 시험 성공 · 무력화 / 지금 공격하세요", scaleDuration: false);
             }
         }
     }

@@ -31,7 +31,8 @@ namespace KarmaPrototype
             if (velocity.sqrMagnitude > 0.01f)
             {
                 if (selected == EnemyAttack.SW02) pose = "AimedWave";
-                else if (selected == EnemyAttack.SW05 || selected == EnemyAttack.GD03) pose = "Blade";
+                else if (selected == EnemyAttack.SW05) pose = "Blade";
+                else if (selected == EnemyAttack.GD03) pose = "Ward";
             }
             else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
@@ -87,7 +88,7 @@ namespace KarmaPrototype
                 return;
             }
             if (player.Health < before)
-            { trial.Hit(); if (stun > 0 && Active) player.Stun(stun); }
+            { contact.RecordDamage(); trial.Hit(); if (stun > 0 && Active) player.Stun(stun); }
         }
     }
 }

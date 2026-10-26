@@ -5,7 +5,9 @@ namespace KarmaPrototype
     public sealed class KarmaAttackContact
     {
         public bool Consumed { get; private set; }
+        public bool DealtDamage { get; private set; }
         public bool TryConsume() { if (Consumed) return false; Consumed = true; return true; }
+        public void RecordDamage() { DealtDamage = true; }
     }
     public sealed class KarmaTrialState
     {

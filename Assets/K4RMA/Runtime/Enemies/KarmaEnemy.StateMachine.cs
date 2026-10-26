@@ -50,7 +50,7 @@ namespace KarmaPrototype
             if (Mathf.Abs(dx) > preferred) Move(Mathf.Sign(dx) * game.Config.enemyMoveSpeed * Tuning.moveMultiplier * dt);
             else if (PrimaryType == Essence.Flame && Mathf.Abs(dx) < KarmaSpace.Units(4.2f)) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
             timer -= dt;
-            if (timer <= 0) BeginAttack();
+            if (timer <= 0 && shieldWarningUntil <= 0) BeginAttack();
         }
         void BeginAttack()
         {
@@ -58,7 +58,10 @@ namespace KarmaPrototype
             bool escape = Position.x > KarmaStage.ArenaLeft + 5 && Position.x < KarmaStage.ArenaRight - 5;
             bool sight = ClearShot(Position, game.Player.Position);
             selected = EnemyAttack.GroundStrike;
-            for (int i = 0; i < attacks.Count; i++)
+            // Spend a newly formed guard on its signature attack before another recovery clears it.
+            if (PrimaryType == Essence.Ward && FightSeconds < shieldUntil && distance <= KarmaSpace.Units(5))
+                selected = EnemyAttack.GD02;
+            else for (int i = 0; i < attacks.Count; i++)
             {
                 var candidate = attacks[cycleIndex++ % attacks.Count];
                 if (!KarmaPatternCatalog.CanSelect(candidate, previous, distance / KarmaSpace.Scale, game.Player.Airborne,
@@ -88,13 +91,15 @@ namespace KarmaPrototype
             while (elapsed < seconds && Active)
             { yield return null; if (!game.Paused) elapsed += Time.deltaTime; }
         }
-        IEnumerator Recovery(float seconds, bool keepAutoShield = false, string message = null)
+        IEnumerator Recovery(float seconds, bool keepAutoShield = false, string message = null, bool scaleDuration = true)
         {
             ClearPatternObjects(); fullShield = frontalGuard = swordWard = false;
             // A real, stationary attack opportunity: auto-shield cannot conceal it.
             if (!keepAutoShield) shieldUntil = shieldWarningUntil = 0;
             state = ActionState.Recover; Intent = message ?? "빈틈 발생 · 지금 공격하세요";
-            yield return Wait(Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo));
+            yield return Wait(scaleDuration
+                ? Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo)
+                : seconds);
         }
         void Move(float distance)
         { transform.position = new Vector3(Mathf.Clamp(Position.x + distance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Position.y, 0); }

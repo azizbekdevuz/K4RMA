@@ -53,6 +53,12 @@ namespace KarmaPrototype
             Fill(new Rect(left, y, width * ratio, 8), HudIvory);
             Fill(new Rect(left - 3, y - 5, 1.2f, 20), HudIvory);
             Fill(new Rect(left + width + 2, y - 5, 1.2f, 20), HudIvory);
+            if (enemy.PrimaryType == Essence.Ward)
+            {
+                Fill(new Rect(left - 16, 80, width + 32, 66), new Color(0.015f, 0.025f, 0.045f, 0.78f));
+                Label(left, 82, width, 23, enemy.TrialActive ? "결계 진행 · 이동/점프/K 반격으로 생존" : enemy.DefenseStatus, small);
+                Label(left, 106, width, 38, enemy.TrialActive ? enemy.TrialStatus : enemy.Intent, small);
+            }
         }
 
     }

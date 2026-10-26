@@ -5,6 +5,8 @@
 
 ## 실행
 
+방어형 GD01~GD05 개인 작업과 반복 연습 메뉴: [방어형 작업 안내](docs/GUARD_BOSS_WORK.md).
+
 Unity Hub에서 저장소 루트를 **Unity 6000.6.2f1**로 연다. URP와 Input System은 `Packages`에 고정되어 있다.
 `Assets/K4RMA/Scenes/KarmaPrototype.unity`를 열고 Play → Enter로 시작한다. 빈 씬에서도 자동으로 시작한다.
 `K4RMA → 플레이 씬 생성`은 기존 플레이 씬을 열고, 없을 때만 생성한다.

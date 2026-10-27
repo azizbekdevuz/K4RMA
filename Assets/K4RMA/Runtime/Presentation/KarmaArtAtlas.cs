@@ -68,7 +68,7 @@ namespace KarmaPrototype
             new Rect(900,700,245,290),
             new Rect(1150,825,380,160),
         };
-        static readonly Rect[] WardRects={
+        static readonly Rect[] GuardRects={
             new Rect(10,45,395,305),
             new Rect(470,40,250,310),
             new Rect(785,30,340,320),
@@ -196,9 +196,9 @@ namespace KarmaPrototype
         public static Sprite[] Guardian(Essence? type)
         {
             return !type.HasValue?Cut("02_Guardians/guardian-neutral-keyposes.png",NeutralRects,145,true)
-                :type==Essence.Flame?Cut("02_Guardians/guardian-wave-keyposes.png",WaveRects,125,true)
-                :type==Essence.Dash?Cut("02_Guardians/guardian-rise-keyposes.png",RiseRects,125,true)
-                :Cut("02_Guardians/guardian-ward-keyposes.png",WardRects,125,true);
+                :type==Essence.SwordWave?Cut("02_Guardians/guardian-wave-keyposes.png",WaveRects,125,true)
+                :type==Essence.RisingSlash?Cut("02_Guardians/guardian-rise-keyposes.png",RiseRects,125,true)
+                :Cut("02_Guardians/guardian-ward-keyposes.png",GuardRects,125,true);
         }
         public static Sprite[] Effects(int kind)
         {

@@ -51,9 +51,9 @@ public static class KarmaMigrationChecks
             var keys = new[] { Key.Space, Key.J, Key.K, Key.Q, Key.LeftShift, Key.E, Key.F, Key.Escape,
                 Key.Enter, Key.R, Key.T, Key.S, Key.H, Key.Digit1, Key.Digit2, Key.Digit3 };
             var actions = new[] { KarmaAction.Jump, KarmaAction.Attack, KarmaAction.Counter, KarmaAction.SwordWave,
-                KarmaAction.RisingSlash, KarmaAction.Ward, KarmaAction.Interact, KarmaAction.Pause, KarmaAction.Confirm,
+                KarmaAction.RisingSlash, KarmaAction.Guard, KarmaAction.Interact, KarmaAction.Pause, KarmaAction.Confirm,
                 KarmaAction.Restart, KarmaAction.Title, KarmaAction.Story, KarmaAction.Controls,
-                KarmaAction.ChooseFlame, KarmaAction.ChooseDash, KarmaAction.ChooseWard };
+                KarmaAction.ChooseSwordWave, KarmaAction.ChooseRisingSlash, KarmaAction.ChooseGuard };
             for (int i = 0; i < keys.Length; i++)
             {
                 Send(keyboard);

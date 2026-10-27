@@ -35,7 +35,7 @@ namespace KarmaPrototype
             }
             else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
-                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose);
+                Damage * multiplier, PrimaryType == Essence.Guard ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose);
         }
         IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null)
         {

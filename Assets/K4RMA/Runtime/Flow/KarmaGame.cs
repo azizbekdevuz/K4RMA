@@ -83,9 +83,9 @@ namespace KarmaPrototype
                 Phase = RunPhase.Choosing;
             if (Phase == RunPhase.Choosing)
             {
-                if (KarmaInput.Pressed(KarmaAction.ChooseFlame)) Choose(Essence.Flame);
-                else if (KarmaInput.Pressed(KarmaAction.ChooseDash)) Choose(Essence.Dash);
-                else if (KarmaInput.Pressed(KarmaAction.ChooseWard)) Choose(Essence.Ward);
+                if (KarmaInput.Pressed(KarmaAction.ChooseSwordWave)) Choose(Essence.SwordWave);
+                else if (KarmaInput.Pressed(KarmaAction.ChooseRisingSlash)) Choose(Essence.RisingSlash);
+                else if (KarmaInput.Pressed(KarmaAction.ChooseGuard)) Choose(Essence.Guard);
                 else if (KarmaInput.Pressed(KarmaAction.Confirm)) ConfirmChoice();
             }
             if (Phase == RunPhase.Transition)

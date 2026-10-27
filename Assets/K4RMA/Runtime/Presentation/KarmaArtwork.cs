@@ -78,7 +78,7 @@ namespace KarmaPrototype
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
             var primary = KarmaPatternCatalog.Primary(order);
-            animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward");
+            animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward");
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
             if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order));
             return root;
@@ -89,10 +89,10 @@ namespace KarmaPrototype
         {
             var primary = KarmaPatternCatalog.Primary(order);
             if (!primary.HasValue) return Sprite("Inheritance", "Neutral") ?? Settings.Guardian(null);
-            string name = primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward";
+            string name = primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward";
             if (order.Count == 3) name += "Final";
             else if (order.Count == 2)
-                name += order[1] == Essence.Flame ? "Wave" : order[1] == Essence.Dash ? "Rise" : "Ward";
+                name += order[1] == Essence.SwordWave ? "Wave" : order[1] == Essence.RisingSlash ? "Rise" : "Ward";
             return Sprite("Inheritance", name) ?? Settings.Guardian(primary);
         }
         public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)

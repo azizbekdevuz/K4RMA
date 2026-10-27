@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace KarmaPrototype
 {
@@ -24,7 +25,8 @@ namespace KarmaPrototype
         [InspectorName("기본 수호자")] public Sprite neutralGuardian;
         [InspectorName("검 수호자")] public Sprite swordGuardian;
         [InspectorName("상승 수호자")] public Sprite risingGuardian;
-        [InspectorName("결계 수호자")] public Sprite wardGuardian;
+        [FormerlySerializedAs("wardGuardian")]
+        [InspectorName("결계 수호자")] public Sprite guardGuardian;
 
         [Header("스테이지 — Sprite를 연결하세요")]
         [InspectorName("도장 배경")] public Sprite dojoBackground;
@@ -49,7 +51,8 @@ namespace KarmaPrototype
         [InspectorName("상승베기 설명")] public Texture2D playerRisingSlash;
         [InspectorName("검 수호자 소개")] public Texture2D swordGuardianIllustration;
         [InspectorName("상승 수호자 소개")] public Texture2D risingGuardianIllustration;
-        [InspectorName("결계 수호자 소개")] public Texture2D wardGuardianIllustration;
+        [FormerlySerializedAs("wardGuardianIllustration")]
+        [InspectorName("결계 수호자 소개")] public Texture2D guardGuardianIllustration;
         [Tooltip("가로 3칸 × 세로 2칸의 계승 일러스트 시트")]
         [InspectorName("수호자 계승 일러스트")] public Texture2D guardianEvolution;
 
@@ -72,7 +75,7 @@ namespace KarmaPrototype
         public Sprite Guardian(Essence? type)
         {
             if (!type.HasValue && neutralGuardian != null) return neutralGuardian;
-            return type == Essence.Flame ? swordGuardian : type == Essence.Dash ? risingGuardian : wardGuardian;
+            return type == Essence.SwordWave ? swordGuardian : type == Essence.RisingSlash ? risingGuardian : guardGuardian;
         }
 
         public Texture2D Texture(string name)
@@ -86,10 +89,10 @@ namespace KarmaPrototype
                 case "PlayerRisingSlash": return playerRisingSlash;
                 case "SwordGuardian": return swordGuardianIllustration;
                 case "RisingGuardian": return risingGuardianIllustration;
-                case "WardGuardian": return wardGuardianIllustration;
+                case "WardGuardian": return guardGuardianIllustration;
                 case "GuardianEvolution": return guardianEvolution;
                 case "PlayerAnimation": return playerIdle != null ? playerIdle.texture : null;
-                case "GuardianSprites": return wardGuardian != null ? wardGuardian.texture : null;
+                case "GuardianSprites": return guardGuardian != null ? guardGuardian.texture : null;
                 case "DojoBackground": return dojoBackground != null ? dojoBackground.texture : null;
                 default: return null;
             }

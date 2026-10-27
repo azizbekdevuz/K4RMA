@@ -18,7 +18,7 @@ namespace KarmaPrototype
         }
         void ReadUniqueDirectionTap()
         {
-            if (!Essences.HasRemnant(Essence.Flame) || !CanSword()) { techniques.ClearDirectionTap(); return; }
+            if (!Essences.HasRemnant(Essence.SwordWave) || !CanSword()) { techniques.ClearDirectionTap(); return; }
             int direction = 0, count = 0;
             if (KarmaInput.DirectionPressed(1)) { direction = 1; count++; }
             if (KarmaInput.DirectionPressed(2)) { direction = 2; count++; }
@@ -27,15 +27,15 @@ namespace KarmaPrototype
             if (count > 1) { techniques.ClearDirectionTap(); return; }
             if (count == 0 || !techniques.DirectionTap(direction, Time.time, game.Config.Techniques.doubleTapWindow)) return;
             Vector2 aim = direction == 1 ? Vector2.left : direction == 2 ? Vector2.right : direction == 3 ? Vector2.up : Vector2.down;
-            BeginDirectionalSlash(aim, game.Config.Techniques.pierceDistance, Essence.Flame);
+            BeginDirectionalSlash(aim, game.Config.Techniques.pierceDistance, Essence.SwordWave);
         }
         void Attack()
         {
             if (!CanSword()) return;
             // Preserve a simultaneous jump + attack press through the takeoff frame.
-            if (Essences.HasRemnant(Essence.Dash) && airSlashBufferedUntil > Time.time &&
+            if (Essences.HasRemnant(Essence.RisingSlash) && airSlashBufferedUntil > Time.time &&
                 jumpBufferedUntil > Time.time && !Airborne) return;
-            if (Essences.HasRemnant(Essence.Dash) && Airborne && airSlashBufferedUntil > Time.time && techniques.TryAirSlash())
+            if (Essences.HasRemnant(Essence.RisingSlash) && Airborne && airSlashBufferedUntil > Time.time && techniques.TryAirSlash())
             {
                 BeginAirSlash(AttackDirection());
                 return;
@@ -92,7 +92,7 @@ namespace KarmaPrototype
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
             animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
-            Essences.NotifyUnique(Essence.Dash);
+            Essences.NotifyUnique(Essence.RisingSlash);
             KarmaArtworkVFX.Player(game,Position,direction.y<0?4:3,direction);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
         }
@@ -161,9 +161,9 @@ namespace KarmaPrototype
             techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow);
             animator.PlayPose("Parry", game.Config.Techniques.counterWindow);
         }
-        public void BeginWard(float seconds)
+        public void BeginGuard(float seconds)
         {
-            wardUntil = Time.time + seconds; animator.PlayPose("Guard", seconds);
+            guardUntil = Time.time + seconds; animator.PlayPose("Guard", seconds);
         }
         public void TakeDamage(float damage)
         {
@@ -174,7 +174,7 @@ namespace KarmaPrototype
                 ParryCount++;
                 animator.PlayPose("Riposte", 0.3f);
                 invulnerableUntil = Time.time + 0.12f;
-                Essences.NotifyUnique(Essence.Ward);
+                Essences.NotifyUnique(Essence.Guard);
                 foreach (var enemy in game.Enemies.ToArray())
                 {
                     if (enemy == null || !enemy.Alive) continue;
@@ -183,7 +183,7 @@ namespace KarmaPrototype
                     {
                         Vector2 aim = ((Vector2)enemy.DamageBounds.center - Position).normalized;
                         KarmaProjectile.Spawn(game, Position + aim * KarmaSpace.Units(0.7f), aim * KarmaSpace.Units(14),
-                            game.Config.Techniques.counterDamage, game.Config.wardColor, KarmaSpace.Units(0.25f));
+                            game.Config.Techniques.counterDamage, game.Config.guardColor, KarmaSpace.Units(0.25f));
                     }
                 }
                 return;

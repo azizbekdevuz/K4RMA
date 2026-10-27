@@ -42,16 +42,16 @@ namespace KarmaPrototype
             engaged = true;
             if (fullShield) return;
             bool front = frontalGuard && (source.x - Position.x) * direction >= 0;
-            bool reduced = front || swordWard || FightSeconds < shieldUntil;
-            if (swordWard && FightSeconds < swordWardUntil && FightSeconds >= nextWardResponse && !wardResponsePending)
+            bool reduced = front || swordGuard || FightSeconds < shieldUntil;
+            if (swordGuard && FightSeconds < swordGuardUntil && FightSeconds >= nextGuardResponse && !guardResponsePending)
             {
-                wardResponsePending = true;
-                nextWardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordWardResponseCooldown);
+                guardResponsePending = true;
+                nextGuardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordGuardResponseCooldown);
             }
             if (reduced)
             {
                 amount *= Mathf.Clamp01(Tuning.shieldDamageMultiplier);
-                KarmaRemnantVFX.Impact(game, Position, Essence.Ward);
+                KarmaRemnantVFX.Impact(game, Position, Essence.Guard);
             }
             ReceiveDamage(amount);
         }

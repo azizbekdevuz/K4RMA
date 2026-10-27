@@ -55,7 +55,7 @@ namespace KarmaPrototype.Editor
             ImportSprite("GuardianSprites", 724 / 2.05f, guardians);
             settings.swordGuardian = Sprite("GuardianSprites", "Guardian0");
             settings.risingGuardian = Sprite("GuardianSprites", "Guardian1");
-            settings.wardGuardian = Sprite("GuardianSprites", "Guardian2");
+            settings.guardGuardian = Sprite("GuardianSprites", "Guardian2");
             ImportSprite("DojoBackground", 100, null);
             settings.dojoBackground = AssetDatabase.LoadAssetAtPath<Sprite>(Folder + "DojoBackground.png");
 
@@ -65,7 +65,7 @@ namespace KarmaPrototype.Editor
             settings.playerRisingSlash = ImportTexture("PlayerRisingSlash");
             settings.swordGuardianIllustration = ImportTexture("SwordGuardian");
             settings.risingGuardianIllustration = ImportTexture("RisingGuardian");
-            settings.wardGuardianIllustration = ImportTexture("WardGuardian");
+            settings.guardGuardianIllustration = ImportTexture("WardGuardian");
             settings.guardianEvolution = ImportTexture("GuardianEvolution");
             AssetDatabase.CreateAsset(settings, SettingsPath);
             AssetDatabase.SaveAssets();

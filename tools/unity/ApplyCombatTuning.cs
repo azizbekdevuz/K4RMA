@@ -12,7 +12,7 @@ public static class ApplyCombatTuning
         var config = AssetDatabase.LoadAssetAtPath<KarmaConfig>("Assets/K4RMA/Settings/KarmaConfig.asset");
         Undo.RecordObject(config, "Player combat balance");
         config.playerHealth = 160; config.swordDamage = 60; config.enemyDamage = 14;
-        config.flameDamage = 72; config.healAfterSacrifice = 45;
+        config.swordWaveDamage = 72; config.healAfterSacrifice = 45;
         config.Techniques.risingDamage = 60; config.Techniques.counterDamage = 85;
         var t = config.BossTuning;
         t.stageOneHealth = 1050; t.stageTwoHealth = 1550; t.stageThreeHealth = 2050; t.finalHealth = 2800;

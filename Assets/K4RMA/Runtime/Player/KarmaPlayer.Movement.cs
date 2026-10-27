@@ -76,7 +76,7 @@ namespace KarmaPrototype
             body.position = position;
             body.linearVelocity = Vector2.zero;
             move = 0; jumpBufferedUntil = 0; lastGrounded = -10; nextSword = 0;
-            invulnerableUntil = wardUntil = 0;
+            invulnerableUntil = guardUntil = 0;
             CancelAirSlash();
             techniques.Reset();
             ClearStatus();

@@ -3,8 +3,8 @@ namespace KarmaPrototype
 {
     public static class KarmaPatternCatalog
     {
-        public static string Name(Essence e) { return e == Essence.Flame ? "검기" : e == Essence.Dash ? "상승베기" : "방어"; }
-        public static string UniqueName(Essence e) { return e == Essence.Flame ? "관통베기" : e == Essence.Dash ? "도약베기" : "반격"; }
+        public static string Name(Essence e) { return e == Essence.SwordWave ? "검기" : e == Essence.RisingSlash ? "상승베기" : "방어"; }
+        public static string UniqueName(Essence e) { return e == Essence.SwordWave ? "관통베기" : e == Essence.RisingSlash ? "도약베기" : "반격"; }
         public static Essence? Primary(IReadOnlyList<Essence> order) { return order.Count == 0 ? (Essence?)null : order[0]; }
         public static string TypeName(IReadOnlyList<Essence> order) { return order.Count == 0 ? "기본형" : Name(order[0]) + "형"; }
         public static bool IsUltimate(EnemyAttack a)
@@ -16,23 +16,23 @@ namespace KarmaPrototype
             if (returned.Count == 0) { result.Add(EnemyAttack.GroundStrike); return result; }
             switch (returned[0])
             {
-                case Essence.Flame:
+                case Essence.SwordWave:
                     result.Add(EnemyAttack.SW01); result.Add(EnemyAttack.SW02);
-                    if (owned.Contains(Essence.Dash)) result.Add(EnemyAttack.SW03);
-                    if (owned.Contains(Essence.Ward)) result.Add(EnemyAttack.SW04);
+                    if (owned.Contains(Essence.RisingSlash)) result.Add(EnemyAttack.SW03);
+                    if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.SW04);
                     if (owned.Count == 3) result.Add(EnemyAttack.SW05);
                     break;
-                case Essence.Dash:
+                case Essence.RisingSlash:
                     result.Add(EnemyAttack.UP01); result.Add(EnemyAttack.UP02);
-                    if (owned.Contains(Essence.Flame)) result.Add(EnemyAttack.UP03);
-                    if (owned.Contains(Essence.Ward)) result.Add(EnemyAttack.UP04);
+                    if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
+                    if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
                     if (owned.Count == 3) result.Add(EnemyAttack.UP05);
                     break;
-                case Essence.Ward:
+                case Essence.Guard:
                     // GD01 is a separate periodic defense, never an attack in this cycle.
                     result.Add(EnemyAttack.GroundStrike); result.Add(EnemyAttack.GD02);
-                    if (owned.Contains(Essence.Flame)) result.Add(EnemyAttack.GD03);
-                    if (owned.Contains(Essence.Dash)) result.Add(EnemyAttack.GD04);
+                    if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.GD03);
+                    if (owned.Contains(Essence.RisingSlash)) result.Add(EnemyAttack.GD04);
                     if (owned.Count == 3) result.Add(EnemyAttack.GD05);
                     break;
             }

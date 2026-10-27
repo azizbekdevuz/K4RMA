@@ -22,14 +22,14 @@ static class Program
                 {
                     Check(KarmaPatternCatalog.Primary(state.Order) == (Essence)order[0], "primary stays fixed");
                     var main = (Essence)order[0];
-                    Check(cycle.Contains(main == Essence.Flame ? EnemyAttack.SW01 : main == Essence.Dash ? EnemyAttack.UP01 : EnemyAttack.GD02), "primary base retained");
+                    Check(cycle.Contains(main == Essence.SwordWave ? EnemyAttack.SW01 : main == Essence.RisingSlash ? EnemyAttack.UP01 : EnemyAttack.GD02), "primary base retained");
                     Check(cycle.Any(KarmaPatternCatalog.IsUltimate) == (stage == 3), "ultimate requires full inheritance");
-                    Check(cycle.Contains(EnemyAttack.SW03) == (main == Essence.Flame && state.HasRemnant(Essence.Dash)), "SW03 independent unlock");
-                    Check(cycle.Contains(EnemyAttack.SW04) == (main == Essence.Flame && state.HasRemnant(Essence.Ward)), "SW04 independent unlock");
-                    Check(cycle.Contains(EnemyAttack.UP03) == (main == Essence.Dash && state.HasRemnant(Essence.Flame)), "UP03 independent unlock");
-                    Check(cycle.Contains(EnemyAttack.UP04) == (main == Essence.Dash && state.HasRemnant(Essence.Ward)), "UP04 independent unlock");
-                    Check(cycle.Contains(EnemyAttack.GD03) == (main == Essence.Ward && state.HasRemnant(Essence.Flame)), "GD03 independent unlock");
-                    Check(cycle.Contains(EnemyAttack.GD04) == (main == Essence.Ward && state.HasRemnant(Essence.Dash)), "GD04 independent unlock");
+                    Check(cycle.Contains(EnemyAttack.SW03) == (main == Essence.SwordWave && state.HasRemnant(Essence.RisingSlash)), "SW03 independent unlock");
+                    Check(cycle.Contains(EnemyAttack.SW04) == (main == Essence.SwordWave && state.HasRemnant(Essence.Guard)), "SW04 independent unlock");
+                    Check(cycle.Contains(EnemyAttack.UP03) == (main == Essence.RisingSlash && state.HasRemnant(Essence.SwordWave)), "UP03 independent unlock");
+                    Check(cycle.Contains(EnemyAttack.UP04) == (main == Essence.RisingSlash && state.HasRemnant(Essence.Guard)), "UP04 independent unlock");
+                    Check(cycle.Contains(EnemyAttack.GD03) == (main == Essence.Guard && state.HasRemnant(Essence.SwordWave)), "GD03 independent unlock");
+                    Check(cycle.Contains(EnemyAttack.GD04) == (main == Essence.Guard && state.HasRemnant(Essence.RisingSlash)), "GD04 independent unlock");
                 }
                 if (stage == 3) break;
                 Essence result;

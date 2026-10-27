@@ -6,8 +6,8 @@ namespace KarmaPrototype
 {
     public enum KarmaAction
     {
-        Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Ward,
-        Interact, Pause, Confirm, Restart, Title, Story, Controls, ChooseFlame, ChooseDash, ChooseWard,
+        Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Guard,
+        Interact, Pause, Confirm, Restart, Title, Story, Controls, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
         PreviousPage, NextPage
     }
 
@@ -42,7 +42,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.Counter, "k");
             Bind(KarmaAction.SwordWave, "q");
             Bind(KarmaAction.RisingSlash, "leftShift");
-            Bind(KarmaAction.Ward, "e");
+            Bind(KarmaAction.Guard, "e");
             Bind(KarmaAction.Interact, "f");
             Bind(KarmaAction.Pause, "escape");
             Bind(KarmaAction.Confirm, "enter");
@@ -50,9 +50,9 @@ namespace KarmaPrototype
             Bind(KarmaAction.Title, "t");
             Bind(KarmaAction.Story, "s");
             Bind(KarmaAction.Controls, "h");
-            Bind(KarmaAction.ChooseFlame, "1");
-            Bind(KarmaAction.ChooseDash, "2");
-            Bind(KarmaAction.ChooseWard, "3");
+            Bind(KarmaAction.ChooseSwordWave, "1");
+            Bind(KarmaAction.ChooseRisingSlash, "2");
+            Bind(KarmaAction.ChooseGuard, "3");
             Bind(KarmaAction.PreviousPage, "leftArrow", "upArrow");
             Bind(KarmaAction.NextPage, "rightArrow", "downArrow");
             map.Enable();

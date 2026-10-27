@@ -1,8 +1,6 @@
 using UnityEngine;
 namespace KarmaPrototype
 {
-    // Empty scenes in the supplied project can enter Play directly.
-    // Existing authored scenes with KarmaGame keep their configured director.
     public static class KarmaBootstrap
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

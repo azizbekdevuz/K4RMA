@@ -1,7 +1,7 @@
 namespace KarmaPrototype
 {
     // Essence values are serialized in existing assets; keep these IDs stable.
-    public enum Essence { Flame = 0, Dash = 1, Ward = 2 }
+    public enum Essence { SwordWave = 0, RisingSlash = 1, Guard = 2 }
     public enum RunPhase { Title, Combat, Gate, Choosing, Transition, Victory, Defeat, Story, Controls }
     public enum EnemyAttack
     {

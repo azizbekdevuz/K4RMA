@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace KarmaPrototype
 {
@@ -22,12 +23,18 @@ namespace KarmaPrototype
         [Min(1)] [InspectorName("검 공격력")] public float swordDamage = 60;
         [Min(0.1f)] [InspectorName("검 공격 간격")] public float swordCooldown = 0.32f;
         [Header("액티브 기술")]
-        [Min(0.1f)] [InspectorName("검기 쿨타임")] public float flameCooldown = 2.2f;
-        [Min(1)] [InspectorName("검기 피해")] public float flameDamage = 72;
-        [Min(1)] [InspectorName("검기 속도")] public float flameSpeed = 14 * KarmaSpace.Scale;
-        [Min(0.1f)] [InspectorName("상승베기 쿨타임")] public float dashCooldown = 1.6f;
-        [Min(0.1f)] [InspectorName("보호막 쿨타임")] public float wardCooldown = 5;
-        [Min(0.1f)] [InspectorName("보호막 지속 시간")] public float wardDuration = 1.5f;
+        [FormerlySerializedAs("flameCooldown")]
+        [Min(0.1f)] [InspectorName("검기 쿨타임")] public float swordWaveCooldown = 2.2f;
+        [FormerlySerializedAs("flameDamage")]
+        [Min(1)] [InspectorName("검기 피해")] public float swordWaveDamage = 72;
+        [FormerlySerializedAs("flameSpeed")]
+        [Min(1)] [InspectorName("검기 속도")] public float swordWaveSpeed = 14 * KarmaSpace.Scale;
+        [FormerlySerializedAs("dashCooldown")]
+        [Min(0.1f)] [InspectorName("상승베기 쿨타임")] public float risingSlashCooldown = 1.6f;
+        [FormerlySerializedAs("wardCooldown")]
+        [Min(0.1f)] [InspectorName("보호막 쿨타임")] public float guardCooldown = 5;
+        [FormerlySerializedAs("wardDuration")]
+        [Min(0.1f)] [InspectorName("보호막 지속 시간")] public float guardDuration = 1.5f;
         [Header("원형·고유화 기술 조정")]
         public KarmaTechniqueTuning techniques = new KarmaTechniqueTuning();
         public KarmaTechniqueTuning Techniques { get { if (techniques == null) techniques = new KarmaTechniqueTuning(); return techniques; } }
@@ -40,12 +47,15 @@ namespace KarmaPrototype
         [Header("화면 표시")]
         [InspectorName("한글 UI 폰트 (비우면 자동)")] public Font koreanFont;
         [InspectorName("2D 표시 재질 (빌드에 포함)")] public Material spriteMaterial;
-        [InspectorName("검기 색상")] public Color flameColor = new Color(1, 0.38f, 0.18f);
-        [InspectorName("상승베기 색상")] public Color dashColor = new Color(0.25f, 0.9f, 0.9f);
-        [InspectorName("보호막 색상")] public Color wardColor = new Color(0.67f, 0.48f, 1);
+        [FormerlySerializedAs("flameColor")]
+        [InspectorName("검기 색상")] public Color swordWaveColor = new Color(1, 0.38f, 0.18f);
+        [FormerlySerializedAs("dashColor")]
+        [InspectorName("상승베기 색상")] public Color risingSlashColor = new Color(0.25f, 0.9f, 0.9f);
+        [FormerlySerializedAs("wardColor")]
+        [InspectorName("보호막 색상")] public Color guardColor = new Color(0.67f, 0.48f, 1);
         public Color ColorOf(Essence essence)
         {
-            return essence == Essence.Flame ? flameColor : essence == Essence.Dash ? dashColor : wardColor;
+            return essence == Essence.SwordWave ? swordWaveColor : essence == Essence.RisingSlash ? risingSlashColor : guardColor;
         }
     }
 }

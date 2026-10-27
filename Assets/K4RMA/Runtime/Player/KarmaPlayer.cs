@@ -12,14 +12,14 @@ namespace KarmaPrototype
         SpriteRenderer aura;
         SpriteRenderer remnantHalo;
         readonly Collider2D[] groundHits = new Collider2D[12];
-        float move, jumpBufferedUntil, lastGrounded = -10, nextSword, invulnerableUntil, wardUntil;
+        float move, jumpBufferedUntil, lastGrounded = -10, nextSword, invulnerableUntil, guardUntil;
         readonly KarmaTechniqueState techniques = new KarmaTechniqueState();
         public bool Airborne { get { return body.linearVelocity.y > 0.1f || !Grounded(); } }
         public KarmaEssences Essences { get; private set; }
         public float Health { get; private set; }
         public int Facing { get; private set; } = 1;
         public Vector2 Position { get { return transform.position; } }
-        public bool Shielded { get { return Time.time < wardUntil; } }
+        public bool Shielded { get { return Time.time < guardUntil; } }
         public void Initialize(KarmaGame director)
         {
             game = director;
@@ -35,11 +35,11 @@ namespace KarmaPrototype
             art = KarmaArtwork.Player(transform);
             if (art == null) art = KarmaVisuals.Character(transform, new Color(0.2f, 0.65f, 0.72f));
             animator = art.GetComponent<KarmaCharacterAnimator>();
-            aura = KarmaVisuals.Box(transform, "Ward", Vector2.zero, KarmaSpace.Units(new Vector2(1.25f, 1.9f)),
-                game.Config.wardColor, 2);
+            aura = KarmaVisuals.Box(transform, "Guard", Vector2.zero, KarmaSpace.Units(new Vector2(1.25f, 1.9f)),
+                game.Config.guardColor, 2);
             aura.enabled = false;
             KarmaCombatVFX.ApplySprite(aura, "PlayerVFX", "Guard", KarmaSpace.Units(new Vector2(1.5f, 2.15f)));
-            remnantHalo = KarmaRemnantVFX.CreateWardHalo(transform, game.Config.wardColor);
+            remnantHalo = KarmaRemnantVFX.CreateGuardHalo(transform, game.Config.guardColor);
             remnantHalo.enabled = false;
         }
         void Update()
@@ -62,9 +62,9 @@ namespace KarmaPrototype
                 ReadUniqueDirectionTap();
                 if (KarmaInput.Pressed(KarmaAction.Attack)) airSlashBufferedUntil = Time.time + game.Config.Techniques.airSlashInputBuffer;
                 if (KarmaInput.Held(KarmaAction.Attack) || airSlashBufferedUntil > Time.time) Attack();
-                if (KarmaInput.Pressed(KarmaAction.SwordWave)) Essences.TryUse(Essence.Flame);
-                if (KarmaInput.Pressed(KarmaAction.RisingSlash)) Essences.TryUse(Essence.Dash);
-                if (KarmaInput.Pressed(KarmaAction.Ward)) Essences.TryUse(Essence.Ward);
+                if (KarmaInput.Pressed(KarmaAction.SwordWave)) Essences.TryUse(Essence.SwordWave);
+                if (KarmaInput.Pressed(KarmaAction.RisingSlash)) Essences.TryUse(Essence.RisingSlash);
+                if (KarmaInput.Pressed(KarmaAction.Guard)) Essences.TryUse(Essence.Guard);
                 if (KarmaInput.Pressed(KarmaAction.Counter)) Essences.TryCounter();
             }
             else techniques.ClearDirectionTap();

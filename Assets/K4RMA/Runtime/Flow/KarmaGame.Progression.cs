@@ -15,7 +15,7 @@ namespace KarmaPrototype
             runRoot.SetParent(transform, false);
             var p = new GameObject("Player"); p.transform.SetParent(runRoot, false);
             Player = p.AddComponent<KarmaPlayer>(); Player.Initialize(this);
-            Player.Essences.Cancel(); LastSacrifice = Essence.Flame; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
+            Player.Essences.Cancel(); LastSacrifice = Essence.SwordWave; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
             for (int i = 0; i < BossSplits.Length; i++) BossSplits[i] = 0;
             LoadRoom(true);
         }

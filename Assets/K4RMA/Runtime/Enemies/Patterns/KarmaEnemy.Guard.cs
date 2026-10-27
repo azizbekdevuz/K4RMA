@@ -6,7 +6,7 @@ namespace KarmaPrototype
     {
         void UpdateAutoShield()
         {
-            if (PrimaryType != Essence.Ward || trial.Active || Stunned || state == ActionState.Recover || frontalGuard) return;
+            if (PrimaryType != Essence.Guard || trial.Active || Stunned || state == ActionState.Recover || frontalGuard) return;
             if (shieldWarningUntil > 0)
             {
                 if (FightSeconds >= shieldWarningUntil) RefreshAutoShield();

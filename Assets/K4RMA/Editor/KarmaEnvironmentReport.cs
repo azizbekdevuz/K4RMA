@@ -55,7 +55,7 @@ namespace KarmaPrototype.Editor
                 AddSprite(sprites, warnings, "neutralGuardian", settings.neutralGuardian);
                 AddSprite(sprites, warnings, "swordGuardian", settings.swordGuardian);
                 AddSprite(sprites, warnings, "risingGuardian", settings.risingGuardian);
-                AddSprite(sprites, warnings, "wardGuardian", settings.wardGuardian);
+                AddSprite(sprites, warnings, "guardGuardian", settings.guardGuardian);
                 AddSprite(sprites, warnings, "mountainPanorama", settings.mountainPanorama);
                 AddSprite(sprites, warnings, "dojoPanorama", settings.dojoPanorama);
             }

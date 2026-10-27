@@ -31,7 +31,7 @@ namespace KarmaPrototype
             shieldHalo.enabled = Armored || shieldWarningUntil > 0;
             shieldHalo.color = shieldWarningUntil > 0
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
-                : fullShield ? Color.white : swordWard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
+                : fullShield ? Color.white : swordGuard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
             animator.GuardianPose(state.ToString(), selected, Position.y > KarmaSpace.Units(1.5f), Armored);
             if (Stunned)
             {
@@ -46,9 +46,9 @@ namespace KarmaPrototype
             }
             float dx = game.Player.Position.x - Position.x;
             art.localScale = new Vector3(Mathf.Sign(dx) * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
-            float preferred = KarmaSpace.Units(PrimaryType == Essence.Flame ? 7 : PrimaryType == Essence.Ward ? 3 : 3.5f);
+            float preferred = KarmaSpace.Units(PrimaryType == Essence.SwordWave ? 7 : PrimaryType == Essence.Guard ? 3 : 3.5f);
             if (Mathf.Abs(dx) > preferred) Move(Mathf.Sign(dx) * game.Config.enemyMoveSpeed * Tuning.moveMultiplier * dt);
-            else if (PrimaryType == Essence.Flame && Mathf.Abs(dx) < KarmaSpace.Units(4.2f)) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
+            else if (PrimaryType == Essence.SwordWave && Mathf.Abs(dx) < KarmaSpace.Units(4.2f)) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
             timer -= dt;
             if (timer <= 0) BeginAttack();
         }
@@ -78,7 +78,7 @@ namespace KarmaPrototype
             yield return ExecuteAttack();
             if (!Active) yield break;
             ClearPatternObjects();
-            fullShield = frontalGuard = swordWard = false;
+            fullShield = frontalGuard = swordGuard = false;
             state = ActionState.Approach; running = false;
             timer = Mathf.Max(0.22f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * Tempo);
         }
@@ -90,7 +90,7 @@ namespace KarmaPrototype
         }
         IEnumerator Recovery(float seconds, bool keepAutoShield = false, string message = null)
         {
-            ClearPatternObjects(); fullShield = frontalGuard = swordWard = false;
+            ClearPatternObjects(); fullShield = frontalGuard = swordGuard = false;
             // A real, stationary attack opportunity: auto-shield cannot conceal it.
             if (!keepAutoShield) shieldUntil = shieldWarningUntil = 0;
             state = ActionState.Recover; Intent = message ?? "빈틈 발생 · 지금 공격하세요";
@@ -108,7 +108,7 @@ namespace KarmaPrototype
         {
             StopAllCoroutines(); ClearPatternObjects();
             trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
-            fullShield = frontalGuard = swordWard = running = pendingParry = false;
+            fullShield = frontalGuard = swordGuard = running = pendingParry = false;
             shieldUntil = shieldWarningUntil = 0;
             transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY, 0);
         }

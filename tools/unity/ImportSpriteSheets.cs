@@ -107,7 +107,7 @@ public static class ImportSpriteSheets
         settings.neutralGuardian = entries.First(s => s.id == "Neutral").sprites[0];
         settings.swordGuardian = entries.First(s => s.id == "Wave").sprites[0];
         settings.risingGuardian = entries.First(s => s.id == "Rise").sprites[0];
-        settings.wardGuardian = entries.First(s => s.id == "Ward").sprites[0];
+        settings.guardGuardian = entries.First(s => s.id == "Ward").sprites[0];
         var ui = entries.First(s => s.id == "UI").sprites.ToDictionary(s => s.name);
         settings.skillIcons = new[] { ui["Wave"], ui["Rise"], ui["Ward"], ui["Pierce"], ui["Air"], ui["Parry"] };
         settings.selectionCrescent = ui["Crescent"];

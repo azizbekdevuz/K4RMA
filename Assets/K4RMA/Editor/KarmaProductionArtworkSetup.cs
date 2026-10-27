@@ -51,7 +51,7 @@ namespace KarmaPrototype.Editor
             settings.neutralGuardian = Sprite("NeutralGuardian", "Idle");
             settings.swordGuardian = Sprite("WaveGuardian", "Idle");
             settings.risingGuardian = Sprite("RiseGuardian", "Idle");
-            settings.wardGuardian = Sprite("WardGuardian", "Idle");
+            settings.guardGuardian = Sprite("WardGuardian", "Idle");
             foreach (var name in new[] { "MountainDojo", "TrialHall" }) KarmaArtworkSetup.ImportSprite(Prefix + name, 100, null);
             settings.mountainBackground = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/K4RMA/Resources/K4RMAArtwork/Production/MountainDojo.png");
             settings.dojoBackground = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/K4RMA/Resources/K4RMAArtwork/Production/TrialHall.png");

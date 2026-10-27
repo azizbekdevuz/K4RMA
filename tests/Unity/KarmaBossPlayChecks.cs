@@ -75,9 +75,9 @@ public static class KarmaBossPlayChecks
             KarmaMigrationChecks.Run(game);
             game.Config.playerHealth = 1000000;
             game.StartRun();
-            game.Player.Essences.Sacrifice(Essence.Flame);
-            game.Player.Essences.Sacrifice(Essence.Dash);
-            game.Player.Essences.Sacrifice(Essence.Ward);
+            game.Player.Essences.Sacrifice(Essence.SwordWave);
+            game.Player.Essences.Sacrifice(Essence.RisingSlash);
+            game.Player.Essences.Sacrifice(Essence.Guard);
             Call(game,"LoadRoom",true);
             enemy = game.Enemies[0];
             game.Player.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Kinematic;
@@ -102,7 +102,7 @@ public static class KarmaBossPlayChecks
             var attack = Cases[index];
             sawRecovery |= Get<object>(enemy,"state").ToString()=="Recover";
             sawFullShield |= enemy.Invulnerable;
-            if (attack == EnemyAttack.SW04 && Get<bool>(enemy,"swordWard") && !responseTriggered)
+            if (attack == EnemyAttack.SW04 && Get<bool>(enemy,"swordGuard") && !responseTriggered)
             { enemy.TakeDamage(1); responseTriggered = true; }
             if (attack == EnemyAttack.SW04 && responseTriggered && enemy.GetComponentInParent<KarmaGame>() != null)
                 sawResponse |= game.World.GetComponentsInChildren<KarmaBossAttack>().Length > 0;
@@ -142,7 +142,7 @@ public static class KarmaBossPlayChecks
         Check(baseline != null, "serialized gameplay configuration exists");
         Check(baseline.playerHealth == 160 && baseline.swordDamage == 60,
             "serialized difficulty does not retain the 10000 HP / 1000 damage values");
-        Check(baseline.flameDamage == 72 && baseline.Techniques.risingDamage == 60
+        Check(baseline.swordWaveDamage == 72 && baseline.Techniques.risingDamage == 60
             && baseline.Techniques.counterDamage == 85 && baseline.healAfterSacrifice == 45,
             "skill damage and transition healing use the revised player balance");
         Check(KarmaCombatVFX.GlowMaterial != null, "additive combat material is included in Resources");
@@ -153,7 +153,7 @@ public static class KarmaBossPlayChecks
             "spatial compensation preserves jump airtime");
         Check(Mathf.Abs(config.jumpSpeed * config.jumpSpeed / config.gravityScale - 169f / 3 * KarmaSpace.Scale) < 0.0001f,
             "spatial compensation scales jump height");
-        Check(config.moveSpeed == baseline.moveSpeed && config.flameSpeed == baseline.flameSpeed,
+        Check(config.moveSpeed == baseline.moveSpeed && config.swordWaveSpeed == baseline.swordWaveSpeed,
             "serialized and default movement/projectile speeds agree");
         Check(config.Techniques.pierceDistance == baseline.Techniques.pierceDistance
             && config.BossTuning.swordSpeed == baseline.BossTuning.swordSpeed,
@@ -225,7 +225,7 @@ public static class KarmaBossPlayChecks
         Call(shot, "Update");
         Check(enemy.Health < before && !shot.enabled, "swept projectile damages the head and stops");
         place(); before = enemy.Health;
-        Call(game.Player, "BeginDirectionalSlash", Vector2.right, 1f, Essence.Flame);
+        Call(game.Player, "BeginDirectionalSlash", Vector2.right, 1f, Essence.SwordWave);
         Check(enemy.Health < before, "directional slash damages upper artwork");
         place(); before = enemy.Health;
         Set(game.Player, "airSlashDirection", Vector2.right);
@@ -423,7 +423,7 @@ public static class KarmaBossPlayChecks
         if(lifecycleStage==0)
         {
             Call(enemy,"InterruptPattern");
-            typeof(KarmaEnemy).GetProperty("PrimaryType").SetValue(enemy,(Essence?)Essence.Ward);
+            typeof(KarmaEnemy).GetProperty("PrimaryType").SetValue(enemy,(Essence?)Essence.Guard);
             Set(enemy,"engaged",true); Set(enemy,"running",true);
             Set(enemy,"patternStarted",enemy.FightSeconds);
             Set(enemy,"nextShield",enemy.FightSeconds+0.2f);

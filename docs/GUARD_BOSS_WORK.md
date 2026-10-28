@@ -38,15 +38,19 @@ Play 종료 시 연습 상태가 해제되고, 연습 중 스크립트를 다시
   투척과 모든 조각은 한 접촉 기록을 공유하므로 한 기술에서 피해·기절은 한 번만 발생한다.
 - GD04: 유지 벽의 물리 크기를 표시 범위에 명시적으로 맞췄다. 유지 중 피해 없음, 정면 피해 감소,
   뒤쪽 정상 피해, 생성 시 겹침 해소, 관통베기 차단을 확인하는 검사를 추가했다.
-- GD05: 성공 공격 기회는 `trialStunSeconds` 전체를 보장한다. 강화 페이즈나 회복 템포가 시간을 줄이지 않는다.
-  허용 피격 초과 시에도 마지막 공격까지 진행하고, 실패 폭발 전조·해제 및 사망 시 정리를 검사한다.
+- GD05: 노란 반원 보호막과 곡면 지붕 안에서 낮은 파동·낙하 봉인·양쪽 협공·바닥 봉인·높낮이 연속 공격을 섞는다.
+  같은 묶음의 공격들은 접촉 기록을 공유해 다중 피격을 막는다. HUD에 현재 공격의 회피 안내를 표시한다.
+  허용 피격 초과 시 마지막 공격까지 진행한 뒤 보호막이 균열·과부하를 거쳐 직접 폭발한다.
+  성공 시 보호막이 부드럽게 사라지고 `trialStunSeconds` 전체를 보장한다.
 - 방어형 HUD: 보스 체력 아래 방어 상태, 현재 행동 또는 결계 피격/허용/남은 공격을 표시한다.
 
 ## 주로 수정할 곳
 
 | 파일 | 역할 |
 |---|---|
-| `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Ward.cs` | GD01~GD05의 실제 순서·전조·공격·회수·결계 |
+| `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Ward.cs` | GD01~GD04의 실제 순서·전조·공격·회수 |
+| `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardTrial.cs` | GD05의 5종 내부 공격·피격 집계·결과·폭발 피해 |
+| `Assets/K4RMA/Runtime/Presentation/KarmaGuardDome.cs` | 반원 보호막·곡면 지붕·과부하 균열·파열·성공 소멸 |
 | `Assets/K4RMA/Runtime/Enemies/KarmaEnemy.StateMachine.cs` | 패턴 선택·회복·패링 중단·종료 처리; 다른 보스도 공유하므로 변경 범위를 확인 |
 | `Assets/K4RMA/Runtime/Enemies/KarmaEnemy.Presentation.cs` | 경고 표시·공격 생성·피격 연결 |
 | `Assets/K4RMA/Runtime/Configuration/KarmaBossTuning.cs` | 새 설정의 기본 수치 |
@@ -71,6 +75,15 @@ python -X utf8 tools/run-unity-playchecks.py --unity 'C:/Program Files/Unity/Hub
 Play 검사는 임시 복사본에서 실행하며 현재 연습 씬을 바꾸지 않는다.
 결과는 `output/validation/guard-play-validation.txt`, 전체 패턴은 `boss-play-validation.txt`에 남긴다.
 자동 검사가 실제 사람이 느끼는 전조 가독성·회피 난도·재미를 대신하지는 않는다.
+
+### 2026-10-28 GD05 룸 확인 결과
+
+- 방어형 Play Mode 검사 38개 통과: 반원 지붕과 폭발 범위, 다섯 공격 흐름, 과부하 중 일시정지,
+  룸 유지 후 파열, 폭발 1회 피해, 타이밍 반격, 성공·사망 정리 및 첫 프레임 예고선 표시를 포함한다.
+- Unity 컴파일 오류·경고 없음. 소스 스크립트 61개와 중복 없는 에셋 GUID 248개 확인.
+- 실제 룸·낙하·바닥 봉인·높낮이 공격·균열·폭발 캡처를 로컬 `output/validation/gd05-dome-*.png`에 저장한다.
+- 에디터에서 임시 C# 검사 스크립트를 여러 번 로드하면 Mono가 한글 경로를 읽는 중 오류를 낼 수 있다.
+  이 경우 Play를 종료한 뒤 다시 시작해 임시 어셈블리를 초기화한다.
 
 ### 2026-10-26 Windows 확인 결과
 

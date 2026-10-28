@@ -78,8 +78,10 @@ namespace KarmaPrototype
                 arrow.positionCount = 3;
                 for (int i = 0; i < 3; i++) arrow.SetPosition(i, new Vector3((head[i].x - center.x) / bounds.x, (head[i].y - center.y) / bounds.y, 0));
             }
+            RefreshStyle();
         }
-        void Update()
+        void Update() { RefreshStyle(); }
+        void RefreshStyle()
         {
             if (visual == null || edge == null) return;
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 15);

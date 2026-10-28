@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -86,6 +87,12 @@ public static class KarmaGuardPlayChecks
             Set(game.Player, "invulnerableUntil", 0f);
             float health = game.Player.Health;
             Force(EnemyAttack.GD02);
+            var warning = Get<Transform>(enemy, "effectsRoot").GetComponentInChildren<KarmaAttackWarning>();
+            bool initialized = warning != null;
+            if (warning != null)
+                foreach (var line in warning.GetComponentsInChildren<LineRenderer>())
+                    initialized &= line.widthMultiplier < KarmaSpace.Units(0.1f) && line.startColor.b < 0.5f;
+            Check(initialized, "warning lines have their intended color and thickness on the first frame");
             await Until(() => Attacks().Length > 0, 3);
             Place(enemy.Position + Vector2.left * KarmaSpace.Units(2));
             await Until(() => game.Player.Health < health, 1);
@@ -143,21 +150,35 @@ public static class KarmaGuardPlayChecks
             Call(enemy, "InterruptPattern");
             Check(Wall() == null, "GD04 interruption removes the wall immediately");
 
-            config.BossTuning.trialAttackCount = 3;
+            config.BossTuning.trialAttackCount = 5;
             config.BossTuning.trialAllowedHits = 0;
             Reset();
             typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.45f);
             Force(EnemyAttack.GD05);
             await Until(() => enemy.TrialActive, 3);
+            var dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
+            Check(dome != null && dome.GetComponent<EdgeCollider2D>().pointCount == 65, "GD05 creates a semicircular room with a curved roof");
+            Check(dome.Overlaps(new Vector2(20, dome.Radius * 0.5f), Vector2.zero)
+                && !dome.Overlaps(new Vector2(20 + dome.Radius + 1, 0), Vector2.zero)
+                && !dome.Overlaps(new Vector2(20, -1), Vector2.zero), "GD05 room blast follows the dome footprint");
             Check(Get<bool>(game.Player, "confined"), "GD05 confines the player during the trial");
             float clock = enemy.FightSeconds;
+            float domeClock = dome.PhaseSeconds;
             game.TogglePause();
             await Task.Delay(150);
-            Check(enemy.FightSeconds == clock && enemy.TrialActive, "GD05 pause freezes combat and trial clocks");
+            Check(enemy.FightSeconds == clock && enemy.TrialActive && dome.PhaseSeconds == domeClock, "GD05 pause freezes combat, trial and dome clocks");
             game.TogglePause();
-            await Until(() => State() == "Recover", 15);
+            var seen = new HashSet<string>();
+            await Until(() =>
+            {
+                foreach (string cue in new[] { "낮은 파동", "봉인 낙하", "양쪽 협공", "바닥 봉인", "높낮이 연속" })
+                    if (enemy.Intent.Contains(cue)) seen.Add(cue);
+                return State() == "Recover";
+            }, 22);
+            Check(seen.Count == 5, "GD05 runs five different readable attack beats");
             clock = enemy.FightSeconds;
-            Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined"), "GD05 success releases arena restrictions");
+            Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined")
+                && UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>() == null, "GD05 success dissolves the room and releases arena restrictions");
             await Until(() => !Get<bool>(enemy, "running"), 7);
             Check(enemy.FightSeconds - clock >= config.BossTuning.trialStunSeconds - 0.08f,
                 "GD05 success retains the full configured punish window even while enraged");
@@ -170,16 +191,46 @@ public static class KarmaGuardPlayChecks
             Set(game.Player, "invulnerableUntil", Time.time + 100);
             var trial = Get<KarmaTrialState>(enemy, "trial");
             Check(trial.Hits == 1 && !trial.Finished && enemy.TrialActive, "GD05 excess hits do not end the trial early");
-            await Until(() => enemy.Intent.Contains("시험 실패"), 15);
-            Check(!enemy.TrialActive && Get<bool>(game.Player, "confined"), "GD05 failure announces the explosion before releasing the arena");
+            await Until(() => enemy.Intent.Contains("시험 실패"), 22);
+            dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
+            Check(!enemy.TrialActive && Get<bool>(game.Player, "confined") && dome != null && dome.Charging,
+                "GD05 failure keeps the room intact while charging its explosion");
+            clock = dome.PhaseSeconds;
+            game.TogglePause(); await Task.Delay(150);
+            Check(dome.PhaseSeconds == clock && dome.Charging, "GD05 overload animation pauses with gameplay");
+            game.TogglePause();
+            health = game.Player.Health; Set(game.Player, "invulnerableUntil", 0f);
+            await Until(() => dome.Exploding, 2);
+            Check(dome.gameObject.activeInHierarchy && Attacks().Length == 0,
+                "GD05 shell itself explodes without spawning a generic giant attack");
+            await Seconds(0.25f);
+            Check(Mathf.Abs(health - game.Player.Health - config.enemyDamage * config.BossTuning.damageMultiplier * config.BossTuning.trialExplosionMultiplier) < 0.01f,
+                "GD05 room explosion deals exactly one configured hit");
             await Until(() => !Get<bool>(enemy, "running"), 5);
             Check(!Get<bool>(game.Player, "confined") && Attacks().Length == 0, "GD05 failure cleans up attacks and movement restrictions");
+
+            config.BossTuning.trialAttackCount = 3;
+            Reset(); Force(EnemyAttack.GD05);
+            await Until(() => enemy.TrialActive, 3);
+            Set(game.Player, "invulnerableUntil", 0f);
+            enemy.TryAttackHit(game.Player.Position, game.Player.Position, Vector2.one, 10, new KarmaAttackContact(), 0);
+            Set(game.Player, "invulnerableUntil", Time.time + 100);
+            await Until(() => enemy.Intent.Contains("시험 실패"), 15);
+            dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
+            await Until(() => dome.PhaseSeconds >= 0.9f, 2);
+            health = game.Player.Health; parries = game.Player.ParryCount;
+            Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
+            await Until(() => dome.Exploding, 2); await Seconds(0.25f);
+            Check(game.Player.ParryCount == parries + 1 && game.Player.Health == health,
+                "GD05 room detonation retains a timed counter opportunity");
+            await Until(() => !Get<bool>(enemy, "running"), 5);
 
             Reset();
             Force(EnemyAttack.GD05);
             await Until(() => enemy.TrialActive, 3);
             game.PlayerDied();
-            Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined") && Attacks().Length == 0,
+            Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined") && Attacks().Length == 0
+                && UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>() == null,
                 "GD05 death cancels the trial and releases the player synchronously");
 
             KarmaGuardPractice.Start(3);

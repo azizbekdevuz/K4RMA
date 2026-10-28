@@ -9,7 +9,7 @@
 | ShieldRing.png | GuardShield / ShieldRing | GD01 자동방어막, 방어형 보스의 방어 표시 |
 | Bash.png | GuardBash / Cleave | GD02 강공격 |
 | Shard.png | GuardShard / Ward | GD03 발사·분열·피해 없는 회수 조각 |
-| Pillar.png | GuardPillar / Pillar | GD04 상승·완성 방벽, GD05 양쪽 경계 장식 |
+| Pillar.png | GuardPillar / Pillar | GD04 상승·완성 방벽, GD05 바닥 봉인 |
 | Wave.png | GuardWave / Wave | GD02 분노 충격파, GD05 생존 시험 탄 |
 | GroundSeal.png | GuardSeal / GroundRing | GD05 바닥 결계 장식 |
 
@@ -17,6 +17,7 @@
 회전과 잔상은 기존 코드가 붙인다. 예고선·피해량·공격 시간·충돌 범위는 유지한다.
 회수 조각은 기존의 낮은 불투명도와 청색 계열 틴트를 적용하며 공격 컴포넌트가 없다.
 완성 방벽의 장식은 별도 오브젝트이고, 기존 이동 차단 콜라이더를 유지한다.
+GD05의 반원 보호막·균열·폭발은 KarmaGuardDome이 그리며, 폭발 파편에는 Shard.png를 재사용한다.
 다른 유형의 보스와 플레이어는 기존 GuardianVFX/PlayerVFX 이미지를 사용한다.
 
 Unity의 `K4RMA > 방어형 연습`에서 GD01~GD05를 각각 확인할 수 있다.

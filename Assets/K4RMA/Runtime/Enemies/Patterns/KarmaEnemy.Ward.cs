@@ -134,57 +134,5 @@ namespace KarmaPrototype
             yield return Wait(0.5f);
             yield return Recovery(Mathf.Max(0.3f, Tuning.barrierRecovery));
         }
-        IEnumerator SurvivalTrial()
-        {
-            state = ActionState.Telegraph;
-            Mark("GD05 결계 범위 예고", new Vector2(20, KarmaSpace.Units(4)), KarmaSpace.Units(new Vector2(16, 8)), false);
-            yield return Wait(1); ClearPatternObjects();
-            shieldUntil = shieldWarningUntil = 0;
-            // Placement is protected, then the actual trial begins with a full warning.
-            game.Player.ConfineArena(20 - KarmaSpace.Units(7.4f), 20 + KarmaSpace.Units(7.4f));
-            yield return Motion(new Vector2(20, KarmaSpace.GuardianGroundY), 0.5f, Vector2.zero);
-            Mark("결계 좌측", new Vector2(20 - KarmaSpace.Units(8), KarmaSpace.Units(5)), KarmaSpace.Units(new Vector2(0.25f, 10)), false);
-            Mark("결계 우측", new Vector2(20 + KarmaSpace.Units(8), KarmaSpace.Units(5)), KarmaSpace.Units(new Vector2(0.25f, 10)), false);
-            GuardDecoration("GuardSeal", "GroundRing", new Vector2(20, KarmaSpace.Units(0.25f)),
-                KarmaSpace.Units(new Vector2(16, 2)), new Color(1, 1, 1, 0.55f), 3);
-            for (int side = -1; side <= 1; side += 2)
-                GuardDecoration("GuardPillar", "Pillar", new Vector2(20 + side * KarmaSpace.Units(8), KarmaSpace.Units(5)),
-                    KarmaSpace.Units(new Vector2(2.4f, 10)), new Color(1, 1, 1, 0.7f), 9);
-            trial.Begin(Mathf.Clamp(Tuning.trialAttackCount, 3, 8), Tuning.trialAllowedHits);
-            state = ActionState.Attack;
-            for (int i = 0; i < trial.Total; i++)
-            {
-                bool left = i % 2 == 0;
-                float y = KarmaSpace.Units(i % 3 == 1 ? 3.3f : 1.05f);
-                Vector2 start = new Vector2(20 + KarmaSpace.Units(left ? -7.2f : 7.2f), y);
-                Vector2 velocity = KarmaSpace.Units(new Vector2(left ? 10 : -10, 0));
-                var mark = PathMark(start, start + velocity * 1.4f, WaveSize);
-                Intent = "GD05 " + TrialStatus + (trial.Hits > trial.Allowed ? " · 종료 후 폭발 예정" : " · 회피/반격");
-                yield return Wait(Warning(0.7f)); Destroy(mark.gameObject);
-                Attack(start, velocity, WaveSize, 1.4f, 0.65f);
-                yield return Wait(1.45f);
-                trial.CompleteAttack();
-                yield return Wait(Mathf.Max(0.4f, Tuning.trialAttackGap * Tempo));
-            }
-            // Snapshot only after the final attack expires. Threshold crossing never ends early.
-            bool passed = trial.Passed;
-            ClearPatternObjects(); trial.Clear();
-            if (!passed)
-            {
-                Intent = "GD05 시험 실패 · 결계 폭발 예고 / 반격 가능";
-                var mark = Mark("결계 폭발", new Vector2(20, KarmaSpace.Units(4)), KarmaSpace.Units(new Vector2(16, 8)));
-                yield return Wait(0.9f); Destroy(mark.gameObject);
-                Attack(new Vector2(20, KarmaSpace.Units(4)), Vector2.zero, KarmaSpace.Units(new Vector2(16, 8)), 0.15f, Tuning.trialExplosionMultiplier);
-                yield return Wait(0.2f); ClearPatternObjects();
-                game.Player.ReleaseArena();
-                yield return Recovery(1.5f);
-            }
-            else
-            {
-                game.Player.ReleaseArena();
-                yield return Recovery(Mathf.Max(1, Tuning.trialStunSeconds), false,
-                    "GD05 시험 성공 · 무력화 / 지금 공격하세요", scaleDuration: false);
-            }
-        }
     }
 }

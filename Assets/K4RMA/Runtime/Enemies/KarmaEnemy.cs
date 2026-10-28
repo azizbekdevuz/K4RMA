@@ -64,6 +64,12 @@ namespace KarmaPrototype
             effectsRoot = new GameObject("Guardian pattern objects").transform; effectsRoot.SetParent(game.World, false);
             shieldHalo = KarmaRemnantVFX.CreateWardHalo(transform, KarmaArtwork.BarrierColor);
             shieldHalo.transform.localScale = new Vector3(KarmaSpace.Units(2.2f) * KarmaSpace.GuardianSizeBoost, KarmaSpace.Units(3.1f) * KarmaSpace.GuardianSizeBoost, 1); shieldHalo.enabled = false;
+            if (PrimaryType == Essence.Ward)
+            {
+                if (KarmaCombatVFX.ApplySprite(shieldHalo, "GuardShield", "ShieldRing",
+                    KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
+                    shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
+            }
             timer = 1.4f; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach; Intent = "앞으로 나아가 시험을 시작하세요";
         }

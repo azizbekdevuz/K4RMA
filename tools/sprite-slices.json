@@ -280,5 +280,11 @@
   ]},
   {"id": "HallLayers_hall-layer-rear_rail", "source": "image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-rear_rail.png", "ppu": 100, "sprites": [
     {"name": "hall-layer-rear_rail", "x": 0, "y": 0, "width": 1672, "height": 941, "pivotX": 0.5, "pivotY": 0.5}
-  ]}
+  ]},
+  {"id": "GuardShield", "source": "image/K4RMA_Guard_Bronze_v1/ShieldRing.png", "ppu": 200, "sprites": [{"name": "ShieldRing", "x": 79, "y": 81, "width": 1144, "height": 1069, "pivotX": 0.5, "pivotY": 0.5}]},
+  {"id": "GuardBash", "source": "image/K4RMA_Guard_Bronze_v1/Bash.png", "ppu": 200, "sprites": [{"name": "Cleave", "x": 324, "y": 101, "width": 867, "height": 919, "pivotX": 0.5, "pivotY": 0.5}]},
+  {"id": "GuardShard", "source": "image/K4RMA_Guard_Bronze_v1/Shard.png", "ppu": 200, "sprites": [{"name": "Ward", "x": 382, "y": 200, "width": 693, "height": 674, "pivotX": 0.5, "pivotY": 0.5}]},
+  {"id": "GuardPillar", "source": "image/K4RMA_Guard_Bronze_v1/Pillar.png", "ppu": 200, "sprites": [{"name": "Pillar", "x": 328, "y": 110, "width": 369, "height": 1297, "pivotX": 0.5, "pivotY": 0.5}]},
+  {"id": "GuardWave", "source": "image/K4RMA_Guard_Bronze_v1/Wave.png", "ppu": 200, "sprites": [{"name": "Wave", "x": 278, "y": 182, "width": 664, "height": 1120, "pivotX": 0.5, "pivotY": 0.5}]},
+  {"id": "GuardSeal", "source": "image/K4RMA_Guard_Bronze_v1/GroundSeal.png", "ppu": 200, "sprites": [{"name": "GroundRing", "x": 98, "y": 194, "width": 1977, "height": 399, "pivotX": 0.5, "pivotY": 0.5}]}
 ]}

@@ -35,8 +35,23 @@ namespace KarmaPrototype
                 else if (selected == EnemyAttack.GD03) pose = "Ward";
             }
             else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
+            string sheet = "GuardianVFX";
+            if (PrimaryType == Essence.Ward)
+            {
+                if (selected == EnemyAttack.GD03) sheet = "GuardShard";
+                else if (selected == EnemyAttack.GD04) sheet = "GuardPillar";
+                else if (selected == EnemyAttack.GD02 && velocity.sqrMagnitude <= 0.01f) sheet = "GuardBash";
+                else if ((selected == EnemyAttack.GD02 || selected == EnemyAttack.GD05) && velocity.sqrMagnitude > 0.01f) sheet = "GuardWave";
+            }
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
-                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose);
+                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose, sheet);
+        }
+        // Decorations are separate from warning geometry, colliders and damage objects.
+        void GuardDecoration(string sheet, string pose, Vector2 center, Vector2 size, Color color, int order = 7)
+        {
+            if (KarmaArtwork.Sprite(sheet, pose) == null) return;
+            var sr = KarmaVisuals.Box(effectsRoot, "청동 결계 장식 · 피해 없음", center, size, color, order);
+            KarmaCombatVFX.ApplySprite(sr, sheet, pose, size);
         }
         IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null)
         {

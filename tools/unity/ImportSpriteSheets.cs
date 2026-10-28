@@ -16,10 +16,15 @@ public static class ImportSpriteSheets
     const string Folder = "Assets/K4RMA/Resources/K4RMAArtwork/Sheets";
     const string LibraryPath = "Assets/K4RMA/Resources/KarmaSpriteLibrary.asset";
 
-    public static string Main()
+    public static string Main() { return Import(null); }
+    public static string Guard() { return Import("image/K4RMA_Guard_Bronze_v1/"); }
+
+    static string Import(string prefix)
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play Mode before importing sheets.");
         var plan = Newtonsoft.Json.JsonConvert.DeserializeObject<Plan>(File.ReadAllText("tools/sprite-slices.json"));
+        var order = plan.sheets.Select((s, i) => new { s.id, index = i }).ToDictionary(s => s.id, s => s.index);
+        if (prefix != null) plan.sheets = plan.sheets.Where(s => s.source.StartsWith(prefix, StringComparison.Ordinal)).ToArray();
         Directory.CreateDirectory(Folder);
         foreach (var sheet in plan.sheets)
         {
@@ -95,7 +100,20 @@ public static class ImportSpriteSheets
         var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(LibraryPath);
         if (library == null) { library = ScriptableObject.CreateInstance<KarmaSpriteLibrary>(); AssetDatabase.CreateAsset(library, LibraryPath); }
         Undo.RecordObject(library, "Import all artwork sheets");
+        if (prefix != null)
+        {
+            var imported = entries.ToDictionary(s => s.id);
+            var combined = library.sheets.Select(s => imported.TryGetValue(s.id, out var replacement) ? replacement : s).ToList();
+            combined.AddRange(entries.Where(s => !library.sheets.Any(existing => existing.id == s.id)));
+            entries = combined.OrderBy(s => order.TryGetValue(s.id, out int index) ? index : int.MaxValue).ToList();
+        }
         library.sheets = entries.ToArray(); EditorUtility.SetDirty(library);
+        if (prefix != null)
+        {
+            AssetDatabase.SaveAssets(); Selection.activeObject = library;
+            string result = "PASS: imported " + plan.sheets.Length + " guard textures, " + count + " named sprites; existing sheets preserved.";
+            Debug.Log(result); return result;
+        }
         var settings = AssetDatabase.LoadAssetAtPath<KarmaArtworkSettings>("Assets/K4RMA/Resources/KarmaArtworkSettings.asset");
         Undo.RecordObject(settings, "Connect artwork sheets");
         settings.spriteLibrary = library;

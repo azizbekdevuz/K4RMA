@@ -1,0 +1,50 @@
+{
+  "reference": "output/vfx-concepts/2026-10-28/B-bronze-seals.png",
+  "styleReference": "output/validation/guard-practice.png",
+  "transparent": true,
+  "style": "Hand-painted HD 2D side-scroller VFX. Aged bronze plates, engraved circular seals, amber seams, local ivory highlights. Isolated modular assets. Rotation, trails, fades and collision remain runtime driven.",
+  "assets": [
+    {
+      "id": "ShieldRing",
+      "sheet": "GuardShield",
+      "pose": "ShieldRing",
+      "prompt": "A symmetrical circular protective halo, front facing. A complete ring made of 12 thick curved separated bronze plates, simple engraved circular seal motifs, amber seams outlining each segment. Wide completely TRANSPARENT empty center occupying about 65% of diameter so boss is visible through it. No central shield or disc. Ring centered exactly; equal width and height, delicate sparse flecks at perimeter.",
+      "source": "image/K4RMA_Guard_Bronze_v1/ShieldRing.png"
+    },
+    {
+      "id": "Bash",
+      "sheet": "GuardBash",
+      "pose": "Cleave",
+      "prompt": "A single heavy shield-bash impact, oriented to attack RIGHT (+X). Compact near-vertical curved impact crescent at right, pale ivory contact edge, sturdy broken bronze chips falling below and tiny amber sparks extending a short distance LEFT. Transparent opening left. Shape almost square, wider than tall by at most 1.35, centered contact effect, no full physical shield, no character, no long trail. Clear punchy outline, not an explosion ball.",
+      "source": "image/K4RMA_Guard_Bronze_v1/Bash.png"
+    },
+    {
+      "id": "Shard",
+      "sheet": "GuardShard",
+      "pose": "Ward",
+      "prompt": "A SINGLE compact thick curved triangular segment broken from an engraved bronze round shield. Broad curved trailing edge on LEFT and sharp reinforced wedge nose pointing RIGHT (+X), centered exactly. Heavy solid brown bronze with golden amber rim and ONE small engraved spiral, three-dimensional bevel suggested in handpainted 2D style, no photorealism. Width around 1.35 times height. No motion trail at all, no multiple fragments, only 2 tiny detached chips nearby. It must read as a thrown piece of armor rather than a glowing sword slash.",
+      "source": "image/K4RMA_Guard_Bronze_v1/Shard.png"
+    },
+    {
+      "id": "Pillar",
+      "sheet": "GuardPillar",
+      "pose": "Pillar",
+      "prompt": "ONE upright narrow bronze-and-stone defensive barrier pillar. Full height upright on +Y axis, perfectly side-facing straight silhouette. Single rectangular monolith with angular fractured cap and foot, bronze armored plates, a circular engraved amber seal in center, restrained lit seams down the vertical axis. Art height about 3.8 times width, not a wide arch. No horizontal base platform, no floor, no dust obscuring contour. Center full object on canvas with at least 10% margin top and bottom. All surrounding alpha transparent.",
+      "source": "image/K4RMA_Guard_Bronze_v1/Pillar.png"
+    },
+    {
+      "id": "Wave",
+      "sheet": "GuardWave",
+      "pose": "Wave",
+      "prompt": "One compact rightward traveling ward projectile for a survival-trial boss. A thick upright crescent of segmented bronze plates, curved back left and pointed two small tips to right, convex leading edge pointing RIGHT (+X). Amber rimlight, engraved bands and solid dark brown plate interiors. Height about 1.4 times width, centered. A short ivory shock accent only at leading edge. No long tail, no circle, no ground, no additional objects. Readable solid hostile silhouette.",
+      "source": "image/K4RMA_Guard_Bronze_v1/Wave.png"
+    },
+    {
+      "id": "GroundSeal",
+      "sheet": "GuardSeal",
+      "pose": "GroundRing",
+      "prompt": "ONE flat perspective ellipse magic seal seen from the SIDE for floor placement in a 2D side scroller, width about 4 times height. Two thin concentric engraved BRONZE bands with tiny amber luminous breaks and simple ancient circular motifs. Empty transparent center and outside, no filled floor or disc. Sparse small amber flecks along band only. It should read as a low golden floor ring under an arena, not an upright protective halo. Centered, fully contained with generous transparency.",
+      "source": "image/K4RMA_Guard_Bronze_v1/GroundSeal.png"
+    }
+  ]
+}

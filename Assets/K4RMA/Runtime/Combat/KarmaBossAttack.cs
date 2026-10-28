@@ -10,14 +10,14 @@ namespace KarmaPrototype
         float remaining, damage, stun;
         KarmaAttackContact contact;
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
-            Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null)
+            Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null, string visualSheet = "GuardianVFX")
         {
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
             var attack = go.AddComponent<KarmaBossAttack>();
             var picture = new GameObject("Directional attack artwork"); picture.transform.SetParent(go.transform, false);
             var sr = picture.AddComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(sr); sr.sortingOrder = 26;
             string pose = visualPose ?? VisualPose(velocity, size);
-            ConfigureVisual(sr, velocity, size, owner.Facing, pose);
+            ConfigureVisual(sr, velocity, size, owner.Facing, pose, visualSheet);
             sr.color = Color.Lerp(Color.white, color, 0.18f);
             attack.Visual = sr;
             KarmaCombatVFX.AttachAttack(sr, velocity, color, root);
@@ -36,10 +36,11 @@ namespace KarmaPrototype
             return size.x > size.y * 2 ? "GroundRing" : size.y > size.x * 1.5f ? "Pillar" : "Cleave";
         }
         // All moving art points along local +X. Upright pillars only mirror; hit boxes never rotate.
-        public static void ConfigureVisual(SpriteRenderer sr, Vector2 velocity, Vector2 size, int facing, string pose)
+        public static void ConfigureVisual(SpriteRenderer sr, Vector2 velocity, Vector2 size, int facing, string pose, string sheet = "GuardianVFX")
         {
             bool moving = velocity.sqrMagnitude > 0.01f;
-            KarmaCombatVFX.ApplySprite(sr, "GuardianVFX", pose, size * 1.15f, pose != "Pillar");
+            if (!KarmaCombatVFX.ApplySprite(sr, sheet, pose, size * 1.15f, pose != "Pillar"))
+                KarmaCombatVFX.ApplySprite(sr, "GuardianVFX", pose, size * 1.15f, pose != "Pillar");
             if (moving)
             {
                 // Fit the rotated sprite to the world-space footprint, including diagonal shots.

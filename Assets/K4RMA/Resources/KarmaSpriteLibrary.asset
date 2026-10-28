@@ -332,3 +332,27 @@ MonoBehaviour:
     source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-rear_rail.png
     sprites:
     - {fileID: 373112066, guid: ee166daffceb3462aa58078ea60d06fa, type: 3}
+  - id: GuardShield
+    source: image/K4RMA_Guard_Bronze_v1/ShieldRing.png
+    sprites:
+    - {fileID: -1470651544, guid: 6f7a3d5052864fa41ac650aaa87a4f04, type: 3}
+  - id: GuardBash
+    source: image/K4RMA_Guard_Bronze_v1/Bash.png
+    sprites:
+    - {fileID: -1391105952, guid: 9b218306696bf764bb2bb494d1dc6a42, type: 3}
+  - id: GuardShard
+    source: image/K4RMA_Guard_Bronze_v1/Shard.png
+    sprites:
+    - {fileID: -1533835179, guid: 0900b06d290254f4a84c6520e9617af5, type: 3}
+  - id: GuardPillar
+    source: image/K4RMA_Guard_Bronze_v1/Pillar.png
+    sprites:
+    - {fileID: -1163106952, guid: b9af6a72124ecf64fa57b43e3c88d72a, type: 3}
+  - id: GuardWave
+    source: image/K4RMA_Guard_Bronze_v1/Wave.png
+    sprites:
+    - {fileID: 129665699, guid: bcead75ee0358764b9feeb1e8fac873d, type: 3}
+  - id: GuardSeal
+    source: image/K4RMA_Guard_Bronze_v1/GroundSeal.png
+    sprites:
+    - {fileID: 883652632, guid: c2732a4c824ca9f4eb93370af4ab20fd, type: 3}

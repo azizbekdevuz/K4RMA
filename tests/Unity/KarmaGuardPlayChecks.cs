@@ -114,7 +114,7 @@ public static class KarmaGuardPlayChecks
             int returns = 0;
             foreach (var piece in pieces)
                 if (piece.name.StartsWith("회수 조각"))
-                { returns++; Check(piece.sprite == KarmaArtwork.Sprite("GuardianVFX", "Ward"), "GD03 returning fragment uses shield art"); }
+                { returns++; Check(piece.sprite == KarmaArtwork.Sprite("GuardShard", "Ward"), "GD03 returning fragment uses bronze shield art"); }
             Check(returns == config.BossTuning.shieldFragments, "GD03 returns every shield fragment");
             Check(Mathf.Abs(health - game.Player.Health - config.enemyDamage * config.BossTuning.damageMultiplier * 0.8f) < 0.01f,
                 "GD03 entire throw/fragment skill deals exactly one hit");

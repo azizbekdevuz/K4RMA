@@ -95,7 +95,8 @@ namespace KarmaPrototype
             {
                 pieces[i] = KarmaVisuals.Box(effectsRoot, "회수 조각 · 피해 없음", starts[i] + aims[i] * 0.8f,
                     Vector2.one, new Color(0.3f, 0.85f, 1, 0.65f), 8);
-                KarmaCombatVFX.ApplySprite(pieces[i], "GuardianVFX", "Ward", KarmaSpace.Units(new Vector2(0.4f, 0.4f)), true);
+                if (!KarmaCombatVFX.ApplySprite(pieces[i], "GuardShard", "Ward", KarmaSpace.Units(new Vector2(0.4f, 0.4f)), true))
+                    KarmaCombatVFX.ApplySprite(pieces[i], "GuardianVFX", "Ward", KarmaSpace.Units(new Vector2(0.4f, 0.4f)), true);
             }
             Intent = "GD03 방패 회수 · 복귀 판정 없음";
             float elapsed = 0;
@@ -103,7 +104,12 @@ namespace KarmaPrototype
             {
                 if (game.Paused) { yield return null; continue; }
                 elapsed += Time.deltaTime;
-                for (int i = 0; i < count; i++) pieces[i].transform.position = Vector2.Lerp(starts[i] + aims[i] * 0.8f, Position, Mathf.Clamp01(elapsed / 0.6f));
+                for (int i = 0; i < count; i++)
+                {
+                    pieces[i].transform.position = Vector2.Lerp(starts[i] + aims[i] * 0.8f, Position, Mathf.Clamp01(elapsed / 0.6f));
+                    Vector2 heading = Position - (Vector2)pieces[i].transform.position;
+                    pieces[i].transform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg);
+                }
                 yield return null;
             }
             yield return Recovery(1.2f);
@@ -124,6 +130,7 @@ namespace KarmaPrototype
             var wall = Mark("완성 방벽 · 이동 차단/피해 없음", center, size, false);
             game.Player.ResolveBarrier(x, size.x);
             wall.gameObject.AddComponent<KarmaSurface>(); wall.gameObject.AddComponent<BoxCollider2D>().size = Vector2.one;
+            GuardDecoration("GuardPillar", "Pillar", center, size, new Color(0.3f, 0.85f, 1, 0.6f));
             yield return Wait(0.5f);
             yield return Recovery(Mathf.Max(0.3f, Tuning.barrierRecovery));
         }
@@ -138,6 +145,11 @@ namespace KarmaPrototype
             yield return Motion(new Vector2(20, KarmaSpace.GuardianGroundY), 0.5f, Vector2.zero);
             Mark("결계 좌측", new Vector2(20 - KarmaSpace.Units(8), KarmaSpace.Units(5)), KarmaSpace.Units(new Vector2(0.25f, 10)), false);
             Mark("결계 우측", new Vector2(20 + KarmaSpace.Units(8), KarmaSpace.Units(5)), KarmaSpace.Units(new Vector2(0.25f, 10)), false);
+            GuardDecoration("GuardSeal", "GroundRing", new Vector2(20, KarmaSpace.Units(0.25f)),
+                KarmaSpace.Units(new Vector2(16, 2)), new Color(1, 1, 1, 0.55f), 3);
+            for (int side = -1; side <= 1; side += 2)
+                GuardDecoration("GuardPillar", "Pillar", new Vector2(20 + side * KarmaSpace.Units(8), KarmaSpace.Units(5)),
+                    KarmaSpace.Units(new Vector2(2.4f, 10)), new Color(1, 1, 1, 0.7f), 9);
             trial.Begin(Mathf.Clamp(Tuning.trialAttackCount, 3, 8), Tuning.trialAllowedHits);
             state = ActionState.Attack;
             for (int i = 0; i < trial.Total; i++)

@@ -46,8 +46,18 @@ namespace KarmaPrototype
             }
             float dx = game.Player.Position.x - Position.x;
             art.localScale = new Vector3(Mathf.Sign(dx) * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
-            float preferred = KarmaSpace.Units(PrimaryType == Essence.Flame ? 7 : PrimaryType == Essence.Ward ? 3 : 3.5f);
-            if (Mathf.Abs(dx) > preferred) Move(Mathf.Sign(dx) * game.Config.enemyMoveSpeed * Tuning.moveMultiplier * dt);
+            bool rush = PrimaryType == Essence.Dash;
+            float preferred = KarmaSpace.Units(PrimaryType == Essence.Flame ? 7 : PrimaryType == Essence.Ward ? 3 : rush ? 2.05f : 3.5f);
+            float speed = game.Config.enemyMoveSpeed * Tuning.moveMultiplier * (rush ? 1.55f : 1f);
+            if (Mathf.Abs(dx) > preferred)
+            {
+                Move(Mathf.Sign(dx) * speed * dt);
+                if (rush && FightSeconds >= nextStride)
+                {
+                    nextStride = FightSeconds + 0.12f;
+                    KarmaRisingPolish.Stride(effectsRoot, Position, Mathf.Sign(dx));
+                }
+            }
             else if (PrimaryType == Essence.Flame && Mathf.Abs(dx) < KarmaSpace.Units(4.2f)) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
             timer -= dt;
             if (timer <= 0) BeginAttack();
@@ -58,12 +68,20 @@ namespace KarmaPrototype
             bool escape = Position.x > KarmaStage.ArenaLeft + 5 && Position.x < KarmaStage.ArenaRight - 5;
             bool sight = ClearShot(Position, game.Player.Position);
             selected = EnemyAttack.GroundStrike;
+            bool found = false;
+            float meleeReach = KarmaSpace.Units(3.4f);
             for (int i = 0; i < attacks.Count; i++)
             {
                 var candidate = attacks[cycleIndex++ % attacks.Count];
                 if (!KarmaPatternCatalog.CanSelect(candidate, previous, distance / KarmaSpace.Scale, game.Player.Airborne,
                     sight, FightSeconds < shieldUntil, escape, FightSeconds >= nextUltimate)) continue;
-                selected = candidate; break;
+                if (PrimaryType == Essence.Dash && candidate == EnemyAttack.GroundStrike && distance > meleeReach) continue;
+                selected = candidate; found = true; break;
+            }
+            if (PrimaryType == Essence.Dash && (!found || (selected == EnemyAttack.GroundStrike && distance > meleeReach)))
+            {
+                timer = 0.2f;
+                return;
             }
             previous = selected;
             if (KarmaPatternCatalog.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
@@ -80,7 +98,9 @@ namespace KarmaPrototype
             ClearPatternObjects();
             fullShield = frontalGuard = swordWard = false;
             state = ActionState.Approach; running = false;
-            timer = Mathf.Max(0.22f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * Tempo);
+            float delay = game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * Tempo;
+            if (PrimaryType == Essence.Dash) delay *= 0.58f;
+            timer = Mathf.Max(PrimaryType == Essence.Dash ? 0.26f : 0.22f, delay);
         }
         IEnumerator Wait(float seconds)
         {

@@ -30,6 +30,35 @@ namespace KarmaPrototype
             return attack;
         }
         public SpriteRenderer Visual { get; private set; }
+        public void Repaint(Sprite sprite, bool fillFootprint)
+        {
+            if (sprite == null || Visual == null) return;
+            Visual.sprite = sprite;
+            var glowObject = Visual.transform.Find("Attack radiance");
+            if (glowObject != null)
+            {
+                var glow = glowObject.GetComponent<SpriteRenderer>();
+                if (glow != null) glow.sprite = sprite;
+            }
+            var bounds = sprite.bounds.size;
+            if (fillFootprint)
+            {
+                Visual.transform.localScale = new Vector3(size.x / Mathf.Max(0.01f, bounds.x), size.y / Mathf.Max(0.01f, bounds.y), 1f);
+                return;
+            }
+            bool moving = velocity.sqrMagnitude > 0.01f;
+            if (!moving)
+            {
+                float fit = Mathf.Min(size.x / Mathf.Max(0.01f, bounds.x), size.y / Mathf.Max(0.01f, bounds.y));
+                Visual.transform.localScale = new Vector3(fit, fit, 1f);
+                return;
+            }
+            Vector2 axis = velocity.normalized;
+            float width = Mathf.Abs(axis.x) * bounds.x + Mathf.Abs(axis.y) * bounds.y;
+            float height = Mathf.Abs(axis.y) * bounds.x + Mathf.Abs(axis.x) * bounds.y;
+            float fitted = Mathf.Min(size.x / Mathf.Max(0.01f, width), size.y / Mathf.Max(0.01f, height)) * 1.15f;
+            Visual.transform.localScale = new Vector3(fitted, fitted, 1f);
+        }
         public static string VisualPose(Vector2 velocity, Vector2 size)
         {
             if (velocity.sqrMagnitude > 0.01f) return size.magnitude < KarmaSpace.Units(1) ? "Blade" : "Wave";

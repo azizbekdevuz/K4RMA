@@ -5,6 +5,32 @@ namespace KarmaPrototype
     public sealed partial class KarmaEnemy
     {
         readonly Vector2 bodyAttackSize = KarmaSpace.Units(new Vector2(1.4f, 1.8f));
+        float nextStride;
+        IEnumerator RisingMelee()
+        {
+            float gap = game.Player.Position.x - Position.x;
+            direction = gap < 0 ? -1 : 1;
+            art.localScale = new Vector3(direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
+            if (Mathf.Abs(gap) > KarmaSpace.Units(2.15f))
+            {
+                float step = Mathf.Clamp(Mathf.Abs(gap) - KarmaSpace.Units(1.65f), 0f, KarmaSpace.Units(2.2f));
+                Vector2 close = new Vector2(Mathf.Clamp(Position.x + direction * step, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
+                state = ActionState.Approach;
+                yield return Motion(close, 0.16f, Vector2.zero);
+            }
+            Vector2 size = KarmaSpace.Units(new Vector2(2.55f, 1.55f));
+            Vector2 center = new Vector2(Position.x + direction * KarmaSpace.Units(1.35f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.72f));
+            state = ActionState.Telegraph;
+            var mark = Mark("기본 베기", center, size);
+            Intent = "기본 베기 · 거리를 유지하세요";
+            yield return Wait(Warning(0.32f));
+            if (mark != null) Destroy(mark.gameObject);
+            state = ActionState.Attack;
+            var slash = Attack(center, Vector2.zero, size, 0.16f, 0.8f, null, 0f, "Cleave");
+            if (slash != null) slash.Repaint(KarmaRisingArt.Get("Slash"), true);
+            yield return Wait(0.18f);
+            yield return Recovery(0.62f);
+        }
         IEnumerator RiseSlam(bool shield)
         {
             Vector2 start = Position;

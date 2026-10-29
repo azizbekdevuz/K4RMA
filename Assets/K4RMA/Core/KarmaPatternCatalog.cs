@@ -23,6 +23,7 @@ namespace KarmaPrototype
                     if (owned.Count == 3) result.Add(EnemyAttack.SW05);
                     break;
                 case Essence.Dash:
+                    result.Add(EnemyAttack.GroundStrike);
                     result.Add(EnemyAttack.UP01); result.Add(EnemyAttack.UP02);
                     if (owned.Contains(Essence.Flame)) result.Add(EnemyAttack.UP03);
                     if (owned.Contains(Essence.Ward)) result.Add(EnemyAttack.UP04);

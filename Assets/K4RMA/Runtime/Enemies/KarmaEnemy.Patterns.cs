@@ -13,10 +13,10 @@ namespace KarmaPrototype
                 case EnemyAttack.SW04: return CounterWard();
                 case EnemyAttack.SW05: return AerialSwords();
                 case EnemyAttack.GroundStrike: return PrimaryType == Essence.Dash ? RisingMelee() : GroundStrike();
-                case EnemyAttack.UP01: return RiseSlam(false);
+                case EnemyAttack.UP01: return AreaLanding();
                 case EnemyAttack.UP02: return AirPursuit(true);
-                case EnemyAttack.UP03: return GroundBlade();
-                case EnemyAttack.UP04: return RiseSlam(true);
+                case EnemyAttack.UP03: return InheritedWave();
+                case EnemyAttack.UP04: return FragmentSlam();
                 case EnemyAttack.UP05: return Crossings();
                 case EnemyAttack.GD02: return HeavyStrike();
                 case EnemyAttack.GD03: return SplitShield();

@@ -59,11 +59,11 @@ namespace KarmaPrototype
                 case EnemyAttack.SW03: return "SW03 검흔 상승 · 검기 후 바닥 검흔에서 이탈";
                 case EnemyAttack.SW04: return "SW04 반격 검막 · 사출 유도 후 회피";
                 case EnemyAttack.SW05: return "SW05 공중 검 사출 · 순차 조준을 피하고 착지 반격";
-                case EnemyAttack.UP01: return "UP01 상승 내려찍기 · 착지 후 낮은 충격파";
-                case EnemyAttack.UP02: return "UP02 공중 추격 · 목표 고정 후 수평 이동/낙하";
-                case EnemyAttack.UP03: return "UP03 지면 검기 상승 · 등 뒤 또는 범위 밖으로";
-                case EnemyAttack.UP04: return "UP04 방어막 내려찍기 · 착지 파편을 점프로";
-                case EnemyAttack.UP05: return "UP05 연속 횡단 · 지상/공중/지상/내려찍기";
+                case EnemyAttack.UP01: return "UP01 착지 범위 · 표시된 바닥에서 이탈";
+                case EnemyAttack.UP02: return "UP02 공중 추격 · 추적 중 이동, 고정 후 궤적 이탈";
+                case EnemyAttack.UP03: return "UP03 전방 대검기 · 등 뒤로 이탈";
+                case EnemyAttack.UP04: return "UP04 방패 파편 · 피하거나 패링해 기절";
+                case EnemyAttack.UP05: return "UP05 고속 횡단 · 예고 궤적을 읽고 탈진을 노리세요";
                 case EnemyAttack.GD01: return "GD01 자동방어막 생성";
                 case EnemyAttack.GD02: return "GD02 강공격 · K 반격 성공 시 방어막 파괴";
                 case EnemyAttack.GD03: return "GD03 분열 방패 · 조각 조준 고정 후 이탈";

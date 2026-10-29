@@ -8,9 +8,10 @@ namespace KarmaPrototype
         KarmaEnemy owner;
         Vector2 velocity, size;
         float remaining, damage, stun;
+        bool parryStun;
         KarmaAttackContact contact;
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
-            Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null)
+            Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null, bool parryStun = false)
         {
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
             var attack = go.AddComponent<KarmaBossAttack>();
@@ -26,7 +27,7 @@ namespace KarmaPrototype
                 new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y) * 1.15f, 0.24f, angle, color);
             burst.transform.parent.localScale = new Vector3(sr.flipX ? -1 : 1, 1, 1);
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;
-            attack.remaining = life; attack.damage = damage; attack.contact = contact ?? new KarmaAttackContact(); attack.stun = stun;
+            attack.remaining = life; attack.damage = damage; attack.contact = contact ?? new KarmaAttackContact(); attack.stun = stun; attack.parryStun = parryStun;
             return attack;
         }
         public SpriteRenderer Visual { get; private set; }
@@ -91,7 +92,7 @@ namespace KarmaPrototype
             float dt = Mathf.Min(Time.deltaTime, Mathf.Max(0, remaining));
             Vector2 from = transform.position, to = from + velocity * dt;
             transform.position = to;
-            owner.TryAttackHit(from, to, size, damage, contact, stun);
+            owner.TryAttackHit(from, to, size, damage, contact, stun, parryStun);
             remaining -= Time.deltaTime;
             if (remaining <= 0 || to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12))
             { gameObject.SetActive(false); Destroy(gameObject); }

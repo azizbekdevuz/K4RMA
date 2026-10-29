@@ -135,7 +135,9 @@ namespace KarmaPrototype
             else if (action == "Telegraph") pose = armored && poses.ContainsKey("Guard") ? "Guard" : "Windup";
             else if (action == "Attack")
             {
-                if (sheet == "Rise") pose = airborne ? "AirSlash" : attack == EnemyAttack.UP01 || attack == EnemyAttack.UP03 ? "Rising" : "Slash";
+                if (sheet == "Rise")
+                    pose = !airborne && (attack == EnemyAttack.UP01 || attack == EnemyAttack.UP04) ? "Landing"
+                        : airborne ? "AirSlash" : "Slash";
                 else if (sheet == "Ward") pose = attack == EnemyAttack.GD02 ? "ShieldBash" : attack == EnemyAttack.GD03 ? "Thrust" : "Windup";
                 else if (sheet == "Wave") pose = attack == EnemyAttack.SW01 || attack == EnemyAttack.SW02 ? "Wave" : airborne ? "Rising" : "Slash";
                 else pose = "Slash";

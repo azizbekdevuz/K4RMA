@@ -47,7 +47,7 @@ namespace KarmaPrototype
             { child.gameObject.SetActive(false); Destroy(child.gameObject); }
         }
         KarmaBossAttack Attack(Vector2 at, Vector2 velocity, Vector2 size, float life,
-            float multiplier = 1, KarmaAttackContact contact = null, float stun = 0, string visualPose = null)
+            float multiplier = 1, KarmaAttackContact contact = null, float stun = 0, string visualPose = null, bool parryStun = false)
         {
             string pose = visualPose;
             if (pose == null)
@@ -60,9 +60,9 @@ namespace KarmaPrototype
                 else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
             }
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
-                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose);
+                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose, parryStun);
         }
-        IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null)
+        IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null, Sprite sweepSprite = null)
         {
             Vector2 from = Position; float elapsed = 0;
             var ledger = contact ?? new KarmaAttackContact();
@@ -72,10 +72,11 @@ namespace KarmaPrototype
             SpriteRenderer sweep = null;
             if (hitSize != Vector2.zero)
             {
-                sweep = KarmaCombatVFX.Burst(effectsRoot, from, KarmaArtwork.Sprite("GuardianVFX", "AirSlash"),
+                var sweepArt = sweepSprite != null ? sweepSprite : KarmaArtwork.Sprite("GuardianVFX", "AirSlash");
+                sweep = sweepArt == null ? null : KarmaCombatVFX.Burst(effectsRoot, from, sweepArt,
                     "Guardian motion slash", hitSize * 1.4f, duration, 0, new Color(1, 0.45f, 0.15f));
                 // AirSlash is authored upright: mirror horizontally without turning rising art upside down.
-                sweep.transform.parent.localScale = new Vector3(Facing, 1, 1);
+                if (sweep != null) sweep.transform.parent.localScale = new Vector3(Facing, 1, 1);
             }
             while (elapsed < duration && Active)
             {
@@ -92,11 +93,15 @@ namespace KarmaPrototype
             {
                 Destroy(sweep.transform.parent.gameObject);
                 if (heading.y < -0.1f && target.y <= KarmaSpace.GuardianGroundY + 0.1f)
-                    KarmaCombatVFX.Burst(effectsRoot, target, KarmaArtwork.Sprite("GuardianVFX", "Landing"),
-                        "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f));
+                {
+                    var dust = KarmaArtwork.Sprite("GuardianVFX", "Landing");
+                    if (dust != null)
+                        KarmaCombatVFX.Burst(effectsRoot, target, dust,
+                            "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f));
+                }
             }
         }
-        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun)
+        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, bool parryStun = false)
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
@@ -107,8 +112,9 @@ namespace KarmaPrototype
             player.TakeDamage(amount);
             if (player.ParryCount != parries)
             {
-                // Projectile parries remain local; GD02 is the shield-breaking parry.
-                if (selected == EnemyAttack.GD02) pendingParry = true;
+                // GD02 breaks its own shield. UP04 fragments are the only other parry stun.
+                if (selected == EnemyAttack.GD02 || parryStun) pendingParry = true;
+                if (parryStun) KarmaRisingPolish.ParryBreak(effectsRoot, player.Position);
                 return;
             }
             if (player.Health < before)

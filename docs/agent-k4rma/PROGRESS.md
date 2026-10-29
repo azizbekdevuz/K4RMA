@@ -5,10 +5,21 @@
 - Active branch: `feat/real-asset-integration`
 - Baseline before Task 1: `ec0436215c540f42c20e3114039b1fe7fd9be49e`
 - Unity: `6000.6.2f1` (`770e33f6875c`)
-- Current task: Task 1 implemented
-- Task 1 status: Rising-slash combat is in local commits. The editor batch compile of this repository passed after the knockback repair. Human feel playtest not run.
-- Task 2 status: Not started
-- Play Mode this session: Passed in an isolated project copy. The working scenes were not played by hand.
+- Current task: Rising Slash rework from the October 29 review
+- Task 1 status: Local commits now include the aggressive identity, distinct UP01–UP05, illustrated effects, and an editor practice menu. Human feel playtest not run.
+- Task 2 status: Not started. The upper-left 체공 status line was removed from the combat HUD. The 체공 ability itself is still in the player code because the locked story text still defines it and the meeting note did not replace that requirement.
+- Play Mode this session: Not run. The open editor compiled the scripts with no `error CS`. That does not validate feel, hit timing, or visuals.
+
+## October 29 rising-slash rework
+
+- UP01 is a locked ground area. UP04 is an eight-way shield burst whose parry stuns the guardian. They no longer share `RiseSlam`.
+- UP03 is a large facing-direction sword wave. The small rising blade is gone.
+- UP05 is eight warned crossings at mixed heights, then exhaustion.
+- Rising Slash primary guardians close faster and can use a short melee only inside range.
+- New effects live in `Assets/K4RMA/Resources/K4RMAArtwork/RisingSlash`. Fragments are cut from `Shield.png`. No character art was regenerated.
+- Practice menu: `K4RMA/상승베기 연습`.
+- Core checks: 402 passed with Unity's bundled dotnet. Isolated Play Mode regression was not rerun.
+- Local commits: `d003b64` effects, `f79d208` rushdown melee, `9133fc7` importer settings, `277ab16` distinct attacks, `03ae373` practice menu, `9e7ef07` HUD text. Nothing pushed.
 
 ## Verified source decisions
 

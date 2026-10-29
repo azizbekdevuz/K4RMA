@@ -8,6 +8,8 @@
 /[Rr]ecordings/
 /Assets/AssetStoreTools*
 
+/ProjectSettings/ProjectAuditorSettings.asset
+
 # Builds, validation reports and .NET test intermediates
 /[Bb]uild/
 /[Bb]uilds/

@@ -37,6 +37,35 @@ namespace KarmaPrototype
                 KarmaCombatVFX.Burst(parent, at, dust, "Landing Impact", KarmaSpace.Units(new Vector2(4.2f, 1.5f)), 0.34f, 0f, tint);
             if (game != null) game.PresentationShake(0.12f, 0.7f);
         }
+        public static void Stride(Transform parent, Vector2 at, float direction)
+        {
+            var sprite = KarmaRisingArt.Get("SlashEcho");
+            if (parent == null || sprite == null) return;
+            var sweep = KarmaCombatVFX.Burst(parent, at + Vector2.up * KarmaSpace.Units(0.85f), sprite,
+                "상승 접근", KarmaSpace.Units(new Vector2(2.4f, 0.85f)), 0.16f, 0f, new Color(1f, 0.72f, 0.28f));
+            if (sweep != null) sweep.transform.parent.localScale = new Vector3(direction < 0 ? -1 : 1, 1, 1);
+        }
+        public static void AreaImpact(KarmaGame game, Transform parent, Vector2 at, Vector2 size)
+        {
+            if (parent == null) return;
+            var sprite = KarmaRisingArt.Get("Impact");
+            if (sprite != null)
+                KarmaCombatVFX.Burst(parent, at, sprite, "착지 범위 충격", size, 0.42f, 0f, new Color(1f, 0.62f, 0.16f));
+            if (game != null) game.PresentationShake(0.14f, 0.75f);
+        }
+        public static void ShieldPlant(Transform parent, Vector2 at, Vector2 size)
+        {
+            var sprite = KarmaRisingArt.Get("Shield");
+            if (parent == null || sprite == null) return;
+            KarmaCombatVFX.Burst(parent, at + Vector2.up * KarmaSpace.Units(1.15f), sprite,
+                "계승 방패", size, 0.34f, 0f, KarmaArtwork.BarrierColor);
+        }
+        public static void ParryBreak(Transform parent, Vector2 at)
+        {
+            var sprite = KarmaRisingArt.Get("Parry");
+            if (parent == null || sprite == null) return;
+            KarmaCombatVFX.Burst(parent, at, sprite, "파편 패링", KarmaSpace.Units(new Vector2(3.4f, 3.4f)), 0.36f, 0f, new Color(1f, 0.9f, 0.55f));
+        }
         public static void DressShot(SpriteRenderer visual, bool shield)
         {
             if (visual == null || visual.sprite == null) return;

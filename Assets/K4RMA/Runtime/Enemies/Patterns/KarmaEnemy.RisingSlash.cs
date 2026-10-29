@@ -10,28 +10,38 @@ namespace KarmaPrototype
             Vector2 start = Position;
             Vector2 apex = new Vector2(Mathf.Clamp(start.x + direction * KarmaSpace.Units(2), KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.GuardianGroundY + Mathf.Clamp(Tuning.riseHeight, KarmaSpace.Units(2), KarmaSpace.Units(6)));
             state = ActionState.Telegraph;
-            var path = PathMark(start, apex, bodyAttackSize);
-            yield return Wait(Warning(0.65f)); Destroy(path.gameObject);
+            var path = RisingPath(start, apex, bodyAttackSize, KarmaRisingCue.Charging);
+            var charge = BeginRisingCharge(KarmaRisingCue.Charging);
+            yield return Wait(Warning(0.65f));
+            EndRisingCharge(charge);
+            Destroy(path.gameObject);
             fullShield = shield;
             yield return Motion(apex, 0.4f, bodyAttackSize);
             Vector2 landing = new Vector2(Mathf.Clamp(game.Player.Position.x, KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.GuardianGroundY);
             // Limit the slam's horizontal reach; target is immutable once displayed.
             landing.x = Mathf.Clamp(landing.x, apex.x - KarmaSpace.Units(4), apex.x + KarmaSpace.Units(4));
-            var drop = PathMark(apex, landing, bodyAttackSize);
-            var left = PathMark(new Vector2(landing.x, KarmaSpace.Units(0.55f)), new Vector2(Mathf.Max(KarmaStage.ArenaLeft, landing.x - KarmaSpace.Units(9)), KarmaSpace.Units(0.55f)), KarmaSpace.Units(new Vector2(1.1f, 0.65f)));
-            var right = PathMark(new Vector2(landing.x, KarmaSpace.Units(0.55f)), new Vector2(Mathf.Min(KarmaStage.ArenaRight, landing.x + KarmaSpace.Units(9)), KarmaSpace.Units(0.55f)), KarmaSpace.Units(new Vector2(1.1f, 0.65f)));
+            var drop = RisingPath(apex, landing, bodyAttackSize, KarmaRisingCue.Locked);
+            var left = RisingPath(new Vector2(landing.x, KarmaSpace.Units(0.55f)), new Vector2(Mathf.Max(KarmaStage.ArenaLeft, landing.x - KarmaSpace.Units(9)), KarmaSpace.Units(0.55f)), KarmaSpace.Units(new Vector2(1.1f, 0.65f)), KarmaRisingCue.Locked);
+            var right = RisingPath(new Vector2(landing.x, KarmaSpace.Units(0.55f)), new Vector2(Mathf.Min(KarmaStage.ArenaRight, landing.x + KarmaSpace.Units(9)), KarmaSpace.Units(0.55f)), KarmaSpace.Units(new Vector2(1.1f, 0.65f)), KarmaRisingCue.Locked);
+            charge = BeginRisingCharge(KarmaRisingCue.Locked);
+            KarmaRisingPolish.LockPop(effectsRoot, new Vector2(landing.x, KarmaSpace.Units(0.55f)));
             Intent = shield ? "UP04 착지점 고정 · 착지 시 방어 해제/지면 파편" : "UP01 착지점 고정 · 착지 충격파는 점프로";
-            yield return Wait(Warning(0.55f)); Destroy(drop.gameObject);
+            yield return Wait(Warning(0.55f));
+            EndRisingCharge(charge);
+            Destroy(drop.gameObject);
             yield return Motion(landing, 0.3f, bodyAttackSize);
             fullShield = false; Destroy(left.gameObject); Destroy(right.gameObject);
             // The pair shares one contact so overlapping waves cannot hit twice.
             // UP04 fragments replace the shockwave. They are not added on top of it.
+            Vector2 impact = new Vector2(landing.x, KarmaSpace.Units(0.55f));
+            KarmaRisingPolish.Landing(game, effectsRoot, impact, shield);
             var groundContact = new KarmaAttackContact();
             foreach (float side in new[] { -1f, 1f })
             {
-                var shot = Attack(new Vector2(landing.x, KarmaSpace.Units(0.55f)), Vector2.right * side * KarmaSpace.Units(10), KarmaSpace.Units(new Vector2(1.1f, 0.65f)), 0.9f, 1, groundContact);
+                var shot = Attack(impact, Vector2.right * side * KarmaSpace.Units(10), KarmaSpace.Units(new Vector2(1.1f, 0.65f)), 0.9f, 1, groundContact, 0, shield ? "Blade" : "GroundRing");
                 shot.name = shield ? "착지 방어막 파편" : "착지 지면 충격파";
-                if (shield) shot.Visual.color = KarmaArtwork.BarrierColor;
+                shot.Visual.color = shield ? KarmaArtwork.BarrierColor : new Color(1f, 0.78f, 0.45f, 1f);
+                KarmaRisingPolish.DressShot(shot.Visual, shield);
             }
             if (!shield && Enraged)
             {
@@ -52,6 +62,7 @@ namespace KarmaPrototype
             Vector2 origin = Position, target = origin;
             SpriteRenderer path = null;
             state = ActionState.Telegraph;
+            var charge = BeginRisingCharge(KarmaRisingCue.Tracking);
             float elapsed = 0;
             while (elapsed < 0.4f && Active)
             {
@@ -59,14 +70,18 @@ namespace KarmaPrototype
                 target = game.Player.Position;
                 target.x = Mathf.Clamp(target.x, Mathf.Max(KarmaStage.ArenaLeft + 2, origin.x - KarmaSpace.Units(7)), Mathf.Min(KarmaStage.ArenaRight - 2, origin.x + KarmaSpace.Units(7)));
                 target.y = Mathf.Clamp(target.y, KarmaSpace.Units(2.5f), KarmaSpace.Units(7));
-                if (path == null) path = PathMark(origin, target, bodyAttackSize, false);
+                if (path == null) path = RisingPath(origin, target, bodyAttackSize, KarmaRisingCue.Tracking);
                 else path.GetComponent<KarmaAttackWarning>().SetPath(path, origin, target, bodyAttackSize);
                 elapsed += Time.deltaTime; yield return null;
             }
             if (path != null) Destroy(path.gameObject);
-            path = PathMark(origin, target, bodyAttackSize);
+            if (charge != null) charge.Lock();
+            KarmaRisingPolish.LockPop(effectsRoot, target);
+            path = RisingPath(origin, target, bodyAttackSize, KarmaRisingCue.Locked);
             Intent = "UP02 목표 고정 · 추적 종료";
-            yield return Wait(Warning(0.4f)); Destroy(path.gameObject);
+            yield return Wait(Warning(0.4f));
+            EndRisingCharge(charge);
+            Destroy(path.gameObject);
             yield return Motion(target, 0.45f, bodyAttackSize);
             // Return is presentation only: no unannounced falling hit box.
             yield return Motion(new Vector2(target.x, KarmaSpace.GuardianGroundY), 0.4f, Vector2.zero);

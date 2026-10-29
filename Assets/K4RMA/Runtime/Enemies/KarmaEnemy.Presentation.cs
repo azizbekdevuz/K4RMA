@@ -18,6 +18,28 @@ namespace KarmaPrototype
             marker.GetComponent<KarmaAttackWarning>().SetPath(marker, from, to, size);
             return marker;
         }
+        SpriteRenderer RisingPath(Vector2 from, Vector2 to, Vector2 size, KarmaRisingCue cue)
+        {
+            var color = cue == KarmaRisingCue.Locked
+                ? new Color(1f, 0.28f, 0.02f, 0.66f)
+                : cue == KarmaRisingCue.Tracking
+                    ? new Color(0.15f, 0.95f, 1f, 0.5f)
+                    : new Color(1f, 0.78f, 0.28f, 0.58f);
+            string label = cue == KarmaRisingCue.Locked ? "상승베기 고정" : cue == KarmaRisingCue.Tracking ? "상승베기 추적" : "상승베기 준비";
+            var marker = KarmaVisuals.Box(effectsRoot, label, Vector2.zero, Vector2.one, color, 9);
+            var warning = marker.gameObject.AddComponent<KarmaAttackWarning>();
+            warning.SetPath(marker, from, to, size);
+            warning.Emphasize();
+            return marker;
+        }
+        KarmaRisingCharge BeginRisingCharge(KarmaRisingCue cue)
+        {
+            return KarmaRisingCharge.Begin(effectsRoot, transform, cue);
+        }
+        static void EndRisingCharge(KarmaRisingCharge charge)
+        {
+            if (charge != null) charge.End();
+        }
         void ClearPatternObjects()
         {
             if (effectsRoot == null) return;
@@ -25,15 +47,18 @@ namespace KarmaPrototype
             { child.gameObject.SetActive(false); Destroy(child.gameObject); }
         }
         KarmaBossAttack Attack(Vector2 at, Vector2 velocity, Vector2 size, float life,
-            float multiplier = 1, KarmaAttackContact contact = null, float stun = 0)
+            float multiplier = 1, KarmaAttackContact contact = null, float stun = 0, string visualPose = null)
         {
-            string pose = null;
-            if (velocity.sqrMagnitude > 0.01f)
+            string pose = visualPose;
+            if (pose == null)
             {
-                if (selected == EnemyAttack.SW02) pose = "AimedWave";
-                else if (selected == EnemyAttack.SW05 || selected == EnemyAttack.GD03) pose = "Blade";
+                if (velocity.sqrMagnitude > 0.01f)
+                {
+                    if (selected == EnemyAttack.SW02) pose = "AimedWave";
+                    else if (selected == EnemyAttack.SW05 || selected == EnemyAttack.GD03) pose = "Blade";
+                }
+                else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
             }
-            else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
                 Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose);
         }

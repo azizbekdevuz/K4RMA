@@ -7,6 +7,13 @@ namespace KarmaPrototype
     {
         readonly KarmaHitFeedbackState hitFeedback = new KarmaHitFeedbackState();
         Vector3 lastShake;
+        float presentationShakeUntil, presentationShakeStrength;
+        public void PresentationShake(float seconds, float strength)
+        {
+            if (!IsCombat || seconds <= 0f || strength <= 0f) return;
+            presentationShakeUntil = Mathf.Max(presentationShakeUntil, Time.unscaledTime + seconds);
+            presentationShakeStrength = Mathf.Max(presentationShakeStrength, strength);
+        }
         Bounds stageBackgroundBounds;
         bool hasStageBackground;
         public void FrameStageBackground(Bounds bounds)
@@ -46,6 +53,8 @@ namespace KarmaPrototype
         void ResetHitFeedback()
         {
             hitFeedback.Reset();
+            presentationShakeUntil = 0f;
+            presentationShakeStrength = 0f;
             if (GameCamera != null) GameCamera.transform.position -= lastShake;
             lastShake = Vector3.zero;
         }
@@ -70,6 +79,12 @@ namespace KarmaPrototype
             {
                 float strength = Config.Techniques.hitShakeStrength * hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds);
                 lastShake = new Vector3(Mathf.Sin(Time.unscaledTime * 97) * strength, Mathf.Sin(Time.unscaledTime * 73) * strength * 0.55f, 0);
+            }
+            if (!Paused && Time.unscaledTime < presentationShakeUntil)
+            {
+                float fade = Mathf.Clamp01((presentationShakeUntil - Time.unscaledTime) / 0.12f);
+                float kick = presentationShakeStrength * fade;
+                lastShake += new Vector3(Mathf.Sin(Time.unscaledTime * 91f) * kick, Mathf.Sin(Time.unscaledTime * 67f) * kick * 0.42f, 0f);
             }
             GameCamera.transform.position += lastShake;
         }

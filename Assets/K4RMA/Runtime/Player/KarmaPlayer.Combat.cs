@@ -10,6 +10,7 @@ namespace KarmaPrototype
         Vector2 airSlashDirection, airSlashPrevious;
         float airSlashBufferedUntil, airRecoveryLeft, airLaunchX, risingSlashUntil;
         bool risingSlashHit, attackSuppressedUntilRelease;
+        KarmaHoverCue hoverCue;
 
         public bool HoverReady { get { return techniques.HoverReady; } }
         public bool Hovering { get { return techniques.Hovering; } }
@@ -146,6 +147,8 @@ namespace KarmaPrototype
             animator.PlayPose("Apex", duration);
             Essences.NotifyUnique(Essence.Dash);
             KarmaArtworkVFX.Player(game, Position, 11, Vector2.up);
+            if (hoverCue != null) Destroy(hoverCue.gameObject);
+            hoverCue = KarmaHoverCue.Attach(transform);
             KarmaCombatVFX.SpawnSprite(
                 game.World,
                 Position + Vector2.up * KarmaSpace.Units(0.2f),
@@ -167,6 +170,13 @@ namespace KarmaPrototype
         {
             if (!techniques.Hovering) return;
             techniques.EndHover();
+            if (hoverCue != null)
+            {
+                var cue = hoverCue;
+                hoverCue = null;
+                if (game != null) cue.Release(drop, game.World);
+                else Destroy(cue.gameObject);
+            }
             if (body == null || game == null) return;
             body.gravityScale = game.Config.gravityScale;
             if (drop) body.linearVelocity = new Vector2(body.linearVelocity.x, -KarmaSpace.Units(1.2f));

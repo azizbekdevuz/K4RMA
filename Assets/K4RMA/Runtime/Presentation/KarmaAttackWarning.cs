@@ -10,6 +10,8 @@ namespace KarmaPrototype
         SpriteRenderer visual;
         LineRenderer edge, arrow;
         Color baseColor;
+        bool emphasized;
+        public void Emphasize() { emphasized = true; }
         public void SetPath(SpriteRenderer renderer, Vector2 from, Vector2 to, Vector2 size)
         {
             if (visual == null) { visual = renderer; baseColor = renderer.color; }
@@ -85,8 +87,10 @@ namespace KarmaPrototype
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 15);
             var fill = baseColor; fill.a = baseColor.a * (0.6f + pulse * 0.35f); visual.color = fill;
             var color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.7f + pulse * 0.3f);
-            arrow.startColor = arrow.endColor = color; arrow.widthMultiplier = KarmaSpace.Units(0.055f);
-            edge.startColor = edge.endColor = color; edge.widthMultiplier = KarmaSpace.Units(0.035f + pulse * 0.015f);
+            arrow.startColor = arrow.endColor = color;
+            arrow.widthMultiplier = KarmaSpace.Units(emphasized ? 0.085f : 0.055f);
+            edge.startColor = edge.endColor = color;
+            edge.widthMultiplier = KarmaSpace.Units((emphasized ? 0.06f : 0.035f) + pulse * (emphasized ? 0.025f : 0.015f));
         }
         static float Cross(Vector2 a, Vector2 b) { return a.x * b.y - a.y * b.x; }
         void OnDestroy() { if (shape != null) Destroy(shape); }

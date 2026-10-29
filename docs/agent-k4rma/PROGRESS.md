@@ -33,12 +33,19 @@ Details: `docs/agent-k4rma/SOURCE_OF_TRUTH.md`.
 | UP03 | Present | Flame gate unchanged. Forward blade and rear escape kept |
 | UP04 | Refined | Shield ends on landing. Fragments replace the shockwave |
 | UP05 | Refined | Same phase order. Low slash height. Exhaustion recovery message |
-| Combat feedback and polish | Partial | Existing sheet VFX and poses. No new generated character frames |
+| Combat feedback and polish | Demo pass | UP01/UP02 charge and lock cue, UP01/UP04 landing flash, UP01/UP04 ground wave on the existing hitbox, 체공 aura. No new character art |
 | Unity compilation | Passed | Editor 6000.6.2f1 batchmode on this repository. No `error CS`. Earlier Roslyn-only pass did not see the missing knockback fields |
 | Core checks | Passed | 402 assertions |
 | Source reference check | Passed | 63 scripts, 240 GUIDs |
 | Play Mode regression | Passed | Isolated copy after the repair: 21 pattern runs, 599 assertions |
 | Human gameplay feel | Requires human playtest | Batchmode does not show the Game view |
+
+## Demo polish — visible 상승베기 and 체공
+
+- UP01 preparation is a gold charge. UP02 tracking stays cyan, then snaps to an orange locked path and lock flash.
+- UP01 and UP04 land with a short flash, dust, and a GroundRing or Blade sprite on the existing shockwave hitbox. Camera kick does not change time scale or damage.
+- 체공 keeps a PlayerVFX aura while hanging, with a start burst and a small release when the hang ends.
+- Open Unity `6000.6.2f1` recompiled `Assembly-CSharp` with no `error CS`. Batchmode could not open the project because that editor already had it locked. Play Mode was not visually inspected.
 
 ## Task 2 — UI/UX
 

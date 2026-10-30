@@ -20,6 +20,9 @@ namespace KarmaPrototype
         public int Facing { get; private set; } = 1;
         public Vector2 Position { get { return transform.position; } }
         public bool Shielded { get { return Time.time < guardUntil; } }
+        public bool TestInvincible { get; private set; }
+        public bool Crouching { get; private set; }
+        public void ToggleTestInvincibility() { TestInvincible = !TestInvincible; }
         public void Initialize(KarmaGame director)
         {
             game = director;
@@ -45,15 +48,19 @@ namespace KarmaPrototype
         void Update()
         {
             if (game == null) return;
+            if (KarmaInput.Pressed(KarmaAction.ToggleInvincibility)) ToggleTestInvincibility();
             if (game.Paused) { airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             if (!game.IsCombat) ClearStatus();
             aura.enabled = Shielded;
             remnantHalo.enabled = techniques.CounterReady(Time.time);
             art.gameObject.SetActive(Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
-            animator.Pose(move, Airborne, body.linearVelocity.y);
+            bool airborne = Airborne;
+            Crouching = game.CanMove && !Stunned && !airborne && KarmaInput.Vertical < 0
+                && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;
+            animator.Pose(move, airborne, body.linearVelocity.y, Crouching);
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
-            move = KarmaInput.Horizontal;
+            move = Crouching ? 0 : KarmaInput.Horizontal;
             if (move != 0) Facing = move > 0 ? 1 : -1;
             art.localScale = new Vector3(Facing, 1, 1);
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;

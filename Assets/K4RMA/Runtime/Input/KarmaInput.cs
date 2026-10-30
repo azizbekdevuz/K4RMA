@@ -8,7 +8,7 @@ namespace KarmaPrototype
     {
         Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Guard,
         Interact, Pause, Confirm, Restart, Title, Story, Controls, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
-        PreviousPage, NextPage
+        PreviousPage, NextPage, ToggleInvincibility
     }
 
     // Shared actions stay enabled in menus and while Time.timeScale is zero.
@@ -55,6 +55,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.ChooseGuard, "3");
             Bind(KarmaAction.PreviousPage, "leftArrow", "upArrow");
             Bind(KarmaAction.NextPage, "rightArrow", "downArrow");
+            Bind(KarmaAction.ToggleInvincibility, "p");
             map.Enable();
             Application.quitting += Reset;
         }

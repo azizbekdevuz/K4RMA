@@ -193,6 +193,7 @@ namespace KarmaPrototype
                 KarmaCombatVFX.SpawnSprite(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
                 return;
             }
+            if (TestInvincible) return;
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();

@@ -30,6 +30,11 @@ namespace KarmaPrototype
             var library = KarmaArtwork.Settings.spriteLibrary;
             if (library == null) return;
             foreach (var sprite in library.All(name)) if (sprite != null) poses[sprite.name] = sprite;
+            if (name == "Player")
+            {
+                var crouch = Resources.Load<Sprite>("K4RMAArtwork/PlayerCrouchV2");
+                if (crouch != null) poses["Crouch"] = crouch;
+            }
             if (name == "Player" && poses.TryGetValue("Run", out var run))
             {
                 // The second movement key pose is also used for jump takeoff in
@@ -69,7 +74,7 @@ namespace KarmaPrototype
         public void Attack(Vector2 direction) { slashDirection = direction; actionUntil = Time.time + 0.18f; }
         public void Hurt() { hurtUntil = Time.time + 0.16f; }
         public void Die() { deathAt = Time.time; }
-        public void Pose(float movement, bool airborne, float verticalSpeed = 0)
+        public void Pose(float movement, bool airborne, float verticalSpeed = 0, bool crouching = false)
         {
             if (deathAt >= 0)
             {
@@ -102,6 +107,7 @@ namespace KarmaPrototype
                             : actionUntil - Time.time > 0.07f ? "Slash" : "FollowThrough")
                         : actionUntil > 0 && Time.time < actionUntil + 0.08f ? "Recovery"
                         : airborne ? (verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
+                        : crouching ? "Crouch"
                         : Time.time < landedUntil ? "Land"
                         : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
                     if (pose == "Run" && runFrames != null)
@@ -112,7 +118,7 @@ namespace KarmaPrototype
                     }
                     else ShowPose(pose);
                 }
-                float bob = airborne ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;
+                float bob = airborne || crouching ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;
                 picture.transform.localPosition = pictureHome + Vector3.up * bob;
                 picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
                 transform.localRotation = Quaternion.Euler(0, 0, Time.time < hurtUntil ? -8 : 0);

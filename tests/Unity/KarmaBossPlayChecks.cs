@@ -92,7 +92,7 @@ public static class KarmaBossPlayChecks
         try
         {
             if (warningError != null) throw new Exception(warningError);
-            if (!geometryChecked) { SpatialChecks(); CameraChecks(); BoundaryChecks(); ProgressionReloadChecks(); WarningGeometryChecks(); BossDamageBoundsChecks(); geometryChecked = true; }
+            if (!geometryChecked) { PlayerUtilityChecks(); SpatialChecks(); CameraChecks(); BoundaryChecks(); ProgressionReloadChecks(); WarningGeometryChecks(); BossDamageBoundsChecks(); geometryChecked = true; }
             if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Play checks exceeded wall-clock deadline");
             if (!EditorApplication.isPlaying) throw new Exception("Play mode ended unexpectedly");
             if (index >= Cases.Length) { if(LifecycleChecks()) Finish(null); return; }
@@ -127,6 +127,34 @@ public static class KarmaBossPlayChecks
             index++; started=false;
         }
         catch(Exception e) { Finish(e); }
+    }
+    static void PlayerUtilityChecks()
+    {
+        var player = game.Player;
+        var animator = player.GetComponentInChildren<KarmaCharacterAnimator>();
+        var renderer = animator.GetComponentInChildren<SpriteRenderer>();
+        animator.Pose(0, false, 0, true);
+        var crouch = Resources.Load<Sprite>("K4RMAArtwork/PlayerCrouchV2");
+        Check(crouch != null && renderer.sprite == crouch && animator.CurrentPose == "Crouch", "new crouch sprite is displayed");
+        Check(crouch.bounds.size.y < KarmaArtwork.Sprite("Player", "Idle").bounds.size.y, "crouch art is shorter than standing art");
+        animator.Pose(0, true, 3, true);
+        Check(animator.CurrentPose == "Jump", "jump takes priority over crouch");
+        animator.Pose(0, false);
+        Check(animator.CurrentPose != "Crouch", "releasing crouch restores normal pose");
+        Set(player, "invulnerableUntil", 0f);
+        float health = player.Health, damage = game.DamageTaken;
+        Check(!player.TestInvincible, "test invincibility starts disabled");
+        player.ToggleTestInvincibility();
+        player.TakeDamage(100);
+        Check(player.Health == health && game.DamageTaken == damage, "test invincibility blocks health and damage statistics");
+        player.ResetForRoom(player.Position, false);
+        Check(player.TestInvincible, "test mode survives room reset");
+        player.ToggleTestInvincibility();
+        player.TakeDamage(10);
+        Check(player.Health == health - 10 && game.DamageTaken == damage + 10, "disabling test mode restores damage");
+        player.Heal(10);
+        Set(player, "invulnerableUntil", 0f);
+        game.DamageTaken = damage;
     }
     static void CaptureWarningError(string message, string stack, LogType type)
     {

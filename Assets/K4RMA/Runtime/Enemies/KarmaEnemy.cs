@@ -35,6 +35,12 @@ namespace KarmaPrototype
         public bool Stunned { get { return state == ActionState.Stunned; } }
         public bool Invulnerable { get { return fullShield; } }
         public bool Armored { get { return fullShield || swordGuard || frontalGuard || FightSeconds < shieldUntil; } }
+        public bool AutoShieldActive { get { return FightSeconds < shieldUntil; } }
+        internal static float TrialRadius { get { return GD05Pattern.TrialRadius; } }
+        internal static float TrialCenter { get { return GD05Pattern.TrialCenter; } }
+        public bool TrialActive { get { return trial.Active; } }
+        public bool HeavyParryWindowOpen { get { return behavior is GuardBossBehavior guard && guard.Heavy.ParryWindowOpen; } }
+        public bool TryQueueHeavyParry() { return behavior is GuardBossBehavior guard && guard.Heavy.TryQueueParry(); }
         public void Initialize(KarmaGame director, int stage)
         {
             game = director;
@@ -53,6 +59,7 @@ namespace KarmaPrototype
                 shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
             timer = 1.4f; nextShield = Tuning.guard.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach;
+            if (behavior is GuardBossBehavior guard) guard.Initialize();
         }
         public void PrepareRevival(Vector3 position, Vector3 artworkScale)
         {

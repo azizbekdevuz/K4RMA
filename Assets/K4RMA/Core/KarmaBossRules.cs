@@ -1,9 +1,11 @@
 using System;
 namespace KarmaPrototype
 {
-    // Shared by shield fragments: one contact attempt per cast, never a stun chain.
+    // Shared contact ledger: one hit per attack group, with an explicit GD02 parry contract.
     public sealed class KarmaAttackContact
     {
+        public bool BreaksShieldOnParry { get; private set; }
+        public KarmaAttackContact(bool breaksShieldOnParry = false) { BreaksShieldOnParry = breaksShieldOnParry; }
         public bool Consumed { get; private set; }
         public bool DealtDamage { get; private set; }
         public void RecordDamage() { DealtDamage = true; }

@@ -52,6 +52,21 @@ namespace KarmaPrototype
             // Poses follow the actual combat state, including long attacks and recovery.
             if (picture == null || deathAt >= 0) return;
             if (EmpowermentPose()) return;
+            picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            transform.localRotation = Quaternion.identity;
+            if (action == "Stunned" && guardStagger != null)
+            {
+                picture.sprite = guardStagger;
+                picture.transform.localPosition = pictureHome;
+                picture.transform.localScale = staggerScale;
+                picture.transform.localRotation = Quaternion.identity;
+                picture.color = new Color(pictureColor.r * 0.82f, pictureColor.g * 0.82f, pictureColor.b * 0.82f, pictureColor.a);
+                CurrentPose = "Stagger/" + heavyStrike.FormKey;
+                guardianPreviousPosition = transform.position;
+                return;
+            }
+            if (heavyStrike != null && heavyStrike.Show(attack))
+            { CurrentPose = heavyStrike.CurrentPose; return; }
             bool basicWave = sheet == "Wave" && (attack == EnemyAttack.SWBasic || attack == EnemyAttack.SW01 || attack == EnemyAttack.SW02);
             bool waveAction = basicWave && (action == "Telegraph" || action == "Attack");
             bool phaseAction = sheet == "Wave" && (attack == EnemyAttack.SW03 || attack == EnemyAttack.SW04 || attack == EnemyAttack.SW05)

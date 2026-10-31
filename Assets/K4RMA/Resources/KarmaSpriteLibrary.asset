@@ -284,6 +284,10 @@ MonoBehaviour:
     - {fileID: -1533835179, guid: 0900b06d290254f4a84c6520e9617af5, type: 3}
     - {fileID: -1470651544, guid: 6f7a3d5052864fa41ac650aaa87a4f04, type: 3}
     - {fileID: 129665699, guid: bcead75ee0358764b9feeb1e8fac873d, type: 3}
+    - {fileID: 21300000, guid: f2c49d182455fcb4da00d6f06eb81897, type: 3}
+    - {fileID: 1660225870, guid: 0b5cdb24514051d48879fd35b7f44b06, type: 3}
+    - {fileID: 1361301739, guid: 446db59d0f5992044be6cd85e4477b72, type: 3}
+    - {fileID: -1486744105, guid: 446db59d0f5992044be6cd85e4477b72, type: 3}
     poses:
     - Bash
     - Pillar
@@ -291,3 +295,51 @@ MonoBehaviour:
     - Shard
     - Shield
     - Wave
+    - ParryRed
+    - WholeHot
+    - ShardHot
+    - ShardCooled
+  - id: GuardHeavyWard
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/HeavyStrike
+    sprites:
+    - {fileID: 1453833098, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
+    - {fileID: -588242779, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
+    - {fileID: 1634365799, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
+  - id: GuardHeavyWardWave
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/HeavyStrike
+    sprites:
+    - {fileID: -774171877, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
+    - {fileID: -197919176, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
+    - {fileID: 1813446154, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
+  - id: GuardHeavyWardRise
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/HeavyStrike
+    sprites:
+    - {fileID: 1958433419, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
+    - {fileID: 1789754190, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
+    - {fileID: -804145536, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
+  - id: GuardHeavyWardFinal
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/HeavyStrike
+    sprites:
+    - {fileID: 1952035418, guid: e23e801929fe5cb4597425597e38456f, type: 3}
+    - {fileID: 1393750050, guid: e23e801929fe5cb4597425597e38456f, type: 3}
+    - {fileID: -1144299091, guid: e23e801929fe5cb4597425597e38456f, type: 3}
+  - id: GuardStaggerWard
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/Stagger
+    sprites:
+    - {fileID: 2055513753, guid: 8cb0f5b7306699f4680da1172c578a9a, type: 3}
+    - {fileID: -403814162, guid: 8cb0f5b7306699f4680da1172c578a9a, type: 3}
+  - id: GuardStaggerWardWave
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/Stagger
+    sprites:
+    - {fileID: 267211721, guid: e9dc5d8380fd0b946ba347b0ca554e3d, type: 3}
+    - {fileID: -476478516, guid: e9dc5d8380fd0b946ba347b0ca554e3d, type: 3}
+  - id: GuardStaggerWardRise
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/Stagger
+    sprites:
+    - {fileID: -1476393565, guid: 4fee35af4fbfb26438f78054d9bfff5b, type: 3}
+    - {fileID: -1289503404, guid: 4fee35af4fbfb26438f78054d9bfff5b, type: 3}
+  - id: GuardStaggerWardFinal
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Guard/Stagger
+    sprites:
+    - {fileID: 869182589, guid: 844159e55f9d8644f94527dede0f822a, type: 3}
+    - {fileID: 12131052, guid: 844159e55f9d8644f94527dede0f822a, type: 3}

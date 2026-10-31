@@ -87,13 +87,15 @@ namespace KarmaPrototype
                 : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y);
             if (!hit) return;
             if (!contact.TryConsume()) return;
+            if (contact.BreaksShieldOnParry && state == ActionState.Attack && behavior is GuardBossBehavior guard && guard.Heavy.ConsumeQueuedParry())
+                player.BeginCounter();
             int parries = player.ParryCount;
             float before = player.Health;
             player.TakeDamage(amount);
             if (player.ParryCount != parries)
             {
                 // Projectile parries remain local; GD02 is the shield-breaking parry.
-                if (shieldBreak || parryStun) pendingParry = true;
+                if (contact.BreaksShieldOnParry || shieldBreak || parryStun) pendingParry = true;
                 if (parryStun) KarmaRisingPolish.ParryBreak(effectsRoot, player.Position);
                 return;
             }

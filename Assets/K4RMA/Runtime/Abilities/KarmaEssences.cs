@@ -68,7 +68,12 @@ namespace KarmaPrototype
         }
         public void TryCounter()
         {
-            if (!game.IsCombat || player.Stunned || !HasRemnant(Essence.Guard) || Cooldown(Essence.Guard) > 0) return;
+            if (!game.IsCombat || player.Stunned || !HasRemnant(Essence.Guard)) return;
+            bool queued = false;
+            foreach (var enemy in game.Enemies)
+                if (enemy != null && enemy.TryQueueHeavyParry()) queued = true;
+            // A visible GD02 tell accepts K throughout its window, even after an early normal counter.
+            if (!queued && Cooldown(Essence.Guard) > 0) return;
             readyAt[2] = Time.time + game.Config.Techniques.counterCooldown;
             player.BeginCounter();
         }

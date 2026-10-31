@@ -103,7 +103,7 @@ namespace KarmaPrototype
             }
             // Set the first rendered frame too; LineRenderer defaults are opaque white
             // and one unit wide until its first Update.
-            if (restrainedVisual) ApplyStyle();
+            ApplyStyle();
         }
         public void Emphasize() { baseColor.a = Mathf.Max(baseColor.a, 0.58f); }
         void Update()

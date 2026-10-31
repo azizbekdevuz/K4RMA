@@ -10,7 +10,7 @@ namespace KarmaPrototype
             public GD01Pattern(KarmaEnemy owner) : base(owner) { }
             public void Tick()
             {
-                if (owner.PrimaryType != Essence.Guard || owner.trial.Active || owner.Stunned || owner.state == ActionState.Recover || owner.frontalGuard) return;
+                if (owner.PrimaryType != Essence.Guard || owner.FightSeconds < owner.shieldUntil || owner.trial.Active || owner.Stunned || owner.state == ActionState.Recover || owner.frontalGuard) return;
                 if (owner.shieldWarningUntil > 0)
                 {
                     if (owner.FightSeconds >= owner.shieldWarningUntil) RefreshAutoShield();
@@ -24,8 +24,7 @@ namespace KarmaPrototype
             }
             public void RefreshAutoShield()
             {
-                owner.shieldUntil = owner.FightSeconds + Mathf.Max(1, Settings.autoShieldDuration);
-                owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
+                owner.shieldUntil = float.PositiveInfinity;
                 owner.shieldWarningUntil = 0;
             }
             public override IEnumerator Execute() { yield break; }

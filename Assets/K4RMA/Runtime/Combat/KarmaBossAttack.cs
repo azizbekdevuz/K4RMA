@@ -13,7 +13,7 @@ namespace KarmaPrototype
         Vector2 axis = Vector2.right;
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
             Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null,
-            bool restrainedVisual = false, bool separateLaunch = false, string extraWavePose = null, string visualSheet = "GuardianVFX", bool parryStun = false, bool shieldBreak = false)
+            bool restrainedVisual = false, bool separateLaunch = false, string extraWavePose = null, string visualSheet = "GuardianVFX", bool parryStun = false, bool shieldBreak = false, bool renderArtwork = true)
         {
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
             var attack = go.AddComponent<KarmaBossAttack>();
@@ -29,13 +29,14 @@ namespace KarmaPrototype
             else ConfigureVisual(sr, velocity, size, owner.Facing, pose, restrainedVisual, visualSheet);
             sr.color = aerialSword ? Color.white : restrainedVisual ? new Color(1, 0.94f, 0.8f, 0.86f) : Color.Lerp(Color.white, color, 0.18f);
             attack.Visual = sr;
+            picture.SetActive(renderArtwork);
             // The supplied aerial sword is the released visual. Orange radiance,
             // residual copies and a second launch sprite obscure its cutting edge.
-            if (!aerialSword && !attack.aimedSlash) KarmaCombatVFX.AttachAttack(sr, velocity, color, root, restrainedVisual);
+            if (renderArtwork && !aerialSword && !attack.aimedSlash) KarmaCombatVFX.AttachAttack(sr, velocity, color, root, restrainedVisual);
             float angle = sr.transform.localEulerAngles.z;
             // SW01/02 already have their authored Cleave/Beam swing at this instant.
             // Avoid stacking another full-size white copy on top of that release.
-            if (!separateLaunch && !aerialSword && !attack.aimedSlash)
+            if (renderArtwork && !separateLaunch && !aerialSword && !attack.aimedSlash)
             {
                 var burst = KarmaCombatVFX.Burst(root, at, sr.sprite, "Guardian launch/" + pose,
                     new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y)

@@ -12,11 +12,15 @@ namespace KarmaPrototype
         [Min(0.1f)] public float trialDamageMultiplier = 0.65f;
         [Min(2)] public float autoShieldPeriod = 8;
         [Min(0.3f)] public float autoShieldWarning = 0.8f;
-        [Min(1)] public float autoShieldDuration = 5;
-        public bool dodgeRefreshesShield = false;
         [Min(0.1f)] public float parryStunSeconds = 2, fragmentStunSeconds = 1;
+        [Min(0.1f)] public float heavyParryCueSeconds = 0.5f, heavyHitStunSeconds = 1;
         [Range(2, 5)] public int shieldFragments = 4;
         [Min(0.2f)] public float fragmentAimWarning = 0.5f;
+        [Min(0.15f)] public float fragmentLaunchGap = 0.3f;
+        [Min(1)] public float fragmentChaseSpeed = 15 * KarmaSpace.Scale;
+        [Min(0.1f)] public float fragmentReturnSeconds = 0.4f;
+        [Range(3, 8)] public int barrierSteps = 6;
+        [Min(0.12f)] public float barrierStepGap = 0.22f;
         [Min(0.3f)] public float barrierRecovery = 1.2f;
         [Header("GD05 결계")]
         [Range(3, 8)] public int trialAttackCount = 7;

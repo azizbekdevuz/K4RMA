@@ -24,8 +24,15 @@ namespace KarmaPrototype
         void FitStageBackground(bool snap = false)
         {
             // Preserve the full-image zoom while following across the expanded arena.
-            GameCamera.orthographicSize = Mathf.Max(stageBackgroundBounds.extents.y,
-                25 / Mathf.Max(GameCamera.aspect, 0.01f));
+            bool trialOverview = false;
+            foreach (var enemy in Enemies)
+                if (enemy != null && enemy.Invulnerable && enemy.CurrentPattern == (int)EnemyAttack.GD05)
+                { trialOverview = true; break; }
+            float targetSize = Mathf.Max(stageBackgroundBounds.extents.y, 25 / Mathf.Max(GameCamera.aspect, 0.01f));
+            if (trialOverview) targetSize = Mathf.Max(targetSize, KarmaEnemy.TrialRadius * 0.8f,
+                (KarmaEnemy.TrialRadius + KarmaSpace.Units(1)) / Mathf.Max(GameCamera.aspect, 0.01f));
+            float blend = 1 - Mathf.Exp(-6 * Time.unscaledDeltaTime);
+            GameCamera.orthographicSize = snap ? targetSize : Mathf.Lerp(GameCamera.orthographicSize, targetSize, blend);
             float halfWidth = GameCamera.orthographicSize * GameCamera.aspect;
             float left = Mathf.Max(KarmaStage.ArenaLeft, stageBackgroundBounds.min.x);
             float right = Mathf.Min(KarmaStage.ArenaRight, stageBackgroundBounds.max.x);
@@ -33,10 +40,12 @@ namespace KarmaPrototype
             float facing = snap || Player == null ? 1 : Player.Facing;
             float x = right - left <= halfWidth * 2 ? (left + right) / 2
                 : Mathf.Clamp(playerX + facing * KarmaSpace.Units(2), left + halfWidth, right - halfWidth);
-            var target = new Vector3(x, stageBackgroundBounds.center.y, -10);
+            var target = trialOverview
+                ? new Vector3(KarmaEnemy.TrialCenter, KarmaEnemy.TrialRadius * 0.625f, -10)
+                : new Vector3(x, stageBackgroundBounds.center.y, -10);
             GameCamera.transform.position = snap ? target
                 : Vector3.Lerp(GameCamera.transform.position - lastShake, target,
-                    1 - Mathf.Exp(-6 * Time.unscaledDeltaTime));
+                    blend);
             lastShake = Vector3.zero;
         }
         public void SwordHitFeedback()

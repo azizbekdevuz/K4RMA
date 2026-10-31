@@ -72,7 +72,7 @@ namespace KarmaPrototype
         public void Attack() { Attack(Vector2.right); }
         public void Attack(Vector2 direction) { slashDirection = direction; actionUntil = Time.time + 0.18f; }
         public void Hurt() { hurtUntil = Time.time + 0.16f; }
-        public void Die() { deathAt = Time.time; }
+        public void Die() { EndHeavyStrike(); deathAt = Time.time; }
         public void Pose(float movement, bool airborne, float verticalSpeed = 0, bool crouching = false)
         {
             if (picture == null) return;

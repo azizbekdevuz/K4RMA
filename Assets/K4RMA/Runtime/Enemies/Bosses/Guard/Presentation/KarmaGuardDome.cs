@@ -18,6 +18,8 @@ namespace KarmaPrototype
         float age, phaseAge, chargeDuration;
         int phase;
         public float Radius { get; private set; }
+        public bool Exploding { get { return phase == 2; } }
+        public float PhaseSeconds { get { return phaseAge; } }
         public bool Charging { get { return phase == 1; } }
 
         public static KarmaGuardDome Create(KarmaGame game, Transform parent, Vector2 center, float radius)

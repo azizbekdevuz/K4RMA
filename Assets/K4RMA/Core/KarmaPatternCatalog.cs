@@ -3,6 +3,7 @@ namespace KarmaPrototype
 {
     public static class KarmaPatternCatalog
     {
+        public const float GuardHeavyReach = 4;
         public static string Name(Essence e) { return e == Essence.SwordWave ? "검기" : e == Essence.RisingSlash ? "상승베기" : "방어"; }
         public static string UniqueName(Essence e) { return e == Essence.SwordWave ? "관통베기" : e == Essence.RisingSlash ? "도약베기" : "반격"; }
         public static Essence? Primary(IReadOnlyList<Essence> order) { return order.Count == 0 ? (Essence?)null : order[0]; }
@@ -47,7 +48,7 @@ namespace KarmaPrototype
             if (attack == EnemyAttack.SW02) return lineOfSight;
             if (attack == EnemyAttack.UP02) return previous != attack && (airborne || distance <= 8);
             if (attack == EnemyAttack.UP03 || attack == EnemyAttack.GD04) return escapeRoute;
-            if (attack == EnemyAttack.GD02) return shield && distance <= 5;
+            if (attack == EnemyAttack.GD02) return shield && distance <= GuardHeavyReach;
             return true;
         }
         public static string FusionSummary(IReadOnlyList<Essence> order)

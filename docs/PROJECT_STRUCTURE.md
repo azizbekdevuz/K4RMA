@@ -34,11 +34,12 @@ K4RMA/
             Presentation/         KarmaRisingArt.cs, KarmaRisingPolish.cs,
                                   KarmaRisingCharge.cs
           Guard/
-            KarmaGuardBossBehavior.cs 방어막 우선 선택·패턴 연결
+            KarmaGuardBossBehavior.cs 패턴 등록·순환 선택
             KarmaGuardBossPattern.cs  공통 장식·파동 크기
             Patterns/             GD01.cs ~ GD05.cs
             Settings/             KarmaGuardBossSettings.cs
-            Presentation/         KarmaGuardDome.cs
+            Presentation/         KarmaGuardDome.cs, KarmaHeavyStrikeMotion.cs,
+                                  KarmaCharacterAnimator.Guard.cs
       Flow/                       시작·진행·카메라·고유화·승패 흐름
       Input/                      Input System 입력
       Player/
@@ -66,11 +67,13 @@ K4RMA/
           Base/                   기본 수호자 4종
           Inherited/              계승·최종형 동작 atlas
           Revival/                부활 동작 atlas
+          Guard/HeavyStrike/      방어형 4종의 강공격 동작 atlas
+          Guard/Stagger/          방어형 4종의 패링 경직 atlas
           ReferencePoses.png      실제 계승 외형에 사용되는 런타임 atlas
         Effects/                  공통 전투·피격·고유화 효과
           Sword/                  검기형 효과 6장
           Rising/                 상승베기형 효과 15장
-          Guard/                  방어형 효과 6장
+          Guard/                  방어형 공통 효과·패링 빛·가열 방패·분열 파편
         Environments/             경기장 배경·파노라마
         UI/                       UI atlas·메뉴 배경
         Props/                    월드 소품 atlas
@@ -84,26 +87,17 @@ K4RMA/
     Settings/Rendering/            URP 파이프라인·렌더러·후처리 설정
   Packages/                       실행 의존 패키지와 잠금 파일
   ProjectSettings/                Unity 버전·빌드 씬·입력·물리·렌더링 설정
+  tests/Unity/                    방어형 Play Mode 회귀 검사
+  tools/run-guard-playchecks.py    별도 프로젝트에서 검사 실행
   docs/PROJECT_STRUCTURE.md        이 파일
   README.md                       실행 안내
 ```
 
-`*.meta`는 Unity 에셋의 GUID·Sprite ID·임포트 설정을 보관하므로 해당 파일과 함께 유지한다. 각 패턴은 실제 별도 클래스이며 공격별 상태와 실행을 소유한다. 행동 클래스는 이동·선택·주기를, KarmaEnemy는 공통 피해·패링·상태·중단을 담당한다.
+## 코드·에셋 배치 기준
 
-새 효과도 KarmaSpriteLibrary의 `SwordBossVFX`, `RisingBossVFX`, `GuardBossVFX` 그룹으로 조회한다. 파일별 직접 로딩·중복 원본·미사용 대체 외형은 없다. 보스 본체는 기존 기본/계승 동작 atlas를 사용한다. 그림 교체 시 이미지 `.meta`와 라이브러리 참조를 보존한다.
-
-밸런스는 KarmaConfig의 Boss Tuning → sword/rising/guard에서 조정한다. 패턴 수정은 해당 보스의 Patterns 폴더에서 한다. 관통베기 보호 시간은 Techniques → pierceInvulnerabilitySeconds(기본 0.1초)다.
-
-`Library`, `Temp`, `Logs`, `UserSettings`는 Unity가 생성하는 로컬 캐시·실행 상태이며 배포 소스가 아니다. Git 이력도 실행 에셋과 별도로 보존한다.
-
-## 코드 배치 기준
-
-- 게임 규칙과 진행 계산은 `Core`, Unity 오브젝트를 다루는 코드는 `Runtime`에 둔다.
-- 특정 보스에만 쓰는 행동·패턴·설정·연출은 해당 `Enemies/Bosses/<유형>` 안에 둔다.
-- 여러 캐릭터가 공유하는 포즈·이미지·효과는 `Presentation`의 역할별 폴더에 둔다. 이미지 참조 설정 타입도 `Artwork`에 둔다.
-- `partial` 파일은 같은 컴포넌트의 책임을 나눈다. 새 컴포넌트나 상속 계층을 추가하는 용도로 쓰지 않는다.
-- `.cs`·셰이더 등 에셋을 옮길 때 `.meta`를 함께 옮겨 GUID를 보존한다. `Resources` 내부 경로는 로딩 API에서 쓰므로 별도 확인 없이 바꾸지 않는다.
-
-현재 설정 에셋은 `sword`·`rising`·`guard`의 보스별 구조와 현재 기술 필드명을 직접 저장한다. 구버전 설정 이관·필드 별칭·이전 실행 세션 복구 코드는 유지하지 않는다. 캐릭터는 실제 스프라이트를 사용하며, 초기 프로토타입의 도형 캐릭터 생성·애니메이션 코드는 제거했다. 스테이지와 전투 효과가 사용하는 기본 도형 생성은 유지한다.
-
-고유화 관련 이름은 `LastPersonalizedEssence`(마지막으로 고유화한 기술), `PersonalizationOrder`(고유화 순서), `healAfterPersonalization`(고유화 후 회복량)을 사용한다.
+- `Core`는 Unity 비의존 규칙, `Runtime`은 Unity 컴포넌트와 실행 로직을 둔다.
+- 보스별 행동·패턴·설정·연출은 `Runtime/Enemies/Bosses/<유형>/`에 둔다. 행동 클래스는 선택·이동·주기를, 패턴 클래스는 공격별 상태·실행을, `KarmaEnemy`는 공통 전투·중단을 담당한다.
+- 공통 애니메이션·이미지 접근·효과는 `Runtime/Presentation/`에, 실제 이미지는 `Art/Resources/K4RMAArtwork/`의 용도별 폴더에 둔다.
+- 이미지 참조는 `KarmaArtworkSettings`와 `KarmaSpriteLibrary`에서 관리한다. 보스 효과는 `SwordBossVFX`·`RisingBossVFX`·`GuardBossVFX` 그룹을 사용한다.
+- 에셋을 옮길 때는 `.meta`를 함께 옮겨 GUID와 Sprite ID를 보존한다. `Resources` 경로를 바꾸면 로딩 참조도 함께 수정한다.
+- `Library`·`Temp`·`Logs`·`UserSettings`는 Unity 로컬 캐시, `output`은 생성된 검사 결과다.

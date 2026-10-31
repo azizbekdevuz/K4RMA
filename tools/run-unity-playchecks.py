@@ -23,7 +23,7 @@ report_name = 'guard-play-validation.txt' if args.guard else 'boss-play-validati
 report = args.output_dir.resolve() / report_name
 with tempfile.TemporaryDirectory(prefix='karma-playchecks-') as folder:
     project = Path(folder)
-    for name in ('Assets', 'Packages', 'ProjectSettings', 'image'):
+    for name in ('Assets', 'Packages', 'ProjectSettings'):
         shutil.copytree(root / name, project / name)
     (project / 'Assets/Editor').mkdir(exist_ok=True)
     checks = ('KarmaGuardPlayChecks.cs',) if args.guard else ('KarmaBossPlayChecks.cs', 'KarmaMigrationChecks.cs')

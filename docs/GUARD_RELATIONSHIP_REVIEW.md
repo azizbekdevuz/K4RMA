@@ -59,7 +59,7 @@ GD05 성공 보상은 후속 요청에 따라 GD01 해제를 함께 제공하도
 기존 0.5초 패링 입력 창은 유지한다.
 
 관련 코드: [패턴 선택](C:/Users/김민재/OneDrive/문서/ChatGPT/K4RMA/boss-guard/Assets/K4RMA/Core/KarmaPatternCatalog.cs:49),
-[공격 중심과 크기](C:/Users/김민재/OneDrive/문서/ChatGPT/K4RMA/boss-guard/Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Ward.cs:33).
+[공격 중심과 크기](C:/Users/김민재/OneDrive/문서/ChatGPT/K4RMA/boss-guard/Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Guard.cs:33).
 
 ## 2. GD04: 벽에서 방향을 바꾸면 의도한 후방 공략 흐름이 끊긴다
 

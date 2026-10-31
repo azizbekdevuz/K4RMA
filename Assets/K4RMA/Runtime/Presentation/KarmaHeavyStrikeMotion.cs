@@ -20,7 +20,7 @@ namespace KarmaPrototype
         {
             picture = renderer; home = position;
             string key = order.Count >= 3 ? "WardFinal" : order.Count == 2
-                ? order[1] == Essence.Flame ? "WardWave" : "WardRise" : "Ward";
+                ? order[1] == Essence.SwordWave ? "WardWave" : "WardRise" : "Ward";
             FormKey = key;
             string[] names = { "Windup", "Downstroke", "FollowThrough" };
             foreach (var sprite in Resources.LoadAll<Sprite>("K4RMAArtwork/Sheets/GD02/" + key))

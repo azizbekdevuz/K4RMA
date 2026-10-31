@@ -64,29 +64,28 @@ namespace KarmaPrototype
             var c = game.Config;
             switch (e)
             {
-                case Essence.Flame:
-                    KarmaArtworkVFX.Player(game,player.Position,2,Vector2.right*player.Facing);
-                    readyAt[0] = Time.time + c.flameCooldown;
+                case Essence.SwordWave:
+                    readyAt[0] = Time.time + c.swordWaveCooldown;
                     player.BeginSwordWave();
                     KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * KarmaSpace.Units(0.7f),
-                        Vector2.right * player.Facing * c.flameSpeed, c.flameDamage, c.flameColor, KarmaSpace.Units(0.25f));
+                        Vector2.right * player.Facing * c.swordWaveSpeed, c.swordWaveDamage, c.swordWaveColor, KarmaSpace.Units(0.25f));
                     break;
-                case Essence.Dash:
-                    readyAt[1] = Time.time + c.dashCooldown;
+                case Essence.RisingSlash:
+                    readyAt[1] = Time.time + c.risingSlashCooldown;
                     player.BeginRisingSlash(); break;
-                case Essence.Ward:
-                    readyAt[2] = Time.time + c.wardCooldown;
-                    player.BeginWard(c.wardDuration); break;
+                case Essence.Guard:
+                    readyAt[2] = Time.time + c.guardCooldown;
+                    player.BeginGuard(c.guardDuration); break;
             }
         }
         public void TryCounter()
         {
-            if (!game.IsCombat || player.Stunned || !HasRemnant(Essence.Ward)) return;
+            if (!game.IsCombat || player.Stunned || !HasRemnant(Essence.Guard)) return;
             bool queued = false;
             foreach (var enemy in game.Enemies)
                 if (enemy != null && enemy.TryQueueHeavyParry()) queued = true;
             // A visible GD02 tell accepts K throughout its window, even after an early normal counter.
-            if (!queued && Cooldown(Essence.Ward) > 0) return;
+            if (!queued && Cooldown(Essence.Guard) > 0) return;
             readyAt[2] = Time.time + game.Config.Techniques.counterCooldown;
             player.BeginCounter();
         }

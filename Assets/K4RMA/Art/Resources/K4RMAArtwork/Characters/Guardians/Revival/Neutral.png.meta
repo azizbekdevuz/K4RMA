@@ -1,0 +1,412 @@
+fileFormatVersion: 2
+guid: 6a7bd4ddf92114c99b53a9b1f247b8ea
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3622792381989719942
+    second: Neutral_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 156.04762
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Revive00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 512
+        width: 512
+        height: 512
+      alignment: 9
+      pivot: {x: 0.5, y: 0.064453125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: -226, y: -199}
+        - {x: -225, y: -200}
+        - {x: -223, y: -201}
+        - {x: -187, y: -210}
+        - {x: -6, y: -225}
+        - {x: 191, y: -201}
+        - {x: 194, y: -200}
+        - {x: 256, y: -175}
+        - {x: 256, y: -166}
+        - {x: 214, y: -88}
+        - {x: 211, y: -84}
+        - {x: 208, y: -81}
+        - {x: 200, y: -80}
+        - {x: 76, y: -72}
+        - {x: 40, y: -78}
+        - {x: 35, y: -79}
+        - {x: -150, y: -126}
+        - {x: -152, y: -127}
+        - {x: -155, y: -129}
+        - {x: -160, y: -133}
+        - {x: -193, y: -161}
+        - {x: -204, y: -171}
+        - {x: -215, y: -182}
+        - {x: -219, y: -187}
+        - {x: -225, y: -196}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d5a8245d80bba41679bad9b7aee26c21
+      internalID: -1044980344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Revive01
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 512
+        width: 512
+        height: 512
+      alignment: 9
+      pivot: {x: 0.5, y: 0.052734375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: -218, y: -202}
+        - {x: -217, y: -203}
+        - {x: -213, y: -204}
+        - {x: -189, y: -209}
+        - {x: 227, y: -231}
+        - {x: 251, y: -225}
+        - {x: 256, y: -223}
+        - {x: 256, y: -216}
+        - {x: 157, y: 14}
+        - {x: 156, y: 16}
+        - {x: 154, y: 18}
+        - {x: 149, y: 22}
+        - {x: 147, y: 23}
+        - {x: 24, y: 0}
+        - {x: 19, y: -1}
+        - {x: 15, y: -2}
+        - {x: 9, y: -4}
+        - {x: 1, y: -7}
+        - {x: -11, y: -12}
+        - {x: -31, y: -21}
+        - {x: -56, y: -34}
+        - {x: -211, y: -189}
+        - {x: -213, y: -192}
+        - {x: -218, y: -200}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b65c2fa7fa03a4cb98bf7da28f7fac27
+      internalID: 130260557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Revive02
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 512
+        width: 512
+        height: 512
+      alignment: 9
+      pivot: {x: 0.5, y: 0.095703125}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: -179, y: -203}
+        - {x: -178, y: -204}
+        - {x: -176, y: -205}
+        - {x: 195, y: -209}
+        - {x: 200, y: -205}
+        - {x: 202, y: -203}
+        - {x: 204, y: -198}
+        - {x: 206, y: -190}
+        - {x: 206, y: -173}
+        - {x: 184, y: 1}
+        - {x: 180, y: 31}
+        - {x: 178, y: 38}
+        - {x: 177, y: 40}
+        - {x: 165, y: 63}
+        - {x: 163, y: 65}
+        - {x: 124, y: 97}
+        - {x: 119, y: 101}
+        - {x: -49, y: 73}
+        - {x: -54, y: 72}
+        - {x: -66, y: 69}
+        - {x: -71, y: 67}
+        - {x: -73, y: 66}
+        - {x: -75, y: 64}
+        - {x: -179, y: -200}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 588780ab5b7774e18b2a21f77f84a6af
+      internalID: -1456468261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Revive03
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 512
+        height: 512
+      alignment: 9
+      pivot: {x: 0.5, y: 0.103515625}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: -183, y: -198}
+        - {x: -182, y: -199}
+        - {x: -178, y: -200}
+        - {x: -157, y: -204}
+        - {x: -138, y: -205}
+        - {x: 240, y: -200}
+        - {x: 247, y: -199}
+        - {x: 249, y: -198}
+        - {x: 249, y: -197}
+        - {x: 188, y: 131}
+        - {x: 187, y: 133}
+        - {x: 184, y: 137}
+        - {x: 180, y: 141}
+        - {x: 172, y: 142}
+        - {x: 64, y: 125}
+        - {x: 59, y: 124}
+        - {x: 45, y: 121}
+        - {x: 32, y: 118}
+        - {x: 17, y: 114}
+        - {x: 4, y: 110}
+        - {x: -2, y: 108}
+        - {x: -17, y: 102}
+        - {x: -26, y: 98}
+        - {x: -28, y: 97}
+        - {x: -29, y: 96}
+        - {x: -183, y: -197}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fcda781c4f71a41a89f7fd5ac3857929
+      internalID: -2070386997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Revive04
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 0
+        width: 512
+        height: 512
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1015625}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: -170, y: -202}
+        - {x: -169, y: -203}
+        - {x: -162, y: -205}
+        - {x: -156, y: -206}
+        - {x: 175, y: -198}
+        - {x: 181, y: -197}
+        - {x: 183, y: -196}
+        - {x: 183, y: -194}
+        - {x: 116, y: 188}
+        - {x: 115, y: 190}
+        - {x: 110, y: 196}
+        - {x: 106, y: 198}
+        - {x: 89, y: 194}
+        - {x: -71, y: 147}
+        - {x: -77, y: 145}
+        - {x: -87, y: 141}
+        - {x: -97, y: 136}
+        - {x: -99, y: 134}
+        - {x: -170, y: -199}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a79739cbe08904cddbe7beb2665334b6
+      internalID: 1642297883
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Revive05
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 512
+        height: 512
+      alignment: 9
+      pivot: {x: 0.5, y: 0.099609375}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: -254, y: -164}
+        - {x: -253, y: -165}
+        - {x: -146, y: -204}
+        - {x: -143, y: -205}
+        - {x: -138, y: -206}
+        - {x: -110, y: -207}
+        - {x: 139, y: -200}
+        - {x: 147, y: -199}
+        - {x: 151, y: -198}
+        - {x: 151, y: -195}
+        - {x: 113, y: -13}
+        - {x: 111, y: -4}
+        - {x: 39, y: 241}
+        - {x: 37, y: 243}
+        - {x: 33, y: 246}
+        - {x: 29, y: 248}
+        - {x: 14, y: 241}
+        - {x: 10, y: 239}
+        - {x: -114, y: 141}
+        - {x: -115, y: 140}
+        - {x: -254, y: -163}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ebb44bc27e6f461eae0b8f1dc022a00
+      internalID: -228732076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: fde8db41356d2476eb4e43db717827aa
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Revive00: -1044980344
+      Revive01: 130260557
+      Revive02: -1456468261
+      Revive03: -2070386997
+      Revive04: 1642297883
+      Revive05: -228732076
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -83,9 +83,9 @@ namespace KarmaPrototype.Editor
             game = Object.FindAnyObjectByType<KarmaGame>();
             if (game == null) return;
             game.StartRun();
-            game.Player.Essences.Sacrifice(Essence.Ward);
-            game.Player.Essences.Sacrifice(Essence.Flame);
-            game.Player.Essences.Sacrifice(Essence.Dash);
+            game.Player.Essences.Sacrifice(Essence.Guard);
+            game.Player.Essences.Sacrifice(Essence.SwordWave);
+            game.Player.Essences.Sacrifice(Essence.RisingSlash);
             typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, 3);
             Call(game, "LoadRoom", true);
             game.Player.ResetForRoom(new Vector2(20, KarmaSpace.Units(1)), true);

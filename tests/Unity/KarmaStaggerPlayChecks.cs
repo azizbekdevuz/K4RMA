@@ -22,8 +22,8 @@ public static class KarmaStaggerPlayChecks
     static string runtimeError;
     static readonly List<string> log = new List<string>();
     static readonly Essence[][] Orders = {
-        new[] { Essence.Ward }, new[] { Essence.Ward, Essence.Flame }, new[] { Essence.Ward, Essence.Dash },
-        new[] { Essence.Ward, Essence.Flame, Essence.Dash }, new[] { Essence.Ward, Essence.Dash, Essence.Flame }
+        new[] { Essence.Guard }, new[] { Essence.Guard, Essence.SwordWave }, new[] { Essence.Guard, Essence.RisingSlash },
+        new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash }, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave }
     };
     static T Get<T>(object obj, string name) => (T)obj.GetType().GetField(name, Private).GetValue(obj);
     static void Set(object obj, string name, object value) => obj.GetType().GetField(name, Private).SetValue(obj, value);
@@ -85,6 +85,12 @@ public static class KarmaStaggerPlayChecks
         game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
         var original = game.Config; var config = UnityEngine.Object.Instantiate(original);
         config.playerHealth = 100000; Set(game, "config", config);
+        var background = InputSystem.settings.backgroundBehavior;
+        var inputBehavior = InputSystem.settings.editorInputBehaviorInPlayMode;
+        var updateMode = InputSystem.settings.updateMode;
+        InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+        InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+        InputSystem.settings.updateMode = InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
         var keyboard = InputSystem.AddDevice<Keyboard>();
         checks = 0; log.Clear(); runtimeError = null; Application.logMessageReceived += Error;
         Directory.CreateDirectory("output/validation/stagger");
@@ -101,7 +107,8 @@ public static class KarmaStaggerPlayChecks
                 var art = Get<Transform>(enemy, "art"); var picture = art.GetComponentInChildren<SpriteRenderer>();
                 var animator = Get<KarmaCharacterAnimator>(enemy, "animator");
                 var standing = picture.sprite; var scale = picture.transform.localScale; var home = picture.transform.localPosition;
-                var restored = form == 0 ? KarmaArtwork.Sprite("Ward", "Idle") : standing;
+                var restored = form == 0 ? KarmaArtwork.Sprite("Ward", "Idle")
+                    : Array.Find(KarmaArtwork.InheritedPoses(key), s => s.name == "Idle");
                 var color = picture.color; var bounds = picture.bounds; var position = enemy.Position;
                 Capture("output/validation/stagger/" + label + "-before.png");
                 Force(facing); await Until(() => enemy.HeavyParryWindowOpen);
@@ -149,7 +156,7 @@ public static class KarmaStaggerPlayChecks
                 foreach (var pattern in new[] { EnemyAttack.GD03, EnemyAttack.GD04, EnemyAttack.GD05 })
                 {
                     Force(facing, pattern); Set(game.Player, "invulnerableUntil", Time.time + 100); await Seconds(0.08f);
-                    Check((form == 0 ? picture.sprite.texture.name == "Ward" && picture.sprite.name != "Stagger" : picture.sprite == standing)
+                    Check((form == 0 ? picture.sprite.texture.name == "Ward" && picture.sprite.name != "Stagger" : picture.sprite.texture == standing.texture)
                         && picture.color == color && picture.transform.localScale == scale,
                         label + " " + pattern + " restores stage body without leftover stagger");
                 }
@@ -158,9 +165,13 @@ public static class KarmaStaggerPlayChecks
             game.Player.Essences.TryCounter(); await Until(() => enemy.Stunned); await Seconds(0.04f);
             var deadAnimator = Get<KarmaCharacterAnimator>(enemy, "animator");
             var deadPicture = Get<Transform>(enemy, "art").GetComponentInChildren<SpriteRenderer>();
-            enemy.TakeDamage(100000, game.Player.Position); await Task.Delay(100);
+            enemy.TakeDamage(100000, game.Player.Position);
+            Check(deadPicture.color == new Color(1, 0.88f, 0.73f), "death immediately clears stagger tint before the fall animation");
+            await Task.Delay(100);
             Check(!enemy.Alive && !deadAnimator.CurrentPose.StartsWith("Stagger/"), "death exits stagger pose");
-            Check(deadPicture.color == new Color(1, 0.88f, 0.73f), "death restores original final tint");
+            Check(deadPicture.color.r < 1 && deadPicture.color.r >= 0.55f
+                && deadPicture.color.g <= 0.88f && deadPicture.color.g >= 0.55f,
+                "team guardian-fall fade runs after stagger without keeping its tint");
             await Reset(0, 1);
             Check(!enemy.Stunned && Get<KarmaCharacterAnimator>(enemy, "animator").CurrentPose != "Stagger/Ward", "new room has no stale stun");
             Check(runtimeError == null, "no game-code runtime errors: " + runtimeError);
@@ -173,6 +184,9 @@ public static class KarmaStaggerPlayChecks
         {
             EditorApplication.isPaused = false; Application.logMessageReceived -= Error;
             InputSystem.RemoveDevice(keyboard); game.ReturnToTitle(); Set(game, "config", original); UnityEngine.Object.Destroy(config);
+            InputSystem.settings.backgroundBehavior = background;
+            InputSystem.settings.editorInputBehaviorInPlayMode = inputBehavior;
+            InputSystem.settings.updateMode = updateMode;
         }
     }
 }

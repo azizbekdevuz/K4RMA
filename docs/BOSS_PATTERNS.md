@@ -197,7 +197,7 @@ Stage 1은 근접 베기만 사용한다. Stage 2부터 첫 고유화 기술이 
 - 해금·선택 조건·표시명: `Core/KarmaPatternCatalog.cs`
 - 공유 1회 접촉·결계 결과·연속 박스 검사: `Core/KarmaBossRules.cs`
 - 실행/중단/주기: `Runtime/Enemies/KarmaEnemy.StateMachine.cs`
-- 개별 실행: `Runtime/Enemies/Patterns/KarmaEnemy.SwordWave.cs`, `KarmaEnemy.RisingSlash.cs`, `KarmaEnemy.Ward.cs`, `KarmaEnemy.WardTrial.cs`
+- 개별 실행: `Runtime/Enemies/Patterns/KarmaEnemy.SwordWave.cs`, `KarmaEnemy.RisingSlash.cs`, `KarmaEnemy.Guard.cs`, `KarmaEnemy.WardTrial.cs`
 - GD05 보호막·균열·파열·곡면 지붕: `Runtime/Presentation/KarmaGuardDome.cs`
 - Inspector 수치: `KarmaConfig.bossTuning` / `Runtime/Configuration/KarmaBossTuning.cs`
 - 전조 모양: `Runtime/Presentation/KarmaAttackWarning.cs`

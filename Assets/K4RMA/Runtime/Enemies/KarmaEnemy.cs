@@ -18,8 +18,8 @@ namespace KarmaPrototype
         bool autoShield;
         float heavyParryUntil;
         bool heavyParryQueued;
-        float swordWardUntil, nextWardResponse;
-        bool engaged, running, stopped, fullShield, frontalGuard, swordWard, pendingParry;
+        float swordGuardUntil, nextGuardResponse;
+        bool engaged, running, stopped, fullShield, frontalGuard, swordGuard, pendingParry;
         bool announcedEnrage;
         readonly KarmaTrialState trial = new KarmaTrialState();
         KarmaBossTuning Tuning { get { return game.Config.BossTuning; } }
@@ -39,7 +39,7 @@ namespace KarmaPrototype
         public bool Stunned { get { return state == ActionState.Stunned; } }
         public bool Invulnerable { get { return fullShield; } }
         public bool AutoShieldActive { get { return autoShield; } }
-        public bool Armored { get { return fullShield || swordWard || frontalGuard || autoShield; } }
+        public bool Armored { get { return fullShield || swordGuard || frontalGuard || autoShield; } }
         public bool TrialActive { get { return trial.Active; } }
         public bool HeavyParryWindowOpen
         { get { return Active && !game.Paused && running && selected == EnemyAttack.GD02
@@ -55,7 +55,7 @@ namespace KarmaPrototype
             get
             {
                 if (fullShield) return selected == EnemyAttack.GD05 ? "GD05 결계 시험 · 보스 무적" : "구형 방어막 · 무적";
-                if (swordWard) return "반격 검막 · 피해 감소/공격 시 검 사출";
+                if (swordGuard) return "반격 검막 · 피해 감소/공격 시 검 사출";
                 if (frontalGuard) return "정면 방어 · 뒤쪽 공격 가능";
                 if (autoShield) return attacks.Contains(EnemyAttack.GD05)
                     ? "GD01 자동방어막 · GD02 패링 / GD05 성공으로 해제"
@@ -77,9 +77,9 @@ namespace KarmaPrototype
             art.localScale = Vector3.one * KarmaSpace.GuardianArtScale; animator = art.GetComponent<KarmaCharacterAnimator>();
             attacks = KarmaPatternCatalog.BuildCycle(game.Player.Essences.SacrificeOrder);
             effectsRoot = new GameObject("Guardian pattern objects").transform; effectsRoot.SetParent(game.World, false);
-            shieldHalo = KarmaRemnantVFX.CreateWardHalo(transform, KarmaArtwork.BarrierColor);
+            shieldHalo = KarmaRemnantVFX.CreateGuardHalo(transform, KarmaArtwork.BarrierColor);
             shieldHalo.transform.localScale = new Vector3(KarmaSpace.Units(2.2f) * KarmaSpace.GuardianSizeBoost, KarmaSpace.Units(3.1f) * KarmaSpace.GuardianSizeBoost, 1); shieldHalo.enabled = false;
-            if (PrimaryType == Essence.Ward)
+            if (PrimaryType == Essence.Guard)
             {
                 if (KarmaCombatVFX.ApplySprite(shieldHalo, "GuardShield", "ShieldRing",
                     KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
@@ -87,8 +87,14 @@ namespace KarmaPrototype
             }
             timer = 1.4f; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach; Intent = "앞으로 나아가 시험을 시작하세요";
-            if (PrimaryType == Essence.Ward)
+            if (PrimaryType == Essence.Guard)
             { RefreshAutoShield(); shieldHalo.enabled = true; }
+        }
+        public void PrepareRevival(Vector3 position, Vector3 artworkScale)
+        {
+            transform.position = position;
+            art.localScale = artworkScale;
+            engaged = true;
         }
         public bool RestoreMissingPersonalizations(KarmaEssences essences, int stage, Essence last)
         {

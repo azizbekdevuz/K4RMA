@@ -1,4 +1,6 @@
 #if UNITY_EDITOR
+using System;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.U2D.Sprites;
 using UnityEngine;
@@ -21,12 +23,33 @@ namespace KarmaPrototype.Editor
                 var source = (TextureImporter)AssetImporter.GetAtPath("Assets/K4RMA/Resources/K4RMAArtwork/" + sheet + ".png");
                 source.GetSourceTextureWidthAndHeight(out int sourceWidth, out int sourceHeight);
                 float width = sourceWidth / 3f;
+                source.textureType = TextureImporterType.Sprite;
+                source.spriteImportMode = SpriteImportMode.Multiple;
+                source.spritePixelsPerUnit = 125;
+                source.SaveAndReimport();
+                var factory = new SpriteDataProviderFactories(); factory.Init();
+                var provider = factory.GetSpriteEditorDataProviderFromObject(source);
+                if (provider == null) throw new InvalidOperationException("Sprite provider unavailable: " + sheet);
+                provider.InitSpriteEditorDataProvider();
+                var capability = provider.GetDataProvider<ISpriteFrameEditCapability>();
+                var required = EEditCapability.CreateAndDeleteSprite | EEditCapability.EditSpriteName
+                    | EEditCapability.EditSpriteRect | EEditCapability.EditPivot;
+                if (capability == null || !capability.GetEditCapability().HasCapability(required))
+                    throw new InvalidOperationException("Required slicing capabilities unavailable: " + sheet);
+                var ids = provider.GetDataProvider<ISpriteNameFileIdDataProvider>();
+                if (ids == null) throw new InvalidOperationException("Name/file ID provider unavailable: " + sheet);
+                var previous = provider.GetSpriteRects().ToDictionary(s => s.name, s => s.spriteID);
                 var frames = new SpriteRect[3];
                 for (int i = 0; i < frames.Length; i++)
-                    frames[i] = KarmaArtworkSetup.Frame(names[i], new Rect(i * width, 0, width, sourceHeight),
-                        new Vector2(centers[form], feet[form]));
-                KarmaArtworkSetup.ImportSprite(sheet, 125, frames);
-                foreach (string name in names) KarmaArtworkSetup.Sprite(sheet, name);
+                    frames[i] = new SpriteRect { name = names[i], rect = new Rect(i * width, 0, width, sourceHeight),
+                        alignment = SpriteAlignment.Custom, pivot = new Vector2(centers[form], feet[form]),
+                        spriteID = previous.TryGetValue(names[i], out var id) ? id : GUID.Generate() };
+                provider.SetSpriteRects(frames);
+                ids.SetNameFileIdPairs(frames.Select(s => new SpriteNameFileIdPair(s.name, s.spriteID)));
+                provider.Apply(); source.SaveAndReimport();
+                foreach (string name in names)
+                    if (!AssetDatabase.LoadAllAssetsAtPath(source.assetPath).OfType<Sprite>().Any(s => s.name == name))
+                        throw new InvalidOperationException("Missing imported pose: " + sheet + "/" + name);
             }
             const string cue = "Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/ParryRed.png";
             var importer = (TextureImporter)AssetImporter.GetAtPath(cue);

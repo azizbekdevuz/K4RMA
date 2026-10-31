@@ -45,6 +45,10 @@ namespace KarmaPrototype
         {
             return Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
         }
+        public static Sprite[] InheritedPoses(string form)
+        {
+            return Resources.LoadAll<Sprite>("K4RMAArtwork/Characters/Guardians/Inherited/" + form);
+        }
         public static Sprite[] PlayerFrames()
         {
             var frames = Settings.PlayerFrames();
@@ -55,7 +59,7 @@ namespace KarmaPrototype
         }
         public static Transform Player(Transform parent)
         {
-            var frames = Settings.useCompleteArtwork ? KarmaArtAtlas.Player() : PlayerFrames();
+            var frames = PlayerFrames();
             var root = new GameObject("Artwork").transform; root.SetParent(parent, false);
             var picture = new GameObject("Player sprite"); picture.transform.SetParent(root, false);
             picture.transform.localPosition = new Vector3(0, -KarmaSpace.PlayerHalfHeight, 0);
@@ -79,26 +83,31 @@ namespace KarmaPrototype
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
             var primary = KarmaPatternCatalog.Primary(order);
-            animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward");
-            if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order));
-            if (primary == Essence.Ward) animator.ConfigureHeavyStrike(order);
+            animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward");
+            if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order), GuardianFormName(order));
+            if (primary == Essence.Guard) animator.ConfigureHeavyStrike(order);
             return root;
         }
         public static readonly Color BossSwordColor = new Color(0.42f, 0.68f, 1);
         public static readonly Color BarrierColor = new Color(1, 0.83f, 0.48f);
+        public static string GuardianFormName(IReadOnlyList<Essence> order)
+        {
+            var primary = KarmaPatternCatalog.Primary(order);
+            if (!primary.HasValue) return "Neutral";
+            string name = primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward";
+            if (order.Count == 3) name += "Final";
+            else if (order.Count == 2)
+                name += order[1] == Essence.SwordWave ? "Wave" : order[1] == Essence.RisingSlash ? "Rise" : "Ward";
+            return name;
+        }
         public static Sprite GuardianPreview(IReadOnlyList<Essence> order)
         {
             var primary = KarmaPatternCatalog.Primary(order);
-            if (!primary.HasValue) return Sprite("Inheritance", "Neutral") ?? Settings.Guardian(null);
-            string name = primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward";
-            if (order.Count == 3) name += "Final";
-            else if (order.Count == 2)
-                name += order[1] == Essence.Flame ? "Wave" : order[1] == Essence.Dash ? "Rise" : "Ward";
+            string name = GuardianFormName(order);
             return Sprite("Inheritance", name) ?? Settings.Guardian(primary);
         }
         public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)
         {
-            if (Settings.useCompleteArtwork && KarmaLayeredScenery.Build(parent, stage, game)) return true;
             bool mountain = stage == 0 && Settings.mountainBackground != null;
             var original = mountain ? Settings.mountainBackground : Settings.dojoBackground;
             var panorama = mountain ? Settings.mountainPanorama : Settings.dojoPanorama;

@@ -16,7 +16,7 @@ namespace KarmaPrototype.Editor
                 if (settings == null || KarmaArtwork.Settings != settings)
                     throw new InvalidOperationException("Resources 이미지 설정 에셋 연결 실패");
                 ValidateSheets(settings.spriteLibrary);
-                string[] names = { "WorldOverview", "PlayerAnimation", "PlayerSheet", "GuardianSprites", "DojoBackground", "PlayerSwordWave", "PlayerRisingSlash", "WardGuardian", "RisingGuardian", "SwordGuardian", "GuardianEvolution" };
+                string[] names = { "MenuBackground" };
                 foreach (string name in names)
                 {
                     var texture = KarmaArtwork.Texture(name);
@@ -45,14 +45,14 @@ namespace KarmaPrototype.Editor
                         throw new InvalidOperationException("첫 시련 기본 수호자 선택 오류");
                 }
                 // The runtime must follow Inspector references, regardless of the PNG filename.
-                var original = settings.worldOverview;
+                var original = settings.menuBackground;
                 try
                 {
-                    settings.worldOverview = settings.playerSwordWave;
-                    if (KarmaArtwork.Texture("WorldOverview") != settings.playerSwordWave)
+                    settings.menuBackground = settings.playerIdle.texture;
+                    if (KarmaArtwork.Texture("MenuBackground") != settings.playerIdle.texture)
                         throw new InvalidOperationException("Inspector 텍스처 교체가 반영되지 않습니다.");
                 }
-                finally { settings.worldOverview = original; }
+                finally { settings.menuBackground = original; }
                 var root = new GameObject("Artwork validation");
                 if (KarmaArtwork.Player(root.transform) == null || !KarmaArtwork.Background(root.transform))
                     throw new InvalidOperationException("플레이어/배경 연결 실패");
@@ -65,7 +65,7 @@ namespace KarmaPrototype.Editor
                 if (frames[0] == null || original == null || KarmaArtwork.Settings != settings)
                     throw new InvalidOperationException("캐시 초기화 시 공유 이미지 에셋이 파괴되었습니다.");
                 UnityEngine.Object.DestroyImmediate(root);
-                File.WriteAllText("artwork-validation.txt", "PASS: shared Inspector settings, 208 named sprites across 37 sheets/layers, player/guardian poses, VFX/UI/props/inheritance, native sprite geometry, reference replacement and cache reset.\n");
+                File.WriteAllText("artwork-validation.txt", "PASS: shared Inspector settings, 164 named sprites across 12 current-game sheets, player/guardian poses, VFX/UI/props/inheritance, native sprite geometry, reference replacement and cache reset.\n");
                 Debug.Log("K4RMA 이미지 연결 검사 PASS");
                 if (Application.isBatchMode) EditorApplication.Exit(0);
             }
@@ -97,9 +97,11 @@ namespace KarmaPrototype.Editor
                     total++;
                 }
             }
-            if (total != 208 || library.All("Player").Length != 20 || library.All("Neutral").Length != 8
+            if (total != 173 || library.sheets.Length != 20 || library.All("Player").Length != 20 || library.All("Neutral").Length != 8
                 || library.All("Wave").Length != 12 || library.All("Rise").Length != 12 || library.All("Ward").Length != 12)
                 throw new InvalidOperationException("포즈 또는 시트 분리 누락");
+            if (library.All("GuardShardDB").Length != 2 || library.All("GuardWholeShield").Length != 1)
+                throw new InvalidOperationException("GD03 방패·파편 연결 누락");
         }
     }
 }

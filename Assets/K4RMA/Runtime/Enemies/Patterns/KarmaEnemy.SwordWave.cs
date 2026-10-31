@@ -76,22 +76,22 @@ namespace KarmaPrototype
             yield return Wait(WaveLife);
             yield return Recovery(1.1f);
         }
-        bool wardResponsePending;
-        IEnumerator CounterWard()
+        bool guardResponsePending;
+        IEnumerator CounterGuard()
         {
             state = ActionState.Telegraph;
             var formation = Mark("검막 형성", Position, KarmaSpace.Units(new Vector2(3, 3)));
             yield return Wait(Warning(0.7f)); Destroy(formation.gameObject);
-            state = ActionState.Attack; swordWard = true; wardResponsePending = false;
-            swordWardUntil = FightSeconds + Mathf.Max(0.6f, Tuning.swordWardDuration);
-            nextWardResponse = FightSeconds;
+            state = ActionState.Attack; swordGuard = true; guardResponsePending = false;
+            swordGuardUntil = FightSeconds + Mathf.Max(0.6f, Tuning.swordGuardDuration);
+            nextGuardResponse = FightSeconds;
             var blades = new SpriteRenderer[4];
             for (int i = 0; i < blades.Length; i++)
             {
                 blades[i] = KarmaVisuals.Box(effectsRoot, "회전 검막 · 접촉 피해 없음", Position, Vector2.one, Color.white, 13);
                 KarmaCombatVFX.ApplySprite(blades[i], "GuardianVFX", "Blade", KarmaSpace.Units(new Vector2(1.2f, 0.5f)));
             }
-            while (FightSeconds < swordWardUntil && Active)
+            while (FightSeconds < swordGuardUntil && Active)
             {
                 for (int i = 0; i < blades.Length; i++)
                 {
@@ -99,9 +99,9 @@ namespace KarmaPrototype
                     blades[i].transform.position = Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * KarmaSpace.Units(1.6f);
                     blades[i].transform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
                 }
-                if (wardResponsePending)
+                if (guardResponsePending)
                 {
-                    wardResponsePending = false;
+                    guardResponsePending = false;
                     Vector2 origin = Position, aim = (game.Player.Position - origin).normalized;
                     if (aim.sqrMagnitude < 0.01f) aim = Vector2.right * direction;
                     var mark = PathMark(origin, origin + aim * Tuning.swordSpeed * WaveLife, WaveSize);
@@ -109,12 +109,12 @@ namespace KarmaPrototype
                     yield return Wait(Mathf.Max(0.3f, Tuning.counterWarning));
                     Destroy(mark.gameObject);
                     Attack(origin, aim * Tuning.swordSpeed, WaveSize, WaveLife);
-                    nextWardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordWardResponseCooldown);
+                    nextGuardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordGuardResponseCooldown);
                 }
                 yield return null;
             }
-            swordWard = false; wardResponsePending = false;
-            // Recovery cancels all remaining ward shots before exposing the boss.
+            swordGuard = false; guardResponsePending = false;
+            // Recovery cancels all remaining guard shots before exposing the boss.
             yield return Recovery(1.4f);
         }
         IEnumerator AerialSwords()

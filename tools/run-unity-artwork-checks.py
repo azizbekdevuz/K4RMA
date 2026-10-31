@@ -14,7 +14,7 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--initialize', action='store_true')
-parser.add_argument('--production', action='store_true', help='Import copied Production PNGs, assign settings and validate')
+parser.add_argument('--production', action='store_true', help='Assign current image settings and validate')
 parser.add_argument('--unity', type=Path)
 parser.add_argument('--licensing-ipc', help='Use an existing Unity Licensing Client channel')
 args = parser.parse_args()
@@ -30,7 +30,7 @@ if args.production:
     method = 'KarmaPrototype.Editor.KarmaProductionArtworkSetup.ApplyAndValidate'
 with tempfile.TemporaryDirectory(prefix='karma-artwork-', ignore_cleanup_errors=True) as folder:
     project = Path(folder)
-    for name in ('Assets', 'Packages', 'ProjectSettings', 'image'):
+    for name in ('Assets', 'Packages', 'ProjectSettings'):
         shutil.copytree(root / name, project / name)
     if args.initialize and 'com.unity.2d.sprite' not in json.loads((project / 'Packages/manifest.json').read_text())['dependencies']:
         bootstrap = project / 'Assets/Editor/KarmaSpritePackageInstaller.cs'
@@ -72,14 +72,13 @@ public static class KarmaSpritePackageInstaller
         + (['-licensingIpc', args.licensing_ipc] if args.licensing_ipc else []), timeout=240)
     verdict = project / 'artwork-validation.txt'
     if result.returncode or not verdict.exists() or not verdict.read_text().startswith('PASS:'):
-        shutil.copy2(project / 'Assets/K4RMA/Resources/K4RMAArtwork/PlayerAnimation.png.meta', output / 'failed-player-import.txt')
+        shutil.copy2(project / 'Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Player/Actions.png.meta', output / 'failed-player-import.txt')
         raise SystemExit(f'Artwork validation failed. Read {log}')
     if args.production:
-        imported = project / 'Assets/K4RMA/Resources/K4RMAArtwork/Production'
-        for source in [*imported.rglob('*.meta'), Path(str(imported) + '.meta'), project / 'Assets/K4RMA/Resources/KarmaArtworkSettings.asset']:
-            shutil.copy2(source, root / source.relative_to(project))
+        relative = Path('Assets/K4RMA/Resources/KarmaArtworkSettings.asset')
+        shutil.copy2(project / relative, root / relative)
     if args.initialize:
-        files = list((project / 'Assets/K4RMA/Resources/K4RMAArtwork').glob('*.png.meta'))
+        files = list((project / 'Assets/K4RMA/Art/Resources/K4RMAArtwork').rglob('*.png.meta'))
         files += [project / 'Assets/K4RMA/Resources/KarmaArtworkSettings.asset',
                   project / 'Assets/K4RMA/Resources/KarmaArtworkSettings.asset.meta']
         for source in files:

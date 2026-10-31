@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 namespace KarmaPrototype
 {
     [Serializable]
@@ -21,8 +22,10 @@ namespace KarmaPrototype
         [Min(0.2f)] public float swordLifetime = 1.65f;
         [Min(0.1f)] public float swordWidth = 1.2f * KarmaSpace.Scale, swordHeight = 0.5f * KarmaSpace.Scale;
         [Min(0.3f)] public float counterWarning = 0.45f;
-        [Min(0.6f)] public float swordWardDuration = 3;
-        [Min(0.5f)] public float swordWardResponseCooldown = 0.8f;
+        [FormerlySerializedAs("swordWardDuration")]
+        [Min(0.6f)] public float swordGuardDuration = 3;
+        [FormerlySerializedAs("swordWardResponseCooldown")]
+        [Min(0.5f)] public float swordGuardResponseCooldown = 0.8f;
         [Range(1, 8)] public int aerialSwordCount = 7;
         [Min(0.25f)] public float aerialSwordGap = 0.4f;
         [Header("상승베기형")]

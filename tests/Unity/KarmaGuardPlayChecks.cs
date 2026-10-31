@@ -384,7 +384,7 @@ public static class KarmaGuardPlayChecks
             int frame = Time.frameCount;
             await Task.Delay(50);
             Check(Time.frameCount > frame, "physical input check uses a live player loop");
-            Reset(new[] { Essence.Ward, Essence.Dash });
+            Reset(new[] { Essence.Guard, Essence.RisingSlash });
             var body = game.Player.GetComponent<Rigidbody2D>();
             body.bodyType = RigidbodyType2D.Dynamic;
             Place(new Vector2(16, KarmaSpace.PlayerHalfHeight + 0.05f));
@@ -895,9 +895,9 @@ public static class KarmaGuardPlayChecks
     static async Task CheckBarrierCounterChain()
     {
         var orders = new[] {
-            new[] { Essence.Ward, Essence.Dash },
-            new[] { Essence.Ward, Essence.Flame, Essence.Dash },
-            new[] { Essence.Ward, Essence.Dash, Essence.Flame }
+            new[] { Essence.Guard, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave }
         };
         foreach (var order in orders)
         foreach (int facing in new[] { -1, 1 })
@@ -1059,8 +1059,8 @@ public static class KarmaGuardPlayChecks
     static async Task CheckPersistentShield()
     {
         var orders = new[] {
-            new[] { Essence.Ward }, new[] { Essence.Ward, Essence.Flame }, new[] { Essence.Ward, Essence.Dash },
-            new[] { Essence.Ward, Essence.Flame, Essence.Dash }, new[] { Essence.Ward, Essence.Dash, Essence.Flame }
+            new[] { Essence.Guard }, new[] { Essence.Guard, Essence.SwordWave }, new[] { Essence.Guard, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash }, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave }
         };
         foreach (var order in orders)
         {
@@ -1072,7 +1072,7 @@ public static class KarmaGuardPlayChecks
             await Until(() => !Get<bool>(enemy, "running"), 3);
             Check(enemy.AutoShieldActive, "dodging GD02 preserves GD01 through recovery and pattern completion");
         }
-        foreach (var primary in new[] { Essence.Flame, Essence.Dash })
+        foreach (var primary in new[] { Essence.SwordWave, Essence.RisingSlash })
         {
             Reset(new[] { primary });
             Check(!enemy.AutoShieldActive, "GD01 is not granted to " + primary + " primary bosses");
@@ -1110,7 +1110,7 @@ public static class KarmaGuardPlayChecks
     static void Reset(Essence[] order = null)
     {
         game.StartRun();
-        order = order ?? new[] { Essence.Ward, Essence.Flame, Essence.Dash };
+        order = order ?? new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash };
         foreach (var essence in order) game.Player.Essences.Sacrifice(essence);
         typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, order.Length);
         Call(game, "LoadRoom", true);

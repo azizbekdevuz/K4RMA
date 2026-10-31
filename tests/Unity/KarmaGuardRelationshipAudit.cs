@@ -23,7 +23,7 @@ public static class KarmaGuardRelationshipAudit
     static string report;
     static int checks;
     static readonly List<string> notes = new List<string>();
-    static readonly Essence[] Final = { Essence.Ward, Essence.Flame, Essence.Dash };
+    static readonly Essence[] Final = { Essence.Guard, Essence.SwordWave, Essence.RisingSlash };
     static T Get<T>(object obj, string name) => (T)obj.GetType().GetField(name, Private).GetValue(obj);
     static void Set(object obj, string name, object value) => obj.GetType().GetField(name, Private).SetValue(obj, value);
     static object Call(object obj, string name, params object[] args) => obj.GetType().GetMethod(name, Private).Invoke(obj, args);
@@ -117,7 +117,7 @@ public static class KarmaGuardRelationshipAudit
         foreach (int side in new[] { -1, 1 })
         foreach (float distance in new[] { 6f, 9.5f, 10.4f })
         {
-            await Reset(new[] { Essence.Ward }, 20 + side * distance, 20, false);
+            await Reset(new[] { Essence.Guard }, 20 + side * distance, 20, false);
             Set(enemy, "cycleIndex", 1); Set(enemy, "timer", 0f);
             await Until(() => enemy.HeavyParryWindowOpen);
             float gap = Mathf.Abs(game.Player.Position.x - enemy.Position.x);
@@ -133,7 +133,7 @@ public static class KarmaGuardRelationshipAudit
         foreach (int side in new[] { -1, 1 })
         foreach (string policy in new[] { "stand", "early-cross", "late-retreat" })
         {
-            await Reset(new[] { Essence.Ward, Essence.Flame }, 20 + side * 6);
+            await Reset(new[] { Essence.Guard, Essence.SwordWave }, 20 + side * 6);
             float hp = game.Player.Health; Force(EnemyAttack.GD03, side);
             if (policy == "early-cross") Keys(side > 0 ? Key.A : Key.D);
             if (policy == "late-retreat")
@@ -146,7 +146,7 @@ public static class KarmaGuardRelationshipAudit
                 + " finalPlayer=" + game.Player.Position.ToString("F2") + " shieldRetained=" + enemy.AutoShieldActive);
             if (policy == "stand" && side == 1) Capture("gd03-recovery");
         }
-        await Reset(new[] { Essence.Ward, Essence.Flame }); Force(EnemyAttack.GD03, 1);
+        await Reset(new[] { Essence.Guard, Essence.SwordWave }); Force(EnemyAttack.GD03, 1);
         await Until(() => Get<Transform>(enemy, "effectsRoot").Find("GD03 큰 방패 투척") != null);
         await Seconds(0.16f); Capture("gd03-duplicate-held-shield");
         Note("GD03 launch body sprite=" + Get<Transform>(enemy, "art").GetComponentInChildren<SpriteRenderer>().sprite.name
@@ -157,7 +157,7 @@ public static class KarmaGuardRelationshipAudit
         foreach (int side in new[] { -1, 1 })
         {
             float bossX = side > 0 ? 48 : -8;
-            await Reset(new[] { Essence.Ward, Essence.Dash }, bossX + side * 6, bossX);
+            await Reset(new[] { Essence.Guard, Essence.RisingSlash }, bossX + side * 6, bossX);
             Force(EnemyAttack.GD04, side); await Seconds(0.12f);
             Note("GD04 near-wall side=" + side + " requestedFacing=" + side + " actualFacing=" + enemy.Facing
                 + " playerSignedToActual=" + ((game.Player.Position.x - enemy.Position.x) * enemy.Facing).ToString("F2"));
@@ -166,7 +166,7 @@ public static class KarmaGuardRelationshipAudit
             await Until(() => State() == "Recover", 6);
             Note("GD04 near-wall ending selected=" + Get<EnemyAttack>(enemy, "selected") + " no rear GD02 triggered=" + (Get<EnemyAttack>(enemy, "selected") == EnemyAttack.GD04));
         }
-        await Reset(new[] { Essence.Ward, Essence.Dash }); Force(EnemyAttack.GD04, 1);
+        await Reset(new[] { Essence.Guard, Essence.RisingSlash }); Force(EnemyAttack.GD04, 1);
         await Until(() => State() == "Attack"); Keys(Key.A);
         await Until(() => enemy.HeavyParryWindowOpen, 5); Keys();
         float hp = game.Player.Health; Keys(Key.K); await Task.Delay(45); Keys();
@@ -276,8 +276,8 @@ public static class KarmaGuardRelationshipAudit
     }
     static async Task VerifyHeavyReach()
     {
-        Essence[][] orders = { new[] { Essence.Ward }, new[] { Essence.Ward, Essence.Flame },
-            new[] { Essence.Ward, Essence.Dash }, Final, new[] { Essence.Ward, Essence.Dash, Essence.Flame } };
+        Essence[][] orders = { new[] { Essence.Guard }, new[] { Essence.Guard, Essence.SwordWave },
+            new[] { Essence.Guard, Essence.RisingSlash }, Final, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave } };
         for (int form = 0; form < orders.Length; form++)
         foreach (int side in new[] { -1, 1 })
         foreach (float distance in new[] { 8f, 8.1f, 9.54f })
@@ -304,7 +304,7 @@ public static class KarmaGuardRelationshipAudit
         // Reproduce the original natural-selection case; capture the gap at selection, not at the later tell.
         foreach (int side in new[] { -1, 1 })
         {
-            await Reset(new[] { Essence.Ward }, 20 + side * 10.4f, 20, false);
+            await Reset(new[] { Essence.Guard }, 20 + side * 10.4f, 20, false);
             Set(enemy, "cycleIndex", 1); Set(enemy, "timer", 0f);
             await Until(() => Get<bool>(enemy, "running"));
             float gap = Mathf.Abs(game.Player.Position.x - enemy.Position.x);
@@ -314,7 +314,7 @@ public static class KarmaGuardRelationshipAudit
     }
     static async Task VerifyWallLayout()
     {
-        Essence[][] orders = { new[] { Essence.Ward, Essence.Dash }, Final, new[] { Essence.Ward, Essence.Dash, Essence.Flame } };
+        Essence[][] orders = { new[] { Essence.Guard, Essence.RisingSlash }, Final, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave } };
         for (int form = 0; form < orders.Length; form++)
         foreach (int side in new[] { -1, 1 })
         foreach (float room in new[] { 35f, 7f, 5.2f })
@@ -370,7 +370,7 @@ public static class KarmaGuardRelationshipAudit
     {
         Check(Mathf.Approximately(game.Config.BossTuning.fragmentChaseSpeed, 30), "serialized chase speed is 30 (previously 20)");
         Check(Mathf.Approximately(game.Config.BossTuning.fragmentReturnSeconds, 0.4f), "serialized return duration is 0.4 (previously 0.6)");
-        Essence[][] orders = { new[] { Essence.Ward, Essence.Flame }, Final, new[] { Essence.Ward, Essence.Dash, Essence.Flame } };
+        Essence[][] orders = { new[] { Essence.Guard, Essence.SwordWave }, Final, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave } };
         for (int form = 0; form < orders.Length; form++)
         foreach (int side in new[] { -1, 1 })
         foreach (bool moving in new[] { false, true })
@@ -444,8 +444,8 @@ public static class KarmaGuardRelationshipAudit
     }
     static async Task VerifyTrialShieldRewardRules()
     {
-        Essence[][] orders = { Final, new[] { Essence.Ward, Essence.Dash, Essence.Flame } };
-        await Reset(new[] { Essence.Ward });
+        Essence[][] orders = { Final, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave } };
+        await Reset(new[] { Essence.Guard });
         Check(!enemy.DefenseStatus.Contains("GD05"), "earlier Ward stage keeps its parry-only shield hint");
         for (int form = 0; form < orders.Length; form++)
         foreach (bool success in new[] { true, false })
@@ -474,6 +474,8 @@ public static class KarmaGuardRelationshipAudit
             Check(Mathf.Abs(hp - enemy.Health - (success ? 60 : 18)) < 0.02f,
                 label + " reward damage=" + (hp - enemy.Health).ToString("F2"));
             if (!success) continue;
+            // Recovery can begin in a coroutine after this frame's halo Update has already run.
+            await Until(() => !Get<SpriteRenderer>(enemy, "shieldHalo").enabled, 0.5f);
             Check(enemy.Intent.Contains("GD01 방어막 해제") && !Get<SpriteRenderer>(enemy, "shieldHalo").enabled,
                 label + " success message and actual shield halo agree");
             Check(Get<float>(enemy, "nextShield") > enemy.FightSeconds + 7.4f,

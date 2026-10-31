@@ -13,6 +13,7 @@
 /[Bb]uilds/
 /output/
 /tmp/
+/*-validation.txt
 /tests/**/bin/
 /tests/**/obj/
 
@@ -56,9 +57,5 @@ Desktop.ini
 /Assets/StreamingAssets/aa.meta
 /Assets/StreamingAssets/aa/
 
-# Generated from versioned image sources on Editor import
-/Assets/K4RMA/Resources/K4RMAComplete/
-/Assets/K4RMA/Resources/K4RMAComplete.meta
-/Assets/K4RMA/Editor/ArtReferences/
-/Assets/K4RMA/Editor/ArtReferences.meta
+# Generated native current-image inventory
 /Assets/K4RMA/Editor/CompleteArtInventory.asset*

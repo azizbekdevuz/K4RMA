@@ -5,8 +5,19 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaGame
     {
+        const float GuardianFallDuration = 1.8f, PersonalizationDuration = 2.4f, InheritanceDuration = 3.2f;
+        const float PlayerFallDuration = 1.8f;
+        bool playerFallSettled;
+        bool guardianInheriting;
+        Transform fallenGuardian;
+        Vector3 fallenGuardianPosition;
+        Vector3 fallenGuardianScale;
+        bool ceremonySpacingStarted, ceremonySpacingFinished;
+        public bool GuardianInheriting => Phase == RunPhase.Transition && guardianInheriting;
         public void StartRun()
         {
+            guardianInheriting = false;
+            fallenGuardian = null;
             ResetHitFeedback();
             Paused = false; Time.timeScale = 1;
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
@@ -15,7 +26,7 @@ namespace KarmaPrototype
             runRoot.SetParent(transform, false);
             var p = new GameObject("Player"); p.transform.SetParent(runRoot, false);
             Player = p.AddComponent<KarmaPlayer>(); Player.Initialize(this);
-            Player.Essences.Cancel(); LastSacrifice = Essence.Flame; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
+            Player.Essences.Cancel(); LastSacrifice = Essence.SwordWave; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
             for (int i = 0; i < BossSplits.Length; i++) BossSplits[i] = 0;
             LoadRoom(true);
         }
@@ -35,14 +46,41 @@ namespace KarmaPrototype
             Enemies.Add(enemy);
             Phase = RunPhase.Combat;
         }
-        public void EnemyDefeated(KarmaEnemy enemy)
+        public void EnemyDefeated(KarmaEnemy enemy, Transform fallenArt = null)
         {
             BossSplits[StageIndex] = enemy.FightSeconds;
             Enemies.Remove(enemy);
             if (Enemies.Count != 0) return;
-            Phase = StageIndex == 3 ? RunPhase.Victory : RunPhase.Choosing; Player.Essences.Cancel();
+            fallenGuardian = fallenArt;
+            fallenGuardianPosition = enemy.transform.position;
+            fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
+            guardianInheriting = false;
+            Phase = RunPhase.GuardianFallen;
+            ceremonySpacingStarted = ceremonySpacingFinished = false;
+            transitionLeft = GuardianFallDuration;
+            Player.Essences.Cancel();
             Player.ClearStatus();
             ClearProjectiles();
+        }
+        void UpdateGuardianFall()
+        {
+            transitionLeft -= Time.deltaTime;
+            if (!Player.ReadyForPersonalization) return;
+            if (!ceremonySpacingStarted)
+            {
+                ceremonySpacingStarted = true;
+                var picture = fallenGuardian != null ? fallenGuardian.GetComponentInChildren<SpriteRenderer>() : null;
+                var bounds = picture != null ? picture.bounds : new Bounds(fallenGuardianPosition, Vector3.one * 4);
+                Player.BeginCeremonySpacing(bounds, fallenGuardianPosition.x);
+            }
+            if (Player.SeparatingForCeremony) return;
+            if (!ceremonySpacingFinished)
+            {
+                ceremonySpacingFinished = true;
+                transitionLeft = Mathf.Max(transitionLeft, 0.3f);
+            }
+            if (transitionLeft <= 0)
+                Phase = StageIndex == 3 ? RunPhase.Victory : RunPhase.Choosing;
         }
         public void Choose(Essence essence)
         {
@@ -57,19 +95,70 @@ namespace KarmaPrototype
             if (!Player.Essences.Confirm(out essence)) return;
             Player.Essences.Cancel();
             LastSacrifice = essence;
-            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Personalize(this,Player.Position,essence);
             Player.Heal(config.healAfterSacrifice);
-            Phase = RunPhase.Transition; transitionLeft = 2.5f;
-            KarmaCombatVFX.SpawnSprite(World, Player.Position, "PersonalizationVFX", "Awaken",
-                Vector2.one * KarmaSpace.Units(3), 1.2f);
+            guardianInheriting = false;
+            Phase = RunPhase.Transition; transitionLeft = PersonalizationDuration;
+            KarmaPersonalizationVFX.Play(this, Player.transform, essence, PersonalizationDuration, false);
+        }
+        void UpdatePersonalization()
+        {
+            transitionLeft -= Time.deltaTime;
+            if (transitionLeft > 0) return;
+            if (!guardianInheriting)
+            {
+                Vector2 playerPosition = Player.Position;
+                Vector3 cameraPosition = GameCamera.transform.position;
+                float cameraSize = GameCamera.orthographicSize;
+                var fallenPicture = fallenGuardian != null ? fallenGuardian.GetComponentInChildren<SpriteRenderer>() : null;
+                Sprite fallenAppearance = fallenPicture != null ? fallenPicture.sprite : null;
+                StageIndex++;
+                LoadRoom(false);
+                // Preserve the defeated guardian's place so inheritance reads as a revival.
+                Player.ResetForRoom(playerPosition, false);
+                Player.FaceGuardian(fallenGuardianPosition.x);
+                Enemies[0].PrepareRevival(fallenGuardianPosition, fallenGuardianScale);
+                fallenGuardian = null;
+                GameCamera.transform.position = cameraPosition;
+                GameCamera.orthographicSize = cameraSize;
+                // The new guardian exists, but its AI stays idle until the inheritance finishes.
+                Phase = RunPhase.Transition;
+                guardianInheriting = true;
+                transitionLeft = InheritanceDuration;
+                var previous = new List<Essence>(Player.Essences.SacrificeOrder);
+                previous.RemoveAt(previous.Count - 1);
+                KarmaPersonalizationVFX.Play(this, Enemies[0].transform, LastSacrifice,
+                    InheritanceDuration, true, fallenAppearance != null ? fallenAppearance : KarmaArtwork.GuardianPreview(previous),
+                    KarmaArtwork.GuardianFormName(previous));
+            }
+            else
+            {
+                guardianInheriting = false;
+                Phase = RunPhase.Combat;
+            }
         }
         public void PlayerDied()
         {
-            if (Phase == RunPhase.Defeat || Phase == RunPhase.Victory) return;
-            Phase = RunPhase.Defeat;
+            if (Player == null || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat || Phase == RunPhase.Victory) return;
+            ResetHitFeedback();
+            Phase = RunPhase.PlayerFallen;
+            transitionLeft = PlayerFallDuration;
+            playerFallSettled = false;
+            Player.Essences.Cancel();
             foreach (var enemy in Enemies.ToArray()) if (enemy != null) enemy.CancelCombat();
             ClearProjectiles();
-            if (Player != null) { Player.ClearStatus(); Player.GetComponentInChildren<KarmaCharacterAnimator>(true).Die(); }
+            Player.BeginDefeat();
+        }
+        void UpdatePlayerFall()
+        {
+            transitionLeft -= Time.deltaTime;
+            if (!Player.ReadyForDefeat) return;
+            if (!playerFallSettled)
+            {
+                playerFallSettled = true;
+                // An airborne death must remain visible after landing, too.
+                transitionLeft = Mathf.Max(transitionLeft, 0.8f);
+            }
+            if (transitionLeft <= 0) Phase = RunPhase.Defeat;
         }
         void ClearProjectiles()
         {
@@ -91,6 +180,7 @@ namespace KarmaPrototype
             Paused = false; Time.timeScale = 1; ClearProjectiles();
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
             runRoot = null; World = null; Player = null; Enemies.Clear();
+            guardianInheriting = false; fallenGuardian = null;
             Phase = RunPhase.Title;
         }
         public void TogglePause()

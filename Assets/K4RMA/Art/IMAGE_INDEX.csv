@@ -1,0 +1,48 @@
+category,id,path,usage,poses,width,height,guid
+player,sheet/Player,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Player/Actions.png,현재 플레이어 20동작 통합 시트: 이동·점프·공격·방어·피격·사망·웅크리기,20,1536,1248,96d176c2a45b0450db43376916e2d092
+guardian-base,sheet/Neutral,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Neutral.png,기본 수호자 동작 시트,8,1536,1024,b13752b81622c46cdb6158bd036ffe3d
+guardian-base,sheet/Wave,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png,검기형 수호자 동작 시트,12,1536,1024,b339461aab1db4eeabb2705292e8a290
+guardian-base,sheet/Rise,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Rise.png,상승형 수호자 동작 시트,12,1536,1024,5a0e6caa184cb4b6d9527b732fe76e9c
+guardian-base,sheet/Ward,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Ward.png,방어형 수호자 동작 시트,12,1536,1024,d0a07d7eeb98f4ae9adaf2e72ed2fa84
+effects,sheet/PlayerVFX,Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Player.png,플레이어 기술 이펙트,12,1536,1024,8db8cfead497e4a218c10b266897e73f
+effects,sheet/GuardianVFX,Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Guardian.png,보스 공격 이펙트,12,1536,1024,d98113ce286e84d91a3a0c6ba9a6179a
+effects,sheet/PersonalizationVFX,Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Personalization.png,고유화·계승 이펙트,12,1536,1024,c165ad54ef6024e91bf8e1e35d05f3fc
+effects,sheet/HitVFX,Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Hit.png,피격·타격 이펙트,8,1774,887,9190ef3cfd31e41cf823904bf54c5d1f
+guardian-reference,sheet/Inheritance,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png,계승 조합의 기준 외형·선택 창 미리보기,16,1536,1024,44b9745326c8144abaf6dbe15a82582e
+props,sheet/Props,Assets/K4RMA/Art/Resources/K4RMAArtwork/Props/Props.png,수련장 배경 소품,16,1536,1024,d3368cc0881194e7b8eeb1d880ae786a
+ui,sheet/UI,Assets/K4RMA/Art/Resources/K4RMAArtwork/UI/Components.png,메뉴·체력바·선택 창 UI 요소,24,1536,1024,16969ce7b2a124866b73b43cdfa045d1
+ui,ui/menu,Assets/K4RMA/Art/Resources/K4RMAArtwork/UI/MenuBackground.png,메뉴 배경,0,1672,941,c8f392333173940a496c0588b30e4551
+environment,environment/mountain/background,Assets/K4RMA/Art/Resources/K4RMAArtwork/Environments/MountainDojo/Background.png,실외 도장 기준 배경,0,1672,941,f50e2414a6e4a472396c88342242ada4
+environment,environment/mountain/panorama,Assets/K4RMA/Art/Resources/K4RMAArtwork/Environments/MountainDojo/Panorama.png,실외 도장 가로 스크롤 배경,0,1983,793,925f5a6797694273bcb485ea98c3e612
+environment,environment/hall/background,Assets/K4RMA/Art/Resources/K4RMAArtwork/Environments/TrialHall/Background.png,실내 도장 기준 배경,0,1672,941,105788dea150a46078f38ce8d5054b63
+environment,environment/hall/panorama,Assets/K4RMA/Art/Resources/K4RMAArtwork/Environments/TrialHall/Panorama.png,실내 도장 가로 스크롤 배경,0,1983,793,73ea2f7754e4490ea6c1832b35ad28f2
+guardian-revival,revival/Neutral,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Revival/Neutral.png,기본 유형의 쓰러짐·일어나기 시트,6,1536,1024,6a7bd4ddf92114c99b53a9b1f247b8ea
+guardian-revival,revival/Rise,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Revival/Rise.png,기본 유형의 쓰러짐·일어나기 시트,6,1536,1024,9e8e0a956281843758af57b5b6a78d7f
+guardian-revival,revival/Ward,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Revival/Ward.png,기본 유형의 쓰러짐·일어나기 시트,6,1536,1024,35b4722f00cb44cb5b30497860ee1638
+guardian-revival,revival/Wave,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Revival/Wave.png,기본 유형의 쓰러짐·일어나기 시트,6,1536,1024,583173e0cd024484281be1d75b106533
+guardian-inherited,inherited/RiseFinal,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/RiseFinal.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,7abf3de549b0247e6a99960f68fb559e
+guardian-inherited,inherited/RiseWard,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/RiseWard.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,f964c0fd5408f4b9fa84888923602fc6
+guardian-inherited,inherited/RiseWave,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/RiseWave.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,d441bfcbfb15246688cd3d9de478d709
+guardian-inherited,inherited/WardFinal,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/WardFinal.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,0b8cbb3c60f5c4e4787750c4304f732c
+guardian-inherited,inherited/WardRise,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/WardRise.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,4b877323e12174c38bb21399abaee00c
+guardian-inherited,inherited/WardWave,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/WardWave.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,d0f221c2c8282447d96f22e55b980d03
+guardian-inherited,inherited/WaveFinal,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/WaveFinal.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,b36a727b674e64986afa28a592e615ce
+guardian-inherited,inherited/WaveRise,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/WaveRise.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,ccbf34b04aeb74c55a8cf12f8f1eb99a
+guardian-inherited,inherited/WaveWard,Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Inherited/WaveWard.png,계승 강화형 전투·피격·쓰러짐·부활 16포즈,16,1254,1254,7e3cbd37356db4cb28f49091070c6b78
+guard-pattern,guard/GD02/ParryRed,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/ParryRed.png,GD02 강공격 전용 자세 또는 패링 예고,0,1254,1254,f2c49d182455fcb4da00d6f06eb81897
+guard-pattern,guard/GD02/Ward,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/Ward.png,GD02 강공격 전용 자세 또는 패링 예고,3,2172,724,fa17abcfe55f1d04e86f2ad8c2661696
+guard-pattern,guard/GD02/WardFinal,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/WardFinal.png,GD02 강공격 전용 자세 또는 패링 예고,3,2172,724,e23e801929fe5cb4597425597e38456f
+guard-pattern,guard/GD02/WardRise,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/WardRise.png,GD02 강공격 전용 자세 또는 패링 예고,3,2172,724,4d7c49716d326d64a897e51467433dba
+guard-pattern,guard/GD02/WardWave,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/WardWave.png,GD02 강공격 전용 자세 또는 패링 예고,3,2172,724,adde3087d68c5764094a9e40b6fbe8ff
+guard-pattern,guard/GD03/HeatedWholeShield,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD03/HeatedWholeShield.png,GD03 달궈진 방패 및 추적·복귀 파편,1,1254,1254,0b5cdb24514051d48879fd35b7f44b06
+guard-pattern,guard/GD03/ShardDB,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD03/ShardDB.png,GD03 달궈진 방패 및 추적·복귀 파편,2,1774,887,446db59d0f5992044be6cd85e4477b72
+guard-pattern,sheet/GuardBash,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GuardBash.png,방어형 전용 전투 효과,1,1422,1106,9b218306696bf764bb2bb494d1dc6a42
+guard-pattern,sheet/GuardPillar,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GuardPillar.png,방어형 전용 전투 효과,1,1024,1536,b9af6a72124ecf64fa57b43e3c88d72a
+guard-pattern,sheet/GuardSeal,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GuardSeal.png,방어형 전용 전투 효과,1,2172,724,c2732a4c824ca9f4eb93370af4ab20fd
+guard-pattern,sheet/GuardShard,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GuardShard.png,방어형 전용 전투 효과,1,1456,1080,0900b06d290254f4a84c6520e9617af5
+guard-pattern,sheet/GuardShield,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GuardShield.png,방어형 전용 전투 효과,1,1295,1214,6f7a3d5052864fa41ac650aaa87a4f04
+guard-pattern,sheet/GuardWave,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GuardWave.png,방어형 전용 전투 효과,1,1060,1484,bcead75ee0358764b9feeb1e8fac873d
+guard-pattern,guard/Stagger/Ward,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/Stagger/Ward.png,방어형 패링 성공 경직 및 체형 기준,2,2172,724,8cb0f5b7306699f4680da1172c578a9a
+guard-pattern,guard/Stagger/WardFinal,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/Stagger/WardFinal.png,방어형 패링 성공 경직 및 체형 기준,2,2172,724,844159e55f9d8644f94527dede0f822a
+guard-pattern,guard/Stagger/WardRise,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/Stagger/WardRise.png,방어형 패링 성공 경직 및 체형 기준,2,2172,724,4fee35af4fbfb26438f78054d9bfff5b
+guard-pattern,guard/Stagger/WardWave,Assets/K4RMA/Resources/K4RMAArtwork/Sheets/Stagger/WardWave.png,방어형 패링 성공 경직 및 체형 기준,2,2172,724,e9dc5d8380fd0b946ba347b0ca554e3d

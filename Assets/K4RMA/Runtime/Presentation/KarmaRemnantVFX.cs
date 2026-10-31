@@ -62,7 +62,7 @@ namespace KarmaPrototype
             fx.visual = sr; fx.duration = seconds; fx.expand = growth; fx.drift = drift;
             fx.originalSize = sr.transform.localScale; fx.alpha = sr.color.a;
         }
-        public static SpriteRenderer CreateWardHalo(Transform player, Color color)
+        public static SpriteRenderer CreateGuardHalo(Transform player, Color color)
         {
             color.a = 0.35f;
             var sr = Draw(player, Vector2.zero, KarmaSpace.Units(new Vector2(1.5f, 2.15f)), color, 0);
@@ -71,7 +71,7 @@ namespace KarmaPrototype
         }
         public static void ProjectileLook(SpriteRenderer sr, Vector2 velocity)
         {
-            sr.sprite = KarmaArtwork.Settings.useCompleteArtwork?KarmaArtAtlas.Effects(0)[9]:Shape(1);
+            sr.sprite = Shape(1);
             sr.sortingOrder = 14;
             sr.transform.localScale = new Vector3(KarmaSpace.Units(1.25f), KarmaSpace.Units(2.3f), 1);
             if (KarmaCombatVFX.ApplySprite(sr, "PlayerVFX", "Wave", KarmaSpace.Units(new Vector2(2.3f, 1.25f)), true)) sr.color = Color.white;
@@ -79,11 +79,11 @@ namespace KarmaPrototype
         }
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
         {
-            string pose = essence == Essence.Ward ? "Counter" : essence == Essence.Flame ? "Pierce" : "AirSlash";
+            string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
             KarmaCombatVFX.SpawnSprite(game.World, p, "PersonalizationVFX", pose,
                 KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, facing > 0 ? 0 : 180);
             Color color = game.Config.ColorOf(essence);
-            if (essence == Essence.Ward)
+            if (essence == Essence.Guard)
             {
                 // A local parry pulse; the old radial damage proc was removed.
                 float diameter = KarmaSpace.Units(2.2f);
@@ -93,7 +93,7 @@ namespace KarmaPrototype
             else
             {
                 var sr = Draw(game.World, p + Vector2.right * facing * KarmaSpace.Units(0.8f),
-                    KarmaSpace.Units(essence == Essence.Flame ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f)), color, 1);
+                    KarmaSpace.Units(essence == Essence.SwordWave ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f)), color, 1);
                 sr.transform.localRotation = Quaternion.Euler(0, 0, facing > 0 ? 0 : 180);
                 Animate(sr, 0.35f, 0.35f, Vector2.right * facing * KarmaSpace.Units(0.5f));
             }
@@ -131,7 +131,7 @@ namespace KarmaPrototype
                 Vector2.one * KarmaSpace.Units(1.1f), 0.18f) != null) return;
             var ring = Draw(game.World, point, Vector2.one * KarmaSpace.Units(0.95f), new Color(1, 0.93f, 0.7f), 0);
             ring.sortingOrder = 20; Animate(ring, 0.16f, 0.45f, Vector2.zero);
-            var artwork = KarmaArtwork.Settings.useCompleteArtwork?KarmaArtAtlas.Effects(3)[UnityEngine.Random.Range(0,4)]:KarmaArtwork.Settings.hitEffect;
+            var artwork = KarmaArtwork.Settings.hitEffect;
             if (artwork != null)
             {
                 var hit = new GameObject("Artwork sword impact"); hit.transform.SetParent(game.World, false);
@@ -154,10 +154,10 @@ namespace KarmaPrototype
         }
         public static void Impact(KarmaGame game, Vector2 p, Essence essence)
         {
-            KarmaCombatVFX.SpawnSprite(game.World, p, "HitVFX", essence == Essence.Ward ? "Ring" : essence == Essence.Dash ? "Cross" : "Crescent",
+            KarmaCombatVFX.SpawnSprite(game.World, p, "HitVFX", essence == Essence.Guard ? "Ring" : essence == Essence.RisingSlash ? "Cross" : "Crescent",
                 Vector2.one * KarmaSpace.Units(1.5f), 0.25f);
             Color color = game.Config.ColorOf(essence);
-            var sr = Draw(game.World, p, Vector2.one * KarmaSpace.Units(essence == Essence.Dash ? 2.2f : 1.35f), color, 0);
+            var sr = Draw(game.World, p, Vector2.one * KarmaSpace.Units(essence == Essence.RisingSlash ? 2.2f : 1.35f), color, 0);
             Animate(sr, 0.4f, 1, Vector2.zero);
         }
         void Update()

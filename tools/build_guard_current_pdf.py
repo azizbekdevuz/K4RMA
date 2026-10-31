@@ -41,7 +41,7 @@ styles = {
 }
 story, excerpts, sources = [], [], {}
 paths = {
-    'ward': 'Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Ward.cs',
+    'ward': 'Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Guard.cs',
     'shards': 'Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardShards.cs',
     'steps': 'Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardSteps.cs',
     'trial': 'Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardTrial.cs',
@@ -229,7 +229,7 @@ table(['보스 단계','반납한 능력 순서','방어형 패턴'],[
     ['최종 스테이지','방어 → 검기 → 상승 / 방어 → 상승 → 검기','GD01~GD05 + 일반 연속 베기. 최종 외형은 두 순서 공통.'],
 ],[77,180,AW-257])
 para('코드에서 Flame은 검기, Dash는 상승베기, Ward는 방어 능력이다. 반납 순서의 첫 능력이 보스의 주 형태를 결정한다. GD01은 공격 목록을 차례대로 소비하는 패턴이 아니라 별도로 유지하는 방어 상태다.')
-code('catalog','                case Essence.Ward:','BuildCycle의 방어형 분기','                    break;')
+code('catalog','                case Essence.Guard:','BuildCycle의 방어형 분기','                    break;')
 code('catalog','public static bool CanSelect(','다음 공격을 선택할 수 있는 조건')
 explain('GD02는 방어막이 있고 정규화 거리 4 이하일 때 선택한다. 공간 배율 2를 적용하면 게임 거리 8이다. 공격 중심과 너비도 GuardHeavyReach=4를 공유한다.',
     'GD04는 보스가 벽에서 5보다 멀리 있어야 선택 가능하다. 시전 내부에서는 실제 플레이어 방향의 남은 공간에 맞춰 계단을 배치한다.',

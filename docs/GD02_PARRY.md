@@ -51,7 +51,7 @@ GD01은 각 방어형 스테이지 시작부터 켜진다. 회피·피격·후�
 ## 코드 확인 순서
 
 - `KarmaEnemy.WardSteps.cs / RisingBarrier`: GD01이 남은 상태에서 후방 회피를 감지하면 지면을 유지한 채 GD02로 전환한다.
-- `KarmaEnemy.Ward.cs / HeavyStrike`: 준비 → 빛/입력 창 → 내려베기 → 후딜레이.
+- `KarmaEnemy.Guard.cs / HeavyStrike`: 준비 → 빛/입력 창 → 내려베기 → 후딜레이.
 - `KarmaEssences.cs / TryCounter`: K 입력이 현재 GD02의 빛 구간이면 입력을 저장한다.
 - `KarmaEnemy.Presentation.cs / TryAttackHit`: 실제 접촉에서 저장 입력을 소비하고, 실제 피해에만 기절을 적용한다.
 - `KarmaHeavyStrikeMotion.cs`: 계승 형태별 3개 포즈와 손 위치를 연결한다.

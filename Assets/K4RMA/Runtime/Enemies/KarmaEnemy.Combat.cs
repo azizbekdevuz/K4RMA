@@ -42,16 +42,16 @@ namespace KarmaPrototype
             engaged = true;
             if (fullShield) return;
             bool front = frontalGuard && (source.x - Position.x) * direction >= 0;
-            bool reduced = front || swordWard || autoShield;
-            if (swordWard && FightSeconds < swordWardUntil && FightSeconds >= nextWardResponse && !wardResponsePending)
+            bool reduced = front || swordGuard || autoShield;
+            if (swordGuard && FightSeconds < swordGuardUntil && FightSeconds >= nextGuardResponse && !guardResponsePending)
             {
-                wardResponsePending = true;
-                nextWardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordWardResponseCooldown);
+                guardResponsePending = true;
+                nextGuardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordGuardResponseCooldown);
             }
             if (reduced)
             {
                 amount *= Mathf.Clamp01(Tuning.shieldDamageMultiplier);
-                KarmaRemnantVFX.Impact(game, Position, Essence.Ward);
+                KarmaRemnantVFX.Impact(game, Position, Essence.Guard);
             }
             ReceiveDamage(amount);
         }
@@ -63,7 +63,7 @@ namespace KarmaPrototype
             if (Health <= 0)
             {
                 CancelCombat(); art.SetParent(game.World, true); animator.Die();
-                Destroy(art.gameObject, 0.45f); game.EnemyDefeated(this); Destroy(gameObject);
+                game.EnemyDefeated(this, art); Destroy(gameObject);
             }
         }
     }

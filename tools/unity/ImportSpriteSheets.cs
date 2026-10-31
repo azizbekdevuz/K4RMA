@@ -11,13 +11,12 @@ using KarmaPrototype;
 public static class ImportSpriteSheets
 {
     [Serializable] public sealed class Plan { public Sheet[] sheets; }
-    [Serializable] public sealed class Sheet { public string id, source; public float ppu; public Slice[] sprites; }
+    [Serializable] public sealed class Sheet { public string id, source, asset; public float ppu; public Slice[] sprites; }
     [Serializable] public sealed class Slice { public string name; public float x, y, width, height, pivotX, pivotY; public float[][] outline; public float[][][] outlines; }
-    const string Folder = "Assets/K4RMA/Resources/K4RMAArtwork/Sheets";
     const string LibraryPath = "Assets/K4RMA/Resources/KarmaSpriteLibrary.asset";
 
     public static string Main() { return Import(null); }
-    public static string Guard() { return Import("image/K4RMA_Guard_Bronze_v1/"); }
+    public static string Guard() { return Import("Assets/K4RMA/Resources/K4RMAArtwork/Sheets/Guard"); }
 
     static string Import(string prefix)
     {
@@ -25,19 +24,18 @@ public static class ImportSpriteSheets
         var plan = Newtonsoft.Json.JsonConvert.DeserializeObject<Plan>(File.ReadAllText("tools/sprite-slices.json"));
         var order = plan.sheets.Select((s, i) => new { s.id, index = i }).ToDictionary(s => s.id, s => s.index);
         if (prefix != null) plan.sheets = plan.sheets.Where(s => s.source.StartsWith(prefix, StringComparison.Ordinal)).ToArray();
-        Directory.CreateDirectory(Folder);
         foreach (var sheet in plan.sheets)
         {
-            string path = Folder + "/" + sheet.id + ".png";
-            if (!File.Exists(path) || !File.ReadAllBytes(path).SequenceEqual(File.ReadAllBytes(sheet.source)))
-                File.Copy(sheet.source, path, true);
+            string path = sheet.asset;
+            if (sheet.source != path || !File.Exists(path))
+                throw new FileNotFoundException("Current game image missing; update the catalog instead of restoring an old source", path);
         }
         AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         var entries = new System.Collections.Generic.List<KarmaSpriteLibrary.Sheet>();
         int count = 0;
         foreach (var sheet in plan.sheets)
         {
-            string path = Folder + "/" + sheet.id + ".png";
+            string path = sheet.asset;
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) throw new InvalidOperationException("Missing texture importer: " + path);
             importer.textureType = TextureImporterType.Sprite;
@@ -107,6 +105,8 @@ public static class ImportSpriteSheets
             combined.AddRange(entries.Where(s => !library.sheets.Any(existing => existing.id == s.id)));
             entries = combined.OrderBy(s => order.TryGetValue(s.id, out int index) ? index : int.MaxValue).ToList();
         }
+        else
+            entries.AddRange(library.sheets.Where(s => s.id == "GuardShardDB" || s.id == "GuardWholeShield"));
         library.sheets = entries.ToArray(); EditorUtility.SetDirty(library);
         if (prefix != null)
         {
@@ -125,7 +125,7 @@ public static class ImportSpriteSheets
         settings.neutralGuardian = entries.First(s => s.id == "Neutral").sprites[0];
         settings.swordGuardian = entries.First(s => s.id == "Wave").sprites[0];
         settings.risingGuardian = entries.First(s => s.id == "Rise").sprites[0];
-        settings.wardGuardian = entries.First(s => s.id == "Ward").sprites[0];
+        settings.guardGuardian = entries.First(s => s.id == "Ward").sprites[0];
         var ui = entries.First(s => s.id == "UI").sprites.ToDictionary(s => s.name);
         settings.skillIcons = new[] { ui["Wave"], ui["Rise"], ui["Ward"], ui["Pierce"], ui["Air"], ui["Parry"] };
         settings.selectionCrescent = ui["Crescent"];

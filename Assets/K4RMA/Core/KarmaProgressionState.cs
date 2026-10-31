@@ -22,7 +22,7 @@ namespace KarmaPrototype
         public void Cancel() { Pending = null; }
         public bool Confirm(out Essence essence)
         {
-            essence = Pending ?? Essence.Flame;
+            essence = Pending ?? Essence.SwordWave;
             if (!Pending.HasValue || !TryInternalize(essence)) return false;
             Pending = null; return true;
         }

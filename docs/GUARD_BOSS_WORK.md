@@ -4,6 +4,8 @@
 개인 브랜치: `feat/minjae-boss-guard`.
 시작 기준: `feat/2d-prototype`의 `48f563d` (2026-10-25).
 
+2026-10-31 팀 최신 `c605011`을 개인 브랜치에 병합했다. 보존한 패턴·충돌 해결·검증 내용은 [병합 기록](TEAM_MERGE_2026-10-31.md)을 참조한다.
+
 ## 바로 실행
 
 Unity Hub에서 이 작업 폴더를 Unity **6000.6.2f1**로 연다.
@@ -57,7 +59,7 @@ Play 종료 시 연습 상태가 해제되고, 연습 중 스크립트를 다시
 
 | 파일 | 역할 |
 |---|---|
-| `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Ward.cs` | GD01 방어막과 GD02 강공격 |
+| `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.Guard.cs` | GD01 방어막과 GD02 강공격 |
 | `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardShards.cs` | GD03 시차 발사·추적·복귀 판정 |
 | `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardSteps.cs` | GD04 한 방향 계단 상승·지형 |
 | `Assets/K4RMA/Runtime/Enemies/Patterns/KarmaEnemy.WardTrial.cs` | GD05의 5종 내부 공격·피격 집계·결과·폭발 피해 |

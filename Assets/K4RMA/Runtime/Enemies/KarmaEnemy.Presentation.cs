@@ -36,7 +36,7 @@ namespace KarmaPrototype
             }
             else if (selected == EnemyAttack.UP03 || selected == EnemyAttack.GD04) pose = "Pillar";
             string sheet = "GuardianVFX";
-            if (PrimaryType == Essence.Ward)
+            if (PrimaryType == Essence.Guard)
             {
                 if (selected == EnemyAttack.GD03) sheet = "GuardShard";
                 else if (selected == EnemyAttack.GD04) sheet = "GuardPillar";
@@ -44,7 +44,7 @@ namespace KarmaPrototype
                 else if ((selected == EnemyAttack.GD02 || selected == EnemyAttack.GD05) && velocity.sqrMagnitude > 0.01f) sheet = "GuardWave";
             }
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
-                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose, sheet,
+                Damage * multiplier, PrimaryType == Essence.Guard ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose, sheet,
                 renderArtwork && (selected != EnemyAttack.GD02 || velocity.sqrMagnitude > 0.01f));
         }
         // Decorations are separate from warning geometry, colliders and damage objects.

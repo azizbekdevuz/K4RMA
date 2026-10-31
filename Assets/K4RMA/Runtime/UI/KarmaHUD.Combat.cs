@@ -45,7 +45,6 @@ namespace KarmaPrototype
             const float left = 330, width = 620, y = 56;
             Fill(new Rect(left - 16, 16, width + 32, 62), new Color(0.015f, 0.025f, 0.045f, 0.65f));
             Label(left, 20, width, 27, enemy.DisplayName, centered);
-            if(KarmaArtwork.Settings.useCompleteArtwork) SpriteArt(new Rect(left-12,y-10,width+24,28),KarmaArtAtlas.Hud(2));
             Fill(new Rect(left, y - 2, width, 12), new Color(0.015f, 0.025f, 0.045f, 0.95f));
             Color track = new Color(HudIvory.r, HudIvory.g, HudIvory.b, 0.65f);
             Fill(new Rect(left, y - 2, width, 0.8f), track);
@@ -53,7 +52,7 @@ namespace KarmaPrototype
             Fill(new Rect(left, y, width * ratio, 8), HudIvory);
             Fill(new Rect(left - 3, y - 5, 1.2f, 20), HudIvory);
             Fill(new Rect(left + width + 2, y - 5, 1.2f, 20), HudIvory);
-            if (enemy.PrimaryType == Essence.Ward)
+            if (enemy.PrimaryType == Essence.Guard)
             {
                 Fill(new Rect(left - 16, 80, width + 32, 66), new Color(0.015f, 0.025f, 0.045f, 0.78f));
                 Label(left, 82, width, 23, enemy.TrialActive ? enemy.TrialStatus : enemy.DefenseStatus, small);

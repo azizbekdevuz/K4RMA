@@ -19,9 +19,9 @@ public static class KarmaHeavyStrikePlayChecks
     static int checks;
     static readonly List<string> results = new List<string>();
     static readonly Essence[][] Orders = {
-        new[] { Essence.Ward }, new[] { Essence.Ward, Essence.Flame },
-        new[] { Essence.Ward, Essence.Dash }, new[] { Essence.Ward, Essence.Flame, Essence.Dash },
-        new[] { Essence.Ward, Essence.Dash, Essence.Flame }
+        new[] { Essence.Guard }, new[] { Essence.Guard, Essence.SwordWave },
+        new[] { Essence.Guard, Essence.RisingSlash }, new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash },
+        new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave }
     };
     static T Get<T>(object obj, string name) => (T)obj.GetType().GetField(name, Private).GetValue(obj);
     static void Set(object obj, string name, object value) => obj.GetType().GetField(name, Private).SetValue(obj, value);
@@ -159,7 +159,7 @@ public static class KarmaHeavyStrikePlayChecks
             foreach (bool guard in new[] { true, false })
             {
                 await Reset();
-                if (guard) game.Player.BeginWard(3);
+                if (guard) game.Player.BeginGuard(3);
                 else Set(game.Player, "invulnerableUntil", Time.time + 3);
                 health = game.Player.Health;
                 await Until(() => Get<object>(enemy, "state").ToString() == "Recover");
@@ -199,7 +199,7 @@ public static class KarmaHeavyStrikePlayChecks
             await Reset(form, facing);
             typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * healthRatios[hp]);
             Place(new Vector2(3, KarmaSpace.Units(9))); // Miss the downstroke; inspect its real follow-up.
-            bool inheritedWave = Array.IndexOf(Orders[form], Essence.Flame) >= 0;
+            bool inheritedWave = Array.IndexOf(Orders[form], Essence.SwordWave) >= 0;
             bool expected = inheritedWave && healthRatios[hp] <= 0.5f;
             string label = "form " + form + " HP " + (healthRatios[hp] * 100).ToString("F2") + "%";
             await Until(() => enemy.Intent.Contains("강공격 후 지면 충격파")
@@ -287,7 +287,7 @@ public static class KarmaHeavyStrikePlayChecks
                 Set(game.Player, "invulnerableUntil", Time.time + 100);
                 Force(form == 3 ? -1 : 1, EnemyAttack.GD05);
                 var body = Get<Transform>(enemy, "art").GetComponentInChildren<SpriteRenderer>();
-                var expected = KarmaArtwork.GuardianPreview(Orders[form]);
+                var expected = KarmaArtwork.InheritedPoses("WardFinal")[0].texture;
                 var states = new HashSet<string>();
                 bool hurt = false, captured = false;
                 double deadline = EditorApplication.timeSinceStartup + 28;
@@ -296,7 +296,7 @@ public static class KarmaHeavyStrikePlayChecks
                 {
                     await Task.Delay(5);
                     if (EditorApplication.timeSinceStartup > deadline) throw new Exception("GD05 visual timeout");
-                    if (body.sprite != expected) throw new Exception("GD05 changed final body to " + body.sprite.name);
+                    if (body.sprite.texture != expected) throw new Exception("GD05 changed final body to " + body.sprite.name);
                     samples++;
                     string state = Get<object>(enemy, "state").ToString();
                     states.Add(state);

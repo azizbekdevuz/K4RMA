@@ -36,6 +36,7 @@ MonoBehaviour:
     - {fileID: -225161381, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 1389647563, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 1615971206, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    poses: []
   - id: Neutral
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Neutral.png
     sprites:
@@ -47,6 +48,7 @@ MonoBehaviour:
     - {fileID: 983109016, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
     - {fileID: -91326788, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
     - {fileID: -568564582, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    poses: []
   - id: Wave
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png
     sprites:
@@ -62,6 +64,7 @@ MonoBehaviour:
     - {fileID: -131537219, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
     - {fileID: 1430800272, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
     - {fileID: -1707763843, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    poses: []
   - id: Rise
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Rise.png
     sprites:
@@ -77,6 +80,7 @@ MonoBehaviour:
     - {fileID: -582455795, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
     - {fileID: -337873037, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
     - {fileID: 942584010, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
+    poses: []
   - id: Ward
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Ward.png
     sprites:
@@ -92,6 +96,7 @@ MonoBehaviour:
     - {fileID: -1042672577, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
     - {fileID: -260905994, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
     - {fileID: 870262399, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
+    poses: []
   - id: PlayerVFX
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Player.png
     sprites:
@@ -107,6 +112,7 @@ MonoBehaviour:
     - {fileID: -316916185, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
     - {fileID: 1820261239, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
     - {fileID: 1554036542, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    poses: []
   - id: GuardianVFX
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Guardian.png
     sprites:
@@ -122,6 +128,7 @@ MonoBehaviour:
     - {fileID: -1844246317, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
     - {fileID: -282978673, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
     - {fileID: -1004207857, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    poses: []
   - id: PersonalizationVFX
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Personalization.png
     sprites:
@@ -137,6 +144,7 @@ MonoBehaviour:
     - {fileID: 326557551, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
     - {fileID: 1813857475, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
     - {fileID: -655821090, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    poses: []
   - id: HitVFX
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Hit.png
     sprites:
@@ -148,6 +156,7 @@ MonoBehaviour:
     - {fileID: -1820714245, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
     - {fileID: 1500224326, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
     - {fileID: -271184180, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    poses: []
   - id: Inheritance
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png
     sprites:
@@ -167,6 +176,7 @@ MonoBehaviour:
     - {fileID: 708199587, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     - {fileID: 1649695096, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     - {fileID: 1955462934, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    poses: []
   - id: Props
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Props/Props.png
     sprites:
@@ -186,6 +196,7 @@ MonoBehaviour:
     - {fileID: -724449125, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
     - {fileID: -1548519484, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
     - {fileID: 832456818, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    poses: []
   - id: UI
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/UI/Components.png
     sprites:
@@ -213,3 +224,70 @@ MonoBehaviour:
     - {fileID: -1662141122, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
     - {fileID: -1653754720, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
     - {fileID: -1881640205, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    poses: []
+  - id: SwordBossVFX
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Sword
+    sprites:
+    - {fileID: 21300000, guid: a3ae5b0965e744d496a4b9910a93b433, type: 3}
+    - {fileID: 21300000, guid: bc4723e4c02f420aa3f6547d55f158c7, type: 3}
+    - {fileID: 21300000, guid: ecc10fd108db4ed9898cc078a774745a, type: 3}
+    - {fileID: 21300000, guid: 753db3580642431fbedae47166daddeb, type: 3}
+    - {fileID: 21300000, guid: 843262fa43874a83ad32a466df051668, type: 3}
+    - {fileID: 21300000, guid: 692e0d1ec07b41a4ad8cba2e41965c39, type: 3}
+    poses:
+    - SW01_StaggeredWave
+    - SW02_AimedSlash
+    - SW03_GroundImpact
+    - SW03_RisingBlade
+    - SW04_CounterWave
+    - SW05_AerialSword
+  - id: RisingBossVFX
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Rising
+    sprites:
+    - {fileID: 21300000, guid: b3f887794c734989bfd87b44caa5bfd1, type: 3}
+    - {fileID: 21300000, guid: 1641ac9a2ca74d7888594bd3f152ed2e, type: 3}
+    - {fileID: 21300000, guid: cade03360b674594b7b881ffebcad044, type: 3}
+    - {fileID: 21300000, guid: c58bbaaa2cae41f5b6a280c0b28e674a, type: 3}
+    - {fileID: 21300000, guid: ab5fb7bc1e354326b89b504966316795, type: 3}
+    - {fileID: 21300000, guid: 1a7bdbdde6ac4d129561312daea511ab, type: 3}
+    - {fileID: 21300000, guid: 32fe830fa2c34fdfaab84bb2d1e5214a, type: 3}
+    - {fileID: 21300000, guid: d97e05c97ccf484fb6fd14f681eeee4b, type: 3}
+    - {fileID: 21300000, guid: a65c7ce083d1405183835e08904c3fa7, type: 3}
+    - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
+    - {fileID: 21300000, guid: 4fac0eda4f3a42198a8f0c0950b77a6c, type: 3}
+    - {fileID: 21300000, guid: 46007f95d2f5441882ed4323a327783d, type: 3}
+    - {fileID: 21300000, guid: 170760d645d34ae8810e86d814f20879, type: 3}
+    - {fileID: 21300000, guid: 6e418b95ba6e4fa28dac557d2e5b206b, type: 3}
+    - {fileID: 21300000, guid: 5516be8ed8c44302910390904f8d7b70, type: 3}
+    poses:
+    - Fragment0
+    - Fragment1
+    - Fragment2
+    - Fragment3
+    - Fragment4
+    - Fragment5
+    - Fragment6
+    - Fragment7
+    - Impact
+    - Parry
+    - Shield
+    - Slash
+    - SlashEcho
+    - Wave
+    - WaveEcho
+  - id: GuardBossVFX
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Guard
+    sprites:
+    - {fileID: -1391105952, guid: 9b218306696bf764bb2bb494d1dc6a42, type: 3}
+    - {fileID: -1163106952, guid: b9af6a72124ecf64fa57b43e3c88d72a, type: 3}
+    - {fileID: 883652632, guid: c2732a4c824ca9f4eb93370af4ab20fd, type: 3}
+    - {fileID: -1533835179, guid: 0900b06d290254f4a84c6520e9617af5, type: 3}
+    - {fileID: -1470651544, guid: 6f7a3d5052864fa41ac650aaa87a4f04, type: 3}
+    - {fileID: 129665699, guid: bcead75ee0358764b9feeb1e8fac873d, type: 3}
+    poses:
+    - Bash
+    - Pillar
+    - Seal
+    - Shard
+    - Shield
+    - Wave

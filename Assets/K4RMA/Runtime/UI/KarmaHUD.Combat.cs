@@ -24,7 +24,7 @@ namespace KarmaPrototype
             }
 
             // Only confirmed personalizations appear, packed in acquisition order.
-            var owned = game.Player.Essences.SacrificeOrder;
+            var owned = game.Player.Essences.PersonalizationOrder;
             for (int i = 0; i < owned.Count; i++)
             {
                 var essence = owned[i];

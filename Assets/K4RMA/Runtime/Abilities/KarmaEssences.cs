@@ -1,11 +1,10 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace KarmaPrototype
 {
     // Unity facade: persistent progression lives in Core/KarmaProgressionState.
-    // The director only asks this component to sacrifice an essence.
+    // The director asks this component to personalize an essence.
     public sealed class KarmaEssences : MonoBehaviour, ISerializationCallbackReceiver
     {
         KarmaProgressionState progression = new KarmaProgressionState();
@@ -31,27 +30,16 @@ namespace KarmaPrototype
             KarmaRemnantVFX.Proc(game, player.Position, player.Facing, e);
         }
         public bool JustTriggered(Essence e) { return Time.time - lastProc[(int)e] < 0.7f; }
-        public event Action<Essence> Sacrificed;
-        public IReadOnlyList<Essence> SacrificeOrder { get { return progression.Order; } }
+        public IReadOnlyList<Essence> PersonalizationOrder { get { return progression.Order; } }
         public int Count { get { return progression.Count; } }
         public Essence? Pending { get { return progression.Pending; } }
         public bool Preview(Essence e) { return progression.Preview(e); }
         public void Cancel() { progression.Cancel(); }
-        public bool Confirm(out Essence e)
-        {
-            if (!progression.Confirm(out e)) return false;
-            Sacrificed?.Invoke(e); return true;
-        }
+        public bool Confirm(out Essence e) { return progression.Confirm(out e); }
         public bool HasRemnant(Essence e) { return progression.HasRemnant(e); }
         public bool HasActive(Essence e) { return !HasRemnant(e); }
         public float Cooldown(Essence e) { return Mathf.Max(0, readyAt[(int)e] - Time.time); }
         public void Initialize(KarmaPlayer owner, KarmaGame director) { player = owner; game = director; }
-        public bool Sacrifice(Essence e)
-        {
-            if (!progression.TryInternalize(e)) return false;
-            Sacrificed?.Invoke(e);
-            return true;
-        }
         public void ResetTemporaryState()
         {
             for (int i = 0; i < readyAt.Length; i++) readyAt[i] = 0;

@@ -15,6 +15,8 @@ namespace KarmaPrototype
         [Header("고유화 기술")]
         [Min(0.05f)] public float doubleTapWindow = 0.25f;
         [Min(0.1f)] public float pierceDistance = 4 * KarmaSpace.Scale;
+        [Tooltip("관통베기로 실제 이동한 순간부터 적용하는 짧은 피격 무적 시간")]
+        [Range(0, 0.2f)] public float pierceInvulnerabilitySeconds = 0.1f;
         [Min(0.1f)] public float airSlashDistance = 1.2f * KarmaSpace.Scale;
         [Min(0.02f)] public float airSlashDuration = 0.12f;
         [Min(0.02f)] public float airSlashRecovery = 0.16f;

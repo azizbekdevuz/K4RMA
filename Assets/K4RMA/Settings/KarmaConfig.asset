@@ -27,35 +27,86 @@ MonoBehaviour:
     warningMultiplier: 0.9
     ultimateCooldown: 20
     patternTimeout: 30
-    swordSpeed: 32
-    swordLifetime: 1.65
-    swordWidth: 2.4
-    swordHeight: 1
-    counterWarning: 0.45
-    swordWardDuration: 3
-    swordWardResponseCooldown: 0.8
-    aerialSwordCount: 7
-    aerialSwordGap: 0.4
-    riseHeight: 8
-    groundBladeWidth: 10
-    groundBladeHeight: 12
-    crossingWarning: 0.65
-    crossingReset: 0.65
-    autoShieldPeriod: 8
-    autoShieldWarning: 0.8
-    autoShieldDuration: 5
-    shieldDamageMultiplier: 0.3
-    dodgeRefreshesShield: 0
-    parryStunSeconds: 2
-    fragmentStunSeconds: 1
-    shieldFragments: 4
-    fragmentAimWarning: 0.5
-    barrierRecovery: 1.2
-    trialAttackCount: 7
-    trialAllowedHits: 1
-    trialAttackGap: 0.65
-    trialStunSeconds: 4
-    trialExplosionMultiplier: 2.5
+    sword:
+      swordDecisionMultiplier: 0.75
+      swordSelectionRetry: 0.1
+      swordBasicCooldown: 2.4
+      swordPreferredDistance: 11.75
+      swordSkillsBetweenBasics: 1
+      swordRetreatCooldown: 5
+      swordRetreatStartDistance: 6.25
+      swordRetreatStopDistance: 11.75
+      swordRetreatDistance: 16
+      swordRetreatDuration: 0.6
+      swordRetreatSpeed: 32
+      swordMeleeSpacingMargin: 0.65
+      swordApproachStartDistance: 10.5
+      basicDamageMultiplier: 0.5
+      aimedDamageMultiplier: 1.15
+      swordSpeed: 32
+      swordLifetime: 1.65
+      swordWidth: 2.4
+      swordHeight: 1
+      counterWarning: 0.45
+      swordGuardDuration: 3
+      swordGuardResponseCooldown: 0.8
+      aerialSwordVolleyMin: 15
+      aerialSwordVolleyMax: 15
+      aerialSwordAngleJitter: 0.3
+      aerialSwordSeed: 0
+      aerialSwordInterval: 1
+      shieldDamageMultiplier: 0.3
+      damageScale: 1
+      movementScale: 1
+      decisionScale: 1
+      recoveryScale: 1
+    rising:
+      preferredDistance: 4.1
+      meleeReach: 8.2
+      approachSpeedMultiplier: 1.55
+      attackDecisionMultiplier: 0.58
+      meleeDamageMultiplier: 0.8
+      landingDamageMultiplier: 1
+      waveDamageMultiplier: 1.15
+      fragmentDamageMultiplier: 0.85
+      fragmentLifetime: 0.92
+      fragmentParryStunSeconds: 2
+      riseHeight: 8
+      groundBladeWidth: 10
+      groundBladeHeight: 12
+      crossingWarning: 0.65
+      crossingReset: 0.65
+      shieldDamageMultiplier: 0.3
+      damageScale: 1
+      movementScale: 1
+      decisionScale: 1
+      recoveryScale: 1
+    guard:
+      heavyStrikeDamageMultiplier: 1.5
+      shieldThrowDamageMultiplier: 0.8
+      shieldFragmentDamageMultiplier: 0.8
+      trialWaveWidth: 2.4
+      trialWaveHeight: 1
+      trialDamageMultiplier: 0.65
+      autoShieldPeriod: 8
+      autoShieldWarning: 0.8
+      autoShieldDuration: 5
+      dodgeRefreshesShield: 0
+      parryStunSeconds: 2
+      fragmentStunSeconds: 1
+      shieldFragments: 4
+      fragmentAimWarning: 0.5
+      barrierRecovery: 1.2
+      trialAttackCount: 7
+      trialAllowedHits: 1
+      trialAttackGap: 0.65
+      trialStunSeconds: 4
+      trialExplosionMultiplier: 2.5
+      shieldDamageMultiplier: 0.3
+      damageScale: 1
+      movementScale: 1
+      decisionScale: 1
+      recoveryScale: 1
   playerHealth: 160
   moveSpeed: 14
   jumpSpeed: 26
@@ -63,12 +114,12 @@ MonoBehaviour:
   hitInvulnerability: 0.7
   swordDamage: 60
   swordCooldown: 0.32
-  flameCooldown: 2.2
-  flameDamage: 72
-  flameSpeed: 28
-  dashCooldown: 1.6
-  wardCooldown: 5
-  wardDuration: 1.5
+  swordWaveCooldown: 2.2
+  swordWaveDamage: 72
+  swordWaveSpeed: 28
+  risingSlashCooldown: 1.6
+  guardCooldown: 5
+  guardDuration: 1.5
   techniques:
     longSlashReach: 6.8
     longSlashHeight: 5.2
@@ -93,9 +144,9 @@ MonoBehaviour:
   enemyMoveSpeed: 4.8
   enemyDecisionDelay: 1.2
   enemyTelegraphTime: 0.75
-  healAfterSacrifice: 45
+  healAfterPersonalization: 45
   koreanFont: {fileID: 0}
   spriteMaterial: {fileID: 2100000, guid: 1c46e35ad003c436ba8b625a9e519730, type: 2}
-  flameColor: {r: 1, g: 0.38, b: 0.18, a: 1}
-  dashColor: {r: 0.25, g: 0.9, b: 0.9, a: 1}
-  wardColor: {r: 0.67, g: 0.48, b: 1, a: 1}
+  swordWaveColor: {r: 1, g: 0.38, b: 0.18, a: 1}
+  risingSlashColor: {r: 0.25, g: 0.9, b: 0.9, a: 1}
+  guardColor: {r: 0.67, g: 0.48, b: 1, a: 1}

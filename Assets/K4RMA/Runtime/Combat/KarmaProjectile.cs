@@ -40,13 +40,6 @@ namespace KarmaPrototype
                 enabled = false; Destroy(gameObject); return;
             }
         }
-        public static bool Intersects(Vector2 from, Vector2 to, Vector2 center, float radius)
-        {
-            var segment = to - from;
-            float t = segment.sqrMagnitude < 0.000001f ? 0 :
-                Mathf.Clamp01(Vector2.Dot(center - from, segment) / segment.sqrMagnitude);
-            return (center - (from + segment * t)).sqrMagnitude <= radius * radius;
-        }
         void OnDestroy() { if (game != null) game.Projectiles.Remove(this); }
     }
 }

@@ -4,7 +4,6 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
-        int cycleIndex;
         void Update()
         {
             if (game == null || stopped) return;
@@ -17,7 +16,7 @@ namespace KarmaPrototype
             if (!Active) { CancelCombat(); return; }
             if (!engaged)
             {
-                if (game.Player.Position.x < 12) { Intent = "앞으로 나아가 시험을 시작하세요"; return; }
+                if (!behavior.CanEngage) { return; }
                 engaged = true;
             }
             float dt = Time.deltaTime; FightSeconds += dt;
@@ -28,11 +27,11 @@ namespace KarmaPrototype
             }
             if (pendingParry)
             {
-                pendingParry = false; InterruptPattern();
-                state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, Tuning.parryStunSeconds);
-                Intent = "패링 성공 · 방어막 파괴 / 무력화";
+                pendingParry = false; InterruptPatternCore(true);
+                state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, behavior.ParryStunSeconds);
+                ShowStunCue();
             }
-            UpdateAutoShield();
+            behavior.Tick();
             shieldHalo.enabled = Armored || shieldWarningUntil > 0;
             shieldHalo.color = shieldWarningUntil > 0
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
@@ -41,51 +40,44 @@ namespace KarmaPrototype
             if (Stunned)
             {
                 if (FightSeconds < stunnedUntil) return;
-                state = ActionState.Approach; timer = 0.8f;
+                HideStunCue(); state = ActionState.Approach; timer = 0.8f;
             }
             if (running)
             {
                 if (FightSeconds - patternStarted > Mathf.Max(5, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
-                { InterruptPattern(); state = ActionState.Approach; timer = 1.2f; Intent = "자세 복구 · 빈틈"; }
+                { InterruptPatternCore(true); state = ActionState.Approach; timer = 1.2f; }
                 return;
             }
             float dx = game.Player.Position.x - Position.x;
-            art.localScale = new Vector3(Mathf.Sign(dx) * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
-            float preferred = KarmaSpace.Units(PrimaryType == Essence.SwordWave ? 7 : PrimaryType == Essence.Guard ? 3 : 3.5f);
-            if (Mathf.Abs(dx) > preferred) Move(Mathf.Sign(dx) * game.Config.enemyMoveSpeed * Tuning.moveMultiplier * dt);
-            else if (PrimaryType == Essence.SwordWave && Mathf.Abs(dx) < KarmaSpace.Units(4.2f)) Move(-Mathf.Sign(dx) * game.Config.enemyMoveSpeed * dt);
+            if (behavior.TickMovement(dt, dx)) return;
             timer -= dt;
-            if (timer <= 0) BeginAttack();
+            if (timer <= 0 && shieldWarningUntil <= 0) BeginAttack();
         }
         void BeginAttack()
         {
             float distance = Mathf.Abs(game.Player.Position.x - Position.x);
             bool escape = Position.x > KarmaStage.ArenaLeft + 5 && Position.x < KarmaStage.ArenaRight - 5;
             bool sight = ClearShot(Position, game.Player.Position);
-            selected = EnemyAttack.GroundStrike;
-            for (int i = 0; i < attacks.Count; i++)
-            {
-                var candidate = attacks[cycleIndex++ % attacks.Count];
-                if (!KarmaPatternCatalog.CanSelect(candidate, previous, distance / KarmaSpace.Scale, game.Player.Airborne,
-                    sight, FightSeconds < shieldUntil, escape, FightSeconds >= nextUltimate)) continue;
-                selected = candidate; break;
-            }
+            if (!behavior.TrySelect(distance, sight, escape, out selected))
+            { timer = behavior.RetryDelay; return; }
+            behavior.OnSelected();
             previous = selected;
             if (KarmaPatternCatalog.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
             direction = game.Player.Position.x < Position.x ? -1 : 1;
             art.localScale = new Vector3(direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
             running = true; patternStarted = FightSeconds;
-            Intent = KarmaPatternCatalog.Label(selected);
+
             StartCoroutine(RunPattern());
         }
         IEnumerator RunPattern()
         {
-            yield return ExecuteAttack();
+            yield return behavior.Execute(selected);
             if (!Active) yield break;
             ClearPatternObjects();
-            fullShield = frontalGuard = swordGuard = false;
+            fullShield = frontalGuard = false;
+            behavior.OnCompleted();
             state = ActionState.Approach; running = false;
-            timer = Mathf.Max(0.22f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * Tempo);
+            timer = Mathf.Max(0.22f, behavior.DecisionDelay);
         }
         IEnumerator Wait(float seconds)
         {
@@ -93,13 +85,13 @@ namespace KarmaPrototype
             while (elapsed < seconds && Active)
             { yield return null; if (!game.Paused) elapsed += Time.deltaTime; }
         }
-        IEnumerator Recovery(float seconds, bool keepAutoShield = false, string message = null)
+        IEnumerator Recovery(float seconds, bool keepAutoShield = false, bool scaleDuration = true)
         {
-            ClearPatternObjects(); fullShield = frontalGuard = swordGuard = false;
+            ClearPatternObjects(); fullShield = frontalGuard = false;
             // A real, stationary attack opportunity: auto-shield cannot conceal it.
             if (!keepAutoShield) shieldUntil = shieldWarningUntil = 0;
-            state = ActionState.Recover; Intent = message ?? "빈틈 발생 · 지금 공격하세요";
-            yield return Wait(Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo));
+            state = ActionState.Recover;
+            yield return Wait(scaleDuration ? Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo * behavior.Balance.recoveryScale) : seconds);
         }
         void Move(float distance)
         { transform.position = new Vector3(Mathf.Clamp(Position.x + distance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Position.y, 0); }
@@ -109,9 +101,33 @@ namespace KarmaPrototype
                 if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null) return false;
             return true;
         }
-        void InterruptPattern()
+        Transform stunCue;
+        void ShowStunCue()
         {
-            StopAllCoroutines(); ClearPatternObjects();
+            if (stunCue != null) return;
+            var sprite = KarmaRisingArt.Get("Parry") ?? KarmaArtwork.Sprite("HitVFX", "Burst");
+            if (sprite == null) return;
+            var go = new GameObject("기절 표시");
+            stunCue = go.transform;
+            stunCue.SetParent(transform, false);
+            stunCue.localPosition = Vector3.up * KarmaSpace.Units(2.8f);
+            var mark = go.AddComponent<SpriteRenderer>();
+            mark.sprite = sprite;
+            mark.sortingOrder = 40;
+            KarmaVisuals.ApplyMaterial(mark);
+            float fit = KarmaSpace.Units(2.1f) / Mathf.Max(0.01f, sprite.bounds.size.y);
+            stunCue.localScale = Vector3.one * fit;
+        }
+        void HideStunCue()
+        {
+            if (stunCue == null) return;
+            Destroy(stunCue.gameObject);
+            stunCue = null;
+        }
+        void InterruptPattern() { InterruptPatternCore(false); }
+        void InterruptPatternCore(bool preservePressure)
+        {
+            StopAllCoroutines(); behavior?.Interrupt(preservePressure); ClearPatternObjects(); HideStunCue();
             trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
             fullShield = frontalGuard = swordGuard = running = pendingParry = false;
             shieldUntil = shieldWarningUntil = 0;

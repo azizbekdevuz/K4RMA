@@ -103,7 +103,7 @@ namespace KarmaPrototype
             SpriteArt(new Rect(460, 578, 360, 12), KarmaArtwork.Sprite("UI", "LongRule"));
             string caption = game.GuardianInheriting
                 ? "원형 계승 · " + (game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자")
-                : "고유화 · " + names[(int)game.LastSacrifice] + " → " + KarmaPatternCatalog.UniqueName(game.LastSacrifice);
+                : "고유화 · " + names[(int)game.LastPersonalizedEssence] + " → " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence);
             Label(300, 594, 680, 35, caption, centered);
             Label(300, 638, 680, 28, game.GuardianInheriting
                 ? "내려놓은 원형의 힘이 다음 수호자에게 이어집니다."
@@ -116,7 +116,7 @@ namespace KarmaPrototype
                 Label(280, 180, 720, 60, "시련의 끝", title);
                 SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
                 Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
-                Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder), centered);
+                Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
                 Label(180, 395, 920, 80, "스승: 이제 그 기술들은 누구의 것이냐?\n제자: 배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", centered);
                 if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.StartRun();
                 if (GUI.Button(new Rect(420, 585, 440, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
@@ -125,7 +125,7 @@ namespace KarmaPrototype
             Label(280, 180, 720, 60, "시련 실패", title);
             SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
-            Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder), centered);
+            Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
             Label(180, 405, 920, 55, "원형과 고유화 순서를 초기화하고\n첫 번째 시련부터 다시 도전합니다.", centered);
             if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.StartRun();
             if (GUI.Button(new Rect(420, 585, 440, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();

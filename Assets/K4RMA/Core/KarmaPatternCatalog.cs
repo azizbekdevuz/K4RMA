@@ -23,6 +23,7 @@ namespace KarmaPrototype
                     if (owned.Count == 3) result.Add(EnemyAttack.SW05);
                     break;
                 case Essence.RisingSlash:
+                    result.Add(EnemyAttack.GroundStrike);
                     result.Add(EnemyAttack.UP01); result.Add(EnemyAttack.UP02);
                     if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
                     if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
@@ -48,28 +49,6 @@ namespace KarmaPrototype
             if (attack == EnemyAttack.UP03 || attack == EnemyAttack.GD04) return escapeRoute;
             if (attack == EnemyAttack.GD02) return shield && distance <= 5;
             return true;
-        }
-        public static string Label(EnemyAttack a)
-        {
-            switch (a)
-            {
-                case EnemyAttack.SW01: return "SW01 교차 연사 · 낮은 검기/높은 검기를 반복 회피";
-                case EnemyAttack.SW02: return "SW02 조준 일섬 · 조준 고정 후 사선 이탈";
-                case EnemyAttack.SW03: return "SW03 검흔 상승 · 검기 후 바닥 검흔에서 이탈";
-                case EnemyAttack.SW04: return "SW04 반격 검막 · 사출 유도 후 회피";
-                case EnemyAttack.SW05: return "SW05 공중 검 사출 · 순차 조준을 피하고 착지 반격";
-                case EnemyAttack.UP01: return "UP01 상승 내려찍기 · 착지 후 낮은 충격파";
-                case EnemyAttack.UP02: return "UP02 공중 추격 · 목표 고정 후 수평 이동/낙하";
-                case EnemyAttack.UP03: return "UP03 지면 검기 상승 · 등 뒤 또는 범위 밖으로";
-                case EnemyAttack.UP04: return "UP04 방어막 내려찍기 · 착지 파편을 점프로";
-                case EnemyAttack.UP05: return "UP05 연속 횡단 · 지상/공중/지상/내려찍기";
-                case EnemyAttack.GD01: return "GD01 자동방어막 생성";
-                case EnemyAttack.GD02: return "GD02 강공격 · K 반격 성공 시 방어막 파괴";
-                case EnemyAttack.GD03: return "GD03 분열 방패 · 조각 조준 고정 후 이탈";
-                case EnemyAttack.GD04: return "GD04 방벽 상승 · 등 뒤로 이동";
-                case EnemyAttack.GD05: return "GD05 결계 생존 시험";
-                default: return "연속 베기 · 접근 후 연타 / 마무리 뒤 반격";
-            }
         }
         public static string FusionSummary(IReadOnlyList<Essence> order)
         {

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace KarmaPrototype
 {
@@ -23,17 +22,11 @@ namespace KarmaPrototype
         [Min(1)] [InspectorName("검 공격력")] public float swordDamage = 60;
         [Min(0.1f)] [InspectorName("검 공격 간격")] public float swordCooldown = 0.32f;
         [Header("액티브 기술")]
-        [FormerlySerializedAs("flameCooldown")]
         [Min(0.1f)] [InspectorName("검기 쿨타임")] public float swordWaveCooldown = 2.2f;
-        [FormerlySerializedAs("flameDamage")]
         [Min(1)] [InspectorName("검기 피해")] public float swordWaveDamage = 72;
-        [FormerlySerializedAs("flameSpeed")]
         [Min(1)] [InspectorName("검기 속도")] public float swordWaveSpeed = 14 * KarmaSpace.Scale;
-        [FormerlySerializedAs("dashCooldown")]
         [Min(0.1f)] [InspectorName("상승베기 쿨타임")] public float risingSlashCooldown = 1.6f;
-        [FormerlySerializedAs("wardCooldown")]
         [Min(0.1f)] [InspectorName("보호막 쿨타임")] public float guardCooldown = 5;
-        [FormerlySerializedAs("wardDuration")]
         [Min(0.1f)] [InspectorName("보호막 지속 시간")] public float guardDuration = 1.5f;
         [Header("원형·고유화 기술 조정")]
         public KarmaTechniqueTuning techniques = new KarmaTechniqueTuning();
@@ -43,15 +36,12 @@ namespace KarmaPrototype
         [Min(0.1f)] [InspectorName("적 이동 속도")] public float enemyMoveSpeed = 2.4f * KarmaSpace.Scale;
         [Min(0.2f)] [InspectorName("적 공격 선택 간격")] public float enemyDecisionDelay = 1.2f;
         [Min(0.2f)] [InspectorName("기본 공격 예고 시간")] public float enemyTelegraphTime = 0.75f;
-        [Min(0)] [InspectorName("고유화 후 체력 회복")] public float healAfterSacrifice = 45;
+        [Min(0)] [InspectorName("고유화 후 체력 회복")] public float healAfterPersonalization = 45;
         [Header("화면 표시")]
         [InspectorName("한글 UI 폰트 (비우면 자동)")] public Font koreanFont;
         [InspectorName("2D 표시 재질 (빌드에 포함)")] public Material spriteMaterial;
-        [FormerlySerializedAs("flameColor")]
         [InspectorName("검기 색상")] public Color swordWaveColor = new Color(1, 0.38f, 0.18f);
-        [FormerlySerializedAs("dashColor")]
         [InspectorName("상승베기 색상")] public Color risingSlashColor = new Color(0.25f, 0.9f, 0.9f);
-        [FormerlySerializedAs("wardColor")]
         [InspectorName("보호막 색상")] public Color guardColor = new Color(0.67f, 0.48f, 1);
         public Color ColorOf(Essence essence)
         {

@@ -36,7 +36,6 @@ namespace KarmaPrototype
             Essences.Initialize(this, game);
             Health = game.Config.playerHealth;
             art = KarmaArtwork.Player(transform);
-            if (art == null) art = KarmaVisuals.Character(transform, new Color(0.2f, 0.65f, 0.72f));
             animator = art.GetComponent<KarmaCharacterAnimator>();
             aura = KarmaVisuals.Box(transform, "Guard", Vector2.zero, KarmaSpace.Units(new Vector2(1.25f, 1.9f)),
                 game.Config.guardColor, 2);

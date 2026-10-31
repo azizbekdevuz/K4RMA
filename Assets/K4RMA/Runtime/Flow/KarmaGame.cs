@@ -22,7 +22,7 @@ namespace KarmaPrototype
         public int Retries { get; private set; }
         public readonly float[] BossSplits = new float[4];
         public Essence? PendingChoice { get { return Player == null ? (Essence?)null : Player.Essences.Pending; } }
-        public Essence LastSacrifice { get; private set; }
+        public Essence LastPersonalizedEssence { get; private set; }
         public Camera GameCamera { get; private set; }
         Transform runRoot;
         float transitionLeft;
@@ -31,9 +31,7 @@ namespace KarmaPrototype
         {
             if (World == null) return;
             KarmaStage.RefreshBoundaries(World);
-            if (Player == null || Player.Essences == null) return;
-            var guardian = World.GetComponentInChildren<KarmaEnemy>(true);
-            if (guardian != null) guardian.RestoreMissingPersonalizations(Player.Essences, StageIndex, LastSacrifice);
+
         }
         void Awake()
         {

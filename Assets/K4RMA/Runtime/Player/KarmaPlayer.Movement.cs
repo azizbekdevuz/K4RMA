@@ -35,22 +35,7 @@ namespace KarmaPrototype
             {
                 DamageAirSlash();
                 if (!game.IsCombat) { CancelAirSlash(); return; }
-                var tuning = game.Config.Techniques;
-                if (airSlashMotion.Active)
-                {
-                    // Rigidbody movement keeps interpolation and terrain collision active.
-                    body.gravityScale = 0;
-                    float travel = airSlashMotion.Advance(Time.fixedDeltaTime) * tuning.airSlashDistance;
-                    body.linearVelocity = airSlashDirection * (travel / Time.fixedDeltaTime);
-                }
-                else
-                {
-                    airSlashRunning = false; airSlashHits.Clear();
-                    body.gravityScale = game.Config.gravityScale;
-                    airRecoveryLeft = Mathf.Max(0.02f, tuning.airSlashRecovery);
-                    airLaunchX = airSlashDirection.x * game.Config.moveSpeed * tuning.airSlashHorizontalBoost;
-                    body.linearVelocity = new Vector2(airLaunchX, game.Config.jumpSpeed * tuning.airSlashJumpScale);
-                }
+                AdvanceAirSlash();
             }
             else
             {

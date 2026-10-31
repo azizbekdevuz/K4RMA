@@ -6,6 +6,12 @@ namespace KarmaPrototype
     public sealed partial class KarmaGame
     {
         readonly KarmaHitFeedbackState hitFeedback = new KarmaHitFeedbackState();
+        float presentationShakeUntil, presentationShakeStrength;
+        internal void PresentationShake(float seconds, float strength)
+        {
+            presentationShakeUntil = Time.time + Mathf.Max(0, seconds);
+            presentationShakeStrength = Mathf.Max(0, strength);
+        }
         Vector3 lastShake;
         Bounds stageBackgroundBounds;
         bool hasStageBackground;
@@ -94,6 +100,9 @@ namespace KarmaPrototype
                 float strength = Config.Techniques.hitShakeStrength * hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds);
                 lastShake = new Vector3(Mathf.Sin(Time.unscaledTime * 97) * strength, Mathf.Sin(Time.unscaledTime * 73) * strength * 0.55f, 0);
             }
+            if (IsCombat && !Paused && Time.time < presentationShakeUntil)
+                lastShake += new Vector3(Mathf.Sin(Time.time * 83), Mathf.Sin(Time.time * 67) * 0.5f, 0)
+                    * Config.Techniques.hitShakeStrength * presentationShakeStrength;
             GameCamera.transform.position += lastShake;
         }
     }

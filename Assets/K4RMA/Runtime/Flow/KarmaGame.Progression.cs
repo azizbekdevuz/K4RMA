@@ -26,7 +26,7 @@ namespace KarmaPrototype
             runRoot.SetParent(transform, false);
             var p = new GameObject("Player"); p.transform.SetParent(runRoot, false);
             Player = p.AddComponent<KarmaPlayer>(); Player.Initialize(this);
-            Player.Essences.Cancel(); LastSacrifice = Essence.SwordWave; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
+            Player.Essences.Cancel(); LastPersonalizedEssence = Essence.SwordWave; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
             for (int i = 0; i < BossSplits.Length; i++) BossSplits[i] = 0;
             LoadRoom(true);
         }
@@ -94,8 +94,8 @@ namespace KarmaPrototype
             Essence essence;
             if (!Player.Essences.Confirm(out essence)) return;
             Player.Essences.Cancel();
-            LastSacrifice = essence;
-            Player.Heal(config.healAfterSacrifice);
+            LastPersonalizedEssence = essence;
+            Player.Heal(config.healAfterPersonalization);
             guardianInheriting = false;
             Phase = RunPhase.Transition; transitionLeft = PersonalizationDuration;
             KarmaPersonalizationVFX.Play(this, Player.transform, essence, PersonalizationDuration, false);
@@ -124,9 +124,9 @@ namespace KarmaPrototype
                 Phase = RunPhase.Transition;
                 guardianInheriting = true;
                 transitionLeft = InheritanceDuration;
-                var previous = new List<Essence>(Player.Essences.SacrificeOrder);
+                var previous = new List<Essence>(Player.Essences.PersonalizationOrder);
                 previous.RemoveAt(previous.Count - 1);
-                KarmaPersonalizationVFX.Play(this, Enemies[0].transform, LastSacrifice,
+                KarmaPersonalizationVFX.Play(this, Enemies[0].transform, LastPersonalizedEssence,
                     InheritanceDuration, true, fallenAppearance != null ? fallenAppearance : KarmaArtwork.GuardianPreview(previous),
                     KarmaArtwork.GuardianFormName(previous));
             }

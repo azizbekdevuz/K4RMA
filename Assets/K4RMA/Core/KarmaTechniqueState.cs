@@ -40,8 +40,7 @@ namespace KarmaPrototype
     {
         int lastDirection;
         float lastTap = -100, counterUntil;
-        bool counterArmed, airSlashUsed, hovering;
-        float hoverUntil, hoverReleaseAt;
+        bool counterArmed, airSlashUsed;
         public bool DirectionTap(int direction, float now, float window)
         {
             if (direction < 1 || direction > 4) { ClearDirectionTap(); return false; }
@@ -51,29 +50,12 @@ namespace KarmaPrototype
             return ready;
         }
         public void ClearDirectionTap() { lastDirection = 0; lastTap = -100; }
-        public bool HoverReady { get { return !airSlashUsed && !hovering; } }
-        public bool Hovering { get { return hovering; } }
         public bool TryAirSlash()
         {
             if (airSlashUsed) return false;
             airSlashUsed = true; return true;
         }
-        // One hang per airborne period. Holding continues it; release after the minimum drops.
-        public bool TryBeginHover(float now, float duration, float minimumHold)
-        {
-            if (airSlashUsed || hovering) return false;
-            airSlashUsed = true;
-            hovering = true;
-            hoverUntil = now + Math.Max(0.2f, duration);
-            hoverReleaseAt = now + Math.Max(0.05f, minimumHold);
-            return true;
-        }
-        public bool ShouldEndHover(float now, bool held)
-        {
-            return hovering && (now >= hoverUntil || (!held && now >= hoverReleaseAt));
-        }
-        public void EndHover() { hovering = false; }
-        public void Land() { airSlashUsed = false; EndHover(); }
+        public void Land() { airSlashUsed = false; }
         public void ArmCounter(float now, float window) { counterArmed = true; counterUntil = now + Math.Max(0, window); }
         public bool CounterReady(float now) { return counterArmed && now < counterUntil; }
         public bool ConsumeCounter(float now)

@@ -79,17 +79,12 @@ static class Program
         Check(trial.Passed,"allowed hit boundary succeeds");
         trial.Hit(); Check(trial.Hits==1,"resolved result immutable");
         trial.Begin(0,-1); Check(trial.Total==1 && trial.Allowed==0,"invalid tuning normalized");
-        var hover = new KarmaTechniqueState();
-        Check(hover.HoverReady && hover.TryBeginHover(1f, 0.72f, 0.16f), "hover starts once");
-        Check(!hover.HoverReady && !hover.TryBeginHover(1.1f, 0.72f, 0.16f), "hover cannot stack");
-        Check(!hover.ShouldEndHover(1.1f, false), "minimum hang ignores an early release");
-        Check(hover.ShouldEndHover(1.2f, false), "release after the minimum starts the drop");
-        hover.EndHover();
-        Check(!hover.TryBeginHover(2f, 0.72f, 0.16f), "landing is required before another hang");
-        hover.Land();
-        Check(hover.HoverReady && hover.TryBeginHover(3f, 0.72f, 0.16f), "landing restores hover");
-        Check(hover.ShouldEndHover(3.8f, true), "held hang still ends at its limit");
-        Check(KarmaPatternCatalog.UniqueName(Essence.Dash) == "체공", "personalized rising slash is hang-time");
+        var aerial = new KarmaTechniqueState();
+        Check(aerial.TryAirSlash(), "air slash starts once");
+        Check(!aerial.TryAirSlash(), "air slash cannot repeat before landing");
+        aerial.Land();
+        Check(aerial.TryAirSlash(), "landing restores air slash");
+        Check(KarmaPatternCatalog.UniqueName(Essence.Dash) == "도약베기", "personalized rising slash is the aerial slash");
         Console.WriteLine($"PASS: {assertions} core assertions");
     }
 }

@@ -89,8 +89,6 @@ MonoBehaviour:
     counterDamage: 85
     risingDamage: 60
     risingSpeed: 30
-    hoverDuration: 0.72
-    hoverMinimumHold: 0.16
   enemyDamage: 14
   enemyMoveSpeed: 4.8
   enemyDecisionDelay: 1.2

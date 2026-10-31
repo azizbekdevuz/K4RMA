@@ -79,13 +79,22 @@ namespace KarmaPrototype
             animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
             var primary = KarmaPatternCatalog.Primary(order);
             animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward");
+            if (primary == Essence.SwordWave)
+                root.gameObject.AddComponent<KarmaWaveMotion>();
+
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
-            if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order));
+            // Wave always uses the prototype sheet, including its attack poses.
+            if (primary != Essence.SwordWave && order.Count >= 2) animator.SetGuardianAppearance(LegacyGuardianPreview(order));
             return root;
         }
         public static readonly Color BossSwordColor = new Color(0.42f, 0.68f, 1);
         public static readonly Color BarrierColor = new Color(1, 0.83f, 0.48f);
         public static Sprite GuardianPreview(IReadOnlyList<Essence> order)
+        {
+            return KarmaPatternCatalog.Primary(order) == Essence.SwordWave
+                ? Settings.Guardian(Essence.SwordWave) : LegacyGuardianPreview(order);
+        }
+        static Sprite LegacyGuardianPreview(IReadOnlyList<Essence> order)
         {
             var primary = KarmaPatternCatalog.Primary(order);
             if (!primary.HasValue) return Sprite("Inheritance", "Neutral") ?? Settings.Guardian(null);

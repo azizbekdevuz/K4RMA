@@ -53,6 +53,7 @@ namespace KarmaPrototype
         {
             switch (a)
             {
+                case EnemyAttack.SWBasic: return "기본 검기 베기 · 짧은 검기를 회피";
                 case EnemyAttack.SW01: return "SW01 교차 연사 · 낮은 검기/높은 검기를 반복 회피";
                 case EnemyAttack.SW02: return "SW02 조준 일섬 · 조준 고정 후 사선 이탈";
                 case EnemyAttack.SW03: return "SW03 검흔 상승 · 검기 후 바닥 검흔에서 이탈";

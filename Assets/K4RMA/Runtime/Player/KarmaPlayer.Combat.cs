@@ -9,6 +9,24 @@ namespace KarmaPrototype
         bool airSlashRunning;
         Vector2 airSlashDirection, airSlashPrevious;
         float airSlashBufferedUntil, airRecoveryLeft, airLaunchX;
+        float normalSwordPressureUntil;
+        // Spacing AI gives a committed player swing its existing attack window.
+        internal bool AttackCommitted
+        { get { return airSlashRunning || Time.time < nextSword - game.Config.swordCooldown + game.Config.Techniques.slashLife; } }
+        internal bool SwordPressureActive
+        { get { return !airSlashRunning && Time.time < normalSwordPressureUntil && Time.time < nextSword; } }
+        // Ordinary J resolves its hit immediately. Only the continuous aerial
+        // sweep needs to finish before the guardian starts a new spacing move.
+        internal bool ContinuousSwordAttack { get { return airSlashRunning; } }
+        // The same box serves real hits and the guardian's pressure query.
+        // A center-distance check alone misses the wide guardian silhouette.
+        internal bool SwordAreaOverlaps(KarmaEnemy enemy)
+        {
+            var tuning = game.Config.Techniques;
+            float width = tuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
+            Vector2 center = Position + Vector2.right * Facing * (tuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
+            return enemy.OverlapsDamageArea(center, new Vector2(width, tuning.longSlashHeight));
+        }
         bool CanSword() { return game.IsCombat && Health > 0 && Time.time >= nextSword && !airSlashRunning && !Stunned && !Shielded && !techniques.CounterReady(Time.time); }
         Vector2 AttackDirection()
         {
@@ -44,15 +62,17 @@ namespace KarmaPrototype
             KarmaArtworkVFX.Player(game,Position,Airborne?11:0,Vector2.right*Facing);
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
+            normalSwordPressureUntil = Time.time + swordTuning.slashLife;
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
                 swordTuning.longSlashReach, swordTuning.longSlashHeight, swordTuning.slashLife);
             foreach (var enemy in game.Enemies.ToArray())
             {
                 if (enemy == null || !enemy.Alive) continue;
-                float width = swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
-                Vector2 center = Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
-                if (enemy.OverlapsDamageArea(center, new Vector2(width, swordTuning.longSlashHeight)))
+                if (SwordAreaOverlaps(enemy))
+                {
+                    enemy.RememberSwordPressure();
                     SwordHit(enemy, Vector2.right * Facing);
+                }
             }
         }
         void BeginDirectionalSlash(Vector2 direction, float distance, Essence essence)

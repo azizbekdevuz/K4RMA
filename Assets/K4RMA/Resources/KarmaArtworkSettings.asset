@@ -27,6 +27,10 @@ MonoBehaviour:
   swordGuardian: {fileID: -1121073146, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
   risingGuardian: {fileID: 851959632, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
   wardGuardian: {fileID: 1341530238, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
+  waveGuardianBase: {fileID: 21300000, guid: 139dade9a4f3408cbdfc30dc5d3c9d1a, type: 3}
+  waveGuardianRise: {fileID: 21300000, guid: 59c4ef85d8194c27a772aad6c075570b, type: 3}
+  waveGuardianWard: {fileID: 21300000, guid: d38a2f20b2874c61afa36a95e09d61a6, type: 3}
+  waveGuardianFinal: {fileID: 21300000, guid: a9ac902c58114c75b37795d128428f90, type: 3}
   dojoBackground: {fileID: 21300000, guid: 105788dea150a46078f38ce8d5054b63, type: 3}
   mountainBackground: {fileID: 21300000, guid: f50e2414a6e4a472396c88342242ada4, type: 3}
   mountainPanorama: {fileID: 21300000, guid: 925f5a6797694273bcb485ea98c3e612, type: 3}

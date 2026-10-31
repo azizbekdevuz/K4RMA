@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KarmaPrototype
@@ -21,8 +22,9 @@ namespace KarmaPrototype
         Vector3 scale;
         Color tint;
         float age, life, trailAt;
-        bool sustained, moving;
+        bool sustained, moving, restrainedVisual;
         Transform trailRoot;
+        readonly List<GameObject> ownedAfterimages = new List<GameObject>();
 
         public static bool ApplySprite(SpriteRenderer renderer, string sheet, string pose, Vector2 size, bool preserveAspect = false)
         {
@@ -53,20 +55,21 @@ namespace KarmaPrototype
             if (additive && GlowMaterial != null) sr.sharedMaterial = GlowMaterial;
             return sr;
         }
-        public static SpriteRenderer Burst(Transform parent, Vector2 at, Sprite sprite, string name, Vector2 size, float seconds, float angle, Color color)
+        public static SpriteRenderer Burst(Transform parent, Vector2 at, Sprite sprite, string name, Vector2 size, float seconds, float angle, Color color, bool restrained = false)
         {
             var root = new GameObject(name); root.transform.SetParent(parent, false);
             root.transform.localPosition = at; root.transform.localRotation = Quaternion.Euler(0, 0, angle);
-            var fx = root.AddComponent<KarmaCombatVFX>(); fx.life = Mathf.Max(0.08f, seconds); fx.tint = color;
-            fx.core = Layer(root.transform, "Ivory edge", sprite, 22, Color.white, false);
+            var fx = root.AddComponent<KarmaCombatVFX>(); fx.life = Mathf.Max(0.08f, seconds); fx.tint = color; fx.restrainedVisual = restrained;
+            fx.core = Layer(root.transform, "Ivory edge", sprite, 22, restrained ? new Color(1, 0.96f, 0.84f, 0.78f) : Color.white, false);
             float fit = Mathf.Min(size.x / sprite.bounds.size.x, size.y / sprite.bounds.size.y);
             fx.scale = new Vector3(fit, fit, 1);
             fx.core.transform.localScale = fx.scale;
-            fx.glow = Layer(root.transform, "Colored light", sprite, 21, color, true);
-            fx.glow.transform.localScale = fx.scale * 1.16f;
-            fx.echo = Layer(root.transform, "Sweeping echo", sprite, 20, new Color(color.r, color.g, color.b, 0.6f), true);
-            fx.echo.transform.localScale = fx.scale * 1.28f;
-            int particles = name.Contains("Hit") || name.Contains("Impact") ? 9 : 5;
+            var light = color; if (restrained) light.a = 0.18f;
+            fx.glow = Layer(root.transform, "Colored light", sprite, 21, light, true);
+            fx.glow.transform.localScale = fx.scale * (restrained ? 1.04f : 1.16f);
+            fx.echo = Layer(root.transform, "Sweeping echo", sprite, 20, new Color(color.r, color.g, color.b, restrained ? 0.1f : 0.6f), true);
+            fx.echo.transform.localScale = fx.scale * (restrained ? 1.06f : 1.28f);
+            int particles = restrained ? 2 : name.Contains("Hit") || name.Contains("Impact") ? 9 : 5;
             fx.motes = new Mote[particles];
             for (int i = 0; i < particles; i++)
             {
@@ -80,13 +83,14 @@ namespace KarmaPrototype
             }
             return fx.core;
         }
-        public static void AttachAttack(SpriteRenderer renderer, Vector2 velocity, Color color, Transform trailParent = null)
+        public static void AttachAttack(SpriteRenderer renderer, Vector2 velocity, Color color, Transform trailParent = null, bool restrained = false)
         {
             var fx = renderer.gameObject.AddComponent<KarmaCombatVFX>();
-            fx.sustained = true; fx.moving = velocity.sqrMagnitude > 0.01f; fx.core = renderer; fx.tint = color;
+            fx.sustained = true; fx.moving = velocity.sqrMagnitude > 0.01f; fx.core = renderer; fx.tint = color; fx.restrainedVisual = restrained;
             fx.scale = renderer.transform.localScale; fx.trailRoot = trailParent != null ? trailParent : renderer.transform.parent;
-            fx.glow = Layer(renderer.transform, "Attack radiance", renderer.sprite, renderer.sortingOrder - 1, color, true);
-            fx.glow.transform.localScale = Vector3.one * 1.25f;
+            var light = color; if (restrained) light.a = 0.18f;
+            fx.glow = Layer(renderer.transform, "Attack radiance", renderer.sprite, renderer.sortingOrder - 1, light, true);
+            fx.glow.transform.localScale = Vector3.one * (restrained ? 1.04f : 1.25f);
             fx.glow.flipX = renderer.flipX; fx.glow.flipY = renderer.flipY;
         }
         void Update()
@@ -95,30 +99,33 @@ namespace KarmaPrototype
             age += Time.deltaTime;
             if (sustained)
             {
-                var light = tint; light.a = 0.65f + 0.22f * Mathf.Sin(age * 35); glow.color = light;
-                glow.transform.localScale = Vector3.one * (1.18f + Mathf.Sin(age * 24) * 0.09f);
+                var light = tint;
+                light.a = restrainedVisual ? 0.16f + 0.035f * Mathf.Sin(age * 20) : 0.65f + 0.22f * Mathf.Sin(age * 35);
+                glow.color = light;
+                glow.transform.localScale = Vector3.one * (restrainedVisual ? 1.035f + Mathf.Sin(age * 20) * 0.015f : 1.18f + Mathf.Sin(age * 24) * 0.09f);
                 if (moving && age >= trailAt)
                 {
-                    trailAt = age + 0.045f;
+                    trailAt = age + (restrainedVisual ? 0.075f : 0.045f);
                     var ghost = Layer(trailRoot, "Attack afterimage", core.sprite, core.sortingOrder - 2,
-                        new Color(tint.r, tint.g, tint.b, 0.5f), true);
+                        new Color(tint.r, tint.g, tint.b, restrainedVisual ? 0.16f : 0.5f), true);
                     ghost.transform.position = transform.position; ghost.transform.rotation = transform.rotation;
-                    ghost.transform.localScale = scale * 1.05f;
+                    ghost.transform.localScale = scale * (restrainedVisual ? 0.96f : 1.05f);
                     ghost.flipX = core.flipX; ghost.flipY = core.flipY;
-                    ghost.gameObject.AddComponent<KarmaEffect>().Initialize(0.19f);
+                    ghost.gameObject.AddComponent<KarmaEffect>().Initialize(restrainedVisual ? 0.11f : 0.19f);
+                    if (restrainedVisual) ownedAfterimages.Add(ghost.gameObject);
                 }
                 return;
             }
             float t = Mathf.Clamp01(age / life);
             if (t >= 1) { Destroy(gameObject); return; }
             float fade = 1 - Mathf.SmoothStep(0, 1, Mathf.Clamp01((t - 0.24f) / 0.76f));
-            core.color = new Color(1, 1, 1, fade);
-            core.transform.localScale = scale * Mathf.Lerp(0.78f, 1.12f, Mathf.Sqrt(t));
-            var lightColor = tint; lightColor.a = fade * (1.15f - t * 0.4f); glow.color = lightColor;
-            glow.transform.localScale = core.transform.localScale * Mathf.Lerp(1.1f, 1.25f, t);
-            echo.color = new Color(tint.r, tint.g, tint.b, fade * 0.45f);
+            core.color = restrainedVisual ? new Color(1, 0.96f, 0.84f, fade * 0.78f) : new Color(1, 1, 1, fade);
+            core.transform.localScale = scale * (restrainedVisual ? Mathf.Lerp(0.88f, 1.02f, Mathf.Sqrt(t)) : Mathf.Lerp(0.78f, 1.12f, Mathf.Sqrt(t)));
+            var lightColor = tint; lightColor.a = fade * (restrainedVisual ? 0.18f - t * 0.08f : 1.15f - t * 0.4f); glow.color = lightColor;
+            glow.transform.localScale = core.transform.localScale * (restrainedVisual ? 1.04f : Mathf.Lerp(1.1f, 1.25f, t));
+            echo.color = new Color(tint.r, tint.g, tint.b, fade * (restrainedVisual ? 0.1f : 0.45f));
             echo.transform.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(-15, 10, t));
-            echo.transform.localScale = scale * Mathf.Lerp(0.9f, 1.35f, t);
+            echo.transform.localScale = scale * (restrainedVisual ? Mathf.Lerp(0.94f, 1.08f, t) : Mathf.Lerp(0.9f, 1.35f, t));
             for (int i = 0; i < motes.Length; i++)
             {
                 ref var mote = ref motes[i];
@@ -126,6 +133,14 @@ namespace KarmaPrototype
                 mote.velocity *= Mathf.Exp(-5 * Time.deltaTime);
                 mote.renderer.color = new Color(tint.r, tint.g, tint.b, fade * (1 - t));
             }
+        }
+        void OnDisable()
+        {
+            // Wave echoes stay in world space, but never suggest danger after
+            // their owning projectile is cancelled, expires, or is cleaned up.
+            foreach (var ghost in ownedAfterimages)
+                if (ghost != null) { ghost.SetActive(false); Destroy(ghost); }
+            ownedAfterimages.Clear();
         }
     }
 }

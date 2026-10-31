@@ -64,7 +64,7 @@ namespace KarmaPrototype
             effectsRoot = new GameObject("Guardian pattern objects").transform; effectsRoot.SetParent(game.World, false);
             shieldHalo = KarmaRemnantVFX.CreateGuardHalo(transform, KarmaArtwork.BarrierColor);
             shieldHalo.transform.localScale = new Vector3(KarmaSpace.Units(2.2f) * KarmaSpace.GuardianSizeBoost, KarmaSpace.Units(3.1f) * KarmaSpace.GuardianSizeBoost, 1); shieldHalo.enabled = false;
-            timer = 1.4f; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
+            timer = 1.4f * SwordDecisionScale; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach; Intent = "앞으로 나아가 시험을 시작하세요";
         }
         public bool RestoreMissingPersonalizations(KarmaEssences essences, int stage, Essence last)

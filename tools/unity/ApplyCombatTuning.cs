@@ -19,7 +19,10 @@ public static class ApplyCombatTuning
         t.damageMultiplier = 1.15f; t.moveMultiplier = 1.7f; t.decisionMultiplier = 0.42f; t.recoveryMultiplier = 0.72f;
         t.enrageThreshold = 0.5f; t.enrageTempo = 0.82f; t.warningMultiplier = 0.9f;
         t.ultimateCooldown = 20; t.swordSpeed = 32; t.swordLifetime = 1.65f;
-        t.aerialSwordCount = 7; t.aerialSwordGap = 0.4f; t.crossingWarning = t.crossingReset = 0.65f;
+        t.aerialSwordMinCount = 18; t.aerialSwordCount = 30;
+        t.aerialSwordMinGroup = 4; t.aerialSwordMaxGroup = 8;
+        t.aerialSwordAngleJitter = 0.3f; t.aerialSwordSeed = 0;
+        t.aerialSwordGap = 0.4f; t.crossingWarning = t.crossingReset = 0.65f;
         t.autoShieldPeriod = 8; t.shieldFragments = 4; t.fragmentAimWarning = 0.5f;
         t.trialAttackCount = 7; t.trialAttackGap = 0.65f;
         EditorUtility.SetDirty(config);

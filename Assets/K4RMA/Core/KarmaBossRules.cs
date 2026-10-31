@@ -24,6 +24,22 @@ namespace KarmaPrototype
     }
     public static class KarmaBossGeometry
     {
+        // Continuous SAT: a translating oriented attack rectangle versus an
+        // axis-aligned player rectangle. No diagonal enclosing-box false hits.
+        public static bool SweptOrientedBox(float ax, float ay, float bx, float by,
+            float px, float py, float ux, float uy, float length, float thickness,
+            float playerHalfWidth, float playerHalfHeight)
+        {
+            float first = 0, last = 1;
+            float dx = ax - px, dy = ay - py, vx = bx - ax, vy = by - ay;
+            float hx = length / 2, hy = thickness / 2;
+            return Axis(dx, vx, Math.Abs(ux) * hx + Math.Abs(uy) * hy + playerHalfWidth, ref first, ref last)
+                && Axis(dy, vy, Math.Abs(uy) * hx + Math.Abs(ux) * hy + playerHalfHeight, ref first, ref last)
+                && Axis(dx * ux + dy * uy, vx * ux + vy * uy,
+                    hx + Math.Abs(ux) * playerHalfWidth + Math.Abs(uy) * playerHalfHeight, ref first, ref last)
+                && Axis(-dx * uy + dy * ux, -vx * uy + vy * ux,
+                    hy + Math.Abs(uy) * playerHalfWidth + Math.Abs(ux) * playerHalfHeight, ref first, ref last);
+        }
         // Segment versus expanded AABB: exact swept rectangular attack, including target size.
         public static bool SweptBox(float ax, float ay, float bx, float by,
             float px, float py, float halfWidth, float halfHeight)

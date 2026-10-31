@@ -63,6 +63,17 @@ static class Program
         Check(KarmaBossGeometry.SweptBox(0,0,0,0,1,1,1,1),"static boundary contact");
         Check(!KarmaBossGeometry.SweptBox(0,0,10,10,0,10,1,1),"diagonal bounding corner safe");
         Check(KarmaBossGeometry.SweptBox(10,10,0,0,5,5,1,1),"reversed segment hit");
+        foreach (float angle in new[] { 0f, 30f, 45f, 90f })
+        {
+            float ux = (float)Math.Cos(angle * Math.PI / 180), uy = (float)Math.Sin(angle * Math.PI / 180);
+            Check(KarmaBossGeometry.SweptOrientedBox(0,0,ux*30,uy*30,ux*15,uy*15,ux,uy,4,1,0.7f,1.55f), "rotated continuous center hit");
+            Check(!KarmaBossGeometry.SweptOrientedBox(0,0,ux*30,uy*30,ux*15-uy*5,uy*15+ux*5,ux,uy,4,1,0.7f,1.55f), "rotated safe parallel lane");
+            Check(KarmaBossGeometry.SweptOrientedBox(0,0,0,0,ux*1.999f,uy*1.999f,ux,uy,4,1,0,0), "rotated exact length interior");
+            Check(!KarmaBossGeometry.SweptOrientedBox(0,0,0,0,ux*2.001f,uy*2.001f,ux,uy,4,1,0,0), "rotated exact length exterior");
+            Check(KarmaBossGeometry.SweptOrientedBox(0,0,0,0,-uy*0.499f,ux*0.499f,ux,uy,4,1,0,0), "rotated exact thickness interior");
+            Check(!KarmaBossGeometry.SweptOrientedBox(0,0,0,0,-uy*0.501f,ux*0.501f,ux,uy,4,1,0,0), "rotated exact thickness exterior");
+        }
+        Check(!KarmaBossGeometry.SweptOrientedBox(0,0,0,0,1.6f,-1.6f,0.70710678f,0.70710678f,4,1,0.01f,0.01f), "oriented AABB corner is safe");
         var contact = new KarmaAttackContact();
         Check(contact.TryConsume(),"first fragment contact");
         for (int i=0;i<100;i++) Check(!contact.TryConsume(),"remaining frames/fragments cannot stun again");

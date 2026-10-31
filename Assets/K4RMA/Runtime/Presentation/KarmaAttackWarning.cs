@@ -10,16 +10,25 @@ namespace KarmaPrototype
         SpriteRenderer visual;
         LineRenderer edge, arrow;
         Color baseColor;
-        public void SetPath(SpriteRenderer renderer, Vector2 from, Vector2 to, Vector2 size)
+        bool restrainedVisual, aerialVisual, aerialGround;
+        public void SetPath(SpriteRenderer renderer, Vector2 from, Vector2 to, Vector2 size, bool restrained = false, bool oriented = false, bool aerial = false)
         {
             if (visual == null) { visual = renderer; baseColor = renderer.color; }
+            // Tracking calls reuse this component without repeating its visual options.
+            restrainedVisual |= restrained;
+            aerialVisual |= aerial;
             Vector2 center = (from + to) / 2;
-            Vector2 bounds = new Vector2(Mathf.Abs(to.x - from.x) + size.x, Mathf.Abs(to.y - from.y) + size.y);
+            aerialGround = aerialVisual && (to - from).sqrMagnitude < 0.0001f
+                && center.y < 0.6f && size.x > size.y * 2;
+            Vector2 axis = oriented && (to - from).sqrMagnitude > 0.000001f ? (to - from).normalized : Vector2.right;
+            Vector2 normal = new Vector2(-axis.y, axis.x);
+            Vector2 bounds = new Vector2(Mathf.Abs(to.x - from.x) + Mathf.Abs(axis.x) * size.x + Mathf.Abs(normal.x) * size.y,
+                Mathf.Abs(to.y - from.y) + Mathf.Abs(axis.y) * size.x + Mathf.Abs(normal.y) * size.y);
             var points = new List<Vector2>(8);
             foreach (var p in new[] { from, to })
                 for (int x = -1; x <= 1; x += 2)
                     for (int y = -1; y <= 1; y += 2)
-                        points.Add(p + new Vector2(size.x * x / 2, size.y * y / 2));
+                        points.Add(p + axis * (size.x * x / 2) + normal * (size.y * y / 2));
             points.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
             var hull = new List<Vector2>();
             foreach (var p in points)
@@ -57,36 +66,62 @@ namespace KarmaPrototype
             {
                 var go = new GameObject("Locked danger outline"); go.transform.SetParent(transform, false);
                 edge = go.AddComponent<LineRenderer>(); edge.useWorldSpace = false; edge.loop = true;
-                edge.sharedMaterial = KarmaCombatVFX.GlowMaterial != null ? KarmaCombatVFX.GlowMaterial : renderer.sharedMaterial;
+                edge.sharedMaterial = !restrainedVisual && KarmaCombatVFX.GlowMaterial != null ? KarmaCombatVFX.GlowMaterial : renderer.sharedMaterial;
                 edge.sortingOrder = 16; edge.numCornerVertices = 2;
             }
+            edge.useWorldSpace = restrainedVisual;
             edge.positionCount = hull.Count;
-            for (int i = 0; i < hull.Count; i++) edge.SetPosition(i, new Vector3((hull[i].x - center.x) / bounds.x, (hull[i].y - center.y) / bounds.y, 0));
+            for (int i = 0; i < hull.Count; i++)
+            {
+                var point = new Vector3((hull[i].x - center.x) / bounds.x, (hull[i].y - center.y) / bounds.y, 0);
+                edge.SetPosition(i, restrainedVisual ? transform.TransformPoint(point) : point);
+            }
             if (arrow == null)
             {
                 var go = new GameObject("Attack direction"); go.transform.SetParent(transform, false);
                 arrow = go.AddComponent<LineRenderer>(); arrow.useWorldSpace = false;
                 arrow.sharedMaterial = edge.sharedMaterial; arrow.sortingOrder = 17; arrow.numCornerVertices = 2;
             }
+            arrow.useWorldSpace = restrainedVisual;
             arrow.enabled = (to - from).sqrMagnitude > 0.01f;
             if (arrow.enabled)
             {
-                Vector2 axis = (to - from).normalized, normal = new Vector2(-axis.y, axis.x);
+                axis = (to - from).normalized; normal = new Vector2(-axis.y, axis.x);
                 float length = Mathf.Min(KarmaSpace.Units(0.5f), Vector2.Distance(from, to) * 0.2f, Mathf.Min(size.x, size.y) * 0.45f);
-                Vector2 tip = Vector2.Lerp(from, to, 0.7f);
+                // In a dense volley, keep each direction cue close to its own
+                // forming sword instead of placing every arrow across the arena.
+                Vector2 tip = aerialVisual
+                    ? from + axis * Mathf.Min(Vector2.Distance(from, to) * 0.25f, KarmaSpace.Units(1.2f))
+                    : Vector2.Lerp(from, to, 0.7f);
                 var head = new[] { tip - axis * length + normal * length, tip, tip - axis * length - normal * length };
                 arrow.positionCount = 3;
-                for (int i = 0; i < 3; i++) arrow.SetPosition(i, new Vector3((head[i].x - center.x) / bounds.x, (head[i].y - center.y) / bounds.y, 0));
+                for (int i = 0; i < 3; i++)
+                {
+                    var point = new Vector3((head[i].x - center.x) / bounds.x, (head[i].y - center.y) / bounds.y, 0);
+                    arrow.SetPosition(i, restrainedVisual ? transform.TransformPoint(point) : point);
+                }
             }
+            // Set the first rendered frame too; LineRenderer defaults are opaque white
+            // and one unit wide until its first Update.
+            if (restrainedVisual) ApplyStyle();
         }
         void Update()
+        { ApplyStyle(); }
+        void ApplyStyle()
         {
             if (visual == null || edge == null) return;
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 15);
-            var fill = baseColor; fill.a = baseColor.a * (0.6f + pulse * 0.35f); visual.color = fill;
-            var color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.7f + pulse * 0.3f);
-            arrow.startColor = arrow.endColor = color; arrow.widthMultiplier = KarmaSpace.Units(0.055f);
-            edge.startColor = edge.endColor = color; edge.widthMultiplier = KarmaSpace.Units(0.035f + pulse * 0.015f);
+            var fill = baseColor;
+            fill.a = baseColor.a * (aerialGround ? 0.75f + pulse * 0.25f : aerialVisual ? 0.10f + pulse * 0.04f : restrainedVisual ? 0.24f + pulse * 0.08f : 0.6f + pulse * 0.35f);
+            visual.color = fill;
+            var color = new Color(baseColor.r, baseColor.g, baseColor.b,
+                aerialGround ? 0.85f + pulse * 0.15f : aerialVisual ? 0.34f + pulse * 0.10f : restrainedVisual ? 0.72f + pulse * 0.16f : 0.7f + pulse * 0.3f);
+            var directionColor = color;
+            if (aerialVisual) directionColor.a = 0.80f + pulse * 0.10f;
+            arrow.startColor = arrow.endColor = directionColor;
+            arrow.widthMultiplier = KarmaSpace.Units(aerialVisual ? 0.03f : restrainedVisual ? 0.04f : 0.055f);
+            edge.startColor = edge.endColor = color;
+            edge.widthMultiplier = KarmaSpace.Units(aerialGround ? 0.04f + pulse * 0.012f : aerialVisual ? 0.018f + pulse * 0.004f : restrainedVisual ? 0.025f + pulse * 0.01f : 0.035f + pulse * 0.015f);
         }
         static float Cross(Vector2 a, Vector2 b) { return a.x * b.y - a.y * b.x; }
         void OnDestroy() { if (shape != null) Destroy(shape); }

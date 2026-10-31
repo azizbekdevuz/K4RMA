@@ -34,7 +34,12 @@ MonoBehaviour:
     counterWarning: 0.45
     swordWardDuration: 3
     swordWardResponseCooldown: 0.8
-    aerialSwordCount: 7
+    aerialSwordMinCount: 18
+    aerialSwordCount: 30
+    aerialSwordMinGroup: 4
+    aerialSwordMaxGroup: 8
+    aerialSwordAngleJitter: 0.3
+    aerialSwordSeed: 0
     aerialSwordGap: 0.4
     riseHeight: 8
     groundBladeWidth: 10

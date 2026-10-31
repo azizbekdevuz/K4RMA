@@ -7,6 +7,7 @@ namespace KarmaPrototype
         {
             switch (selected)
             {
+                case EnemyAttack.SWBasic: return BasicSwordWave();
                 case EnemyAttack.SW01: return StaggeredWaves(false);
                 case EnemyAttack.SW02: return AimedWave();
                 case EnemyAttack.SW03: return StaggeredWaves(true);

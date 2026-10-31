@@ -27,6 +27,11 @@ namespace KarmaPrototype
                             if (sprite != null) lookup[entry.id + "/" + sprite.name] = sprite;
             }
             lookup.TryGetValue(sheet + "/" + pose, out var result);
+            if (result == null && (sheet == "ExtraWaveVFX" || sheet == "WaveGuardians"))
+            {
+                result = Resources.Load<Sprite>("K4RMAArtwork/" + sheet + "/" + pose);
+                if (result != null) lookup[sheet + "/" + pose] = result;
+            }
             return result;
         }
         public Sprite[] All(string sheet)

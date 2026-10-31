@@ -4,20 +4,26 @@ namespace KarmaPrototype
     public sealed partial class KarmaEnemy
     {
         SpriteRenderer[] damageRenderers;
+        KarmaWaveMotion damageMotion;
+        internal bool PresentationActive { get { return Active && isActiveAndEnabled; } }
         // Only the guardian artwork contributes: attack VFX and shield halos are separate objects.
         public Bounds DamageBounds
         {
             get
             {
                 if (damageRenderers == null || damageRenderers.Length == 0)
+                {
                     damageRenderers = art.GetComponentsInChildren<SpriteRenderer>();
+                    damageMotion = art.GetComponent<KarmaWaveMotion>();
+                }
                 Bounds bounds = default;
                 bool found = false;
                 foreach (var renderer in damageRenderers)
                 {
                     if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer.sprite == null) continue;
-                    if (!found) { bounds = renderer.bounds; found = true; }
-                    else bounds.Encapsulate(renderer.bounds);
+                    var body = damageMotion != null ? damageMotion.GetDamageBounds(renderer) : renderer.bounds;
+                    if (!found) { bounds = body; found = true; }
+                    else bounds.Encapsulate(body);
                 }
                 return found ? bounds : new Bounds(Position, KarmaSpace.Units(new Vector2(1.4f, 2.3f)));
             }
@@ -43,7 +49,7 @@ namespace KarmaPrototype
             if (fullShield) return;
             bool front = frontalGuard && (source.x - Position.x) * direction >= 0;
             bool reduced = front || swordGuard || FightSeconds < shieldUntil;
-            if (swordGuard && FightSeconds < swordGuardUntil && FightSeconds >= nextGuardResponse && !guardResponsePending)
+            if (swordGuard && FightSeconds < swordGuardUntil && FightSeconds >= nextGuardResponse && !guardResponsePending && !guardResponseRunning)
             {
                 guardResponsePending = true;
                 nextGuardResponse = FightSeconds + Mathf.Max(0.5f, Tuning.swordGuardResponseCooldown);

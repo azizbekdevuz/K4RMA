@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Serialization;
+using System.Collections.Generic;
 
 namespace KarmaPrototype
 {
@@ -27,6 +28,22 @@ namespace KarmaPrototype
         [InspectorName("상승 수호자")] public Sprite risingGuardian;
         [FormerlySerializedAs("wardGuardian")]
         [InspectorName("결계 수호자")] public Sprite guardGuardian;
+
+        [Header("검기 주 능력 수호자 · 투명 단일 외형")]
+        public Sprite waveGuardianBase;
+        public Sprite waveGuardianRise;
+        public Sprite waveGuardianWard;
+        public Sprite waveGuardianFinal;
+
+        public Sprite WaveGuardian(IReadOnlyList<Essence> order)
+        {
+            if (KarmaPatternCatalog.Primary(order) != Essence.SwordWave) return null;
+            bool rise = false, ward = false;
+            foreach (var essence in order) { rise |= essence == Essence.RisingSlash; ward |= essence == Essence.Guard; }
+            var configured = rise && ward ? waveGuardianFinal : rise ? waveGuardianRise : ward ? waveGuardianWard : waveGuardianBase;
+            string pose = rise && ward ? "Wave_Rise_Ward" : rise ? "Wave_Rise" : ward ? "Wave_Ward" : "Wave_Base";
+            return configured != null ? configured : spriteLibrary != null ? spriteLibrary.Get("WaveGuardians", pose) : null;
+        }
 
         [Header("스테이지 — Sprite를 연결하세요")]
         [InspectorName("도장 배경")] public Sprite dojoBackground;

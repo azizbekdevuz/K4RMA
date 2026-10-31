@@ -32,6 +32,21 @@ public static class KarmaBossPlayChecks
     static float startedAt;
     static string warningError;
     static bool geometryChecked;
+    static int personalizationCase;
+    static bool sawInheritance, sawTransformation, sawPushUp, sawStandUp;
+    static Sprite inheritedBefore;
+    static float guardianFellAt;
+    static Vector3 guardianFellPosition;
+    static Vector3 guardianFallCameraPosition;
+    static float guardianFallCameraSize;
+    static bool sawAirborneLandingWait;
+    static bool sawCeremonyWalk;
+    static float ceremonyPreviousX;
+    static int playerDeathCase;
+    static float playerDiedAt, playerLandedAt, deathElapsed;
+    static Vector3 deathCameraPosition;
+    static float deathCameraSize;
+    static bool sawPlayerCollapse, sawPlayerDeath, sawPlayerAirborne;
     static FieldInfo Field(object o, string name) => o.GetType().GetField(name, Flags);
     static T Get<T>(object o, string name) => (T)Field(o, name).GetValue(o);
     static void Set(object o, string name, object value) => Field(o, name).SetValue(o,value);
@@ -134,8 +149,9 @@ public static class KarmaBossPlayChecks
         var animator = player.GetComponentInChildren<KarmaCharacterAnimator>();
         var renderer = animator.GetComponentInChildren<SpriteRenderer>();
         animator.Pose(0, false, 0, true);
-        var crouch = Resources.Load<Sprite>("K4RMAArtwork/PlayerCrouchV2");
-        Check(crouch != null && renderer.sprite == crouch && animator.CurrentPose == "Crouch", "new crouch sprite is displayed");
+        var crouch = KarmaArtwork.Sprite("Player", "Crouch");
+        Check(crouch != null && renderer.sprite == crouch && animator.CurrentPose == "Crouch", "integrated atlas crouch sprite is displayed");
+        Check(crouch.texture == KarmaArtwork.Sprite("Player", "Idle").texture, "crouch shares the player action atlas");
         Check(crouch.bounds.size.y < KarmaArtwork.Sprite("Player", "Idle").bounds.size.y, "crouch art is shorter than standing art");
         animator.Pose(0, true, 3, true);
         Check(animator.CurrentPose == "Jump", "jump takes priority over crouch");
@@ -210,6 +226,15 @@ public static class KarmaBossPlayChecks
     }
     static void BossDamageBoundsChecks()
     {
+        InheritedPoseChecks();
+        foreach (string form in new[] { "Neutral", "Wave", "Rise", "Ward" })
+        {
+            var revival = Resources.LoadAll<Sprite>("K4RMAArtwork/Characters/Guardians/Revival/" + form);
+            Check(revival.Length == 6, form + " has six native get-up sprites");
+            foreach (var frame in revival)
+                Check(frame.pivot.y < frame.rect.height * 0.3f,
+                    form + "/" + frame.name + " anchors to the ground");
+        }
         Call(enemy, "InterruptPattern");
         var art = enemy.transform.Find("Artwork");
         var picture = art.Find("Guardian sprite").GetComponent<SpriteRenderer>();
@@ -279,6 +304,44 @@ public static class KarmaBossPlayChecks
         typeof(KarmaPlayer).GetProperty("Facing").SetValue(game.Player, facing);
         Set(game.Player, "nextSword", 0f); Set(game.Player, "invulnerableUntil", 0f);
         Call(game.Player, "CancelAirSlash"); Call(enemy, "InterruptPattern");
+    }
+    static void InheritedPoseChecks()
+    {
+        foreach (Essence primary in Enum.GetValues(typeof(Essence)))
+            foreach (Essence secondary in Enum.GetValues(typeof(Essence)))
+            {
+                if (primary == secondary) continue;
+                var order = new System.Collections.Generic.List<Essence> { primary, secondary };
+                for (int stage = 2; stage <= 3; stage++)
+                {
+                    if (stage == 3)
+                        foreach (Essence third in Enum.GetValues(typeof(Essence))) if (!order.Contains(third)) { order.Add(third); break; }
+                    string form = KarmaArtwork.GuardianFormName(order);
+                    var sprites = KarmaArtwork.InheritedPoses(form);
+                    Check(sprites.Length == 16, form + " has every combat and revival pose");
+                    var host = new GameObject("Inherited pose check");
+                    var art = KarmaArtwork.Guardian(host.transform, order, stage == 3);
+                    var animator = art.GetComponent<KarmaCharacterAnimator>();
+                    var picture = art.GetComponentInChildren<SpriteRenderer>();
+                    string type = primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward";
+                    foreach (var basePose in KarmaArtwork.Settings.spriteLibrary.All(type))
+                    {
+                        animator.PlayPose(basePose.name, 0);
+                        Check(picture.sprite.name == basePose.name && picture.sprite.texture == sprites[0].texture,
+                            form + "/" + basePose.name + " retains its inherited equipment");
+                    }
+                    animator.Hurt(); animator.GuardianPose("Idle", EnemyAttack.GroundStrike, false, false);
+                    Check(picture.sprite.name == "Hurt" && picture.sprite.texture == sprites[0].texture,
+                        form + " combat hit feedback keeps its inherited appearance");
+                    var revival = Get<Sprite[]>(animator, "revivalFrames");
+                    Check(revival.Length == 6 && Array.TrueForAll(revival, s => s != null && s.texture == sprites[0].texture),
+                        form + " uses its own defeat and get-up frames");
+                    animator.Die(); animator.Pose(0, false);
+                    Check(picture.sprite.name == "Death" && picture.sprite.texture == sprites[0].texture,
+                        form + " defeated pose keeps inherited equipment");
+                    UnityEngine.Object.DestroyImmediate(host);
+                }
+            }
     }
     static void BossVisualChecks()
     {
@@ -508,12 +571,222 @@ public static class KarmaBossPlayChecks
             Check(!game.Player.Stunned && !enemy.TrialActive && !enemy.Armored,"restart has no temporary state");
             effects=Get<Transform>(enemy,"effectsRoot");
             KarmaBossAttack.Spawn(game,enemy,effects,enemy.Position,Vector2.zero,Vector2.one,10,1,Color.white,null,0);
+            game.Player.ResetForRoom(new Vector2(enemy.Position.x, 200), false);
+            game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.up * game.Config.jumpSpeed;
+            sawAirborneLandingWait = false;
+            sawCeremonyWalk = false; ceremonyPreviousX = game.Player.Position.x;
             enemy.TakeDamage(enemy.MaxHealth*2);
             Check(effects.GetComponentsInChildren<KarmaBossAttack>().Length==0,"boss death cancels owned attack");
-            Check(game.Phase==RunPhase.Choosing,"boss death advances normal progression");
-            return true;
+            Check(game.Phase==RunPhase.GuardianFallen && !game.CanMove && !game.IsCombat,
+                "boss death shows its fall before opening selection");
+            guardianFellAt = Time.time;
+            guardianFellPosition = enemy.transform.position;
+            Call(game, "LateUpdate");
+            guardianFallCameraPosition = game.GameCamera.transform.position;
+            guardianFallCameraSize = game.GameCamera.orthographicSize;
+            game.Choose(Essence.Guard); game.ConfirmChoice();
+            Check(!game.PendingChoice.HasValue && game.Player.Essences.Count == 0,
+                "selection input cannot skip the boss fall");
+            lifecycleStage++; return false;
+        }
+        if(lifecycleStage==5)
+        {
+            if(game.Phase==RunPhase.GuardianFallen)
+            {
+                if (game.Player.SeparatingForCeremony)
+                {
+                    Check(game.Player.ReadyForPersonalization, "automatic separation begins after landing");
+                    Check(Mathf.Abs(game.Player.Position.x-ceremonyPreviousX) <= game.Config.moveSpeed * Time.deltaTime + 0.2f,
+                        "ceremony separation uses walking physics instead of teleporting");
+                    if (game.Player.GetComponentInChildren<KarmaCharacterAnimator>().CurrentPose == "Run") sawCeremonyWalk = true;
+                }
+                ceremonyPreviousX = game.Player.Position.x;
+                if(personalizationCase == 0 && Time.time-guardianFellAt > 0.1f)
+                {
+                    Check(game.Player.Position.y < 200, "airborne boss finisher descends instead of freezing");
+                    if(Get<float>(game,"transitionLeft") <= 0 && !game.Player.ReadyForPersonalization)
+                        sawAirborneLandingWait = true;
+                }
+                Check(game.GameCamera.transform.position == guardianFallCameraPosition
+                    && game.GameCamera.orthographicSize == guardianFallCameraSize,
+                    "boss fall preserves the combat camera framing");
+                if(Time.time-guardianFellAt > 0.7f)
+                {
+                    var fallen = Get<Transform>(game,"fallenGuardian");
+                    Check(fallen != null && fallen.gameObject.activeInHierarchy,
+                        "fallen guardian remains visible after the old despawn time");
+                    var fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
+                    Check(fallenAnimator.CurrentPose == "Death", "guardian holds its defeated pose");
+                }
+                return false;
+            }
+            Check(game.Phase==RunPhase.Choosing && Time.time-guardianFellAt >= 1.7f,
+                "selection opens only after the boss fall and hold");
+            Check(game.Player.ReadyForPersonalization, "choice opens only after the player lands");
+            Check(!game.Player.SeparatingForCeremony && sawCeremonyWalk,
+                "selection waits for the automatic walking animation to finish");
+            var corpseBounds = Get<Transform>(game,"fallenGuardian").GetComponentInChildren<SpriteRenderer>().bounds;
+            Check(game.Player.Position.x + KarmaSpace.PlayerHalfWidth < corpseBounds.min.x
+                || game.Player.Position.x - KarmaSpace.PlayerHalfWidth > corpseBounds.max.x,
+                "player and defeated guardian are separated before the selection screen");
+            Check(game.Player.Facing == (guardianFellPosition.x < game.Player.Position.x ? -1 : 1),
+                "player faces the fallen guardian after stepping away");
+            if (personalizationCase == 1) Check(game.Player.Position.x > guardianFellPosition.x,
+                "guardian near left wall uses the available space on its right");
+            if (personalizationCase == 2) Check(game.Player.Position.x < guardianFellPosition.x,
+                "guardian near right wall uses the available space on its left");
+            if(personalizationCase == 0)
+                Check(sawAirborneLandingWait, "expired fall timer still waits for an airborne player to land");
+            Check(game.GameCamera.transform.position == guardianFallCameraPosition
+                && game.GameCamera.orthographicSize == guardianFallCameraSize,
+                "selection retains the same combat framing");
+            game.Choose((Essence)personalizationCase);
+            game.ConfirmChoice();
+            Check(game.Phase==RunPhase.Transition && !game.CanMove && !game.IsCombat,
+                "confirmation closes selection and locks combat for actual player ceremony");
+            Check(!game.GuardianInheriting && game.World.GetComponentInChildren<KarmaPersonalizationVFX>() != null,
+                "player ceremony lives in the stage, not the selection UI");
+            Check(game.Player.Essences.HasRemnant((Essence)personalizationCase), "confirmed skill already belongs to player");
+            sawInheritance = sawTransformation = sawPushUp = sawStandUp = false;
+            lifecycleStage++; return false;
+        }
+        if(lifecycleStage==6)
+        {
+            if(game.Phase==RunPhase.Transition)
+            {
+                if(Get<float>(game,"transitionLeft") < 0.4f)
+                {
+                    float combatSize = Mathf.Max(Get<Bounds>(game,"stageBackgroundBounds").extents.y,
+                        25 / Mathf.Max(game.GameCamera.aspect, 0.01f));
+                    float expectedSize = combatSize * (game.GuardianInheriting ? 0.8f : 0.75f);
+                    Check(Mathf.Abs(game.GameCamera.orthographicSize - expectedSize) < expectedSize * 0.05f,
+                        "ceremony uses moderate zoom relative to the combat view");
+                }
+                if(game.GuardianInheriting)
+                {
+                    enemy = game.Enemies[0];
+                    Check(enemy.FightSeconds == 0 && !Get<bool>(enemy,"stopped"),
+                        "guardian waits through inheritance without permanently stopping its AI");
+                    var picture = enemy.GetComponentInChildren<KarmaCharacterAnimator>().GetComponentInChildren<SpriteRenderer>();
+                    if(!sawInheritance)
+                    {
+                        Check(game.StageIndex==personalizationCase+1, "inheritance creates exactly the next stage");
+                        inheritedBefore = picture.sprite;
+                        Check(enemy.transform.position == guardianFellPosition,
+                            "guardian revives at the place where it fell");
+                        Check(enemy.GetComponentInChildren<KarmaCharacterAnimator>().CurrentPose == "ReviveFallen",
+                            "inheritance begins with the actual fallen sprite");
+                        sawInheritance = true;
+                    }
+                    string revivePose = enemy.GetComponentInChildren<KarmaCharacterAnimator>().CurrentPose;
+                    if (revivePose == "Revive01" || revivePose == "Revive02") sawPushUp = true;
+                    if (revivePose == "Revive04" || revivePose == "Revive05") sawStandUp = true;
+                    Check(Mathf.Approximately(picture.transform.localScale.x, picture.transform.localScale.y),
+                        "authored get-up poses keep body proportions instead of stretching");
+                    if(Get<float>(game,"transitionLeft") < 0.8f && !sawTransformation)
+                    {
+                        Check(picture.sprite != inheritedBefore, "actual boss sprite transforms into its inherited form");
+                        sawTransformation = true;
+                    }
+                }
+                return false;
+            }
+            Check(game.Phase==RunPhase.Combat && sawInheritance && sawTransformation && sawPushUp && sawStandUp,
+                "both actor ceremonies finish before normal combat resumes");
+            Check(game.StageIndex==personalizationCase+1 && game.Player.Essences.Count==personalizationCase+1,
+                "ceremony preserves progression and confirmed ownership");
+            waitFrame=Time.frameCount; lifecycleStage++; return false;
+        }
+        if(lifecycleStage==7)
+        {
+            if(Time.frameCount<waitFrame+10) return false;
+            Check(enemy.FightSeconds>0 && !Get<bool>(enemy,"stopped"), "inherited guardian AI resumes after ceremony");
+            Check(enemy.transform.localScale==Vector3.one, "guardian ceremony restores collider root scale");
+            float bossX = personalizationCase == 0 ? KarmaStage.BossLeftWall + 0.2f : KarmaStage.BossRightWall - 0.2f;
+            enemy.transform.position = new Vector3(bossX, KarmaSpace.GuardianGroundY, 0);
+            game.Player.ResetForRoom(new Vector2(bossX, KarmaSpace.PlayerHalfHeight), false);
+            Physics2D.SyncTransforms();
+            sawCeremonyWalk = false; ceremonyPreviousX = bossX;
+            enemy.TakeDamage(enemy.MaxHealth*2);
+            guardianFellAt = Time.time;
+            guardianFellPosition = enemy.transform.position;
+            Call(game, "LateUpdate");
+            guardianFallCameraPosition = game.GameCamera.transform.position;
+            guardianFallCameraSize = game.GameCamera.orthographicSize;
+            if(++personalizationCase<3) { lifecycleStage=5; return false; }
+            lifecycleStage=8; return false;
+        }
+        if(lifecycleStage==8)
+        {
+            if(game.Phase==RunPhase.GuardianFallen) return false;
+            Check(game.Phase==RunPhase.Victory && !game.GuardianInheriting,
+                "final boss victory does not start another inheritance");
+            game.StartRun();
+            game.Enemies[0].TakeDamage(game.Enemies[0].MaxHealth*2);
+            lifecycleStage=9; return false;
+        }
+        if(lifecycleStage==9)
+        {
+            if(game.Phase==RunPhase.GuardianFallen) return false;
+            game.Choose(Essence.Guard); game.ConfirmChoice();
+            game.ReturnToTitle();
+            Check(game.World==null && game.Player==null && game.Phase==RunPhase.Title,
+                "leaving a ceremony clears the world and actor references");
+            BeginPlayerDeathCheck(); lifecycleStage=10; return false;
+        }
+        if(lifecycleStage==10)
+        {
+            var animator=game.Player.GetComponentInChildren<KarmaCharacterAnimator>(true);
+            sawPlayerCollapse |= animator.CurrentPose=="Hurt" || animator.CurrentPose=="Crouch";
+            sawPlayerDeath |= animator.CurrentPose=="Death";
+            if(!game.Player.ReadyForDefeat) sawPlayerAirborne=true;
+            else if(playerLandedAt<0) playerLandedAt=Time.time;
+            Check(!game.CanMove && !game.IsCombat && !game.Paused && Time.timeScale==1,
+                "death stops combat and input while the scene keeps advancing");
+            Call(game,"LateUpdate");
+            Check(Vector3.Distance(game.GameCamera.transform.position,deathCameraPosition)<0.001f
+                && Mathf.Abs(game.GameCamera.orthographicSize-deathCameraSize)<0.001f,
+                "player death keeps the combat camera without zoom or tracking");
+            Check(game.Elapsed==deathElapsed,"death presentation does not advance the result clock");
+            Check(animator.gameObject.activeInHierarchy,"dying player does not flicker after the fatal hit");
+            if(game.Phase==RunPhase.PlayerFallen)
+            {
+                float left=Get<float>(game,"transitionLeft");
+                game.PlayerDied(); game.TogglePause();
+                Check(Get<float>(game,"transitionLeft")==left && !game.Paused,
+                    "repeated death callbacks and pause do not restart or freeze the fall");
+                return false;
+            }
+            Check(game.Phase==RunPhase.Defeat && Time.time-playerDiedAt>=1.75f,
+                "failure menu waits for the player death scene");
+            Check(playerLandedAt>=0 && Time.time-playerLandedAt>=0.7f,
+                "failure menu gives the settled fallen pose time to read");
+            Check(sawPlayerCollapse && sawPlayerDeath,"player collapse leads into the held death pose");
+            if(playerDeathCase==1) Check(sawPlayerAirborne && game.Player.ReadyForPersonalization,
+                "airborne death lands before showing the failure menu");
+            game.RetryRoom();
+            Check(game.Phase==RunPhase.Combat && game.StageIndex==0 && game.Player.Health==game.Config.playerHealth
+                && game.Player.Essences.Count==0,"failure retry resets the run and restores the player");
+            if(++playerDeathCase<3) { BeginPlayerDeathCheck(); return false; }
+            game.ReturnToTitle(); return true;
         }
         return false;
+    }
+    static void BeginPlayerDeathCheck()
+    {
+        game.StartRun();
+        float y=playerDeathCase==1 ? 30 : playerDeathCase==2 ? KarmaSpace.Units(-9) : KarmaSpace.PlayerHalfHeight;
+        game.Player.ResetForRoom(new Vector2(14,y),false);
+        game.Player.GetComponent<Rigidbody2D>().linearVelocity=playerDeathCase==1 ? Vector2.up*game.Config.jumpSpeed : Vector2.zero;
+        Physics2D.SyncTransforms();
+        if(playerDeathCase==2) Call(game.Player,"FixedUpdate");
+        else game.Player.TakeDamage(game.Player.Health*2);
+        Check(game.Phase==RunPhase.PlayerFallen,"fatal damage or falling starts a visible death phase instead of the menu");
+        Check(game.Projectiles.Count==0 && Get<bool>(game.Enemies[0],"stopped"),"fatal hit stops boss AI and projectiles");
+        Call(game,"LateUpdate");
+        deathCameraPosition=game.GameCamera.transform.position; deathCameraSize=game.GameCamera.orthographicSize;
+        playerDiedAt=Time.time; playerLandedAt=-1; deathElapsed=game.Elapsed;
+        sawPlayerCollapse=sawPlayerDeath=sawPlayerAirborne=false;
     }
     static void Finish(Exception error)
     {

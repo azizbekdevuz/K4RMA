@@ -33,8 +33,9 @@ Unity Hub에서 저장소 루트를 **Unity 6000.6.2f1**로 연다. URP와 Input
 | `Assets/K4RMA/Editor` | 씬 생성, 빌드, 이미지 임포트·검사 |
 | `Assets/K4RMA/Scenes` | 플레이 씬 1개 |
 | `Assets/K4RMA/Settings` | 게임 설정·재질, Rendering 아래 URP 설정 |
-| `Assets/K4RMA/Resources` | 런타임 이미지·스프라이트 라이브러리·재질 |
-| `image` | 버전 관리하는 원화·제작 자료; 임포트 도구가 사용 |
+| `Assets/K4RMA/Resources` | 이미지 설정·스프라이트 라이브러리·재질 |
+| `Assets/K4RMA/Art/Resources/K4RMAArtwork` | 현재 게임 이미지 30개: 캐릭터·효과·UI·배경·소품 |
+| `Assets/K4RMA/Art/Editor/DesignNotes` | 현재 이미지의 제작 프롬프트; 빌드 제외 |
 | `tools` / `tools/unity` | Python 검사·이미지 도구 / Unity에서 실행하는 C# 도구 |
 | `tests/CoreChecks` / `tests/Unity` | Core 검사 / Unity 회귀 검사 |
 | `output` | 재생성 가능한 검사 로그·미리보기, Git 제외 |
@@ -48,16 +49,17 @@ Core는 `noEngineReferences` 어셈블리로 분리한다. Runtime·Editor는 Un
 직렬화 필드명은 에셋 데이터와 연결되므로 변경 시 마이그레이션이 필요하다.
 
 그림은 **K4RMA → 이미지 설정 선택**에서 교체한다. 공유 설정은 `Resources/KarmaArtworkSettings.asset`이다.
-기본 캐릭터 슬롯은 Sprite, UI 일러스트는 Texture2D를 받는다.
-동작별 포즈·VFX·계승 외형은 `KarmaSpriteLibrary`와 `Resources/K4RMAArtwork/Sheets`를 사용한다.
+기본 캐릭터 슬롯은 Sprite, 메뉴 배경은 Texture2D를 받는다.
+동작별 포즈·VFX·계승 외형은 `KarmaSpriteLibrary`와 `Art/Resources/K4RMAArtwork`를 사용한다.
 새 캐릭터는 투명 PNG와 발 기준 Pivot을 사용하고, PPU·위치·크기는 Play에서 확인한다.
 
 시트 영역·윤곽은 `tools/sprite-slices.json`이 기준이다. Pillow가 설치된 Python에서
 `tools/build-sprite-outlines.py`와 `tools/build-vfx-outlines.py`로 윤곽을 갱신한 뒤,
 Unity CLI로 `tools/unity/ImportSpriteSheets.cs`의 `ImportSpriteSheets.Main`을 실행한다.
 `PreviewSpriteSheets.cs`, `PreviewBossEffects.cs`는 Unity 렌더 미리보기를 만든다.
-Production 원화 재적용 메뉴는 현재 슬롯을 덮어쓰므로 원본을 갱신할 때 사용한다.
-`useCompleteArtwork`는 이전 원본 카탈로그 표시 옵션이며 기본값은 꺼짐이다.
+현재 게임 이미지 연결 적용 메뉴는 슬롯을 다시 연결하므로 기본 연결을 복구할 때 사용한다.
+현재 파일 목록은 [이미지 인덱스](Assets/K4RMA/Art/IMAGE_INDEX.md)에서 확인한다.
+`python3 tools/update-artwork-index.py`로 Markdown·CSV를 갱신한다.
 
 ## 검증·빌드
 
@@ -84,7 +86,7 @@ Windows Build Support (Mono) 설치 후 **K4RMA → Windows 64-bit 빌드**로 `
 
 ## Git 관리
 
-`Assets`와 모든 `.meta`, `Packages`, `ProjectSettings`, `image`, 도구·검사·문서를 함께 커밋한다.
+`Assets`와 모든 `.meta`, `Packages`, `ProjectSettings`, 도구·검사·문서를 함께 커밋한다.
 에셋 이동 시 `.meta`를 함께 옮기고, PNG 교체 시 기존 `.meta`를 유지해야 참조가 보존된다.
 `Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, IDE 생성 파일, 빌드·검사 산출물, 로컬 비밀 설정은 `.gitignore`로 제외한다.
-`Resources/K4RMAComplete`와 Editor의 원본 이미지 카탈로그는 `image`에서 재생성하므로 제외한다.
+이미지는 현재 게임용 PNG 한 벌만 관리한다. 삭제한 구버전 이미지는 자동 복원하지 않는다.

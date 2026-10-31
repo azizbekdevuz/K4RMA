@@ -77,8 +77,18 @@ namespace KarmaPrototype
             if (KarmaInput.Pressed(KarmaAction.Title) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { ReturnToTitle(); return; }
             if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { StartRun(); return; }
             if (Paused) return;
-            if (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Phase == RunPhase.Choosing || Phase == RunPhase.Transition)
+            if (Phase == RunPhase.PlayerFallen)
+            {
+                UpdatePlayerFall();
+                return;
+            }
+            if (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Phase == RunPhase.Choosing || Phase == RunPhase.Transition || Phase == RunPhase.GuardianFallen)
                 Elapsed += Time.deltaTime;
+            if (Phase == RunPhase.GuardianFallen)
+            {
+                UpdateGuardianFall();
+                return;
+            }
             if (Phase == RunPhase.Gate && Player.Position.x > 35.5f && KarmaInput.Pressed(KarmaAction.Interact))
                 Phase = RunPhase.Choosing;
             if (Phase == RunPhase.Choosing)
@@ -89,10 +99,7 @@ namespace KarmaPrototype
                 else if (KarmaInput.Pressed(KarmaAction.Confirm)) ConfirmChoice();
             }
             if (Phase == RunPhase.Transition)
-            {
-                transitionLeft -= Time.deltaTime;
-                if (transitionLeft <= 0) { StageIndex++; LoadRoom(false); }
-            }
+                UpdatePersonalization();
             if (Phase == RunPhase.Defeat && KarmaInput.Pressed(KarmaAction.Restart)) RetryRoom();
         }
 

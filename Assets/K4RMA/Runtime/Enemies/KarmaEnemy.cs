@@ -67,6 +67,12 @@ namespace KarmaPrototype
             timer = 1.4f; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach; Intent = "앞으로 나아가 시험을 시작하세요";
         }
+        public void PrepareRevival(Vector3 position, Vector3 artworkScale)
+        {
+            transform.position = position;
+            art.localScale = artworkScale;
+            engaged = true;
+        }
         public bool RestoreMissingPersonalizations(KarmaEssences essences, int stage, Essence last)
         {
             // Migrate an already-running session whose old readonly progression was lost on reload.

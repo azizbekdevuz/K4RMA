@@ -63,7 +63,7 @@ namespace KarmaPrototype
             if (Health <= 0)
             {
                 CancelCombat(); art.SetParent(game.World, true); animator.Die();
-                Destroy(art.gameObject, 0.45f); game.EnemyDefeated(this); Destroy(gameObject);
+                game.EnemyDefeated(this, art); Destroy(gameObject);
             }
         }
     }

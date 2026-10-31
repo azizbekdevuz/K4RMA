@@ -41,7 +41,6 @@ namespace KarmaPrototype
                 return;
             }
             animator.Attack();
-            KarmaArtworkVFX.Player(game,Position,Airborne?11:0,Vector2.right*Facing);
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
@@ -70,7 +69,6 @@ namespace KarmaPrototype
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f), game.Config.Techniques.slashLife);
-            KarmaArtworkVFX.Player(game,to,direction.y>0?3:direction.y<0?4:10,direction);
             Essences.NotifyUnique(essence);
             foreach (var enemy in game.Enemies.ToArray())
             {
@@ -93,7 +91,6 @@ namespace KarmaPrototype
             animator.Attack(direction);
             animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
             Essences.NotifyUnique(Essence.RisingSlash);
-            KarmaArtworkVFX.Player(game,Position,direction.y<0?4:3,direction);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
         }
         void DamageAirSlash()
@@ -147,7 +144,6 @@ namespace KarmaPrototype
         }
         public void BeginRisingSlash()
         {
-            KarmaArtworkVFX.Player(game,Position,3,Vector2.up);
             CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
             KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
                 KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);
@@ -170,7 +166,6 @@ namespace KarmaPrototype
             if (!game.IsCombat || Health <= 0 || damage <= 0 || Time.time < invulnerableUntil) return;
             if (techniques.ConsumeCounter(Time.time))
             {
-                KarmaArtworkVFX.Player(game,Position,8,Vector2.right*Facing);
                 ParryCount++;
                 animator.PlayPose("Riposte", 0.3f);
                 invulnerableUntil = Time.time + 0.12f;
@@ -197,7 +192,6 @@ namespace KarmaPrototype
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();
-            if(KarmaArtwork.Settings.useCompleteArtwork) KarmaArtworkVFX.Spawn(game.World,Position,KarmaArtAtlas.Effects(3)[4+UnityEngine.Random.Range(0,4)],Vector2.one*KarmaSpace.Units(1.5f),0.2f);
             Health -= actual; game.DamageTaken += actual;
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
             KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));

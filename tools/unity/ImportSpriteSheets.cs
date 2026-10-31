@@ -11,28 +11,26 @@ using KarmaPrototype;
 public static class ImportSpriteSheets
 {
     [Serializable] public sealed class Plan { public Sheet[] sheets; }
-    [Serializable] public sealed class Sheet { public string id, source; public float ppu; public Slice[] sprites; }
+    [Serializable] public sealed class Sheet { public string id, source, asset; public float ppu; public Slice[] sprites; }
     [Serializable] public sealed class Slice { public string name; public float x, y, width, height, pivotX, pivotY; public float[][] outline; public float[][][] outlines; }
-    const string Folder = "Assets/K4RMA/Resources/K4RMAArtwork/Sheets";
     const string LibraryPath = "Assets/K4RMA/Resources/KarmaSpriteLibrary.asset";
 
     public static string Main()
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play Mode before importing sheets.");
         var plan = Newtonsoft.Json.JsonConvert.DeserializeObject<Plan>(File.ReadAllText("tools/sprite-slices.json"));
-        Directory.CreateDirectory(Folder);
         foreach (var sheet in plan.sheets)
         {
-            string path = Folder + "/" + sheet.id + ".png";
-            if (!File.Exists(path) || !File.ReadAllBytes(path).SequenceEqual(File.ReadAllBytes(sheet.source)))
-                File.Copy(sheet.source, path, true);
+            string path = sheet.asset;
+            if (sheet.source != path || !File.Exists(path))
+                throw new FileNotFoundException("Current game image missing; update the catalog instead of restoring an old source", path);
         }
         AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         var entries = new System.Collections.Generic.List<KarmaSpriteLibrary.Sheet>();
         int count = 0;
         foreach (var sheet in plan.sheets)
         {
-            string path = Folder + "/" + sheet.id + ".png";
+            string path = sheet.asset;
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) throw new InvalidOperationException("Missing texture importer: " + path);
             importer.textureType = TextureImporterType.Sprite;

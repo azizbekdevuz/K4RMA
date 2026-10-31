@@ -21,7 +21,7 @@ log = args.output_dir.resolve() / 'unity-boss-play.log'
 report = args.output_dir.resolve() / 'boss-play-validation.txt'
 with tempfile.TemporaryDirectory(prefix='karma-playchecks-') as folder:
     project = Path(folder)
-    for name in ('Assets', 'Packages', 'ProjectSettings', 'image'):
+    for name in ('Assets', 'Packages', 'ProjectSettings'):
         shutil.copytree(root / name, project / name)
     (project / 'Assets/Editor').mkdir(exist_ok=True)
     for name in ('KarmaBossPlayChecks.cs', 'KarmaMigrationChecks.cs'):

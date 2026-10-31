@@ -52,6 +52,29 @@ namespace KarmaPrototype
         void LateUpdate()
         {
             if (Player == null) return;
+            if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
+                || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)
+            {
+                // Hold the combat framing through the fall and selection screen.
+                GameCamera.transform.position -= lastShake;
+                lastShake = Vector3.zero;
+                return;
+            }
+            if (Phase == RunPhase.Transition)
+            {
+                var actor = GuardianInheriting && Enemies.Count > 0 ? Enemies[0].transform : Player.transform;
+                float height = GuardianInheriting ? 2.2f : 0.6f;
+                var focus = actor.position + new Vector3(0, height, -10);
+                float blend = 1 - Mathf.Exp(-5 * Time.deltaTime);
+                GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position - lastShake, focus, blend);
+                float combatSize = hasStageBackground
+                    ? Mathf.Max(stageBackgroundBounds.extents.y, 25 / Mathf.Max(GameCamera.aspect, 0.01f))
+                    : 6.8f / Mathf.Min(1, Mathf.Max(0.4f, GameCamera.aspect));
+                GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize,
+                    combatSize * (GuardianInheriting ? 0.8f : 0.75f), blend);
+                lastShake = Vector3.zero;
+                return;
+            }
             if (hasStageBackground)
             {
                 FitStageBackground();

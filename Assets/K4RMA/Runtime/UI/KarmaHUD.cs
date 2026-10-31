@@ -69,14 +69,14 @@ namespace KarmaPrototype
             else
             {
                 TopBar();
-                if (game.Paused || game.Phase == RunPhase.Choosing || game.Phase == RunPhase.Transition
+                if (game.Paused || game.Phase == RunPhase.Choosing
                     || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory)
                     Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.78f));
                 if (game.Paused) PauseScreen();
                 else switch (game.Phase)
                 {
                     case RunPhase.Choosing: ChoiceScreen(); break;
-                    case RunPhase.Transition: TransitionScreen(); break;
+                    case RunPhase.Transition: StageTransitionScreen(); break;
                     case RunPhase.Defeat: EndScreen(false); break;
                     case RunPhase.Victory: EndScreen(true); break;
                     case RunPhase.Gate:

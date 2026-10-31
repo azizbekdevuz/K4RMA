@@ -53,11 +53,14 @@ namespace KarmaPrototype
             if (!game.IsCombat) ClearStatus();
             aura.enabled = Shielded;
             remnantHalo.enabled = techniques.CounterReady(Time.time);
-            art.gameObject.SetActive(Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
+            art.gameObject.SetActive(game.Phase == RunPhase.Transition || game.Phase == RunPhase.GuardianFallen
+                || game.Phase == RunPhase.PlayerFallen || game.Phase == RunPhase.Defeat
+                || Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
             bool airborne = Airborne;
             Crouching = game.CanMove && !Stunned && !airborne && KarmaInput.Vertical < 0
                 && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;
-            animator.Pose(move, airborne, body.linearVelocity.y, Crouching);
+            animator.Pose(game.Phase == RunPhase.GuardianFallen ? ceremonyMove : move,
+                airborne, body.linearVelocity.y, Crouching);
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
             move = Crouching ? 0 : KarmaInput.Horizontal;

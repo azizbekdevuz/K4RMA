@@ -5,11 +5,14 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD
     {
         int storyPage;
+        Vector2 storyScroll;
         void Update()
         {
             if (game == null || game.Phase != RunPhase.Story) return;
+            int previousPage = storyPage;
             if (KarmaInput.Pressed(KarmaAction.NextPage)) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
             if (KarmaInput.Pressed(KarmaAction.PreviousPage)) storyPage = Mathf.Max(0, storyPage - 1);
+            if (previousPage != storyPage) storyScroll = Vector2.zero;
         }
         void TitleScreen()
         {
@@ -23,29 +26,38 @@ namespace KarmaPrototype
         }
         void StoryScreen()
         {
-            Panel(new Rect(110, 35, 1060, 650));
-            Label(155, 60, 970, 40, "스승과 제자 · " + (storyPage + 1) + " / " + KarmaStory.Pages.Length, heading);
-            Label(155, 115, 555, 475, KarmaStory.Pages[storyPage], text);
-            string illustration = storyPage == 7 ? "PlayerSheet" : storyPage == 3 ? "PlayerRisingSlash" : storyPage >= 5 ? "SwordGuardian" : "WorldOverview";
-            Art(new Rect(745, 130, 375, 420), illustration);
-            Label(750, 565, 365, 30, "스승과 제자 · 수호자의 시험", small);
-            if (GUI.Button(new Rect(155, 615, 250, 45), "이전 [←]", button)) storyPage = Mathf.Max(0, storyPage - 1);
-            if (GUI.Button(new Rect(440, 615, 250, 45), "다음 [→]", button)) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
-            if (GUI.Button(new Rect(725, 615, 385, 45), "타이틀 [Esc]", button)) game.ReturnToTitle();
+            Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.68f));
+            Label(280, 40, 720, 60, "스승과 제자", title);
+            SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+            Label(280, 140, 720, 30, (storyPage + 1) + " / " + KarmaStory.Pages.Length, centered);
+            float contentHeight = Mathf.Max(410, text.CalcHeight(new GUIContent(KarmaStory.Pages[storyPage]), 620));
+            storyScroll = GUI.BeginScrollView(new Rect(155, 180, 640, 410), storyScroll, new Rect(0, 0, 620, contentHeight));
+            GUI.Label(new Rect(0, 0, 620, contentHeight), KarmaStory.Pages[storyPage], text);
+            GUI.EndScrollView();
+            var illustration = storyPage == 3 ? KarmaArtwork.Sprite("Player", "Rising")
+                : storyPage >= 5 && storyPage != 7 ? KarmaArtwork.GuardianPreview(new[] { Essence.SwordWave })
+                : KarmaArtwork.Sprite("Player", "Idle");
+            SpriteArt(new Rect(845, 195, 315, 350), illustration);
+            Label(845, 555, 315, 30, "수호자의 시험", centered);
+            if (GUI.Button(new Rect(155, 625, 280, 50), "이전 [←]", menuButton)) { storyPage = Mathf.Max(0, storyPage - 1); storyScroll = Vector2.zero; }
+            if (GUI.Button(new Rect(500, 625, 280, 50), "다음 [→]", menuButton)) { storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1); storyScroll = Vector2.zero; }
+            if (GUI.Button(new Rect(845, 625, 280, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();
         }
         void ControlsScreen()
         {
-            Panel(new Rect(35, 35, 1210, 650));
-            Label(65, 65, 730, 45, "조작 안내", heading);
-            Label(65, 135, 745, 440,
+            Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.68f));
+            Label(280, 40, 720, 60, "조작 안내", title);
+            SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+            Label(115, 175, 750, 420,
                 "A/D · ←/→ : 이동    Space : 점프    J 유지 : 검 기본 공격\n\nQ : 검기 발사    왼쪽 Shift : 상승베기    E : 원형 방어\n고유화한 원형 키는 사용할 수 없습니다.\n\n관통베기 : 같은 방향키 / WASD 두 번 (0.25초 이내) · 해당 방향으로 관통\n도약베기 : 공중 방향키 / WASD + J 새로 누르기 · 베고 추가 점프 (착지 전 1회)\n↓ / S + J : 아래로 베고 점프 · 방향 입력이 없으면 바라보는 방향\n반격 : K로 짧은 받아내기 동작 · 공격 도착 순간에만 성공\n\n고유화 : 1/2/3 선택 → Enter 확정 · Esc 취소/재선택\nEsc : 일시정지    일시정지/결과에서 R : 처음부터    T : 타이틀\n\n사망하면 네 수호자의 시험을 Stage 1부터 다시 시작합니다.", text);
-            Label(65, 565, 745, 30, "↓ / S 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
-            Art(new Rect(850, 90, 345, 155), "PlayerSwordWave");
-            Label(855, 250, 340, 28, "검기 · 관통베기", small);
-            Art(new Rect(850, 285, 345, 155), "PlayerRisingSlash");
-            Label(855, 445, 340, 28, "상승베기 · 도약베기", small);
-            Art(new Rect(850, 480, 345, 155), "WardGuardian");
-            if (GUI.Button(new Rect(150, 600, 560, 55), "타이틀 [Esc]", button)) game.ReturnToTitle();
+            Label(115, 595, 750, 28, "↓ / S 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
+            SpriteArt(new Rect(915, 175, 250, 105), SkillIcon(Essence.SwordWave, false));
+            Label(915, 280, 250, 28, "검기 · 관통베기", centered);
+            SpriteArt(new Rect(915, 325, 250, 105), SkillIcon(Essence.RisingSlash, false));
+            Label(915, 430, 250, 28, "상승베기 · 도약베기", centered);
+            SpriteArt(new Rect(915, 475, 250, 105), SkillIcon(Essence.Guard, false));
+            Label(915, 580, 250, 28, "방어 · 반격", centered);
+            if (GUI.Button(new Rect(440, 635, 400, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();
         }
         void ChoiceScreen()
         {
@@ -76,33 +88,47 @@ namespace KarmaPrototype
             GUI.enabled = true;
             if (GUI.Button(new Rect(490, 625, 300, 40), "선택 취소 [Esc]", menuButton)) game.CancelChoice();
         }
-        void TransitionScreen()
-        {
-            Panel(new Rect(120, 275, 1040, 300));
-            Label(155, 300, 570, 45, names[(int)game.LastSacrifice] + " → " + KarmaPatternCatalog.UniqueName(game.LastSacrifice), heading);
-            Label(155, 360, 570, 180, "원형은 제자의 동작으로 고유화되었습니다.\n다음 수호자: " + KarmaPatternCatalog.TypeName(game.Player.Essences.SacrificeOrder)
-                + "\n계승 원형: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder)
-                + (game.StageIndex == 2 ? "\n세 고유 기술로 마지막 수호자의 시험에 도전합니다." : "\n내려놓은 원형의 흔적은 이후 수호자에게 유지됩니다."), text);
-            SpriteArt(new Rect(780, 295, 310, 260), KarmaArtwork.GuardianPreview(game.Player.Essences.SacrificeOrder));
-            SpriteArt(new Rect(650, 300, 65, 65), SkillIcon(game.LastSacrifice, true));
-        }
         void PauseScreen()
         {
-            Panel(new Rect(390, 260, 500, 360));
-            Label(425, 275, 430, 55, "일시정지", heading);
-            if (GUI.Button(new Rect(435, 345, 410, 65), "계속하기 [Esc]", button)) game.TogglePause();
-            if (GUI.Button(new Rect(435, 430, 410, 65), "처음부터 [R]", button)) game.StartRun();
-            if (GUI.Button(new Rect(435, 515, 410, 65), "타이틀 [T]", button)) game.ReturnToTitle();
+            Label(280, 245, 720, 55, "일시정지", title);
+            SpriteArt(new Rect(460, 315, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+            if (GUI.Button(new Rect(440, 350, 400, 55), "계속하기 [Esc]", menuButton)) game.TogglePause();
+            if (GUI.Button(new Rect(440, 425, 400, 55), "처음부터 [R]", menuButton)) game.StartRun();
+            if (GUI.Button(new Rect(440, 500, 400, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
+        }
+        void StageTransitionScreen()
+        {
+            // A low caption keeps the actual actors and their transformation visible.
+            Fill(new Rect(280, 578, 720, 112), new Color(0.015f, 0.025f, 0.07f, 0.72f));
+            SpriteArt(new Rect(460, 578, 360, 12), KarmaArtwork.Sprite("UI", "LongRule"));
+            string caption = game.GuardianInheriting
+                ? "원형 계승 · " + (game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자")
+                : "고유화 · " + names[(int)game.LastSacrifice] + " → " + KarmaPatternCatalog.UniqueName(game.LastSacrifice);
+            Label(300, 594, 680, 35, caption, centered);
+            Label(300, 638, 680, 28, game.GuardianInheriting
+                ? "내려놓은 원형의 힘이 다음 수호자에게 이어집니다."
+                : "배운 원형이 제자의 동작으로 깨어납니다.", centered);
         }
         void EndScreen(bool victory)
         {
-            Panel(new Rect(255, 250, 770, 400));
-            Label(300, 270, 680, 55, victory ? "시련의 끝" : "시련 실패", heading);
-            Label(300, 350, 680, 100, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0")
-                + "\n고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder)
-                + (victory ? "\n스승: 이제 그 기술들은 누구의 것이냐?\n제자: 배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다." : "\n원형과 고유화 순서를 초기화하고 Stage 1부터 다시 도전합니다."), text);
-            if (GUI.Button(new Rect(305, 480, 670, 55), "처음부터 다시 도전 [R]", button)) game.StartRun();
-            if (GUI.Button(new Rect(305, 565, 670, 55), "타이틀 [T]", button)) game.ReturnToTitle();
+            if (victory)
+            {
+                Label(280, 180, 720, 60, "시련의 끝", title);
+                SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+                Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
+                Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder), centered);
+                Label(180, 395, 920, 80, "스승: 이제 그 기술들은 누구의 것이냐?\n제자: 배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", centered);
+                if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.StartRun();
+                if (GUI.Button(new Rect(420, 585, 440, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
+                return;
+            }
+            Label(280, 180, 720, 60, "시련 실패", title);
+            SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+            Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
+            Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.SacrificeOrder), centered);
+            Label(180, 405, 920, 55, "원형과 고유화 순서를 초기화하고\n첫 번째 시련부터 다시 도전합니다.", centered);
+            if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.StartRun();
+            if (GUI.Button(new Rect(420, 585, 440, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
         }
     }
 }

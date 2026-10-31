@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
   sheets:
   - id: Player
-    source: image/K4RMA_Production_Art_v1/01_Player/player-keyposes.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Player/Actions.png
     sprites:
     - {fileID: -1166498298, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 817887777, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
@@ -26,7 +26,6 @@ MonoBehaviour:
     - {fileID: 459610708, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 62152086, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: -1365063686, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1422269245, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 343864838, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 1534812052, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 1155186186, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
@@ -36,8 +35,9 @@ MonoBehaviour:
     - {fileID: 1493579159, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: -225161381, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
     - {fileID: 1389647563, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1615971206, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
   - id: Neutral
-    source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-neutral-keyposes.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Neutral.png
     sprites:
     - {fileID: 180812220, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
     - {fileID: -1802364208, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
@@ -48,7 +48,7 @@ MonoBehaviour:
     - {fileID: -91326788, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
     - {fileID: -568564582, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
   - id: Wave
-    source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-wave-keyposes.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png
     sprites:
     - {fileID: -1121073146, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
     - {fileID: 976325191, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
@@ -63,7 +63,7 @@ MonoBehaviour:
     - {fileID: 1430800272, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
     - {fileID: -1707763843, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
   - id: Rise
-    source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-rise-keyposes.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Rise.png
     sprites:
     - {fileID: 851959632, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
     - {fileID: -1107247268, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
@@ -78,7 +78,7 @@ MonoBehaviour:
     - {fileID: -337873037, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
     - {fileID: 942584010, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
   - id: Ward
-    source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-ward-keyposes.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/Base/Ward.png
     sprites:
     - {fileID: 1341530238, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
     - {fileID: 1404261344, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
@@ -93,7 +93,7 @@ MonoBehaviour:
     - {fileID: -260905994, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
     - {fileID: 870262399, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
   - id: PlayerVFX
-    source: image/K4RMA_Production_Art_v1/04_VFX/player-attack-vfx.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Player.png
     sprites:
     - {fileID: 1530285540, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
     - {fileID: -1729306486, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
@@ -108,7 +108,7 @@ MonoBehaviour:
     - {fileID: 1820261239, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
     - {fileID: 1554036542, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
   - id: GuardianVFX
-    source: image/K4RMA_Production_Art_v1/04_VFX/guardian-attack-vfx.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Guardian.png
     sprites:
     - {fileID: -2089781138, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
     - {fileID: 1024197065, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
@@ -123,7 +123,7 @@ MonoBehaviour:
     - {fileID: -282978673, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
     - {fileID: -1004207857, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
   - id: PersonalizationVFX
-    source: image/K4RMA_Production_Art_v1/04_VFX/personalization-vfx.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Personalization.png
     sprites:
     - {fileID: 792149198, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
     - {fileID: -1492975745, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
@@ -138,7 +138,7 @@ MonoBehaviour:
     - {fileID: 1813857475, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
     - {fileID: -655821090, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
   - id: HitVFX
-    source: image/K4RMA_Production_Art_v1/04_VFX/hit-vfx.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Hit.png
     sprites:
     - {fileID: 1818891179, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
     - {fileID: 1892587345, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
@@ -149,7 +149,7 @@ MonoBehaviour:
     - {fileID: 1500224326, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
     - {fileID: -271184180, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
   - id: Inheritance
-    source: image/K4RMA_Production_Art_v1/03_Variants/guardian-inheritance-atlas.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png
     sprites:
     - {fileID: 23252103, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     - {fileID: -2127646494, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
@@ -168,7 +168,7 @@ MonoBehaviour:
     - {fileID: 1649695096, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     - {fileID: 1955462934, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
   - id: Props
-    source: image/K4RMA_Production_Art_v1/06_Props/props-foreground-atlas.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Props/Props.png
     sprites:
     - {fileID: 977815531, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
     - {fileID: -1094462968, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
@@ -186,35 +186,8 @@ MonoBehaviour:
     - {fileID: -724449125, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
     - {fileID: -1548519484, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
     - {fileID: 832456818, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
-  - id: SkillIcons
-    source: image/K4RMA_Production_Art_v1/07_UI/skill-icons-lineart.png
-    sprites:
-    - {fileID: -195027979, guid: 32395e1dd7f094b8ba45ab3a89970d86, type: 3}
-    - {fileID: 373858015, guid: 32395e1dd7f094b8ba45ab3a89970d86, type: 3}
-    - {fileID: -402599444, guid: 32395e1dd7f094b8ba45ab3a89970d86, type: 3}
-    - {fileID: -2014875702, guid: 32395e1dd7f094b8ba45ab3a89970d86, type: 3}
-    - {fileID: -814715785, guid: 32395e1dd7f094b8ba45ab3a89970d86, type: 3}
-    - {fileID: 1458866132, guid: 32395e1dd7f094b8ba45ab3a89970d86, type: 3}
-  - id: HUD
-    source: image/K4RMA_Production_Art_v1/07_UI/ui-hud-atlas.png
-    sprites:
-    - {fileID: -2031266210, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -1439568710, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -1594287183, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -680774640, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: 443837572, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -949837104, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: 82188242, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: 1042686866, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: 706407804, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -1467505781, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: 1541538058, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -91723770, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -508947885, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: 303828716, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
-    - {fileID: -844279322, guid: 61aa81de50bf64bf1b5472ad3818d60b, type: 3}
   - id: UI
-    source: image/K4RMA_Production_Art_v1/../K4RMA_UI_Screens_v3/UI/10-ui-component-atlas.png
+    source: Assets/K4RMA/Art/Resources/K4RMAArtwork/UI/Components.png
     sprites:
     - {fileID: 155674875, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
     - {fileID: -1293904142, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
@@ -240,95 +213,3 @@ MonoBehaviour:
     - {fileID: -1662141122, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
     - {fileID: -1653754720, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
     - {fileID: -1881640205, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
-  - id: ExteriorLayers_ext-layer-dojo
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-dojo.png
-    sprites:
-    - {fileID: -953451524, guid: 54497f7f2b0104aff9e671f8a0019164, type: 3}
-  - id: ExteriorLayers_ext-layer-far_forest
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-far_forest.png
-    sprites:
-    - {fileID: -2110361603, guid: e7a0070f1595e4e68ab489d5efd2bde5, type: 3}
-  - id: ExteriorLayers_ext-layer-far_mountains
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-far_mountains.png
-    sprites:
-    - {fileID: -1093388161, guid: 74eab5d1ca8c24c799a3eea4241e5475, type: 3}
-  - id: ExteriorLayers_ext-layer-floor
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-floor.png
-    sprites:
-    - {fileID: -1840260064, guid: 49947c7fe65144aa693fffc0563fa207, type: 3}
-  - id: ExteriorLayers_ext-layer-mid_forest
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-mid_forest.png
-    sprites:
-    - {fileID: -999499885, guid: 165ee3c6b89a34ab5b0900f3f32b5446, type: 3}
-  - id: ExteriorLayers_ext-layer-moon
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-moon.png
-    sprites:
-    - {fileID: -497319023, guid: 80811ebec38544a4b9f189ba5c41aa7a, type: 3}
-  - id: ExteriorLayers_ext-layer-rocks
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-rocks.png
-    sprites:
-    - {fileID: -851198595, guid: ab0a74cd8f88445dcb7cbd5b48303b68, type: 3}
-  - id: ExteriorLayers_ext-layer-silhouettes
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-silhouettes.png
-    sprites:
-    - {fileID: -77935216, guid: e86f06ab13d8d4243a4a503be19e5a12, type: 3}
-  - id: ExteriorLayers_ext-layer-sky
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-sky.png
-    sprites:
-    - {fileID: 270014338, guid: 3065e6ee6ade5446085c0e900baa3c4a, type: 3}
-  - id: ExteriorLayers_ext-layer-trees
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-trees.png
-    sprites:
-    - {fileID: 1377621332, guid: b8e13620ad8054c6eb17338e39767fa3, type: 3}
-  - id: ExteriorLayers_ext-layer-vegetation
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-vegetation.png
-    sprites:
-    - {fileID: -1189261903, guid: 9bab95b18f65a4915a115e3ce6464317, type: 3}
-  - id: ExteriorLayers_ext-layer-water
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-water.png
-    sprites:
-    - {fileID: -161759429, guid: 18d55dc4286fd41e79645adc226c5827, type: 3}
-  - id: ExteriorLayers_ext-layer-waterfall
-    source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-waterfall.png
-    sprites:
-    - {fileID: -57400066, guid: 89e398ea8b06a4707904de791e6ec9c7, type: 3}
-  - id: HallLayers_hall-layer-back_wall_windows
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-back_wall_windows.png
-    sprites:
-    - {fileID: 584775561, guid: ab48585f35ed24a1686b1463affcc061, type: 3}
-  - id: HallLayers_hall-layer-banners
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-banners.png
-    sprites:
-    - {fileID: -653669300, guid: a1070856c0ede4e08b6f29a131b5781c, type: 3}
-  - id: HallLayers_hall-layer-floor
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-floor.png
-    sprites:
-    - {fileID: 831915812, guid: 8bd9ee336b02a4636b9c9094d48e0053, type: 3}
-  - id: HallLayers_hall-layer-front_rail
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-front_rail.png
-    sprites:
-    - {fileID: -198538874, guid: e7da1aad1a44f4765a719772ad4c19d0, type: 3}
-  - id: HallLayers_hall-layer-front_silhouette
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-front_silhouette.png
-    sprites:
-    - {fileID: 130683621, guid: e79e9e7b1d31341d5b00b7373e95ffdc, type: 3}
-  - id: HallLayers_hall-layer-lanterns
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-lanterns.png
-    sprites:
-    - {fileID: 949915204, guid: cc1af2a681865441d9dd2b6140176180, type: 3}
-  - id: HallLayers_hall-layer-moon_forest
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-moon_forest.png
-    sprites:
-    - {fileID: 520246406, guid: 69de5fb0ccdb3433b9810f6c2ecafb5c, type: 3}
-  - id: HallLayers_hall-layer-outside_sky
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-outside_sky.png
-    sprites:
-    - {fileID: 1707060416, guid: 16e6f40d4414a46b1aab2ac2c5710d03, type: 3}
-  - id: HallLayers_hall-layer-pillars
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-pillars.png
-    sprites:
-    - {fileID: -2145771774, guid: 9a13a0c5ee93b40189421f7d2828e1d8, type: 3}
-  - id: HallLayers_hall-layer-rear_rail
-    source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-rear_rail.png
-    sprites:
-    - {fileID: 373112066, guid: ee166daffceb3462aa58078ea60d06fa, type: 3}

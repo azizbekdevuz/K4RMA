@@ -65,7 +65,6 @@ namespace KarmaPrototype
             switch (e)
             {
                 case Essence.SwordWave:
-                    KarmaArtworkVFX.Player(game,player.Position,2,Vector2.right*player.Facing);
                     readyAt[0] = Time.time + c.swordWaveCooldown;
                     player.BeginSwordWave();
                     KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * KarmaSpace.Units(0.7f),

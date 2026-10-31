@@ -9,6 +9,11 @@ namespace KarmaPrototype
         {
             if (game == null || stopped) return;
             if (game.Paused) return;
+            if (game.Phase == RunPhase.Transition)
+            {
+                animator.GuardianPose("Idle", selected, false, false);
+                return;
+            }
             if (!Active) { CancelCombat(); return; }
             if (!engaged)
             {

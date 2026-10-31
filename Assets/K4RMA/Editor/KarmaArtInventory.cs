@@ -4,7 +4,7 @@ namespace KarmaPrototype.Editor
 {
     public sealed class KarmaArtInventory:ScriptableObject
     {
-        [System.Serializable] public struct Entry { public string source; public string usage; public Texture2D image; }
+        [System.Serializable] public struct Entry { public string path; public string usage; public Texture2D image; }
         public Entry[] images;
     }
 }

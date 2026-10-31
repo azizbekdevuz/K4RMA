@@ -8,8 +8,6 @@ namespace KarmaPrototype
     {
         [Header("개별 포즈 · VFX · UI · 소품 스프라이트")]
         public KarmaSpriteLibrary spriteLibrary;
-        [Tooltip("이전 원본 카탈로그 표시 경로. 현재는 Sprite Library의 검토된 포즈와 VFX를 사용합니다.")]
-        public bool useCompleteArtwork = false;
         [Header("플레이어 동작 — Sprite를 연결하세요")]
         [InspectorName("대기")] public Sprite playerIdle;
         [InspectorName("이동 1 / 공중")] public Sprite playerMove1;
@@ -42,34 +40,10 @@ namespace KarmaPrototype
         public Sprite selectionCrescent;
         public Sprite hitEffect;
 
-        [Header("UI 일러스트 — PNG 텍스처를 연결하세요")]
-        [InspectorName("타이틀 / 세계관")] public Texture2D worldOverview;
-        [Tooltip("왼쪽 위 기준 0~1 비율. 그림 전체를 표지로 쓰려면 X=0, Y=0, W=1, H=1")]
-        [InspectorName("타이틀 표시 영역")] public Rect titleCrop = new Rect(0, 0, 0.5f, 0.5f);
-        [InspectorName("플레이어 소개")] public Texture2D playerSheet;
-        [InspectorName("검기 설명")] public Texture2D playerSwordWave;
-        [InspectorName("상승베기 설명")] public Texture2D playerRisingSlash;
-        [InspectorName("검 수호자 소개")] public Texture2D swordGuardianIllustration;
-        [InspectorName("상승 수호자 소개")] public Texture2D risingGuardianIllustration;
-        [FormerlySerializedAs("wardGuardianIllustration")]
-        [InspectorName("결계 수호자 소개")] public Texture2D guardGuardianIllustration;
-        [Tooltip("가로 3칸 × 세로 2칸의 계승 일러스트 시트")]
-        [InspectorName("수호자 계승 일러스트")] public Texture2D guardianEvolution;
-
         public Sprite[] PlayerFrames()
         {
             return new[] { playerIdle, playerMove1, playerMove2, playerSlash1, playerSlash2,
                 playerRising, playerFalling, playerHurt, playerDeath };
-        }
-
-        public Rect TitleSource
-        {
-            get
-            {
-                if (worldOverview == null) return new Rect();
-                return new Rect(titleCrop.x * worldOverview.width, titleCrop.y * worldOverview.height,
-                    titleCrop.width * worldOverview.width, titleCrop.height * worldOverview.height);
-            }
         }
 
         public Sprite Guardian(Essence? type)
@@ -78,24 +52,6 @@ namespace KarmaPrototype
             return type == Essence.SwordWave ? swordGuardian : type == Essence.RisingSlash ? risingGuardian : guardGuardian;
         }
 
-        public Texture2D Texture(string name)
-        {
-            switch (name)
-            {
-                case "MenuBackground": return menuBackground;
-                case "WorldOverview": return worldOverview;
-                case "PlayerSheet": return playerSheet;
-                case "PlayerSwordWave": return playerSwordWave;
-                case "PlayerRisingSlash": return playerRisingSlash;
-                case "SwordGuardian": return swordGuardianIllustration;
-                case "RisingGuardian": return risingGuardianIllustration;
-                case "WardGuardian": return guardGuardianIllustration;
-                case "GuardianEvolution": return guardianEvolution;
-                case "PlayerAnimation": return playerIdle != null ? playerIdle.texture : null;
-                case "GuardianSprites": return guardGuardian != null ? guardGuardian.texture : null;
-                case "DojoBackground": return dojoBackground != null ? dojoBackground.texture : null;
-                default: return null;
-            }
-        }
+        public Texture2D Texture(string name) { return name == "MenuBackground" ? menuBackground : null; }
     }
 }

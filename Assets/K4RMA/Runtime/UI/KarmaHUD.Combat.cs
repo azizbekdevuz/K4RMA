@@ -45,7 +45,6 @@ namespace KarmaPrototype
             const float left = 330, width = 620, y = 56;
             Fill(new Rect(left - 16, 16, width + 32, 62), new Color(0.015f, 0.025f, 0.045f, 0.65f));
             Label(left, 20, width, 27, enemy.DisplayName, centered);
-            if(KarmaArtwork.Settings.useCompleteArtwork) SpriteArt(new Rect(left-12,y-10,width+24,28),KarmaArtAtlas.Hud(2));
             Fill(new Rect(left, y - 2, width, 12), new Color(0.015f, 0.025f, 0.045f, 0.95f));
             Color track = new Color(HudIvory.r, HudIvory.g, HudIvory.b, 0.65f);
             Fill(new Rect(left, y - 2, width, 0.8f), track);

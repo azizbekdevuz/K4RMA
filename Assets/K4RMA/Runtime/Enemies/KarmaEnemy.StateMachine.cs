@@ -26,6 +26,7 @@ namespace KarmaPrototype
                 pendingParry = false; InterruptPattern();
                 state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, Tuning.parryStunSeconds);
                 Intent = "패링 성공 · 방어막 파괴 / 무력화";
+                ShowStunCue();
             }
             UpdateAutoShield();
             shieldHalo.enabled = Armored || shieldWarningUntil > 0;
@@ -35,9 +36,12 @@ namespace KarmaPrototype
             animator.GuardianPose(state.ToString(), selected, Position.y > KarmaSpace.Units(1.5f), Armored);
             if (Stunned)
             {
+                ShowStunCue();
                 if (FightSeconds < stunnedUntil) return;
+                HideStunCue();
                 state = ActionState.Approach; timer = 0.8f;
             }
+            else HideStunCue();
             if (running)
             {
                 if (FightSeconds - patternStarted > Mathf.Max(5, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
@@ -69,7 +73,7 @@ namespace KarmaPrototype
             bool sight = ClearShot(Position, game.Player.Position);
             selected = EnemyAttack.GroundStrike;
             bool found = false;
-            float meleeReach = KarmaSpace.Units(3.4f);
+            float meleeReach = KarmaSpace.Units(4.1f);
             for (int i = 0; i < attacks.Count; i++)
             {
                 var candidate = attacks[cycleIndex++ % attacks.Count];
@@ -124,11 +128,35 @@ namespace KarmaPrototype
                 if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null) return false;
             return true;
         }
+        Transform stunCue;
+        void ShowStunCue()
+        {
+            if (stunCue != null) return;
+            var sprite = KarmaRisingArt.Get("Parry") ?? KarmaArtwork.Sprite("HitVFX", "Burst");
+            if (sprite == null) return;
+            var go = new GameObject("기절 표시");
+            stunCue = go.transform;
+            stunCue.SetParent(transform, false);
+            stunCue.localPosition = Vector3.up * KarmaSpace.Units(2.8f);
+            var mark = go.AddComponent<SpriteRenderer>();
+            mark.sprite = sprite;
+            mark.sortingOrder = 40;
+            KarmaVisuals.ApplyMaterial(mark);
+            float fit = KarmaSpace.Units(2.1f) / Mathf.Max(0.01f, sprite.bounds.size.y);
+            stunCue.localScale = Vector3.one * fit;
+        }
+        void HideStunCue()
+        {
+            if (stunCue == null) return;
+            Destroy(stunCue.gameObject);
+            stunCue = null;
+        }
         void InterruptPattern()
         {
             StopAllCoroutines(); ClearPatternObjects();
             trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
             fullShield = frontalGuard = swordWard = running = pendingParry = false;
+            HideStunCue();
             shieldUntil = shieldWarningUntil = 0;
             transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY, 0);
         }

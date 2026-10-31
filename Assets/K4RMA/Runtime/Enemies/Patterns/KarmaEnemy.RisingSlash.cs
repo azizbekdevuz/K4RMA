@@ -5,22 +5,22 @@ namespace KarmaPrototype
     public sealed partial class KarmaEnemy
     {
         readonly Vector2 bodyAttackSize = KarmaSpace.Units(new Vector2(1.4f, 1.8f));
-        static readonly float[] FragmentDegrees = { 8f, 36f, 68f, 98f, 128f, 158f, 186f, 352f };
+        static readonly float[] FragmentDegrees = { -6f, 12f, 30f, 48f, 66f, 84f, 102f, 120f, 138f, 156f, 174f, 192f, 208f, 222f };
         float nextStride;
         IEnumerator RisingMelee()
         {
             float gap = game.Player.Position.x - Position.x;
             direction = gap < 0 ? -1 : 1;
             art.localScale = new Vector3(direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
-            if (Mathf.Abs(gap) > KarmaSpace.Units(2.15f))
+            if (Mathf.Abs(gap) > KarmaSpace.Units(2.45f))
             {
-                float step = Mathf.Clamp(Mathf.Abs(gap) - KarmaSpace.Units(1.65f), 0f, KarmaSpace.Units(2.2f));
+                float step = Mathf.Clamp(Mathf.Abs(gap) - KarmaSpace.Units(1.9f), 0f, KarmaSpace.Units(2.6f));
                 Vector2 close = new Vector2(Mathf.Clamp(Position.x + direction * step, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
                 state = ActionState.Approach;
                 yield return Motion(close, 0.16f, Vector2.zero);
             }
-            Vector2 size = KarmaSpace.Units(new Vector2(2.55f, 1.55f));
-            Vector2 center = new Vector2(Position.x + direction * KarmaSpace.Units(1.35f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.72f));
+            Vector2 size = KarmaSpace.Units(new Vector2(3.05f, 1.55f));
+            Vector2 center = new Vector2(Position.x + direction * KarmaSpace.Units(1.62f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.72f));
             state = ActionState.Telegraph;
             var mark = Mark("기본 베기", center, size);
             Intent = "기본 베기 · 거리를 유지하세요";
@@ -47,7 +47,7 @@ namespace KarmaPrototype
             yield return Motion(apex, 0.32f, Vector2.zero);
             Vector2 landing = new Vector2(Mathf.Clamp(game.Player.Position.x, KarmaStage.ArenaLeft + 4, KarmaStage.ArenaRight - 4), KarmaSpace.GuardianGroundY);
             landing.x = Mathf.Clamp(landing.x, apex.x - KarmaSpace.Units(4.5f), apex.x + KarmaSpace.Units(4.5f));
-            Vector2 area = new Vector2(KarmaSpace.Units(5.2f), KarmaSpace.Units(1.25f));
+            Vector2 area = new Vector2(KarmaSpace.Units(6.5f), KarmaSpace.Units(1.25f));
             Vector2 impact = new Vector2(landing.x, KarmaSpace.Units(0.62f));
             var drop = RisingPath(apex, landing, bodyAttackSize, KarmaRisingCue.Locked);
             var zone = Mark("UP01 착지 범위", impact, area);
@@ -148,39 +148,38 @@ namespace KarmaPrototype
         {
             Vector2 start = Position;
             fullShield = true;
-            float apexY = KarmaSpace.GuardianGroundY + Mathf.Clamp(Tuning.riseHeight * 0.72f, KarmaSpace.Units(2f), KarmaSpace.Units(4.2f));
+            state = ActionState.Approach;
+            KarmaRisingPolish.ShieldPlant(effectsRoot, start, KarmaSpace.Units(new Vector2(2.2f, 2.6f)));
+            float apexY = KarmaSpace.GuardianGroundY + Mathf.Clamp(Tuning.riseHeight * 0.55f, KarmaSpace.Units(1.6f), KarmaSpace.Units(3.2f));
             Vector2 apex = new Vector2(Mathf.Clamp(start.x, KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), apexY);
-            state = ActionState.Telegraph;
-            var charge = BeginRisingCharge(KarmaRisingCue.Charging);
-            KarmaRisingPolish.ShieldPlant(effectsRoot, start, KarmaSpace.Units(new Vector2(2.4f, 2.8f)));
-            Intent = "UP04 방패 준비 · 파편 방향을 읽으세요";
-            yield return Wait(Warning(0.4f));
-            EndRisingCharge(charge);
-            yield return Motion(apex, 0.28f, Vector2.zero);
-            var drop = RisingPath(apex, new Vector2(Mathf.Clamp(start.x + direction * KarmaSpace.Units(1.2f), KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.GuardianGroundY), bodyAttackSize, KarmaRisingCue.Locked);
-            yield return Wait(Warning(0.28f));
-            if (drop != null) Destroy(drop.gameObject);
+            yield return Motion(apex, 0.2f, Vector2.zero);
             Vector2 landing = new Vector2(Mathf.Clamp(start.x + direction * KarmaSpace.Units(1.2f), KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.GuardianGroundY);
-            yield return Motion(landing, 0.24f, bodyAttackSize);
+            yield return Motion(landing, 0.16f, bodyAttackSize);
             Vector2 origin = new Vector2(landing.x, KarmaSpace.Units(2.35f));
-            float life = 1.02f;
-            var warnings = new SpriteRenderer[FragmentDegrees.Length];
-            var ends = new Vector2[FragmentDegrees.Length];
-            var velocities = new Vector2[FragmentDegrees.Length];
-            Vector2 shard = KarmaSpace.Units(new Vector2(1.45f, 0.95f));
-            for (int i = 0; i < FragmentDegrees.Length; i++)
+            float life = 0.92f;
+            int count = FragmentDegrees.Length;
+            var warnings = new SpriteRenderer[count];
+            var ends = new Vector2[count];
+            var velocities = new Vector2[count];
+            var launches = new Vector2[count];
+            Vector2 shard = KarmaSpace.Units(new Vector2(1.15f, 0.78f));
+            for (int i = 0; i < count; i++)
             {
-                AimFragment(origin, FragmentDegrees[i], life, out ends[i], out velocities[i]);
-                warnings[i] = PathMark(origin, ends[i], shard);
+                float rad = FragmentDegrees[i] * Mathf.Deg2Rad;
+                var dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+                launches[i] = origin + dir * KarmaSpace.Units(0.9f);
+                AimFragment(launches[i], FragmentDegrees[i], life, out ends[i], out velocities[i]);
+                warnings[i] = PathMark(launches[i], ends[i], shard);
             }
-            Intent = "UP04 파편 궤적 고정 · 피하거나 K로 패링";
-            yield return Wait(Warning(0.5f));
+            state = ActionState.Telegraph;
+            Intent = "UP04 파편 경로 · 피하거나 K로 패링";
+            yield return Wait(Warning(0.48f));
             for (int i = 0; i < warnings.Length; i++) if (warnings[i] != null) Destroy(warnings[i].gameObject);
             fullShield = false;
-            KarmaRisingPolish.ShieldPlant(effectsRoot, landing, KarmaSpace.Units(new Vector2(2.8f, 2.6f)));
-            for (int i = 0; i < FragmentDegrees.Length && Active; i++)
+            KarmaRisingPolish.ShieldPlant(effectsRoot, landing, KarmaSpace.Units(new Vector2(2.4f, 2.4f)));
+            for (int i = 0; i < count && Active; i++)
             {
-                var shot = Attack(origin, velocities[i], shard, life, 0.85f, new KarmaAttackContact(), 0f, "Blade", true);
+                var shot = Attack(launches[i], velocities[i], shard, life, 0.85f, new KarmaAttackContact(), 0f, "Blade", true);
                 if (shot == null) continue;
                 shot.name = "방패 파편";
                 shot.Repaint(KarmaRisingArt.Get("Fragment" + (i % 8)), false);

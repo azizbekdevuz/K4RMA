@@ -356,3 +356,12 @@ MonoBehaviour:
     source: image/K4RMA_Guard_Bronze_v1/GroundSeal.png
     sprites:
     - {fileID: 883652632, guid: c2732a4c824ca9f4eb93370af4ab20fd, type: 3}
+  - id: GuardShardDB
+    source: Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD03/ShardDB.png
+    sprites:
+    - {fileID: -1486744105, guid: 446db59d0f5992044be6cd85e4477b72, type: 3}
+    - {fileID: 1361301739, guid: 446db59d0f5992044be6cd85e4477b72, type: 3}
+  - id: GuardWholeShield
+    source: Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD03/HeatedWholeShield.png
+    sprites:
+    - {fileID: 1660225870, guid: 0b5cdb24514051d48879fd35b7f44b06, type: 3}

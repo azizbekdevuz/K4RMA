@@ -1,0 +1,30 @@
+{
+  "mode": "builtin",
+  "date": "2026-10-30",
+  "purpose": "GD02 inherited overhead heavy strike poses",
+  "commonPrompt": "Edit/generate a production Unity 2D sprite animation strip based on the attached existing game art. Input image 1 is the established bronze guardian keypose/style reference; input image 2 is the inheritance atlas identity reference. Output ONE sprite sheet with EXACTLY THREE equal-width columns in ONE row, on a genuinely transparent RGBA background (no painted background, checkerboard, ground plane, shadows or labels). Each column shows the SAME specified guardian full body, facing RIGHT, in a distinct sequential OVERHEAD HEAVY SWORD ATTACK pose. Column 1: windup with sword hand raised above head, blade pointing upward/backward. Column 2: powerful downstroke, sword crossing diagonally from overhead toward the front-right, body leaning into the blow. Column 3: follow-through with blade pointing down toward the floor in front-right, knees braced. Shield remains on the other arm/back consistently. This is a sword downward slash, NOT a shield bash, NOT a horizontal thrust. Preserve exact bronze armor design, square head, cloth, inherited accessories and weapon count of requested variant, do not redesign. Same body scale, same feet baseline at 90 percent canvas height, same center hip at the center of each column. All weapons and cloth fit completely within their own cell with at least 6 percent horizontal padding; nothing crossing between cells. Compact painterly HD 2D game art with existing dark outlines. Wide 3:1 strip, each cell approximately square. Do not draw any slash trails, glowing effects, sparks, text, numbers or UI. Three complete full-body poses only. ",
+  "variants": [
+    {
+      "id": "Ward",
+      "identity": "Use the BASE WARD guardian: the bulky plain bronze armored guardian, round gold-inlaid shield, a single straight broad short sword, dark blue waist cloth. Match row 3 column 1 of the inheritance atlas. No wing-like shoulder mantle, no twin swords."
+    },
+    {
+      "id": "WardWave",
+      "identity": "Use the WARD+FLAME inherited guardian shown at row 3 column 2 of the inheritance atlas: bulky bronze armored body with dark blue waist cloth, round gold-inlaid shield and the distinctive parallel twin long blades on the sword arm. Preserve BOTH blades during the overhead downstroke. No wing-like shoulder mantle."
+    },
+    {
+      "id": "WardRise",
+      "identity": "Use the WARD+DASH inherited guardian shown at row 3 column 3 of the inheritance atlas: bulky bronze armored body, round gold-inlaid shield, single broad straight sword, long pale wooden wing-like shoulder/head mantle and trailing light teal ribbons with circular motifs. Preserve this distinctive mantle and cyan ribbons in all three poses. No twin blades."
+    },
+    {
+      "id": "WardFinal",
+      "identity": "Use the FINAL WARD guardian shown at row 3 column 4 of the inheritance atlas: bulky bronze armored body, round gold-inlaid shield, twin long sword blades, dramatic pale wooden wing-like shoulder/head mantle and light teal motif ribbons. Preserve BOTH the twin blades AND inherited wing mantle/teal ribbons in all three poses."
+    }
+  ],
+  "finalCorrection": "Scale all three final form poses down by 12%, preserving feet baseline around 92%, to keep the entire raised blade inside its cell.",
+  "selectedCue": "C-crimson-danger-glint.png -> Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD02/ParryRed.png",
+  "references": [
+    "Assets/K4RMA/Resources/K4RMAArtwork/Production/WardGuardian.png",
+    "Assets/K4RMA/Resources/K4RMAArtwork/Sheets/Inheritance.png"
+  ]
+}

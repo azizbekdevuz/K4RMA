@@ -1,11 +1,14 @@
 using System;
 namespace KarmaPrototype
 {
-    // Shared by shield fragments: one contact attempt per cast, never a stun chain.
+    // One contact attempt per attack; only the GD02 downstroke can break GD01 on parry.
     public sealed class KarmaAttackContact
     {
+        public bool BreaksShieldOnParry { get; private set; }
         public bool Consumed { get; private set; }
         public bool DealtDamage { get; private set; }
+        public KarmaAttackContact(bool breaksShieldOnParry = false)
+        { BreaksShieldOnParry = breaksShieldOnParry; }
         public bool TryConsume() { if (Consumed) return false; Consumed = true; return true; }
         public void RecordDamage() { DealtDamage = true; }
     }

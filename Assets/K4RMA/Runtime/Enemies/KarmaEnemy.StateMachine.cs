@@ -23,7 +23,7 @@ namespace KarmaPrototype
             }
             if (pendingParry)
             {
-                pendingParry = false; InterruptPattern();
+                pendingParry = false; InterruptPattern(); BreakAutoShield();
                 state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, Tuning.parryStunSeconds);
                 Intent = "패링 성공 · 방어막 파괴 / 무력화";
             }
@@ -40,7 +40,9 @@ namespace KarmaPrototype
             }
             if (running)
             {
-                if (FightSeconds - patternStarted > Mathf.Max(5, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
+                if (FightSeconds - patternStarted > Mathf.Max(selected == EnemyAttack.GD05 ? 40
+                    : selected == EnemyAttack.GD03 ? FragmentMaxChaseSeconds + 7 : 5, Tuning.patternTimeout)
+                    || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
                 { InterruptPattern(); state = ActionState.Approach; timer = 1.2f; Intent = "자세 복구 · 빈틈"; }
                 return;
             }
@@ -58,14 +60,12 @@ namespace KarmaPrototype
             bool escape = Position.x > KarmaStage.ArenaLeft + 5 && Position.x < KarmaStage.ArenaRight - 5;
             bool sight = ClearShot(Position, game.Player.Position);
             selected = EnemyAttack.GroundStrike;
-            // Spend a newly formed guard on its signature attack before another recovery clears it.
-            if (PrimaryType == Essence.Ward && FightSeconds < shieldUntil && distance <= KarmaSpace.Units(5))
-                selected = EnemyAttack.GD02;
-            else for (int i = 0; i < attacks.Count; i++)
+            // A persistent GD01 must not starve the other inherited attacks.
+            for (int i = 0; i < attacks.Count; i++)
             {
                 var candidate = attacks[cycleIndex++ % attacks.Count];
                 if (!KarmaPatternCatalog.CanSelect(candidate, previous, distance / KarmaSpace.Scale, game.Player.Airborne,
-                    sight, FightSeconds < shieldUntil, escape, FightSeconds >= nextUltimate)) continue;
+                    sight, autoShield, escape, FightSeconds >= nextUltimate)) continue;
                 selected = candidate; break;
             }
             previous = selected;
@@ -83,6 +83,7 @@ namespace KarmaPrototype
             ClearPatternObjects();
             fullShield = frontalGuard = swordWard = false;
             state = ActionState.Approach; running = false;
+            heavyParryUntil = 0; heavyParryQueued = false; animator.EndHeavyStrike();
             timer = Mathf.Max(0.22f, game.Config.enemyDecisionDelay * Tuning.decisionMultiplier * Tempo);
         }
         IEnumerator Wait(float seconds)
@@ -91,12 +92,12 @@ namespace KarmaPrototype
             while (elapsed < seconds && Active)
             { yield return null; if (!game.Paused) elapsed += Time.deltaTime; }
         }
-        IEnumerator Recovery(float seconds, bool keepAutoShield = false, string message = null, bool scaleDuration = true)
+        IEnumerator Recovery(float seconds, string message = null, bool scaleDuration = true)
         {
             ClearPatternObjects(); fullShield = frontalGuard = swordWard = false;
-            // A real, stationary attack opportunity: auto-shield cannot conceal it.
-            if (!keepAutoShield) shieldUntil = shieldWarningUntil = 0;
-            state = ActionState.Recover; Intent = message ?? "빈틈 발생 · 지금 공격하세요";
+            // GD01 belongs to the boss, not to the attack being recovered from.
+            state = ActionState.Recover;
+            Intent = message ?? (autoShield ? "후딜레이 · GD01 방어막 유지" : "빈틈 발생 · 지금 공격하세요");
             yield return Wait(scaleDuration
                 ? Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo)
                 : seconds);
@@ -114,13 +115,15 @@ namespace KarmaPrototype
             StopAllCoroutines(); ClearPatternObjects();
             trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
             fullShield = frontalGuard = swordWard = running = pendingParry = false;
-            shieldUntil = shieldWarningUntil = 0;
+            shieldWarningUntil = 0;
+            heavyParryUntil = 0; heavyParryQueued = false;
+            if (animator != null) animator.EndHeavyStrike();
             transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY, 0);
         }
         public void CancelCombat()
         {
             if (stopped) return;
-            stopped = true; InterruptPattern();
+            stopped = true; InterruptPattern(); autoShield = false;
             if (shieldHalo != null) shieldHalo.enabled = false;
         }
         void OnDisable() { if (game != null) CancelCombat(); }

@@ -25,7 +25,7 @@ namespace KarmaPrototype
             { child.gameObject.SetActive(false); Destroy(child.gameObject); }
         }
         KarmaBossAttack Attack(Vector2 at, Vector2 velocity, Vector2 size, float life,
-            float multiplier = 1, KarmaAttackContact contact = null, float stun = 0)
+            float multiplier = 1, KarmaAttackContact contact = null, float stun = 0, bool renderArtwork = true)
         {
             string pose = null;
             if (velocity.sqrMagnitude > 0.01f)
@@ -44,7 +44,8 @@ namespace KarmaPrototype
                 else if ((selected == EnemyAttack.GD02 || selected == EnemyAttack.GD05) && velocity.sqrMagnitude > 0.01f) sheet = "GuardWave";
             }
             return KarmaBossAttack.Spawn(game, this, effectsRoot, at, velocity, size, life,
-                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose, sheet);
+                Damage * multiplier, PrimaryType == Essence.Ward ? new Color(1, 0.7f, 0.12f) : new Color(1, 0.38f, 0.12f), contact, stun, pose, sheet,
+                renderArtwork && (selected != EnemyAttack.GD02 || velocity.sqrMagnitude > 0.01f));
         }
         // Decorations are separate from warning geometry, colliders and damage objects.
         void GuardDecoration(string sheet, string pose, Vector2 center, Vector2 size, Color color, int order = 7)
@@ -93,13 +94,19 @@ namespace KarmaPrototype
             var player = game.Player; var p = player.Position;
             if (!KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + KarmaSpace.PlayerHalfWidth, size.y / 2 + KarmaSpace.PlayerHalfHeight)) return;
             if (!contact.TryConsume()) return;
+            if (selected == EnemyAttack.GD02 && contact.BreaksShieldOnParry && state == ActionState.Attack && heavyParryQueued)
+            {
+                // The tell's first-frame input must survive the ordinary 0.18s counter window.
+                heavyParryQueued = false;
+                player.BeginCounter();
+            }
             int parries = player.ParryCount;
             float before = player.Health;
             player.TakeDamage(amount);
             if (player.ParryCount != parries)
             {
-                // Projectile parries remain local; GD02 is the shield-breaking parry.
-                if (selected == EnemyAttack.GD02) pendingParry = true;
+                // GD02's follow-up wave can be countered without breaking GD01 or stunning the boss.
+                if (selected == EnemyAttack.GD02 && contact.BreaksShieldOnParry) pendingParry = true;
                 return;
             }
             if (player.Health < before)

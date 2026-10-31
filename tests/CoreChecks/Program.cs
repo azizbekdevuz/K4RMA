@@ -51,6 +51,8 @@ static class Program
         Check(Select(EnemyAttack.UP02,distance:9,air:true),"UP02 airborne selection");
         Check(!Select(EnemyAttack.GD02,shield:false),"GD02 shield required");
         Check(!Select(EnemyAttack.GD02,distance:6),"GD02 must be reachable");
+        Check(Select(EnemyAttack.GD02,distance:4),"GD02 selects at the actual blade reach");
+        Check(!Select(EnemyAttack.GD02,distance:4.01f),"GD02 never starts beyond the blade reach");
         Check(!Select(EnemyAttack.GD04,escape:false),"wall corner escape required");
         Check(!Select(EnemyAttack.UP03,escape:false),"ground blade escape required");
         foreach (var a in new[]{EnemyAttack.SW05,EnemyAttack.UP05,EnemyAttack.GD05})

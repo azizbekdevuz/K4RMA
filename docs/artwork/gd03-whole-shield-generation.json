@@ -1,0 +1,8 @@
+{
+  "generator": "built-in image_gen (previously approved image, reused without pixel edits)",
+  "asset": "Assets/K4RMA/Resources/K4RMAArtwork/Sheets/GD03/HeatedWholeShield.png",
+  "source": "output/artwork/gd03-whole-shield-v1/HeatedWholeShield.png",
+  "status": "Imported natively and applied to GD03 whole-shield throw",
+  "nativeSprite": "GuardWholeShield/Hot, centered pivot, alpha-trimmed rect, PPU 200",
+  "sequence": "0.5s spinning throw with one damage-only contact; 0.28s shatter spread from actual endpoint; same four D+B shards aim and stagger-track; cooled damage-only return"
+}

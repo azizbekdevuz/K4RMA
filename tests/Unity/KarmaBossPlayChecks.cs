@@ -413,7 +413,7 @@ public static class KarmaBossPlayChecks
         Set(enemy,"engaged",true); Set(enemy,"selected",Cases[index]); Set(enemy,"direction",-1f);
         Set(enemy,"running",true); Set(enemy,"patternStarted",enemy.FightSeconds);
         Set(enemy,"nextShield",float.MaxValue);
-        if(Cases[index]==EnemyAttack.GD02) Set(enemy,"shieldUntil",enemy.FightSeconds+5);
+        if(Cases[index]==EnemyAttack.GD02) Call(enemy,"RefreshAutoShield");
         enemy.StartCoroutine((IEnumerator)Call(enemy,"RunPattern"));
         sawRecovery=sawFullShield=responseTriggered=sawResponse=injectedFailure=sawTrialFailure=false;
         startedAt=Time.time; started=true;
@@ -424,6 +424,7 @@ public static class KarmaBossPlayChecks
         {
             Call(enemy,"InterruptPattern");
             typeof(KarmaEnemy).GetProperty("PrimaryType").SetValue(enemy,(Essence?)Essence.Ward);
+            Call(enemy,"BreakAutoShield");
             Set(enemy,"engaged",true); Set(enemy,"running",false); Set(enemy,"timer",float.MaxValue);
             Set(enemy,"patternStarted",enemy.FightSeconds);
             Set(enemy,"nextShield",enemy.FightSeconds+0.2f);
@@ -434,7 +435,7 @@ public static class KarmaBossPlayChecks
             sawShieldWarning |= Get<float>(enemy,"shieldWarningUntil")>0;
             if(!enemy.Armored) return false;
             Check(sawShieldWarning,"GD01 full generation warning before automatic shield");
-            Check(Get<float>(enemy,"shieldUntil")>enemy.FightSeconds,"GD01 finite active duration");
+            Check(enemy.AutoShieldActive,"GD01 persists until a GD02 parry");
             pauseFight=enemy.FightSeconds; waitFrame=Time.frameCount;
             game.TogglePause(); lifecycleStage++; return false;
         }
@@ -446,7 +447,7 @@ public static class KarmaBossPlayChecks
             Set(enemy,"selected",EnemyAttack.GD02); Set(enemy,"engaged",true);
             Set(game.Player,"invulnerableUntil",0f); game.Player.BeginCounter();
             int parries=game.Player.ParryCount;
-            enemy.TryAttackHit(game.Player.Position,game.Player.Position,new Vector2(2,2),12,new KarmaAttackContact(),0);
+            enemy.TryAttackHit(game.Player.Position,game.Player.Position,new Vector2(2,2),12,new KarmaAttackContact(breaksShieldOnParry: true),0);
             Check(game.Player.ParryCount==parries+1,"GD02 real damage resolution parried");
             Check(Get<bool>(enemy,"pendingParry"),"GD02 queued interrupt");
             waitFrame=Time.frameCount; lifecycleStage++; return false;

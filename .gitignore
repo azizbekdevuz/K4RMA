@@ -12,6 +12,7 @@
 /[Bb]uild/
 /[Bb]uilds/
 /output/
+/tmp/
 /tests/**/bin/
 /tests/**/obj/
 

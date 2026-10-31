@@ -14,7 +14,10 @@ namespace KarmaPrototype
         internal int CurrentPattern { get { return (int)selected; } }
         EnemyAttack selected, previous = (EnemyAttack)(-1);
         float timer, direction, patternStarted, nextUltimate, stunnedUntil;
-        float shieldUntil, nextShield, shieldWarningUntil;
+        float nextShield, shieldWarningUntil;
+        bool autoShield;
+        float heavyParryUntil;
+        bool heavyParryQueued;
         float swordWardUntil, nextWardResponse;
         bool engaged, running, stopped, fullShield, frontalGuard, swordWard, pendingParry;
         bool announcedEnrage;
@@ -35,22 +38,34 @@ namespace KarmaPrototype
         public float FightSeconds { get; private set; }
         public bool Stunned { get { return state == ActionState.Stunned; } }
         public bool Invulnerable { get { return fullShield; } }
-        public bool Armored { get { return fullShield || swordWard || frontalGuard || FightSeconds < shieldUntil; } }
+        public bool AutoShieldActive { get { return autoShield; } }
+        public bool Armored { get { return fullShield || swordWard || frontalGuard || autoShield; } }
         public bool TrialActive { get { return trial.Active; } }
+        public bool HeavyParryWindowOpen
+        { get { return Active && !game.Paused && running && selected == EnemyAttack.GD02
+                    && state == ActionState.Telegraph && heavyParryUntil > 0; } }
+        public bool TryQueueHeavyParry()
+        {
+            if (!HeavyParryWindowOpen) return false;
+            heavyParryQueued = true;
+            return true;
+        }
         public string DefenseStatus
         {
             get
             {
-                if (fullShield) return "구형 방어막 · 무적";
+                if (fullShield) return selected == EnemyAttack.GD05 ? "GD05 결계 시험 · 보스 무적" : "구형 방어막 · 무적";
                 if (swordWard) return "반격 검막 · 피해 감소/공격 시 검 사출";
                 if (frontalGuard) return "정면 방어 · 뒤쪽 공격 가능";
-                if (FightSeconds < shieldUntil) return "자동방어막 · 피해 감소 " + (shieldUntil - FightSeconds).ToString("0.0") + "초";
+                if (autoShield) return attacks.Contains(EnemyAttack.GD05)
+                    ? "GD01 자동방어막 · GD02 패링 / GD05 성공으로 해제"
+                    : "GD01 자동방어막 · GD02 패링으로 해제";
                 if (shieldWarningUntil > 0) return "GD01 자동방어막 생성 예고";
                 return Stunned ? "무력화 · 공격 기회" : "방어 해제";
             }
         }
         public string TrialStatus
-        { get { return trial.Active ? "시험 피격 " + trial.Hits + "/" + trial.Allowed + " · 남은 공격 " + (trial.Total - trial.Completed) : ""; } }
+        { get { return trial.Active ? "보스 무적 · 시험 피격 " + trial.Hits + "/" + trial.Allowed + " · 남은 공격 " + (trial.Total - trial.Completed) : ""; } }
         public void Initialize(KarmaGame director, int stage)
         {
             game = director;
@@ -72,6 +87,8 @@ namespace KarmaPrototype
             }
             timer = 1.4f; nextShield = Tuning.autoShieldPeriod; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach; Intent = "앞으로 나아가 시험을 시작하세요";
+            if (PrimaryType == Essence.Ward)
+            { RefreshAutoShield(); shieldHalo.enabled = true; }
         }
         public bool RestoreMissingPersonalizations(KarmaEssences essences, int stage, Essence last)
         {

@@ -94,7 +94,6 @@ namespace KarmaPrototype.Editor
                 game.gameObject.AddComponent<KarmaGuardPracticeDriver>();
             Field(enemy, "engaged").SetValue(enemy, true);
             int choice = SessionState.GetInt(ChoiceKey, 0);
-            if (choice == 1) Field(enemy, "nextShield").SetValue(enemy, enemy.FightSeconds + 1);
             nextPattern = enemy.FightSeconds + 1;
             Application.runInBackground = true;
             Debug.Log("방어형 연습: " + (choice == 0 ? "자연 전투" : Patterns[choice - 1].ToString())

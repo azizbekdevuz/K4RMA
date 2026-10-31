@@ -21,6 +21,28 @@ namespace KarmaPrototype
         Sprite guardianAppearance;
         Vector3 pictureScale;
         float appearanceScale = 1;
+        KarmaHeavyStrikeMotion heavyStrike;
+        Sprite guardStagger;
+        Vector3 staggerScale;
+        public Vector2 HeavyHandPosition { get { return heavyStrike.HandPosition; } }
+        public void ConfigureHeavyStrike(IReadOnlyList<Essence> order)
+        {
+            heavyStrike = new KarmaHeavyStrikeMotion(picture, pictureHome, pictureScale, order);
+            Sprite reference = null;
+            foreach (var sprite in Resources.LoadAll<Sprite>("K4RMAArtwork/Sheets/Stagger/" + heavyStrike.FormKey))
+            {
+                if (sprite.name == "Stagger") guardStagger = sprite;
+                else if (sprite.name == "Reference") reference = sprite;
+            }
+            // Calibrate with a standing figure drawn at the same anatomical scale.
+            // Using crouched height here would inflate the boss during every parry.
+            if (guardStagger == null || reference == null)
+                throw new System.InvalidOperationException("경직 스프라이트가 없습니다: " + heavyStrike.FormKey);
+            staggerScale = pictureScale * (picture.sprite.bounds.size.y / reference.bounds.size.y);
+        }
+        public void PrepareHeavyStrike() { heavyStrike.Prepare(); }
+        public void SwingHeavyStrike() { heavyStrike.Swing(); }
+        public void EndHeavyStrike() { if (heavyStrike != null) heavyStrike.Stop(); }
         public string CurrentPose { get; private set; }
         public void ConfigureSheet(string name)
         {
@@ -68,7 +90,15 @@ namespace KarmaPrototype
         public void Attack() { Attack(Vector2.right); }
         public void Attack(Vector2 direction) { slashDirection = direction; actionUntil = Time.time + 0.18f; }
         public void Hurt() { hurtUntil = Time.time + 0.16f; }
-        public void Die() { deathAt = Time.time; }
+        public void Die()
+        {
+            deathAt = Time.time;
+            EndHeavyStrike();
+            if (picture == null) return;
+            picture.transform.localPosition = pictureHome;
+            picture.transform.localScale = pictureScale;
+            picture.color = pictureColor;
+        }
         public void Pose(float movement, bool airborne, float verticalSpeed = 0)
         {
             if (deathAt >= 0)
@@ -128,6 +158,21 @@ namespace KarmaPrototype
         {
             // Poses follow the actual combat state, including long attacks and recovery.
             if (picture == null || deathAt >= 0) return;
+            picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            transform.localRotation = Quaternion.identity;
+            if (action == "Stunned" && guardStagger != null)
+            {
+                picture.sprite = guardStagger;
+                picture.transform.localPosition = pictureHome;
+                picture.transform.localScale = staggerScale;
+                picture.transform.localRotation = Quaternion.identity;
+                picture.color = new Color(pictureColor.r * 0.82f, pictureColor.g * 0.82f, pictureColor.b * 0.82f, pictureColor.a);
+                CurrentPose = "Stagger/" + heavyStrike.FormKey;
+                guardianPreviousPosition = transform.position;
+                return;
+            }
+            if (heavyStrike != null && heavyStrike.Show(attack))
+            { CurrentPose = heavyStrike.CurrentPose; return; }
             string pose;
             if (Time.time < hurtUntil) pose = "Hurt";
             else if (action == "Stunned") pose = sheet == "Neutral" ? "Kneel" : sheet == "Ward" ? "Crouch" : "Hurt";
@@ -145,13 +190,13 @@ namespace KarmaPrototype
                     ? sheet == "Rise" ? "Dash" : "Move" : "Idle";
             if (!poses.ContainsKey(pose)) pose = "Idle";
             ShowPose(pose);
-            bool composed = guardianAppearance != null && (pose == "Idle" || pose == "Guard");
+            // Ward's inherited body must also survive movement, GD03/4/5, hurt and recovery.
+            // GD02 has dedicated inherited attack poses and returns above.
+            bool composed = guardianAppearance != null && (sheet == "Ward" || pose == "Idle" || pose == "Guard");
             if (composed) picture.sprite = guardianAppearance;
             picture.transform.localScale = pictureScale * (composed ? appearanceScale : 1);
             guardianPreviousPosition = transform.position;
             picture.transform.localPosition = pictureHome;
-            picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
-            transform.localRotation = Quaternion.identity;
         }
         void Update() { if (deathAt >= 0) Pose(0,false); }
     }

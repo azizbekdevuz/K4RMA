@@ -42,7 +42,7 @@ namespace KarmaPrototype
             engaged = true;
             if (fullShield) return;
             bool front = frontalGuard && (source.x - Position.x) * direction >= 0;
-            bool reduced = front || swordWard || FightSeconds < shieldUntil;
+            bool reduced = front || swordWard || autoShield;
             if (swordWard && FightSeconds < swordWardUntil && FightSeconds >= nextWardResponse && !wardResponsePending)
             {
                 wardResponsePending = true;

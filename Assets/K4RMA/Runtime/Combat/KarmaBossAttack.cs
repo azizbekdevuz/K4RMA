@@ -10,7 +10,7 @@ namespace KarmaPrototype
         float remaining, damage, stun;
         KarmaAttackContact contact;
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
-            Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null, string visualSheet = "GuardianVFX")
+            Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null, string visualSheet = "GuardianVFX", bool renderArtwork = true)
         {
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
             var attack = go.AddComponent<KarmaBossAttack>();
@@ -20,11 +20,15 @@ namespace KarmaPrototype
             ConfigureVisual(sr, velocity, size, owner.Facing, pose, visualSheet);
             sr.color = Color.Lerp(Color.white, color, 0.18f);
             attack.Visual = sr;
-            KarmaCombatVFX.AttachAttack(sr, velocity, color, root);
-            float angle = sr.transform.localEulerAngles.z;
-            var burst = KarmaCombatVFX.Burst(root, at, sr.sprite, "Guardian launch/" + pose,
-                new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y) * 1.15f, 0.24f, angle, color);
-            burst.transform.parent.localScale = new Vector3(sr.flipX ? -1 : 1, 1, 1);
+            picture.SetActive(renderArtwork);
+            if (renderArtwork)
+            {
+                KarmaCombatVFX.AttachAttack(sr, velocity, color, root);
+                float angle = sr.transform.localEulerAngles.z;
+                var burst = KarmaCombatVFX.Burst(root, at, sr.sprite, "Guardian launch/" + pose,
+                    new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y) * 1.15f, 0.24f, angle, color);
+                burst.transform.parent.localScale = new Vector3(sr.flipX ? -1 : 1, 1, 1);
+            }
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;
             attack.remaining = life; attack.damage = damage; attack.contact = contact ?? new KarmaAttackContact(); attack.stun = stun;
             return attack;

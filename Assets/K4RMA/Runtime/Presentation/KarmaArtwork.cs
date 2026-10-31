@@ -75,12 +75,13 @@ namespace KarmaPrototype
             picture.transform.localPosition = new Vector3(0, -KarmaSpace.GuardianGroundY / KarmaSpace.GuardianArtScale, 0);
             picture.transform.localScale = Vector3.one * CharacterPictureScale;
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
+            if (final) renderer.color = new Color(1, 0.88f, 0.73f);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.Initialize(); animator.ConfigureSprites(renderer, new[] { sprite });
             var primary = KarmaPatternCatalog.Primary(order);
             animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.Flame ? "Wave" : primary == Essence.Dash ? "Rise" : "Ward");
-            if (final) renderer.color = new Color(1, 0.88f, 0.73f);
             if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order));
+            if (primary == Essence.Ward) animator.ConfigureHeavyStrike(order);
             return root;
         }
         public static readonly Color BossSwordColor = new Color(0.42f, 0.68f, 1);

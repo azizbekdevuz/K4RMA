@@ -43,13 +43,18 @@ MonoBehaviour:
     crossingReset: 0.65
     autoShieldPeriod: 8
     autoShieldWarning: 0.8
-    autoShieldDuration: 5
     shieldDamageMultiplier: 0.3
-    dodgeRefreshesShield: 0
     parryStunSeconds: 2
     fragmentStunSeconds: 1
+    heavyParryCueSeconds: 0.5
+    heavyHitStunSeconds: 1
     shieldFragments: 4
     fragmentAimWarning: 0.5
+    fragmentLaunchGap: 0.3
+    fragmentChaseSpeed: 30
+    fragmentReturnSeconds: 0.4
+    barrierSteps: 6
+    barrierStepGap: 0.22
     barrierRecovery: 1.2
     trialAttackCount: 7
     trialAllowedHits: 1

@@ -3,6 +3,8 @@ namespace KarmaPrototype
 {
     public static class KarmaPatternCatalog
     {
+        // Boss-to-tip distance, shared by selection and the GD02 hit box (unscaled units).
+        public const float GuardHeavyReach = 4;
         public static string Name(Essence e) { return e == Essence.Flame ? "검기" : e == Essence.Dash ? "상승베기" : "방어"; }
         public static string UniqueName(Essence e) { return e == Essence.Flame ? "관통베기" : e == Essence.Dash ? "도약베기" : "반격"; }
         public static Essence? Primary(IReadOnlyList<Essence> order) { return order.Count == 0 ? (Essence?)null : order[0]; }
@@ -29,7 +31,7 @@ namespace KarmaPrototype
                     if (owned.Count == 3) result.Add(EnemyAttack.UP05);
                     break;
                 case Essence.Ward:
-                    // GD01 is a separate periodic defense, never an attack in this cycle.
+                    // GD01 persists separately; after a parry it re-forms outside this attack cycle.
                     result.Add(EnemyAttack.GroundStrike); result.Add(EnemyAttack.GD02);
                     if (owned.Contains(Essence.Flame)) result.Add(EnemyAttack.GD03);
                     if (owned.Contains(Essence.Dash)) result.Add(EnemyAttack.GD04);
@@ -46,7 +48,7 @@ namespace KarmaPrototype
             if (attack == EnemyAttack.SW02) return lineOfSight;
             if (attack == EnemyAttack.UP02) return previous != attack && (airborne || distance <= 8);
             if (attack == EnemyAttack.UP03 || attack == EnemyAttack.GD04) return escapeRoute;
-            if (attack == EnemyAttack.GD02) return shield && distance <= 5;
+            if (attack == EnemyAttack.GD02) return shield && distance <= GuardHeavyReach;
             return true;
         }
         public static string Label(EnemyAttack a)
@@ -65,8 +67,8 @@ namespace KarmaPrototype
                 case EnemyAttack.UP05: return "UP05 연속 횡단 · 지상/공중/지상/내려찍기";
                 case EnemyAttack.GD01: return "GD01 자동방어막 생성";
                 case EnemyAttack.GD02: return "GD02 강공격 · K 반격 성공 시 방어막 파괴";
-                case EnemyAttack.GD03: return "GD03 분열 방패 · 조각 조준 고정 후 이탈";
-                case EnemyAttack.GD04: return "GD04 방벽 상승 · 등 뒤로 이동";
+                case EnemyAttack.GD03: return "GD03 방패 순차 추적 · 복귀 경로도 회피";
+                case EnemyAttack.GD04: return "GD04 계단식 지면 상승 · 진행 방향에서 이탈";
                 case EnemyAttack.GD05: return "GD05 결계 생존 시험";
                 default: return "연속 베기 · 접근 후 연타 / 마무리 뒤 반격";
             }

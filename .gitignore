@@ -57,3 +57,7 @@ Desktop.ini
 
 # Generated native current-image inventory
 /Assets/K4RMA/Editor/CompleteArtInventory.asset*
+
+# 내 개발 환경에 필요한 파일들을 무시합니다 (gitignore) - azizbek/상승베기
+docs/cursor-rising-slash
+.cursor/

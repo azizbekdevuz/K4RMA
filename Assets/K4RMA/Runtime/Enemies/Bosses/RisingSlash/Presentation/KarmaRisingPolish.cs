@@ -12,6 +12,13 @@ namespace KarmaPrototype
     // Presentation only. These objects never apply damage or change attack timing.
     public static class KarmaRisingPolish
     {
+        public static void BasicArc(Transform parent, Vector2 at, Vector2 size, float direction, string pose)
+        {
+            var sprite = KarmaRisingArt.Get(pose);
+            if (parent == null || sprite == null) return;
+            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 삼연베기", size, 0.12f, 0f, Color.white);
+            if (sweep != null) sweep.transform.parent.localScale = new Vector3(direction < 0f ? -1f : 1f, 1f, 1f);
+        }
         public static void LockPop(Transform parent, Vector2 at)
         {
             if (parent == null) return;

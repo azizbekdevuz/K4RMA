@@ -10,6 +10,7 @@ namespace KarmaPrototype
             new KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride;
+            int selectionCursor;
             public RisingBossBehavior(KarmaEnemy owner) : base(owner)
             {
                 Register(EnemyAttack.GroundStrike, new UPBasicPattern(owner));
@@ -33,6 +34,10 @@ namespace KarmaPrototype
             }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             { return (attack != EnemyAttack.GroundStrike || distance <= Settings.meleeReach) && base.Eligible(attack, distance, sight, escape); }
+            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
+            {
+                return RisingSlashRules.TrySelect(owner.attacks, candidate => Eligible(candidate, distance, sight, escape), ref selectionCursor, out attack);
+            }
             public override float DecisionDelay { get { return Mathf.Max(0.26f, base.DecisionDelay * Settings.attackDecisionMultiplier); } }
 
         }

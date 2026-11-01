@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace KarmaPrototype
 {
@@ -98,6 +99,41 @@ namespace KarmaPrototype
                 AreaWidth = areaWidth,
                 AreaHeight = areaHeight
             };
+        }
+
+        // Fully eligible cycle repeats UP01, UP02, UP01, UP02, then one each of the other Rising attacks.
+        // Skipped slots are not retried forever: one decision inspects at most one full schedule.
+        public static readonly EnemyAttack[] PursuitSchedule =
+        {
+            EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.UP01, EnemyAttack.UP02,
+            EnemyAttack.GroundStrike, EnemyAttack.UP03, EnemyAttack.UP04, EnemyAttack.UP05
+        };
+        public const int PursuitRepeats = 2;
+        public const int OtherRepeats = 1;
+
+        public static bool TrySelect(IReadOnlyList<EnemyAttack> cycle, Func<EnemyAttack, bool> eligible, ref int cursor, out EnemyAttack attack)
+        {
+            attack = default(EnemyAttack);
+            if (cycle == null || cycle.Count == 0 || PursuitSchedule.Length == 0) return false;
+            int span = PursuitSchedule.Length;
+            if (cursor < 0) cursor = 0;
+            cursor %= span;
+            for (int i = 0; i < span; i++)
+            {
+                EnemyAttack candidate = PursuitSchedule[cursor];
+                cursor = (cursor + 1) % span;
+                if (!CycleContains(cycle, candidate)) continue;
+                if (eligible != null && !eligible(candidate)) continue;
+                attack = candidate;
+                return true;
+            }
+            return false;
+        }
+
+        static bool CycleContains(IReadOnlyList<EnemyAttack> cycle, EnemyAttack attack)
+        {
+            for (int i = 0; i < cycle.Count; i++) if (cycle[i] == attack) return true;
+            return false;
         }
 
         static float Clamp(float value, float minimum, float maximum)

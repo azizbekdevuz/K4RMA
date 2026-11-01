@@ -17,6 +17,7 @@ namespace KarmaPrototype
         {
             BasicStrikeChecks();
             Up01LandingChecks();
+            SelectionChecks();
             Console.WriteLine("PASS: " + checks + " Rising Slash checks");
         }
 
@@ -104,6 +105,121 @@ namespace KarmaPrototype
             Check(RisingSlashRules.Up01LockWarningSeconds >= 0.7f, "R2 locked dodge window");
             float rise = RisingSlashRules.PursuitRiseAboveGround(8f, 4.8f, 10.4f);
             Check(Math.Abs(rise - 8f) < 0.0001f, "R2 serialized rise height is the apex climb");
+        }
+
+        static void SelectionChecks()
+        {
+            int pursuit = 0, other = 0;
+            foreach (EnemyAttack attack in RisingSlashRules.PursuitSchedule)
+            {
+                string name = attack.ToString();
+                Check(name == "GroundStrike" || name.StartsWith("UP"), "R3 schedule stays on Rising attacks: " + name);
+                if (attack == EnemyAttack.UP01 || attack == EnemyAttack.UP02) pursuit++;
+                else other++;
+            }
+            Check(pursuit == RisingSlashRules.PursuitRepeats * 2 && other == 4, "R3 schedule weight 2:2:1:1:1:1");
+            var all = KarmaPatternCatalog.BuildCycle(new List<Essence> { Essence.RisingSlash, Essence.SwordWave, Essence.Guard });
+            var log = Simulate(all, 320, 6f, 3f, true, true);
+            Check(log.Total == 320, "R3 every full-cycle decision resolves");
+            Check(log.Count(EnemyAttack.UP01) == 80 && log.Count(EnemyAttack.UP02) == 80, "R3 pursuit slots " + log);
+            Check(log.Count(EnemyAttack.GroundStrike) == 40 && log.Count(EnemyAttack.UP03) == 40, "R3 other slots " + log);
+            Check(log.Count(EnemyAttack.UP04) == 40 && log.Count(EnemyAttack.UP05) == 40, "R3 inherited slots " + log);
+            Check(log.Count(EnemyAttack.UP01) > log.Count(EnemyAttack.GroundStrike), "R3 UP01 exceeds another pattern");
+            Check(log.Count(EnemyAttack.UP02) > log.Count(EnemyAttack.UP04), "R3 UP02 exceeds another pattern");
+            Check(log.Ineligible == 0 && log.ConsecutiveUp02 == 0 && log.UltimateViolations == 0, "R3 no illegal picks " + log);
+
+            var rising = KarmaPatternCatalog.BuildCycle(new List<Essence> { Essence.RisingSlash });
+            var basic = Simulate(rising, 320, 6f, 3f, true, true);
+            Check(basic.Count(EnemyAttack.UP03) + basic.Count(EnemyAttack.UP04) + basic.Count(EnemyAttack.UP05) == 0, "R3 locked patterns stay locked");
+            Check(basic.Count(EnemyAttack.UP01) == 128 && basic.Count(EnemyAttack.UP02) == 128 && basic.Count(EnemyAttack.GroundStrike) == 64, "R3 early cycle still prefers pursuit " + basic);
+            Check(basic.Ineligible == 0 && basic.ConsecutiveUp02 == 0, "R3 early cycle remains legal");
+
+            var guard = KarmaPatternCatalog.BuildCycle(new List<Essence> { Essence.RisingSlash, Essence.Guard });
+            var guarded = Simulate(guard, 300, 6f, 3f, true, true);
+            Check(guarded.Count(EnemyAttack.UP03) == 0 && guarded.Count(EnemyAttack.UP05) == 0, "R3 sword and ultimate stay absent");
+            Check(guarded.Count(EnemyAttack.UP01) == 100 && guarded.Count(EnemyAttack.UP02) == 100, "R3 guard inheritance keeps pursuit ahead " + guarded);
+            Check(guarded.Count(EnemyAttack.UP04) > 0 && guarded.Count(EnemyAttack.GroundStrike) > 0, "R3 eligible non-pursuit attacks are not starved");
+
+            var distant = Simulate(all, 300, 18f, 9f, true, true);
+            Check(distant.Count(EnemyAttack.UP02) == 0 && distant.Count(EnemyAttack.GroundStrike) == 0, "R3 far target removes UP02 and melee");
+            Check(distant.Count(EnemyAttack.UP01) == 120 && distant.Count(EnemyAttack.UP05) == 60, "R3 UP01 remains the pursuit choice " + distant);
+            Check(distant.Count(EnemyAttack.UP01) > distant.Count(EnemyAttack.UP03), "R3 distant UP01 still exceeds others");
+            Check(distant.Ineligible == 0, "R3 distant selection never cheats eligibility");
+
+            var onlyBasic = KarmaPatternCatalog.BuildCycle(new List<Essence>());
+            var strikes = Simulate(onlyBasic, 300, 6f, 3f, true, true);
+            Check(strikes.Total == 300 && strikes.Count(EnemyAttack.GroundStrike) == 300, "R3 sole eligible attack is always chosen");
+
+            int cursor = 0;
+            int probes = 0;
+            EnemyAttack rejected;
+            bool found = RisingSlashRules.TrySelect(all, delegate(EnemyAttack attack) { probes++; return false; }, ref cursor, out rejected);
+            Check(!found && probes == RisingSlashRules.PursuitSchedule.Length, "R3 one decision cannot loop forever");
+
+            var cooled = Simulate(all, 320, 6f, 3f, true, true, 10);
+            Check(cooled.UltimateViolations == 0 && cooled.Count(EnemyAttack.UP05) > 0, "R3 ultimate respects cooldown and still appears " + cooled);
+            Check(cooled.ConsecutiveUp02 == 0 && cooled.Ineligible == 0, "R3 cooldown run stays legal");
+        }
+
+        static SelectionLog Simulate(List<EnemyAttack> cycle, int decisions, float worldDistance, float unscaledDistance, bool ultimateReady, bool escape, int ultimateGap = 0)
+        {
+            var log = new SelectionLog();
+            int cursor = 0;
+            var previous = EnemyAttack.GroundStrike;
+            int readyAgain = 0;
+            bool ready = ultimateReady;
+            for (int i = 0; i < decisions; i++)
+            {
+                if (ultimateGap > 0 && i >= readyAgain) ready = true;
+                bool readyNow = ready;
+                EnemyAttack picked;
+                bool ok = RisingSlashRules.TrySelect(cycle, delegate(EnemyAttack attack)
+                {
+                    return HostEligible(attack, cycle, previous, worldDistance, 8.2f, unscaledDistance, false, true, false, escape, readyNow);
+                }, ref cursor, out picked);
+                if (!ok) continue;
+                log.Total++;
+                log.Add(picked);
+                if (!HostEligible(picked, cycle, previous, worldDistance, 8.2f, unscaledDistance, false, true, false, escape, readyNow)) log.Ineligible++;
+                if (picked == EnemyAttack.UP02 && previous == EnemyAttack.UP02) log.ConsecutiveUp02++;
+                if (picked == EnemyAttack.UP05 && !readyNow) log.UltimateViolations++;
+                if (picked == EnemyAttack.UP05 && ultimateGap > 0) { ready = false; readyAgain = i + ultimateGap; }
+                previous = picked;
+            }
+            return log;
+        }
+
+        static bool HostEligible(EnemyAttack attack, IReadOnlyList<EnemyAttack> cycle, EnemyAttack previous, float worldDistance, float meleeReach,
+            float unscaledDistance, bool airborne, bool sight, bool shield, bool escape, bool ultimateReady)
+        {
+            bool listed = false;
+            for (int i = 0; i < cycle.Count; i++) if (cycle[i] == attack) listed = true;
+            if (!listed) return false;
+            if (attack == EnemyAttack.GroundStrike && worldDistance > meleeReach) return false;
+            return KarmaPatternCatalog.CanSelect(attack, previous, unscaledDistance, airborne, sight, shield, escape, ultimateReady);
+        }
+
+        sealed class SelectionLog
+        {
+            readonly Dictionary<EnemyAttack, int> counts = new Dictionary<EnemyAttack, int>();
+            public int Total, Ineligible, ConsecutiveUp02, UltimateViolations;
+            public void Add(EnemyAttack attack)
+            {
+                int count;
+                counts.TryGetValue(attack, out count);
+                counts[attack] = count + 1;
+            }
+            public int Count(EnemyAttack attack)
+            {
+                int count;
+                return counts.TryGetValue(attack, out count) ? count : 0;
+            }
+            public override string ToString()
+            {
+                var text = new List<string>();
+                foreach (var pair in counts) text.Add(pair.Key + "=" + pair.Value);
+                return string.Join(", ", text) + " illegal=" + Ineligible + " up02=" + ConsecutiveUp02 + " ultimate=" + UltimateViolations;
+            }
         }
 
         static float BoxY(int index)

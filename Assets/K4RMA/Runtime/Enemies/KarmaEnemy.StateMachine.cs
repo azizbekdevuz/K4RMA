@@ -51,6 +51,9 @@ namespace KarmaPrototype
                 { InterruptPatternCore(true); state = ActionState.Approach; timer = 1.2f; }
                 return;
             }
+#if UNITY_EDITOR
+            if (patternTestHold) return;
+#endif
             float dx = game.Player.Position.x - Position.x;
             if (behavior.TickMovement(dt, dx)) return;
             timer -= dt;

@@ -11,31 +11,57 @@ namespace KarmaPrototype
             public override IEnumerator Execute()
             {
                 Vector2 start = owner.Position;
-                float apexY = KarmaSpace.GuardianGroundY + Mathf.Clamp(Settings.riseHeight, KarmaSpace.Units(2.4f), KarmaSpace.Units(5.2f));
-                Vector2 apex = new Vector2(Mathf.Clamp(start.x + owner.direction * KarmaSpace.Units(1.4f), KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), apexY);
+                float rise = RisingSlashRules.PursuitRiseAboveGround(Settings.riseHeight, KarmaSpace.Units(2.4f), KarmaSpace.Units(5.2f));
+                float apexY = KarmaSpace.GuardianGroundY + rise;
+                Vector2 apex = new Vector2(Mathf.Clamp(start.x + owner.direction * KarmaSpace.Units(1.4f), KarmaStage.ArenaLeft + 3f, KarmaStage.ArenaRight - 3f), apexY);
                 owner.state = ActionState.Telegraph;
-                var rise = RisingPath(start, apex, bodyAttackSize, KarmaRisingCue.Charging);
+                var risePath = RisingPath(start, apex, bodyAttackSize, KarmaRisingCue.Charging);
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
 
-                yield return owner.Wait(owner.Warning(0.42f));
+                yield return owner.Wait(owner.Warning(RisingSlashRules.Up01WindupSeconds));
                 EndRisingCharge(charge);
-                if (rise != null) Destroy(rise.gameObject);
-                yield return owner.Motion(apex, 0.32f, Vector2.zero);
-                Vector2 landing = new Vector2(Mathf.Clamp(owner.game.Player.Position.x, KarmaStage.ArenaLeft + 4, KarmaStage.ArenaRight - 4), KarmaSpace.GuardianGroundY);
-                landing.x = Mathf.Clamp(landing.x, apex.x - KarmaSpace.Units(4.5f), apex.x + KarmaSpace.Units(4.5f));
-                Vector2 area = new Vector2(KarmaSpace.Units(6.5f), KarmaSpace.Units(1.25f));
-                Vector2 impact = new Vector2(landing.x, KarmaSpace.Units(0.62f));
+                if (risePath != null) Destroy(risePath.gameObject);
+                charge = BeginRisingCharge(KarmaRisingCue.Tracking);
+                SpriteRenderer path = null;
+                float elapsed = 0f;
+                Vector2 tracked = SampleLanding(apex.x);
+                owner.state = ActionState.Attack;
+                owner.animator.Attack(Vector2.up);
+                while (elapsed < RisingSlashRules.Up01TrackingSeconds && owner.Active)
+                {
+                    bool paused = owner.game.Paused;
+                    if (!paused)
+                    {
+                        float along = RisingSlashRules.AscentBlend(elapsed, RisingSlashRules.Up01AscentSeconds);
+                        Vector2 at = Vector2.Lerp(start, apex, along);
+                        owner.transform.position = at;
+                        tracked = SampleLanding(apex.x);
+                        if (path == null) path = RisingPath(at, tracked, bodyAttackSize, KarmaRisingCue.Tracking);
+                        else path.GetComponent<KarmaAttackWarning>().SetPath(path, at, tracked, bodyAttackSize);
+                    }
+                    elapsed = RisingSlashRules.AdvanceUnpaused(elapsed, Time.deltaTime, paused);
+                    yield return null;
+                }
+                if (!owner.Active) yield break;
+                owner.transform.position = apex;
+                // Freeze the last tracked landing. Later player movement must not enter this value.
+                RisingSlashRules.RisingLandingPlan locked = RisingSlashRules.LockLanding(tracked.x, apex.x, KarmaSpace.GuardianGroundY, KarmaSpace.Units(0.62f),
+                    KarmaSpace.Units(6.5f), KarmaSpace.Units(1.25f), KarmaStage.ArenaLeft, KarmaStage.ArenaRight, RisingSlashRules.Up01EdgeMargin, KarmaSpace.Units(4.5f));
+                Vector2 landing = new Vector2(locked.LandingX, locked.LandingY);
+                Vector2 impact = new Vector2(locked.ImpactX, locked.ImpactY);
+                Vector2 area = new Vector2(locked.AreaWidth, locked.AreaHeight);
+                if (path != null) Destroy(path.gameObject);
+                if (charge != null) charge.Lock();
                 var drop = RisingPath(apex, landing, bodyAttackSize, KarmaRisingCue.Locked);
                 var zone = owner.Mark("UP01 착지 범위", impact, area);
-                charge = BeginRisingCharge(KarmaRisingCue.Locked);
                 KarmaRisingPolish.LockPop(owner.effectsRoot, impact);
 
-                yield return owner.Wait(owner.Warning(0.7f));
+                yield return owner.Wait(owner.Warning(RisingSlashRules.Up01LockWarningSeconds));
                 EndRisingCharge(charge);
                 if (drop != null) Destroy(drop.gameObject);
                 if (zone != null) Destroy(zone.gameObject);
                 var contact = new KarmaAttackContact();
-                yield return owner.Motion(landing, 0.26f, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
+                yield return owner.Motion(landing, RisingSlashRules.Up01DropSeconds, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 var blast = owner.Attack(impact, Vector2.zero, area, 0.22f, Settings.landingDamageMultiplier, contact, 0f, visualPose: "GroundRing");
                 if (blast != null) blast.Repaint(KarmaRisingArt.Get("Impact"), true);
@@ -54,6 +80,12 @@ namespace KarmaPrototype
                 }
                 else yield return owner.Wait(0.34f);
                 yield return owner.Recovery(1.05f);
+            }
+            Vector2 SampleLanding(float apexX)
+            {
+                float x = RisingSlashRules.ClampLandingX(owner.game.Player.Position.x, apexX, KarmaStage.ArenaLeft, KarmaStage.ArenaRight,
+                    RisingSlashRules.Up01EdgeMargin, KarmaSpace.Units(4.5f));
+                return new Vector2(x, KarmaSpace.GuardianGroundY);
             }
 
         }

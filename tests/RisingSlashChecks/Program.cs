@@ -16,6 +16,7 @@ namespace KarmaPrototype
         static void Main()
         {
             BasicStrikeChecks();
+            Up01LandingChecks();
             Console.WriteLine("PASS: " + checks + " Rising Slash checks");
         }
 
@@ -70,6 +71,39 @@ namespace KarmaPrototype
             float finishY = BoxY(2);
             Check(highY > lowY && highY > finishY, "R1 high, low, and finisher arcs differ");
             Check(RisingSlashRules.BasicRecoverySeconds >= 0.38f, "R1 recovery remains readable");
+        }
+
+        static void Up01LandingChecks()
+        {
+            const float left = -15f, right = 55f, margin = RisingSlashRules.Up01EdgeMargin, reach = 9f;
+            float apex = 18f;
+            float near = RisingSlashRules.ClampLandingX(20f, apex, left, right, margin, reach);
+            float far = RisingSlashRules.ClampLandingX(40f, apex, left, right, margin, reach);
+            Check(Math.Abs(near - 20f) < 0.0001f, "R2 open landing follows the player");
+            Check(Math.Abs(far - 27f) < 0.0001f, "R2 later landing moves before lock");
+            Check(Math.Abs(near - far) > 1f, "R2 tracking changes the target");
+            var locked = RisingSlashRules.LockLanding(near, apex, 2.3f, 1.24f, 13f, 2.5f, left, right, margin, reach);
+            float moved = RisingSlashRules.ClampLandingX(0f, apex, left, right, margin, reach);
+            Check(Math.Abs(locked.LandingX - near) < 0.0001f, "R2 locked plan ignores later movement");
+            Check(Math.Abs(moved - locked.LandingX) > 1f, "R2 an unlocked sample would still move");
+            Check(Math.Abs(locked.LandingX - locked.ImpactX) < 0.0001f, "R2 impact shares landing X");
+            Check(Math.Abs(locked.LandingY - 2.3f) < 0.0001f && Math.Abs(locked.ImpactY - 1.24f) < 0.0001f, "R2 ground landing and impact height");
+            Check(Math.Abs(locked.AreaWidth - 13f) < 0.0001f && Math.Abs(locked.AreaHeight - 2.5f) < 0.0001f, "R2 blast uses the locked area");
+            Check(Math.Abs(RisingSlashRules.ClampLandingX(-1000f, 0f, left, right, margin, 100f) - (left + margin)) < 0.0001f, "R2 left wall");
+            Check(Math.Abs(RisingSlashRules.ClampLandingX(1000f, 0f, left, right, margin, 100f) - (right - margin)) < 0.0001f, "R2 right wall");
+            Check(Math.Abs(RisingSlashRules.ClampLandingX(1000f, 0f, left, right, margin, reach) - reach) < 0.0001f, "R2 apex reach right");
+            Check(Math.Abs(RisingSlashRules.ClampLandingX(-1000f, 0f, left, right, margin, reach) + reach) < 0.0001f, "R2 apex reach left");
+            var airborne = RisingSlashRules.LockLanding(22f, 20f, 2.3f, 1.24f, 13f, 2.5f, left, right, margin, reach);
+            Check(Math.Abs(airborne.LandingY - 2.3f) < 0.0001f, "R2 airborne player still lands on the ground line");
+            Check(Math.Abs(RisingSlashRules.AdvanceUnpaused(1f, 0.016f, true) - 1f) < 0.0001f, "R2 pause freezes tracking time");
+            Check(Math.Abs(RisingSlashRules.AdvanceUnpaused(1f, 0.016f, false) - 1.016f) < 0.0001f, "R2 unpaused time advances");
+            Check(Math.Abs(RisingSlashRules.AscentBlend(0f, RisingSlashRules.Up01AscentSeconds)) < 0.0001f, "R2 ascent starts at the ground");
+            Check(Math.Abs(RisingSlashRules.AscentBlend(0.16f, 0.32f) - 0.5f) < 0.0001f, "R2 ascent midpoint");
+            Check(Math.Abs(RisingSlashRules.AscentBlend(1f, 0.32f) - 1f) < 0.0001f, "R2 hover holds the apex");
+            Check(RisingSlashRules.Up01TrackingSeconds > RisingSlashRules.Up01AscentSeconds, "R2 tracking continues after the apex");
+            Check(RisingSlashRules.Up01LockWarningSeconds >= 0.7f, "R2 locked dodge window");
+            float rise = RisingSlashRules.PursuitRiseAboveGround(8f, 4.8f, 10.4f);
+            Check(Math.Abs(rise - 8f) < 0.0001f, "R2 serialized rise height is the apex climb");
         }
 
         static float BoxY(int index)

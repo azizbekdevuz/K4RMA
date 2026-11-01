@@ -54,6 +54,59 @@ namespace KarmaPrototype
         // One ledger per strike. Reusing a contact would collapse the combo into a single hit.
         public static KarmaAttackContact NewStrikeContact() { return new KarmaAttackContact(); }
 
+        public const float Up01WindupSeconds = 0.36f;
+        public const float Up01AscentSeconds = 0.32f;
+        public const float Up01TrackHoverSeconds = 0.40f;
+        public const float Up01LockWarningSeconds = 0.70f;
+        public const float Up01DropSeconds = 0.26f;
+        // Arena inset used by the previous UP01 clamp. It is already in world units.
+        public const float Up01EdgeMargin = 4f;
+
+        public static float Up01TrackingSeconds { get { return Up01AscentSeconds + Up01TrackHoverSeconds; } }
+
+        public struct RisingLandingPlan
+        {
+            public float LandingX, LandingY, ImpactX, ImpactY, AreaWidth, AreaHeight;
+        }
+
+        public static float PursuitRiseAboveGround(float riseHeight, float minimum, float maximum)
+        { return Clamp(riseHeight, minimum, maximum); }
+
+        public static float AscentBlend(float elapsed, float duration)
+        { return duration <= 0f ? 1f : Clamp(elapsed / duration, 0f, 1f); }
+
+        public static float AdvanceUnpaused(float elapsed, float deltaTime, bool paused)
+        { return paused || deltaTime <= 0f ? elapsed : elapsed + deltaTime; }
+
+        public static float ClampLandingX(float playerX, float apexX, float arenaLeft, float arenaRight, float edgeMargin, float apexReach)
+        {
+            float x = Clamp(playerX, arenaLeft + edgeMargin, arenaRight - edgeMargin);
+            return Clamp(x, apexX - apexReach, apexX + apexReach);
+        }
+
+        // The returned plan is a value. Callers must keep it and stop sampling the player.
+        public static RisingLandingPlan LockLanding(float playerX, float apexX, float groundY, float impactY, float areaWidth, float areaHeight,
+            float arenaLeft, float arenaRight, float edgeMargin, float apexReach)
+        {
+            float x = ClampLandingX(playerX, apexX, arenaLeft, arenaRight, edgeMargin, apexReach);
+            return new RisingLandingPlan
+            {
+                LandingX = x,
+                LandingY = groundY,
+                ImpactX = x,
+                ImpactY = impactY,
+                AreaWidth = areaWidth,
+                AreaHeight = areaHeight
+            };
+        }
+
+        static float Clamp(float value, float minimum, float maximum)
+        {
+            if (value < minimum) return minimum;
+            if (value > maximum) return maximum;
+            return value;
+        }
+
         static RisingBasicStrike Strike(int index, float active, float share, float offsetX, float offsetY, float sizeX, float sizeY, string pose)
         {
             return new RisingBasicStrike

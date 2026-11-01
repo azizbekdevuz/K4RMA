@@ -9,29 +9,19 @@ namespace KarmaPrototype
     // The real player, boss position, colliders and physics scene are untouched.
     public sealed class KarmaAerialSwordPlanner : MonoBehaviour
     {
-        public const float FormationRadius = 2.2f;
-        public const int VolleyCount = 7;
+        public const int VolleyCount = 3;
         public sealed class Shot
         {
-            public Vector2 origin, velocity, size;
-            public float life;
-            public bool aimed;
+            public Vector2 origin, orbit, velocity, acceleration, size;
+            public float life, delay, depth = 0.5f;
+            public Vector2 PositionAt(float seconds)
+            { return origin + velocity * seconds + acceleration * (seconds * seconds * 0.5f); }
         }
         public sealed class Group
         {
             public Shot[] shots;
             public int escapeInput;
             public float escapeJumpAt = -1;
-            public float step;
-            public bool reachableEscape;
-            public Vector2[] escapeCenters;
-        }
-        sealed class LiveShot
-        {
-            public KarmaBossAttack instance;
-            public Shot shot;
-            public Vector2 size;
-            public float launchedAt;
         }
         sealed class Route
         {
@@ -48,15 +38,17 @@ namespace KarmaPrototype
         Rigidbody2D probe;
         BoxCollider2D probeShape;
         readonly ContactPoint2D[] contacts = new ContactPoint2D[8];
-        readonly List<LiveShot> live = new List<LiveShot>(56);
+        readonly List<Transform> live = new List<Transform>(54);
         public int[] GroupSizes { get; private set; }
         public int Seed { get; private set; }
+        public Group LatestGroup { get; private set; }
+        public float LatestGroupAt { get; private set; }
         public bool HasLiveShots
         {
             get
             {
                 foreach (var shot in live)
-                    if (shot.instance != null && shot.instance.gameObject.activeInHierarchy) return true;
+                    if (shot != null && shot.gameObject.activeInHierarchy) return true;
                 return false;
             }
         }
@@ -84,7 +76,7 @@ namespace KarmaPrototype
             return sizes;
         }
 
-        public Group BuildGroup(Vector2 elevated, int index, float warning, float life,
+        public Group TryBuildGroup(Vector2 elevated, int index, float warning,
             Vector2 size, float speed, float fightSeconds)
         {
             var player = game.Player;
@@ -93,133 +85,135 @@ namespace KarmaPrototype
             Vector2 target = sourceShape.bounds.center;
             Vector2 half = sourceShape.bounds.extents;
             float step = Mathf.Clamp(Time.fixedDeltaTime, 0.005f, 0.05f);
-            float horizon = warning + Mathf.Max(life, KarmaSpace.Units(12) / Mathf.Max(0.01f, speed))
-                + TimingAllowance(step) + step * 2;
-            for (int i = live.Count - 1; i >= 0; i--)
-                if (live[i].instance == null || !live[i].instance.gameObject.activeInHierarchy
-                    || fightSeconds - live[i].launchedAt >= live[i].shot.life) live.RemoveAt(i);
-            foreach (var active in live)
-                horizon = Mathf.Max(horizon, active.shot.life - (fightSeconds - active.launchedAt) + TimingAllowance(step) + step * 2);
+            float horizon = warning + 1 + TimingAllowance(step) + step * 2;
+            live.RemoveAll(shot => shot == null || !shot.gameObject.activeInHierarchy);
+            if (HasLiveShots) return null;
 
             int count = GroupSizes[index];
             var dimensions = new Vector2[count];
-            var heights = new float[count];
-            float widest = size.y;
+            var formation = new Vector2[count];
+            var orbits = new Vector2[count];
+            var depths = new float[count];
             float ceiling = KarmaSpace.Units(12);
             if (game.GameCamera != null && game.GameCamera.orthographic)
                 ceiling = Mathf.Min(ceiling, game.GameCamera.transform.position.y + game.GameCamera.orthographicSize);
-            float lowerSky = Mathf.Max(0, elevated.y + 6 + size.x * 1.15f / 2 + 0.1f - ceiling);
             for (int i = 0; i < count; i++)
             {
-                // Variants enlarge the real sword and its matching artwork;
-                // reserving an escape never relies on shrinking damage shapes.
-                dimensions[i] = size * Mathf.Lerp(1, 1.15f, (float)random.NextDouble());
-                widest = Mathf.Max(widest, dimensions[i].y);
-                heights[i] = Mathf.Clamp(elevated.y + Mathf.Lerp(4, 6, (float)random.NextDouble()) - lowerSky,
-                    dimensions[i].x / 2 + 1, ceiling - dimensions[i].x / 2 - 0.1f);
+                float sample = (float)random.NextDouble();
+                float x = count > 1 ? i * 2f / (count - 1) - 1 : 0;
+                float arc = Mathf.Sqrt(Mathf.Max(0, 1 - x*x));
+                bool foreground = i % 2 == 0;
+                depths[i] = 0.5f + (foreground ? 1 : -1) * arc * 0.5f;
+                // Near and far semicircles have real, proportionate hit shapes.
+                // The same silhouette is used for both art and dodge planning.
+                dimensions[i] = size * Mathf.Lerp(0.74f, 1.3f, depths[i]) * (1 + sample * 0.035f);
+                float crownHeight = elevated.y + 6 + (foreground ? -1 : 1) * arc * 3.8f;
+                float height = Mathf.Clamp(crownHeight,
+                    dimensions[i].x / 2 + 3.8f, ceiling - dimensions[i].x / 2 - 0.75f);
+                orbits[i] = new Vector2(KarmaStage.ArenaCenter + x * KarmaStage.ArenaWidth * 0.36f, height);
+                // Conjure around the midair boss, then raise the real release
+                // pose to the top of the viewport. Hilts may extend off screen;
+                // the visible cutting tips hang in its upper quarter.
+                float sky = ceiling + dimensions[i].x / 2 - Mathf.Lerp(2.5f, 4.5f, depths[i]);
+                formation[i] = new Vector2(orbits[i].x, sky);
             }
-            float left = KarmaStage.ArenaLeft + widest / 2 + 0.35f;
-            float right = KarmaStage.ArenaRight - widest / 2 - 0.35f;
-            float spacing = count > 1 ? (right - left) / (count - 1) : right - left;
-            // Adjacent slot envelopes cannot overlap, even at their nearest edges.
-            float shift = count > 1 ? Mathf.Max(0, Mathf.Min(spacing * 0.35f,
-                (spacing - widest - 0.45f) / 2)) : spacing / 2;
-            float focus = Mathf.Clamp(target.x + (index % 2 == 0 ? 0 :
-                Mathf.Sin(index * 2.4f) * spacing * 0.6f), left, right);
-            int aimedSlot = count > 1 ? Mathf.Clamp(Mathf.RoundToInt((focus - left) / spacing), 0, count - 1) : 0;
+            float left = KarmaStage.ArenaLeft + 0.25f;
+            float right = KarmaStage.ArenaRight - 0.25f;
+            var slots = new float[count];
+            // Random gap weights create different clusters each slam, while
+            // retaining broad coverage instead of leaving a permanent safe lane.
+            float total = 0;
+            var gaps = new float[Mathf.Max(0, count - 1)];
+            for (int i = 0; i < gaps.Length; i++) { gaps[i] = Mathf.Lerp(0.55f, 1.45f, (float)random.NextDouble()); total += gaps[i]; }
+            float cursor = left;
+            for (int i = 0; i < count; i++)
+            {
+                slots[i] = count == 1 ? (left + right) / 2 : cursor;
+                if (i < gaps.Length) cursor += (right - left) * gaps[i] / total;
+            }
+            // One committed blade targets the player's position at warning start.
+            // It never tracks afterward and may not be moved to make standing safe.
+            float focus = Mathf.Clamp(target.x, left, right);
+            int aimFirst = count >= 3 ? 1 : 0, aimLast = count >= 3 ? count - 2 : count - 1;
+            int aimedSlot = aimFirst;
+            for (int i = aimFirst + 1; i <= aimLast; i++)
+                if (Mathf.Abs(slots[i] - focus) < Mathf.Abs(slots[aimedSlot] - focus)) aimedSlot = i;
+            slots[aimedSlot] = focus;
+            Route standing = SimulateRoute(sourceBody, sourceShape, 0, false, step, horizon);
             int inward = target.x < KarmaStage.ArenaCenter ? 1 : -1;
             Route selected = null;
             Shot[] shots = null;
-            // A route includes the entire remaining lifetime of old and new shots.
-            // Continuing the previous witness therefore remains a valid candidate
-            // at the next group when the player follows an available escape.
+            // Slams do not overlap. Reserve the complete upcoming flight and
+            // require both a moving escape and a real threat to standing still.
             foreach (bool jump in new[] { false, true })
             {
-                foreach (int input in new[] { inward, -inward, 0 })
+                foreach (int input in new[] { inward, -inward })
                 {
                     var route = SimulateRoute(sourceBody, sourceShape, input, jump, step, horizon);
-                    if (!SafeFromLive(route, step, half, fightSeconds)) continue;
                     var candidate = new Shot[count];
                     bool allSafe = true;
                     for (int member = 0; member < count; member++)
                     {
-                        float slot = count > 1 ? Mathf.Lerp(left, right, member / (float)(count - 1))
-                            : (left + right) / 2;
-                        float low = Mathf.Max(left, slot - shift), high = Mathf.Min(right, slot + shift);
-                        float desired = member == aimedSlot ? Mathf.Clamp(focus, low, high) :
-                            Mathf.Clamp(slot + Mathf.Sin(index * 1.7f + member * 2.1f) * shift * 0.55f, low, high);
-                        candidate[member] = FindSafeShot(new Vector2(desired, heights[member]), low, high,
-                            speed, dimensions[member], route, step, half, warning, member == aimedSlot);
+                        float slot = slots[member];
+                        bool edge = count >= 3 && (member == 0 || member == count - 1);
+                        float low = member == aimedSlot ? focus : edge ? slot : member == 0 ? left : (slots[member - 1] + slot) / 2;
+                        float high = member == aimedSlot ? focus : edge ? slot : member == count - 1 ? right : (slots[member + 1] + slot) / 2;
+                        float desired = slot;
+                        candidate[member] = FindSafeShot(desired, low, high,
+                            speed, dimensions[member], route, step, half, warning, formation[member], orbits[member], depths[member]);
                         if (candidate[member] == null) { allSafe = false; break; }
                     }
                     if (!allSafe) continue;
+                    bool threatensStanding = false;
+                    foreach (var shot in candidate)
+                        if (!SafeAtPhase(standing, step, half, shot, warning + shot.delay, shot.size, 0))
+                        { threatensStanding = true; break; }
+                    if (!threatensStanding) continue;
                     shots = candidate; selected = route; break;
                 }
                 if (selected != null) break;
             }
-            if (selected == null)
-                throw new InvalidOperationException("SW05 could not reserve a physical sword-rain escape route.");
-            // Shuffle presentation order so the main aimed sword is not always first.
-            for (int i = shots.Length - 1; i > 0; i--)
-            { int j = random.Next(i + 1); var swap = shots[i]; shots[i] = shots[j]; shots[j] = swap; }
-            return new Group { shots = shots, escapeInput = selected.input, escapeJumpAt = selected.jumpAt,
-                step = step, reachableEscape = true, escapeCenters = selected.centers };
+            if (selected == null) return null;
+            LatestGroupAt = fightSeconds;
+            LatestGroup = new Group { shots = shots, escapeInput = selected.input, escapeJumpAt = selected.jumpAt };
+            return LatestGroup;
         }
 
-        public void RegisterLaunch(Shot shot, KarmaBossAttack instance, Vector2 size, float fightSeconds)
-        { live.Add(new LiveShot { shot = shot, instance = instance, size = shot.size, launchedAt = fightSeconds }); }
+        public void RegisterLaunch(Transform instance) { live.Add(instance); }
 
-        static Shot MakeShot(Vector2 origin, float speed, Vector2 size, bool aimed)
+        static Shot MakeShot(float landing, float speed, Vector2 size, Vector2 formation, Vector2 orbit, float depth)
         {
             speed = Mathf.Max(0.01f, speed);
-            // Local X is the blade's long axis. With a downward velocity its
-            // leading tip, rather than its center, reaches the floor at expiry.
-            return new Shot { origin = origin, velocity = Vector2.down * speed, size = size,
-                life = Mathf.Max(0, origin.y - size.x / 2 - 0.05f) / speed, aimed = aimed };
+            Vector2 ray = new Vector2(landing, 0.05f) - formation;
+            Vector2 axis = ray.normalized;
+            float distance = ray.magnitude - size.x / 2;
+            const float acceleration = 2200;
+            float duration = (Mathf.Sqrt(speed * speed + 2 * acceleration * distance) - speed) / acceleration;
+            return new Shot { origin = formation, orbit = orbit, velocity = axis * speed, acceleration = axis * acceleration,
+                size = size, life = duration, delay = Mathf.Abs(Mathf.Sin(landing * 0.71f)) * 0.035f, depth = depth };
         }
 
-        Shot FindSafeShot(Vector2 desired, float left, float right, float speed, Vector2 size,
-            Route route, float step, Vector2 half, float warning, bool aimed)
+        Shot FindSafeShot(float desired, float left, float right, float speed, Vector2 size,
+            Route route, float step, Vector2 half, float warning, Vector2 formation, Vector2 orbit, float depth)
         {
-            // Search only this sword's non-overlapping slot. Every accepted
+            // Search only this sword's randomized landing region. Every accepted
             // placement remains a visible, full-size, physically falling sword.
-            for (int attempt = 0; attempt <= 24; attempt++)
+            int attempts = right - left < 0.001f ? 0 : 24;
+            for (int attempt = 0; attempt <= attempts; attempt++)
             {
-                float x = attempt == 0 ? desired.x : Mathf.Lerp(left, right, (attempt - 1) / 23f);
-                var shot = MakeShot(new Vector2(x, desired.y), speed, size, aimed && Mathf.Abs(x - desired.x) < 0.1f);
-                if (shot.life > 0.05f && Safe(route, step, half, shot, warning, size)) return shot;
+                float x = attempt == 0 ? desired : Mathf.Lerp(left, right, (attempt - 1) / 23f);
+                var shot = MakeShot(x, speed, size, formation, orbit, depth);
+                if (shot.life > 0.05f && Safe(route, step, half, shot, warning + shot.delay, size)) return shot;
             }
             return null;
         }
 
-        bool SafeFromLive(Route route, float step, Vector2 half, float now)
-        {
-            foreach (var active in live)
-            {
-                var shot = new Shot { origin = active.instance.transform.position,
-                    velocity = active.shot.velocity, life = Mathf.Max(0, active.shot.life - (now - active.launchedAt)) };
-                // A live sword's observed position fixes its launch phase. Do
-                // not expand that already-observed ray by another hypothetical
-                // early/late launch on every volley. Retain the full real swept
-                // rectangle and player-body clearance from this instant onward.
-                if (!SafeAtPhase(route, step, half, shot, 0, active.size, 0))
-                    return false;
-            }
-            return true;
-        }
-
         static bool Safe(Route route, float step, Vector2 half, Shot shot, float begins, Vector2 size)
         {
-            // Warnings finish on a rendered frame, while movement advances on
-            // fixed physics ticks. Reserve the route across that phase window,
-            // including the already-live swords, rather than assuming one exact
-            // launch instant and a perfectly aligned first movement tick.
-            float allowance = TimingAllowance(step);
-            // A continuous launch-time interval translates this rectangle along
-            // its own velocity axis. Its exact union adds 2 * speed * allowance
-            // to the reservation length; the real attack dimensions stay intact.
-            Vector2 reservation = size + Vector2.right * (shot.velocity.magnitude * allowance * 2);
-            return SafeAtPhase(route, step, half, shot, begins, reservation, allowance);
+            // Sweep the whole early/late time window of the exact accelerated
+            // path. Clamping to its true start/end avoids falsely extending a
+            // very fast sword through the floor and closing every escape lane.
+            return SafeAtPhase(route, step, half, shot, begins, size, TimingAllowance(step));
         }
 
         static float TimingAllowance(float step)
@@ -229,7 +223,7 @@ namespace KarmaPrototype
         {
             Vector2 axis = shot.velocity.normalized;
             float activeFrom = begins - allowance;
-            float until = begins + KarmaBossProjectileGeometry.SwordShotLife(shot.origin, shot.velocity, shot.life) + allowance;
+            float until = begins + shot.life + allowance;
             for (int i = 1; i < route.centers.Length; i++)
             {
                 float a = (i - 1) * step, b = i * step;
@@ -238,11 +232,12 @@ namespace KarmaPrototype
                 if (end < start) continue;
                 Vector2 p = Vector2.Lerp(route.centers[i - 1], route.centers[i], (start - a) / step);
                 Vector2 q = Vector2.Lerp(route.centers[i - 1], route.centers[i], (end - a) / step);
-                Vector2 from = shot.origin + shot.velocity * (start - begins) - p;
-                Vector2 to = shot.origin + shot.velocity * (end - begins) - q;
+                Vector2 from = shot.PositionAt(Mathf.Clamp(start - begins - allowance, 0, shot.life)) - p;
+                Vector2 to = shot.PositionAt(Mathf.Clamp(end - begins + allowance, 0, shot.life)) - q;
                 // Reserve a small allowance for render/fixed update phase offsets.
                 if (KarmaBossGeometry.SweptOrientedBox(from.x, from.y, to.x, to.y, 0, 0,
-                    axis.x, axis.y, size.x, size.y, half.x + 0.15f, half.y + 0.15f)) return false;
+                    axis.x, axis.y, size.x, size.y, half.x + 0.15f + Mathf.Abs(q.x - p.x),
+                    half.y + 0.15f + Mathf.Abs(q.y - p.y))) return false;
             }
             return true;
         }

@@ -33,13 +33,12 @@ namespace KarmaPrototype
         [Min(0.3f)] public float counterWarning = 0.45f;
         [Min(0.6f)] public float swordGuardDuration = 3;
         [Min(0.5f)] public float swordGuardResponseCooldown = 0.8f;
-        [Header("SW05 · 무작위 공중 난사")]
-        [Tooltip("각 7회 사출의 검기 수. 동일한 값이면 매회 고정 수량입니다.")]
-        [Range(1, 18)] public int aerialSwordVolleyMin = 15, aerialSwordVolleyMax = 15;
-        [Range(0, 0.45f)] public float aerialSwordAngleJitter = 0.3f;
+        [Header("SW05 · 체력 50% / 25% · 검 소나기 3연격")]
+        [Tooltip("일반 공격 대비 검 소나기 명중 피해 배율")]
+        [Min(1)] public float aerialSwordDamageMultiplier = 2.5f;
+        [Tooltip("회차별 무작위 검 수. 매회 이동 가능한 회피 경로를 확보합니다.")]
+        [Range(1, 18)] public int aerialSwordVolleyMin = 16, aerialSwordVolleyMax = 18;
         [Tooltip("0: 매 공격마다 무작위, 그 외: 동일 물리 상태에서 재현 가능한 시드")]
         public int aerialSwordSeed;
-        [Tooltip("검기 사출 시작 사이의 간격. 전조 시간과 별도로 계산합니다.")]
-        [Min(1)] public float aerialSwordInterval = 1;
     }
 }

@@ -23,9 +23,11 @@ K4RMA/
             KarmaSwordBossMovement.cs 접근·후퇴·근접 압박
             KarmaSwordBossPattern.cs  검기 패턴 공통 의존성
             Patterns/             SWBasic.cs, SW01.cs ~ SW05.cs,
-                                  SwordWaveVolley.cs, KarmaAerialSwordPlanner.cs
+                                  SwordWaveVolley.cs, KarmaAerialSwordPlanner.cs,
+                                  KarmaSW05RainBlade.cs
             Settings/             KarmaSwordBossSettings.cs
-            Presentation/         KarmaWaveArtwork.cs, KarmaWaveMotion.cs
+            Presentation/         KarmaWaveArtwork.cs, KarmaWaveMotion.cs,
+                                  KarmaSW05VFX.cs
           RisingSlash/
             KarmaRisingBossBehavior.cs 접근·선택 정책
             KarmaRisingBossPattern.cs  충전·경로 공통 연출
@@ -81,14 +83,16 @@ K4RMA/
       Shaders/
         KarmaAerialSword.shader   검우 전용 셰이더
         KarmaCombatGlow.shader    공통 전투 발광 셰이더
+    Arts/Resources/SW05/           SW05 검 이미지·전용 재질·셰이더·공유 색상 함수
     Resources/                    KarmaArtworkSettings·KarmaSpriteLibrary 및 공통 재질
     Scenes/KarmaPrototype.unity    실행 씬
     Settings/KarmaConfig.asset    저장된 게임·기술·보스별 밸런스
     Settings/Rendering/            URP 파이프라인·렌더러·후처리 설정
   Packages/                       실행 의존 패키지와 잠금 파일
   ProjectSettings/                Unity 버전·빌드 씬·입력·물리·렌더링 설정
-  tests/Unity/                    방어형 Play Mode 회귀 검사
-  tools/run-guard-playchecks.py    별도 프로젝트에서 검사 실행
+  tests/Unity/                    방어형·SW05 Play Mode 회귀 검사
+  tools/run-guard-playchecks.py    방어형 검사 실행
+  tools/run-sw05-playchecks.py     SW05 검사 실행 (별도 프로젝트)
   docs/PROJECT_STRUCTURE.md        이 파일
   README.md                       실행 안내
 ```
@@ -98,6 +102,7 @@ K4RMA/
 - `Core`는 Unity 비의존 규칙, `Runtime`은 Unity 컴포넌트와 실행 로직을 둔다.
 - 보스별 행동·패턴·설정·연출은 `Runtime/Enemies/Bosses/<유형>/`에 둔다. 행동 클래스는 선택·이동·주기를, 패턴 클래스는 공격별 상태·실행을, `KarmaEnemy`는 공통 전투·중단을 담당한다.
 - 공통 애니메이션·이미지 접근·효과는 `Runtime/Presentation/`에, 실제 이미지는 `Art/Resources/K4RMAArtwork/`의 용도별 폴더에 둔다.
+- SW05 전용 신규 이미지·재질·셰이더는 `Arts/Resources/SW05/`에 모은다. 이미지 조회는 다른 검기 효과와 동일하게 `SwordBossVFX` 라이브러리를 사용한다.
 - 이미지 참조는 `KarmaArtworkSettings`와 `KarmaSpriteLibrary`에서 관리한다. 보스 효과는 `SwordBossVFX`·`RisingBossVFX`·`GuardBossVFX` 그룹을 사용한다.
 - 에셋을 옮길 때는 `.meta`를 함께 옮겨 GUID와 Sprite ID를 보존한다. `Resources` 경로를 바꾸면 로딩 참조도 함께 수정한다.
 - `Library`·`Temp`·`Logs`·`UserSettings`는 Unity 로컬 캐시, `output`은 생성된 검사 결과다.

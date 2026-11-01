@@ -68,11 +68,9 @@ namespace KarmaPrototype
             bool TrySelectSwordAttack(float distance, bool sight, bool escape, out EnemyAttack next)
             {
                 next = owner.previous;
-                // A ward can overlap several short actions. Remember a ready
-                // ultimate skipped by that overlay so the cycle cannot re-arm
-                // another ward before the deferred ultimate gets its turn.
-                if (swordUltimateDeferred && owner.attacks.Contains(EnemyAttack.SW05)
-                && SwordCandidateAvailable(EnemyAttack.SW05, owner.Position, distance, sight, escape))
+                // SW05 is a once-per-health-gate set piece. Its two triggers
+                // bypass ordinary cooldown/repeat rules after the current action.
+                if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed)
                 { next = EnemyAttack.SW05; return true; }
                 bool basic = owner.FightSeconds >= nextSwordBasic && sight && SwordAttackCanReach(EnemyAttack.SWBasic, owner.game.Player.Position);
                 if (basic && (swordBasicDue || distance < KarmaSpace.Units(2.5f)))
@@ -81,8 +79,6 @@ namespace KarmaPrototype
                 for (int i = 0; i < owner.attacks.Count; i++)
                 {
                     var candidate = owner.attacks[cycleIndex++ % owner.attacks.Count];
-                    if (candidate == EnemyAttack.SW05 && counter.Formed && owner.FightSeconds >= owner.nextUltimate)
-                    swordUltimateDeferred = true;
                     if (!SwordCandidateAvailable(candidate, owner.Position, distance, sight, escape)) continue;
                     // Keep the inherited cycle; repeat only when all other unlocked skills are ineligible.
                     if (candidate == owner.previous) { next = candidate; repeatAvailable = true; continue; }
@@ -94,6 +90,7 @@ namespace KarmaPrototype
             }
             bool SwordCandidateAvailable(EnemyAttack candidate, Vector2 from, float distance, bool sight, bool escape)
             {
+                if (candidate == EnemyAttack.SW05) return ultimate.ThresholdPending && !counter.Formed;
                 if (candidate == EnemyAttack.SW04 && (counter.Formed || owner.FightSeconds < counter.NextReadyAt)) return false;
                 // Keep the defensive overlay readable: its four committed counters
                 // can accompany ordinary waves, while larger set pieces wait for it.
@@ -116,9 +113,10 @@ namespace KarmaPrototype
             { return SwordAttackCanReachFrom(candidate, owner.Position, target); }
             readonly SwordBossMovement movement;
             readonly SW04Pattern counter;
+            readonly SW05Pattern ultimate;
             int swordSkillsSinceBasic;
             float nextSwordBasic;
-            bool swordBasicDue, swordUltimateDeferred;
+            bool swordBasicDue;
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             public SwordBossBehavior(KarmaEnemy owner) : base(owner)
@@ -130,7 +128,8 @@ namespace KarmaPrototype
                 Register(EnemyAttack.SW02, new SW02Pattern(owner, this));
                 Register(EnemyAttack.SW03, new SW03Pattern(owner, this));
                 Register(EnemyAttack.SW04, counter);
-                Register(EnemyAttack.SW05, new SW05Pattern(owner, this));
+                ultimate = new SW05Pattern(owner, this);
+                Register(EnemyAttack.SW05, ultimate);
             }
             public override bool CanEngage { get { return base.CanEngage || Vector2.Distance(owner.Position, owner.game.Player.Position) <= KarmaSpace.Units(7); } }
             public override bool OrientedWarnings { get { return true; } }
@@ -144,10 +143,13 @@ namespace KarmaPrototype
             public void RequestBasic() { swordBasicDue = true; }
             public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
             { return TrySelectSwordAttack(distance, sight, escape, out attack); }
-            public override bool TickMovement(float dt, float dx) { return movement.Tick(dt, dx); }
+            public override bool TickMovement(float dt, float dx)
+            {
+                if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed) return false;
+                return movement.Tick(dt, dx);
+            }
             public override void OnSelected()
             {
-                if (owner.selected == EnemyAttack.SW05) swordUltimateDeferred = false;
                 movement.OnSelected();
                 if (owner.selected == EnemyAttack.SWBasic)
                 { nextSwordBasic = owner.FightSeconds + Mathf.Max(0.5f, Settings.swordBasicCooldown); swordBasicDue = false; swordSkillsSinceBasic = 0; }
@@ -164,7 +166,7 @@ namespace KarmaPrototype
             public override void OnDamaged() { movement.RememberSwordPressure(); counter.OnDamaged(); }
             public override Transform PersistentEffects { get { return counter.EffectsRoot; } }
             public override void Interrupt(bool preservePressure)
-            { base.Interrupt(preservePressure); movement.Interrupt(preservePressure); swordUltimateDeferred = false; }
+            { base.Interrupt(preservePressure); movement.Interrupt(preservePressure); }
 
         }
     }

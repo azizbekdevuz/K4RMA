@@ -50,11 +50,10 @@ MonoBehaviour:
       counterWarning: 0.45
       swordGuardDuration: 3
       swordGuardResponseCooldown: 0.8
-      aerialSwordVolleyMin: 15
-      aerialSwordVolleyMax: 15
-      aerialSwordAngleJitter: 0.3
+      aerialSwordDamageMultiplier: 2.5
+      aerialSwordVolleyMin: 16
+      aerialSwordVolleyMax: 18
       aerialSwordSeed: 0
-      aerialSwordInterval: 1
       shieldDamageMultiplier: 0.3
       damageScale: 1
       movementScale: 1

@@ -234,6 +234,7 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 753db3580642431fbedae47166daddeb, type: 3}
     - {fileID: 21300000, guid: 843262fa43874a83ad32a466df051668, type: 3}
     - {fileID: 21300000, guid: 692e0d1ec07b41a4ad8cba2e41965c39, type: 3}
+    - {fileID: 21300000, guid: fd75896186c441e59ef6b523818d150d, type: 3}
     poses:
     - SW01_StaggeredWave
     - SW02_AimedSlash
@@ -241,6 +242,7 @@ MonoBehaviour:
     - SW03_RisingBlade
     - SW04_CounterWave
     - SW05_AerialSword
+    - SW05_JudgementSword
   - id: RisingBossVFX
     source: Assets/K4RMA/Art/Resources/K4RMAArtwork/Effects/Rising
     sprites:

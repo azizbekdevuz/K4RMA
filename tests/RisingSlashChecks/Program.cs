@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace KarmaPrototype
 {
@@ -18,6 +19,7 @@ namespace KarmaPrototype
             BasicStrikeChecks();
             Up01LandingChecks();
             SelectionChecks();
+            Up04Checks();
             Console.WriteLine("PASS: " + checks + " Rising Slash checks");
         }
 
@@ -220,6 +222,63 @@ namespace KarmaPrototype
                 foreach (var pair in counts) text.Add(pair.Key + "=" + pair.Value);
                 return string.Join(", ", text) + " illegal=" + Ineligible + " up02=" + ConsecutiveUp02 + " ultimate=" + UltimateViolations;
             }
+        }
+
+        static void Up04Checks()
+        {
+            const float minimum = 4.8f, maximum = 10.4f, serializedRise = 8f;
+            float up01 = RisingSlashRules.PursuitRiseAboveGround(serializedRise, minimum, maximum);
+            float up04 = RisingSlashRules.PursuitRiseAboveGround(serializedRise, minimum, maximum);
+            Check(Math.Abs(up01 - serializedRise) < 0.0001f && Math.Abs(up04 - up01) < 0.0001f, "R4 apex climb matches UP01");
+            Check(up04 >= RisingSlashRules.Up04ComparableRiseRatio * up01, "R4 comparable rise gate");
+            float legacy = Math.Max(3.2f, Math.Min(6.4f, serializedRise * 0.55f));
+            Check(legacy / up01 < RisingSlashRules.Up04ComparableRiseRatio, "R4 previous short hop fails the gate");
+            float capped = RisingSlashRules.PursuitRiseAboveGround(100f, minimum, maximum);
+            Check(Math.Abs(capped - maximum) < 0.0001f && capped / RisingSlashRules.PursuitRiseAboveGround(100f, minimum, maximum) >= 0.85f, "R4 ceiling clamp stays comparable");
+            Check(2.3f + up04 < 24f, "R4 apex stays under the pattern height limit");
+            Check(RisingSlashRules.Up04AscentSeconds > 0.2f && RisingSlashRules.Up04AscentSeconds > RisingSlashRules.Up01AscentSeconds, "R4 ascent is long enough to read");
+            Check(Math.Abs(RisingSlashRules.Up04DescentSeconds - RisingSlashRules.Up01DropSeconds) > 0.01f, "R4 drop timing stays distinct from UP01");
+            float[] expected = { -6f, 12f, 30f, 48f, 66f, 84f, 102f, 120f, 138f, 156f, 174f, 192f, 208f, 222f };
+            Check(RisingSlashRules.FragmentDegrees.Length == 14 && expected.Length == 14, "R4 fourteen fragments");
+            var seen = new HashSet<float>();
+            for (int i = 0; i < expected.Length; i++)
+            {
+                Check(Math.Abs(RisingSlashRules.FragmentDegrees[i] - expected[i]) < 0.0001f, "R4 degree " + i);
+                Check(seen.Add(expected[i]), "R4 unique direction " + i);
+            }
+            Check(RisingSlashRules.FragmentParryStun, "R4 fragments still parry into stun");
+            var ends = new HashSet<string>();
+            for (int i = 0; i < RisingSlashRules.FragmentDegrees.Length; i++)
+            {
+                double rad = RisingSlashRules.FragmentDegrees[i] * Math.PI / 180.0;
+                float ox = 20f + (float)Math.Cos(rad) * 1.8f;
+                float oy = 4.7f + (float)Math.Sin(rad) * 1.8f;
+                var aim = RisingSlashRules.AimFragment(ox, oy, RisingSlashRules.FragmentDegrees[i], 0.92f, -15f, 55f, 0.8f, 28f, 14.8f, 0.9f, 7f, 0.35f);
+                float speed = (float)Math.Sqrt(aim.VelocityX * aim.VelocityX + aim.VelocityY * aim.VelocityY);
+                Check(speed > 1f, "R4 fragment moves " + i);
+                Check(ends.Add(aim.EndX.ToString("0.00") + "," + aim.EndY.ToString("0.00")), "R4 distinct path " + i);
+            }
+            string asset = File.ReadAllText(RepoFile("Assets/K4RMA/Settings/KarmaConfig.asset"));
+            int rising = asset.IndexOf("\n    rising:", StringComparison.Ordinal);
+            int guard = asset.IndexOf("\n    guard:", StringComparison.Ordinal);
+            Check(rising > 0 && guard > rising, "R4 config has a rising block");
+            string block = asset.Substring(rising, guard - rising);
+            Check(block.Contains("riseHeight: 8"), "R4 serialized rise height unchanged");
+            Check(block.Contains("fragmentLifetime: 0.92"), "R4 fragment lifetime unchanged");
+            Check(block.Contains("fragmentParryStunSeconds: 2"), "R4 parry stun duration unchanged");
+            Check(block.Contains("fragmentDamageMultiplier: 0.85"), "R4 fragment damage unchanged");
+        }
+
+        static string RepoFile(string relative)
+        {
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
+            {
+                string candidate = Path.Combine(dir.FullName, relative.Replace('/', Path.DirectorySeparatorChar));
+                if (File.Exists(candidate)) return candidate;
+                dir = dir.Parent;
+            }
+            throw new FileNotFoundException(relative);
         }
 
         static float BoxY(int index)

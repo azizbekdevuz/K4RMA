@@ -110,6 +110,44 @@ namespace KarmaPrototype
         };
         public const int PursuitRepeats = 2;
         public const int OtherRepeats = 1;
+        public const float Up04AscentSeconds = 0.48f;
+        public const float Up04DescentSeconds = 0.22f;
+        public const float Up04ComparableRiseRatio = 0.85f;
+        public const bool FragmentParryStun = true;
+        public static readonly float[] FragmentDegrees = { -6f, 12f, 30f, 48f, 66f, 84f, 102f, 120f, 138f, 156f, 174f, 192f, 208f, 222f };
+
+        public struct FragmentAim
+        {
+            public float EndX, EndY, VelocityX, VelocityY;
+        }
+
+        public static FragmentAim AimFragment(float originX, float originY, float degrees, float life,
+            float arenaLeft, float arenaRight, float wallInset, float maxRange, float ceilingY, float floorY, float minRange, float minimumLife)
+        {
+            double rad = degrees * Math.PI / 180.0;
+            double dx = Math.Cos(rad), dy = Math.Sin(rad);
+            double magnitude = Math.Sqrt(dx * dx + dy * dy);
+            if (magnitude < 0.0001) { dx = 1.0; dy = 0.0; magnitude = 1.0; }
+            dx /= magnitude; dy /= magnitude;
+            double limit = maxRange;
+            if (Math.Abs(dx) > 0.02)
+            {
+                double wall = dx > 0.0 ? arenaRight - wallInset : arenaLeft + wallInset;
+                limit = Math.Min(limit, (wall - originX) / dx);
+            }
+            if (dy > 0.02) limit = Math.Min(limit, (ceilingY - originY) / dy);
+            else if (dy < -0.02) limit = Math.Min(limit, (floorY - originY) / dy);
+            if (limit < minRange) limit = minRange;
+            float span = life < minimumLife ? minimumLife : life;
+            float distance = (float)limit;
+            return new FragmentAim
+            {
+                EndX = originX + (float)dx * distance,
+                EndY = originY + (float)dy * distance,
+                VelocityX = (float)dx * (distance / span),
+                VelocityY = (float)dy * (distance / span)
+            };
+        }
 
         public static bool TrySelect(IReadOnlyList<EnemyAttack> cycle, Func<EnemyAttack, bool> eligible, ref int cursor, out EnemyAttack attack)
         {

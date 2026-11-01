@@ -1,0 +1,156 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d04b0e3263d5c1bab3db32e8371c732, type: 3}
+  m_Name: KarmaConfig
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaConfig
+  bossTuning:
+    stageOneHealth: 1050
+    stageTwoHealth: 1550
+    stageThreeHealth: 2050
+    finalHealth: 2800
+    healthMultiplier: 1
+    damageMultiplier: 1.15
+    moveMultiplier: 1.7
+    decisionMultiplier: 0.42
+    recoveryMultiplier: 0.72
+    enrageThreshold: 0.5
+    enrageTempo: 0.82
+    warningMultiplier: 0.9
+    ultimateCooldown: 20
+    patternTimeout: 30
+    sword:
+      swordDecisionMultiplier: 0.75
+      swordSelectionRetry: 0.1
+      swordBasicCooldown: 2.4
+      swordPreferredDistance: 11.75
+      swordSkillsBetweenBasics: 1
+      swordRetreatCooldown: 5
+      swordRetreatStartDistance: 6.25
+      swordRetreatStopDistance: 11.75
+      swordRetreatDistance: 16
+      swordRetreatDuration: 0.6
+      swordRetreatSpeed: 32
+      swordMeleeSpacingMargin: 0.65
+      swordApproachStartDistance: 10.5
+      basicDamageMultiplier: 0.5
+      aimedDamageMultiplier: 1.15
+      swordSpeed: 32
+      swordLifetime: 1.65
+      swordWidth: 2.4
+      swordHeight: 1
+      counterWarning: 0.45
+      swordGuardDuration: 3
+      swordGuardResponseCooldown: 0.8
+      aerialSwordDamageMultiplier: 2.5
+      aerialSwordVolleyMin: 16
+      aerialSwordVolleyMax: 18
+      aerialSwordSeed: 0
+      shieldDamageMultiplier: 0.3
+      damageScale: 1
+      movementScale: 1
+      decisionScale: 1
+      recoveryScale: 1
+    rising:
+      preferredDistance: 4.1
+      meleeReach: 8.2
+      approachSpeedMultiplier: 1.55
+      attackDecisionMultiplier: 0.58
+      meleeDamageMultiplier: 0.8
+      landingDamageMultiplier: 1
+      waveDamageMultiplier: 1.15
+      fragmentDamageMultiplier: 0.85
+      fragmentLifetime: 0.92
+      fragmentParryStunSeconds: 2
+      riseHeight: 8
+      groundBladeWidth: 10
+      groundBladeHeight: 12
+      crossingWarning: 0.65
+      crossingReset: 0.65
+      shieldDamageMultiplier: 0.3
+      damageScale: 1
+      movementScale: 1
+      decisionScale: 1
+      recoveryScale: 1
+    guard:
+      heavyStrikeDamageMultiplier: 1.5
+      shieldThrowDamageMultiplier: 0.8
+      shieldFragmentDamageMultiplier: 0.8
+      trialWaveWidth: 2.4
+      trialWaveHeight: 1
+      trialDamageMultiplier: 0.65
+      autoShieldPeriod: 8
+      autoShieldWarning: 0.8
+      parryStunSeconds: 2
+      fragmentStunSeconds: 1
+      shieldFragments: 4
+      heavyParryCueSeconds: 0.5
+      heavyHitStunSeconds: 1
+      fragmentLaunchGap: 0.3
+      fragmentChaseSpeed: 30
+      fragmentReturnSeconds: 0.4
+      barrierSteps: 6
+      barrierStepGap: 0.22
+      fragmentAimWarning: 0.5
+      barrierRecovery: 1.2
+      trialAttackCount: 7
+      trialAllowedHits: 1
+      trialAttackGap: 0.65
+      trialStunSeconds: 4
+      trialExplosionMultiplier: 2.5
+      shieldDamageMultiplier: 0.3
+      damageScale: 1
+      movementScale: 1
+      decisionScale: 1
+      recoveryScale: 1
+  playerHealth: 160
+  moveSpeed: 14
+  jumpSpeed: 26
+  gravityScale: 6
+  hitInvulnerability: 0.7
+  swordDamage: 60
+  swordCooldown: 0.32
+  swordWaveCooldown: 2.2
+  swordWaveDamage: 72
+  swordWaveSpeed: 28
+  risingSlashCooldown: 1.6
+  guardCooldown: 5
+  guardDuration: 1.5
+  techniques:
+    longSlashReach: 6.8
+    longSlashHeight: 5.2
+    slashLife: 0.18
+    hitStopSeconds: 0.035
+    hitShakeSeconds: 0.09
+    hitShakeStrength: 0.15
+    doubleTapWindow: 0.25
+    pierceDistance: 8
+    airSlashDistance: 2.4
+    airSlashDuration: 0.12
+    airSlashRecovery: 0.16
+    airSlashInputBuffer: 0.16
+    airSlashJumpScale: 0.9
+    airSlashHorizontalBoost: 1.5
+    counterWindow: 0.18
+    counterCooldown: 1.1
+    counterDamage: 85
+    risingDamage: 60
+    risingSpeed: 30
+  enemyDamage: 14
+  enemyMoveSpeed: 4.8
+  enemyDecisionDelay: 1.2
+  enemyTelegraphTime: 0.75
+  healAfterPersonalization: 45
+  koreanFont: {fileID: 0}
+  spriteMaterial: {fileID: 2100000, guid: 1c46e35ad003c436ba8b625a9e519730, type: 2}
+  swordWaveColor: {r: 1, g: 0.38, b: 0.18, a: 1}
+  risingSlashColor: {r: 0.25, g: 0.9, b: 0.9, a: 1}
+  guardColor: {r: 0.67, g: 0.48, b: 1, a: 1}

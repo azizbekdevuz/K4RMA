@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/wordmark.png" alt="K4RMA — What you give up comes back" width="470" />
+  <img src="docs/planning/assets/wordmark.png" alt="K4RMA — What you give up comes back" width="470" />
   <br /><strong>WHAT YOU GIVE UP COMES BACK.</strong>
   <br /><sub>잃어버린 능력이 다음 적의 힘이 된다.</sub>
   <br /><br />
@@ -13,12 +13,15 @@
 </div>
 
 <div align="center">
-  <img src="assets/concept-arena.png" alt="Illustrative concept art: a player facing a towering boss in a fantasy arena" width="820" />
+  <img src="docs/planning/assets/concept-arena.png" alt="Illustrative concept art: a player facing a towering boss in a fantasy arena" width="820" />
   <br /><sub>Concept art / 콘셉트 이미지 · Not actual gameplay / 실제 게임 화면이 아닙니다.</sub>
 </div>
 
 > [!IMPORTANT]
-> **K4RMA is a working title in pre-production.** The central loop is the team’s current direction; ability and stage counts, synergy rules, 2D versus 3D, and final visuals are not settled. Planned features are not implemented features.
+> **K4RMA is a working title in pre-production.** The central loop is the team’s current direction; ability and stage counts, synergy rules, 2D versus 3D, and final visuals are not settled. Planned features are not implemented features. The body below remains that planning record.
+
+> [!NOTE]
+> **v0.1.0** integrates the 2D prototype into this repository. Open it in Unity **6000.6.2f1**, play `Assets/K4RMA/Scenes/KarmaPrototype.unity`, and press Enter. The original run notes are in [docs/PROTOTYPE.md](docs/PROTOTYPE.md).
 
 ## Overview
 
@@ -28,7 +31,7 @@
 
 ### Core game loop
 
-<div align="center"><img src="assets/game-loop.svg" alt="Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat" width="850" /></div>
+<div align="center"><img src="docs/planning/assets/game-loop.svg" alt="Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat" width="850" /></div>
 
 1. **Begin:** Start with baseline stats (HP, attack, movement speed, attack speed) and multiple special abilities. Dash, Fireball, Shield, and Heal are **examples**, not a final skill list.
 2. **Fight:** Use basic attacks and remaining abilities. Enemies use basic movement/tracking/attack AI; later enemies may use previously surrendered skills.

@@ -51,19 +51,19 @@
   <header class="top"><div class="wrap bar"><a class="brand" href="#top">K4RMA</a><nav class="switch" aria-label="Language / 언어"><button type="button" data-lang-button="ko" aria-pressed="true">🇰🇷 한국어</button><button type="button" data-lang-button="en" aria-pressed="false">🇺🇸 English</button></nav></div></header>
   <div class="wrap">
     <section class="hero" id="top">
-      <img class="logo" src="assets/wordmark.png" alt="K4RMA" />
+      <img class="logo" src="docs/planning/assets/wordmark.png" alt="K4RMA" />
       <p class="tagline">WHAT YOU GIVE UP COMES BACK.</p>
       <p class="sub">잃어버린 능력이 다음 적의 힘이 된다.</p>
       <div class="pills"><span>● PRE-PRODUCTION</span><span>UNITY</span><span>SINGLE-PLAYER FIRST</span><span>4-PERSON TEAM</span></div>
-      <figure class="art"><img src="assets/concept-arena.png" alt="Concept art of an adventurer facing a towering boss in a dark arena" /><figcaption>CONCEPT ART / 콘셉트 이미지 — NOT ACTUAL GAMEPLAY / 실제 게임 화면이 아닙니다.</figcaption></figure>
+      <figure class="art"><img src="docs/planning/assets/concept-arena.png" alt="Concept art of an adventurer facing a towering boss in a dark arena" /><figcaption>CONCEPT ART / 콘셉트 이미지 — NOT ACTUAL GAMEPLAY / 실제 게임 화면이 아닙니다.</figcaption></figure>
     </section>
-    <aside data-lang-panel="ko" class="notice">K4RMA는 개발 준비 단계의 가제입니다. 일부 게임 규칙과 2D/3D 방향은 아직 확정되지 않았으며, 아래 내용은 구현 완료 목록이 아닙니다.</aside>
-    <aside data-lang-panel="en" class="notice" hidden>K4RMA is a working title in pre-production. Some game rules and 2D/3D choices are undecided; the features below are not claims of implementation.</aside>
+    <aside data-lang-panel="ko" class="notice">K4RMA는 개발 준비 단계의 가제입니다. 일부 게임 규칙과 2D/3D 방향은 아직 확정되지 않았으며, 아래 내용은 구현 완료 목록이 아닙니다. v0.1.0부터 Unity 6000.6.2f1 2D 프로토타입이 저장소에 있으며, 이 페이지의 나머지 설명은 원래 기획 기록입니다.</aside>
+    <aside data-lang-panel="en" class="notice" hidden>K4RMA is a working title in pre-production. Some game rules and 2D/3D choices are undecided; the features below are not claims of implementation. As of v0.1.0 the repository also contains the Unity 6000.6.2f1 2D prototype. The rest of this page remains the original planning record.</aside>
     <main data-lang-panel="ko"><h2>게임 소개</h2>
 <p><strong>K4RMA</strong>는 플레이어가 보스를 이길 때마다 자신의 능력 하나를 희생하고, 그 능력이 이후의 적에게 넘어가는 <strong>싱글플레이 우선 액션·보스 전투 게임</strong>입니다. 스테이지가 진행될수록 내 선택지가 줄어들고 적의 공격 패턴이 변화합니다. 남은 기술, 기본 공격, 회피 및 성장 요소를 활용해 마지막까지 살아남는 것이 핵심입니다.</p>
 <p><strong>핵심 질문:</strong> <em>다음 적이 사용할 기술을 알고도, 어떤 능력을 포기할 것인가?</em></p>
 <h3>핵심 게임 루프</h3>
-<figure class="game-loop"><img src="assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
+<figure class="game-loop"><img src="docs/planning/assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
 <ol>
 <li><strong>시작:</strong> 기본 스탯(HP·공격력·이동 속도·공격 속도)과 여러 특수 능력을 가진 캐릭터로 시작합니다. Dash, Fireball, Shield, Heal은 <strong>예시</strong>이며 최종 구성은 미정입니다.</li>
 <li><strong>전투:</strong> 기본 공격과 남은 능력으로 적/보스와 싸웁니다. 적은 이동·추적·공격 등의 기본 AI를 사용하며, 이후 단계에서는 희생된 능력도 사용할 수 있습니다.</li>
@@ -173,7 +173,7 @@
 <p><strong>K4RMA</strong> is a <strong>single-player-first action / boss-combat game</strong> in which each victory forces the player to sacrifice one ability. That ability becomes available to future enemies. As the player loses options, opponents inherit the consequences of earlier choices. Survive by combining the remaining skills, basic attacks, movement, and progression.</p>
 <p><strong>The central question:</strong> <em>Which ability will you surrender, knowing a later enemy can use it against you?</em></p>
 <h3>Core game loop</h3>
-<figure class="game-loop"><img src="assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
+<figure class="game-loop"><img src="docs/planning/assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
 <ol>
 <li><strong>Begin:</strong> Start with baseline stats (HP, attack, movement speed, attack speed) and multiple special abilities. Dash, Fireball, Shield, and Heal are <strong>examples</strong>, not a final skill list.</li>
 <li><strong>Fight:</strong> Use basic attacks and remaining abilities. Enemies use basic movement/tracking/attack AI; later enemies may use previously surrendered skills.</li>

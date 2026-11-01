@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/wordmark.png" alt="K4RMA — What you give up comes back" width="470" />
+  <img src="docs/planning/assets/wordmark.png" alt="K4RMA — What you give up comes back" width="470" />
   <br /><strong>WHAT YOU GIVE UP COMES BACK.</strong>
   <br /><sub>잃어버린 능력이 다음 적의 힘이 된다.</sub>
   <br /><br />
@@ -13,12 +13,15 @@
 </div>
 
 <div align="center">
-  <img src="assets/concept-arena.png" alt="Illustrative concept art: a player facing a towering boss in a fantasy arena" width="820" />
+  <img src="docs/planning/assets/concept-arena.png" alt="Illustrative concept art: a player facing a towering boss in a fantasy arena" width="820" />
   <br /><sub>Concept art / 콘셉트 이미지 · Not actual gameplay / 실제 게임 화면이 아닙니다.</sub>
 </div>
 
 > [!IMPORTANT]
-> **K4RMA는 개발 준비 단계의 가제입니다.** 게임의 핵심 루프는 팀이 논의한 방향이지만 능력/스테이지 수, 시너지 규칙, 2D/3D 및 최종 그래픽은 아직 결정되지 않았습니다. 계획된 기능을 이미 구현된 것처럼 표시하지 않습니다.
+> **K4RMA는 개발 준비 단계의 가제입니다.** 게임의 핵심 루프는 팀이 논의한 방향이지만 능력/스테이지 수, 시너지 규칙, 2D/3D 및 최종 그래픽은 아직 결정되지 않았습니다. 계획된 기능을 이미 구현된 것처럼 표시하지 않습니다. 아래 본문은 그 기획 기록이다.
+
+> [!NOTE]
+> **v0.1.0**에 2D 프로토타입이 이 저장소로 통합되어 있다. Unity **6000.6.2f1**로 열고 `Assets/K4RMA/Scenes/KarmaPrototype.unity`를 실행한 뒤 Play하고 Enter로 시작한다. 실행 안내 원문은 [docs/PROTOTYPE.md](docs/PROTOTYPE.md)에 있다.
 
 ## 게임 소개
 
@@ -28,7 +31,7 @@
 
 ### 핵심 게임 루프
 
-<div align="center"><img src="assets/game-loop.svg" alt="Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat" width="850" /></div>
+<div align="center"><img src="docs/planning/assets/game-loop.svg" alt="Game loop: select abilities, fight, earn score, sacrifice an ability, strengthen a later enemy, repeat" width="850" /></div>
 
 1. **시작:** 기본 스탯(HP·공격력·이동 속도·공격 속도)과 여러 특수 능력을 가진 캐릭터로 시작합니다. Dash, Fireball, Shield, Heal은 **예시**이며 최종 구성은 미정입니다.
 2. **전투:** 기본 공격과 남은 능력으로 적/보스와 싸웁니다. 적은 이동·추적·공격 등의 기본 AI를 사용하며, 이후 단계에서는 희생된 능력도 사용할 수 있습니다.

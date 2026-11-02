@@ -26,6 +26,10 @@ public static class KarmaSW05PlayChecks
     static void Pump()
     {
         if (!SessionState.GetBool(Key, false)) return;
+        // Enable background updates before waiting for the first Play Mode frame.
+        // Otherwise a batch Editor can stall before Run() ever gets to enable it.
+        if (EditorApplication.isPlaying)
+        { Application.runInBackground = true; EditorApplication.isPaused = false; }
         EditorApplication.QueuePlayerLoopUpdate();
         if (EditorApplication.isPlaying) EditorApplication.isPaused = false;
         if (started && EditorApplication.isPlaying && enemy != null)

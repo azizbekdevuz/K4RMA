@@ -24,6 +24,10 @@ public static class KarmaGuardPlayChecks
     static void Pump()
     {
         if (!SessionState.GetBool(BatchKey, false)) return;
+        // Enable background updates before waiting for the first Play Mode frame.
+        // Otherwise a batch Editor can stall before Run() ever gets to enable it.
+        if (EditorApplication.isPlaying)
+        { Application.runInBackground = true; EditorApplication.isPaused = false; }
         EditorApplication.QueuePlayerLoopUpdate();
         // Unity Search may enable Error Pause during its initial index build.
         // Clear only pre-test startup pauses; runtime errors are captured below.

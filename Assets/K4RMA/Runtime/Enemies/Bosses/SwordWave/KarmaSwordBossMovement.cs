@@ -39,8 +39,7 @@ namespace KarmaPrototype
                     // After using SW02, make room once if that rule still excludes
                     // SW01; keep its attack range and the inherited cycle intact.
                     bool waveRoom = owner.previous == EnemyAttack.SW02 && owner.attacks.Contains(EnemyAttack.SW01)
-                    && !KarmaPatternCatalog.CanSelect(EnemyAttack.SW01, owner.previous, Mathf.Abs(dx) / KarmaSpace.Scale,
-                    owner.game.Player.Airborne, true, false, true, true);
+                    && !behavior.HasWaveRoom(Mathf.Abs(dx));
                     float safeGap = Mathf.Max(swordPressureTarget, SwordSpacingDistance());
                     bool pressure = swordPressurePending && Mathf.Abs(dx) < safeGap;
                     // React before the player has reached the wide melee body.

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
@@ -95,8 +96,7 @@ namespace KarmaPrototype
                 // Keep the defensive overlay readable: its four committed counters
                 // can accompany ordinary waves, while larger set pieces wait for it.
                 if (counter.Formed && candidate != EnemyAttack.SW01 && candidate != EnemyAttack.SW02) return false;
-                return KarmaPatternCatalog.CanSelect(candidate, owner.previous, distance / KarmaSpace.Scale, owner.game.Player.Airborne,
-                sight, owner.FightSeconds < owner.shieldUntil, escape, owner.FightSeconds >= owner.nextUltimate)
+                return Eligible(candidate, distance, sight, escape)
                 && SwordAttackCanReachFrom(candidate, from, owner.game.Player.Position);
             }
             public bool HasSwordCandidate(Vector2 from)
@@ -118,6 +118,7 @@ namespace KarmaPrototype
             float nextSwordBasic;
             bool swordBasicDue;
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
+            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             public SwordBossBehavior(KarmaEnemy owner) : base(owner)
             {
@@ -131,7 +132,28 @@ namespace KarmaPrototype
                 ultimate = new SW05Pattern(owner, this);
                 Register(EnemyAttack.SW05, ultimate);
             }
+            public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
+            {
+                var owned = new HashSet<Essence>(inherited);
+                var result = new List<EnemyAttack> { EnemyAttack.SW01, EnemyAttack.SW02 };
+                if (owned.Contains(Essence.RisingSlash)) result.Add(EnemyAttack.SW03);
+                if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.SW04);
+                if (owned.Count == 3) result.Add(EnemyAttack.SW05);
+                return result;
+            }
+            public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.SW05; }
+            protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
+            {
+                if (!base.Eligible(attack, distance, sight, escape)) return false;
+                if (attack == EnemyAttack.SW01 || attack == EnemyAttack.SW03) return HasWaveRoom(distance);
+                return attack != EnemyAttack.SW02 || sight;
+            }
+            public bool HasWaveRoom(float distance) { return distance >= KarmaSpace.Units(4); }
+            public override Vector2 WarningEndpoint(Vector2 from, Vector2 to)
+            { return from + (to - from) * KarmaBossProjectileGeometry.SwordShotLife(from, to - from, 1); }
             public override bool CanEngage { get { return base.CanEngage || Vector2.Distance(owner.Position, owner.game.Player.Position) <= KarmaSpace.Units(7); } }
+            public override KarmaBossAttack CreateAttackComponent(GameObject target)
+            { return target.AddComponent<KarmaSwordBossAttack>(); }
             public override bool OrientedWarnings { get { return true; } }
             public override bool GroundWarning { get { return owner.selected == EnemyAttack.SW05; } }
             public override BossAttackVisual AttackVisual(EnemyAttack attack, Vector2 velocity)
@@ -160,7 +182,7 @@ namespace KarmaPrototype
                 if (owner.selected != EnemyAttack.SWBasic)
                 { swordSkillsSinceBasic++; swordBasicDue = swordSkillsSinceBasic >= Mathf.Clamp(Settings.swordSkillsBetweenBasics, 1, 6); }
             }
-            public override float DecisionDelay { get { return KarmaPatternCatalog.IsUltimate(owner.selected) ? base.DecisionDelay : base.DecisionDelay * Mathf.Clamp(Settings.swordDecisionMultiplier, 0.25f, 1.5f); } }
+            public override float DecisionDelay { get { return IsUltimate(owner.selected) ? base.DecisionDelay : base.DecisionDelay * Mathf.Clamp(Settings.swordDecisionMultiplier, 0.25f, 1.5f); } }
             public override float RetryDelay { get { return Mathf.Max(0.05f, Settings.swordSelectionRetry); } }
             public override void Tick() { counter.Tick(); movement.ObservePressure(); }
             public override void OnDamaged() { movement.RememberSwordPressure(); counter.OnDamaged(); }

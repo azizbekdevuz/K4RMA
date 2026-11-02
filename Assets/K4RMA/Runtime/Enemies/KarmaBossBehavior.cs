@@ -27,7 +27,22 @@ namespace KarmaPrototype
             protected bool PatternCanReach(EnemyAttack attack, Vector2 from, Vector2 target)
             { return patterns.TryGetValue(attack, out var pattern) && pattern.CanReach(from, target); }
             public virtual bool CanEngage { get { return owner.game.Player.Position.x >= 12; } }
-            public virtual float ParryStunSeconds { get { return owner.Tuning.guard.parryStunSeconds; } }
+            public virtual Sprite StunSprite { get { return KarmaArtwork.Sprite("HitVFX", "Burst"); } }
+            public virtual float ParryStunSeconds { get { return 2; } }
+            public virtual void Initialize() { }
+            public virtual KarmaBossAttack CreateAttackComponent(GameObject target)
+            { return target.AddComponent<KarmaBossAttack>(); }
+            public virtual List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
+            { return new List<EnemyAttack> { EnemyAttack.GroundStrike }; }
+            public virtual bool IsUltimate(EnemyAttack attack) { return false; }
+            public virtual bool PreserveAutoShield { get { return false; } }
+            public virtual float PatternTimeout { get { return 5; } }
+            public virtual void OnParried() { }
+            public virtual bool ConsumeQueuedParry() { return false; }
+            public virtual void OnAttackParried(bool stun) { }
+            public virtual void OnPlayerDamaged() { }
+            public virtual void OnInterrupted() { }
+            public virtual Vector2 WarningEndpoint(Vector2 from, Vector2 to) { return to; }
             public virtual bool OrientedWarnings { get { return false; } }
             public virtual bool GroundWarning { get { return false; } }
             public virtual BossAttackVisual AttackVisual(EnemyAttack attack, Vector2 velocity)
@@ -49,9 +64,7 @@ namespace KarmaPrototype
             }
             protected virtual bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
-                return KarmaPatternCatalog.CanSelect(attack, owner.previous, distance / KarmaSpace.Scale,
-                owner.game.Player.Airborne, sight, owner.FightSeconds < owner.shieldUntil, escape,
-                owner.FightSeconds >= owner.nextUltimate);
+                return !IsUltimate(attack) || owner.FightSeconds >= owner.nextUltimate && !IsUltimate(owner.previous);
             }
             protected void Face(float dx)
             {

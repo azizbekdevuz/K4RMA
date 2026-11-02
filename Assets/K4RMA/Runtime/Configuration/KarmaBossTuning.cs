@@ -16,10 +16,17 @@ namespace KarmaPrototype
         [Range(0.65f, 1.5f)] public float warningMultiplier = 0.9f;
         [Min(10)] public float ultimateCooldown = 20;
         [Min(5)] public float patternTimeout = 30;
-        [Header("보스별 독립 설정")]
-        public KarmaSwordBossSettings sword = new KarmaSwordBossSettings();
-        public KarmaRisingBossSettings rising = new KarmaRisingBossSettings();
-        public KarmaGuardBossSettings guard = new KarmaGuardBossSettings();
+        // Authored values live in each boss folder's Settings/Resources profile.
+        // Lazy loading avoids Unity resource access during serialization/constructors.
+        [NonSerialized] KarmaSwordBossSettings swordSettings;
+        [NonSerialized] KarmaRisingBossSettings risingSettings;
+        [NonSerialized] KarmaGuardBossSettings guardSettings;
+        public KarmaSwordBossSettings sword
+        { get { return swordSettings ?? (swordSettings = KarmaSwordBossProfile.LoadSettings()); } }
+        public KarmaRisingBossSettings rising
+        { get { return risingSettings ?? (risingSettings = KarmaRisingBossProfile.LoadSettings()); } }
+        public KarmaGuardBossSettings guard
+        { get { return guardSettings ?? (guardSettings = KarmaGuardBossProfile.LoadSettings()); } }
         public float HealthFor(int stage)
         {
             float hp = stage == 0 ? stageOneHealth : stage == 1 ? stageTwoHealth : stage == 2 ? stageThreeHealth : finalHealth;

@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6574a805a5742d38f69fdbfda85982b, type: 3}
+  m_Name: KarmaGuardBossProfile
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaGuardBossProfile
+  settings:
+    preferredDistance: 6
+    heavyStrikeReach: 8
+    heavyStrikeDamageMultiplier: 1.5
+    shieldThrowDamageMultiplier: 0.8
+    shieldFragmentDamageMultiplier: 0.8
+    trialWaveWidth: 2.4
+    trialWaveHeight: 1
+    trialDamageMultiplier: 0.65
+    autoShieldPeriod: 8
+    autoShieldWarning: 0.8
+    parryStunSeconds: 2
+    fragmentStunSeconds: 1
+    shieldFragments: 4
+    heavyParryCueSeconds: 0.5
+    heavyHitStunSeconds: 1
+    fragmentLaunchGap: 0.3
+    fragmentChaseSpeed: 30
+    fragmentReturnSeconds: 0.4
+    barrierSteps: 6
+    barrierStepGap: 0.22
+    fragmentAimWarning: 0.5
+    barrierRecovery: 1.2
+    trialAttackCount: 7
+    trialAllowedHits: 1
+    trialAttackGap: 0.65
+    trialStunSeconds: 4
+    trialExplosionMultiplier: 2.5
+    shieldDamageMultiplier: 0.3
+    damageScale: 1
+    movementScale: 1
+    decisionScale: 1
+    recoveryScale: 1

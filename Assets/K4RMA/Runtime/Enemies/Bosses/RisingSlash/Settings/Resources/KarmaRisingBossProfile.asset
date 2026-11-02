@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ebee572ed8748e5aa7ca9f72f131047, type: 3}
+  m_Name: KarmaRisingBossProfile
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaRisingBossProfile
+  settings:
+    preferredDistance: 4.1
+    meleeReach: 8.2
+    approachSpeedMultiplier: 1.55
+    attackDecisionMultiplier: 0.58
+    meleeDamageMultiplier: 0.8
+    landingDamageMultiplier: 1
+    waveDamageMultiplier: 1.15
+    fragmentDamageMultiplier: 0.85
+    fragmentLifetime: 0.92
+    fragmentParryStunSeconds: 2
+    riseHeight: 8
+    groundBladeWidth: 10
+    groundBladeHeight: 12
+    crossingWarning: 0.65
+    crossingReset: 0.65
+    shieldDamageMultiplier: 0.3
+    damageScale: 1
+    movementScale: 1
+    decisionScale: 1
+    recoveryScale: 1

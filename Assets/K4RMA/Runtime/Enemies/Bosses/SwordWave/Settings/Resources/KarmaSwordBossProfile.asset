@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c936797fce1d454886d251f1170b2d3d, type: 3}
+  m_Name: KarmaSwordBossProfile
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSwordBossProfile
+  settings:
+    swordDecisionMultiplier: 0.75
+    swordSelectionRetry: 0.1
+    swordBasicCooldown: 2.4
+    swordPreferredDistance: 11.75
+    swordSkillsBetweenBasics: 1
+    swordRetreatCooldown: 5
+    swordRetreatStartDistance: 6.25
+    swordRetreatStopDistance: 11.75
+    swordRetreatDistance: 16
+    swordRetreatDuration: 0.6
+    swordRetreatSpeed: 32
+    swordMeleeSpacingMargin: 0.65
+    swordApproachStartDistance: 10.5
+    basicDamageMultiplier: 0.5
+    aimedDamageMultiplier: 1.15
+    swordSpeed: 32
+    swordLifetime: 1.65
+    swordWidth: 2.4
+    swordHeight: 1
+    counterWarning: 0.45
+    swordGuardDuration: 3
+    swordGuardResponseCooldown: 0.8
+    aerialSwordDamageMultiplier: 2.5
+    aerialSwordVolleyMin: 16
+    aerialSwordVolleyMax: 18
+    aerialSwordSeed: 0
+    shieldDamageMultiplier: 0.3
+    damageScale: 1
+    movementScale: 1
+    decisionScale: 1
+    recoveryScale: 1

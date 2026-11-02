@@ -28,8 +28,7 @@ namespace KarmaPrototype
             if (pendingParry)
             {
                 pendingParry = false; InterruptPatternCore(true);
-                if (PrimaryType == Essence.Guard)
-                { shieldUntil = 0; nextShield = FightSeconds + Mathf.Max(2, Tuning.guard.autoShieldPeriod); }
+                behavior.OnParried();
 
                 state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, behavior.ParryStunSeconds);
                 ShowStunCue();
@@ -47,7 +46,7 @@ namespace KarmaPrototype
             }
             if (running)
             {
-                if (FightSeconds - patternStarted > Mathf.Max(selected == EnemyAttack.GD05 ? 40 : selected == EnemyAttack.GD03 ? 12 : 5, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
+                if (FightSeconds - patternStarted > Mathf.Max(behavior.PatternTimeout, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
                 { InterruptPatternCore(true); state = ActionState.Approach; timer = 1.2f; }
                 return;
             }
@@ -65,7 +64,7 @@ namespace KarmaPrototype
             { timer = behavior.RetryDelay; return; }
             behavior.OnSelected();
             previous = selected;
-            if (KarmaPatternCatalog.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
+            if (behavior.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
             direction = game.Player.Position.x < Position.x ? -1 : 1;
             art.localScale = new Vector3(direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
             running = true; patternStarted = FightSeconds;
@@ -91,8 +90,7 @@ namespace KarmaPrototype
         IEnumerator Recovery(float seconds, bool keepAutoShield = false, bool scaleDuration = true)
         {
             ClearPatternObjects(); fullShield = frontalGuard = false;
-            // Guard owns persistent GD01; other bosses expose their ordinary recovery.
-            if (!keepAutoShield && PrimaryType != Essence.Guard) shieldUntil = shieldWarningUntil = 0;
+            if (!keepAutoShield && !behavior.PreserveAutoShield) shieldUntil = shieldWarningUntil = 0;
             animator.EndHeavyStrike();
             state = ActionState.Recover;
 
@@ -110,7 +108,7 @@ namespace KarmaPrototype
         void ShowStunCue()
         {
             if (stunCue != null) return;
-            var sprite = KarmaRisingArt.Get("Parry") ?? KarmaArtwork.Sprite("HitVFX", "Burst");
+            var sprite = behavior.StunSprite;
             if (sprite == null) return;
             var go = new GameObject("기절 표시");
             stunCue = go.transform;
@@ -133,10 +131,10 @@ namespace KarmaPrototype
         void InterruptPatternCore(bool preservePressure)
         {
             StopAllCoroutines(); behavior?.Interrupt(preservePressure); ClearPatternObjects(); HideStunCue();
-            trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
+            behavior?.OnInterrupted();
             fullShield = frontalGuard = swordGuard = running = pendingParry = false;
             shieldWarningUntil = 0;
-            if (PrimaryType != Essence.Guard) shieldUntil = 0;
+            if (!behavior.PreserveAutoShield) shieldUntil = 0;
             transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY, 0);
         }
         public void CancelCombat()

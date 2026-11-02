@@ -23,7 +23,7 @@ namespace KarmaPrototype
                 ? order[1] == Essence.SwordWave ? "WardWave" : "WardRise" : "Ward";
             FormKey = key;
             string[] names = { "Windup", "Downstroke", "FollowThrough" };
-            foreach (var sprite in KarmaArtwork.Settings.spriteLibrary.All("GuardHeavy" + key))
+            foreach (var sprite in KarmaArtwork.Sprites("GuardHeavy" + key))
                 for (int i = 0; i < names.Length; i++) if (sprite.name == names[i]) poses[i] = sprite;
             float bodyFraction = key == "Ward" ? 0.65f : key == "WardRise" ? 0.54f : 0.56f;
             scale = originalScale * (picture.sprite.bounds.size.y / (poses[0].bounds.size.y * bodyFraction));

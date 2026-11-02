@@ -50,7 +50,7 @@ namespace KarmaPrototype
                     if (signedDistance >= 0) sawPlayerInFront = true;
                     // One rear counter per GD04, while the terrain stays on its original side.
                     if ((owner.FightSeconds < owner.shieldUntil) && sawPlayerInFront && signedDistance < -KarmaSpace.PlayerHalfWidth
-                        && -signedDistance <= KarmaSpace.Units(KarmaPatternCatalog.GuardHeavyReach) + KarmaSpace.PlayerHalfWidth)
+                        && -signedDistance <= Settings.heavyStrikeReach + KarmaSpace.PlayerHalfWidth)
                     {
                         owner.selected = owner.previous = EnemyAttack.GD02;
                         owner.direction = -terrainDirection;

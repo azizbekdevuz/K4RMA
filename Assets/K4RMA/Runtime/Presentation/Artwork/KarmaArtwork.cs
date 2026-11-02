@@ -11,6 +11,19 @@ namespace KarmaPrototype
         // Enlarge the foot-pivoted artwork for the full-arena camera view.
         const float CharacterPictureScale = KarmaSpace.Scale;
         static KarmaArtworkSettings settings;
+        static KarmaSpriteLibrary[] bossLibraries;
+        static KarmaSpriteLibrary[] BossLibraries
+        {
+            get
+            {
+                if (bossLibraries == null)
+                {
+                    bossLibraries = Resources.LoadAll<KarmaSpriteLibrary>("BossArtwork");
+                    Array.Sort(bossLibraries, (a, b) => string.CompareOrdinal(a.name, b.name));
+                }
+                return bossLibraries;
+            }
+        }
         static readonly HashSet<string> failures = new HashSet<string>();
         public static KarmaArtworkSettings Settings
         {
@@ -26,7 +39,7 @@ namespace KarmaPrototype
         static void ResetCache()
         {
             // Imported textures and sprites belong to Unity, not this runtime cache.
-            settings = null;
+            settings = null; bossLibraries = null;
             failures.Clear();
         }
         public static Texture2D Texture(string name)
@@ -43,7 +56,19 @@ namespace KarmaPrototype
         }
         public static Sprite Sprite(string sheet, string pose)
         {
+            foreach (var library in BossLibraries)
+            {
+                var sprite = library.Get(sheet, pose);
+                if (sprite != null) return sprite;
+            }
             return Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
+        }
+        public static Sprite[] Sprites(string sheet)
+        {
+            var sprites = new List<Sprite>();
+            foreach (var library in BossLibraries) sprites.AddRange(library.All(sheet));
+            if (Settings.spriteLibrary != null) sprites.AddRange(Settings.spriteLibrary.All(sheet));
+            return sprites.ToArray();
         }
         public static Sprite[] InheritedPoses(string form)
         {

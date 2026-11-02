@@ -12,7 +12,7 @@ namespace KarmaPrototype
         {
             heavyStrike = new KarmaHeavyStrikeMotion(picture, pictureHome, pictureScale, order);
             Sprite reference = null;
-            foreach (var sprite in KarmaArtwork.Settings.spriteLibrary.All("GuardStagger" + heavyStrike.FormKey))
+            foreach (var sprite in KarmaArtwork.Sprites("GuardStagger" + heavyStrike.FormKey))
             {
                 if (sprite.name == "Stagger") guardStagger = sprite;
                 else if (sprite.name == "Reference") reference = sprite;

@@ -38,7 +38,7 @@ namespace KarmaPrototype
             shieldHalo.color = shieldWarningUntil > 0
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
                 : fullShield ? Color.white : swordGuard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
-            animator.GuardianPose(state.ToString(), selected, Position.y > KarmaSpace.Units(1.5f), Armored);
+            animator.GuardianPose(ActionStateNames[(int)state], selected, Position.y > KarmaSpace.Units(1.5f), Armored);
             if (Stunned)
             {
                 if (FightSeconds < stunnedUntil) return;
@@ -100,7 +100,8 @@ namespace KarmaPrototype
         { transform.position = new Vector3(Mathf.Clamp(Position.x + distance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Position.y, 0); }
         bool ClearShot(Vector2 from, Vector2 to)
         {
-            foreach (var hit in Physics2D.LinecastAll(from, to))
+            Physics2D.Linecast(from, to, TerrainFilter, terrainHits);
+            foreach (var hit in terrainHits)
                 if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null) return false;
             return true;
         }

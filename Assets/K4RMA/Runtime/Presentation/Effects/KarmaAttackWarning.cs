@@ -11,6 +11,12 @@ namespace KarmaPrototype
         LineRenderer edge, arrow;
         Color baseColor;
         bool restrainedVisual, aerialVisual, aerialGround;
+        readonly List<Vector2> points = new List<Vector2>(8);
+        readonly List<Vector2> hull = new List<Vector2>(16);
+        static readonly IComparer<Vector2> PointOrder = Comparer<Vector2>.Create(
+            (a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
+        Vector2[] vertices = System.Array.Empty<Vector2>();
+        ushort[] triangles = System.Array.Empty<ushort>();
         public void SetPath(SpriteRenderer renderer, Vector2 from, Vector2 to, Vector2 size, bool restrained = false, bool oriented = false, bool aerial = false)
         {
             if (visual == null) { visual = renderer; baseColor = renderer.color; }
@@ -24,13 +30,12 @@ namespace KarmaPrototype
             Vector2 normal = new Vector2(-axis.y, axis.x);
             Vector2 bounds = new Vector2(Mathf.Abs(to.x - from.x) + Mathf.Abs(axis.x) * size.x + Mathf.Abs(normal.x) * size.y,
                 Mathf.Abs(to.y - from.y) + Mathf.Abs(axis.y) * size.x + Mathf.Abs(normal.y) * size.y);
-            var points = new List<Vector2>(8);
-            foreach (var p in new[] { from, to })
+            points.Clear(); hull.Clear();
+            for (int end = 0; end < 2; end++)
                 for (int x = -1; x <= 1; x += 2)
                     for (int y = -1; y <= 1; y += 2)
-                        points.Add(p + axis * (size.x * x / 2) + normal * (size.y * y / 2));
-            points.Sort((a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
-            var hull = new List<Vector2>();
+                        points.Add((end == 0 ? from : to) + axis * (size.x * x / 2) + normal * (size.y * y / 2));
+            points.Sort(PointOrder);
             foreach (var p in points)
             {
                 while (hull.Count >= 2 && Cross(hull[hull.Count - 1] - hull[hull.Count - 2], p - hull[hull.Count - 1]) <= 0) hull.RemoveAt(hull.Count - 1);
@@ -44,7 +49,13 @@ namespace KarmaPrototype
                 hull.Add(p);
             }
             hull.RemoveAt(hull.Count - 1);
-            var vertices = new Vector2[hull.Count];
+            if (vertices.Length != hull.Count)
+            {
+                vertices = new Vector2[hull.Count];
+                triangles = new ushort[(hull.Count - 2) * 3];
+                for (int i = 0; i < hull.Count - 2; i++)
+                { triangles[i * 3] = 0; triangles[i * 3 + 1] = (ushort)(i + 1); triangles[i * 3 + 2] = (ushort)(i + 2); }
+            }
             // OverrideGeometry takes Sprite Rect coordinates, not pivot-relative
             // positions. Unity applies the centered pivot itself. Clamp rounding
             // error so every point stays inside this 1x1 pixel rectangle.
@@ -52,9 +63,6 @@ namespace KarmaPrototype
                 vertices[i] = new Vector2(
                     Mathf.Clamp01((hull[i].x - center.x) / bounds.x + 0.5f),
                     Mathf.Clamp01((hull[i].y - center.y) / bounds.y + 0.5f));
-            var triangles = new ushort[(hull.Count - 2) * 3];
-            for (int i = 0; i < hull.Count - 2; i++)
-            { triangles[i * 3] = 0; triangles[i * 3 + 1] = (ushort)(i + 1); triangles[i * 3 + 2] = (ushort)(i + 2); }
             if (shape == null)
             {
                 shape = Sprite.Create(renderer.sprite.texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1);
@@ -93,11 +101,11 @@ namespace KarmaPrototype
                 Vector2 tip = aerialVisual
                     ? from + axis * Mathf.Min(Vector2.Distance(from, to) * 0.25f, KarmaSpace.Units(1.2f))
                     : Vector2.Lerp(from, to, 0.7f);
-                var head = new[] { tip - axis * length + normal * length, tip, tip - axis * length - normal * length };
                 arrow.positionCount = 3;
                 for (int i = 0; i < 3; i++)
                 {
-                    var point = new Vector3((head[i].x - center.x) / bounds.x, (head[i].y - center.y) / bounds.y, 0);
+                    Vector2 head = i == 1 ? tip : tip - axis * length + normal * (i == 0 ? length : -length);
+                    var point = new Vector3((head.x - center.x) / bounds.x, (head.y - center.y) / bounds.y, 0);
                     arrow.SetPosition(i, restrainedVisual ? transform.TransformPoint(point) : point);
                 }
             }

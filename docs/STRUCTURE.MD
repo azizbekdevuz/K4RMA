@@ -11,12 +11,11 @@ K4RMA/
 │       │   │   │   │   │   ├── WardFinal.png
 │       │   │   │   │   │   ├── WardRise.png
 │       │   │   │   │   │   └── WardWave.png
-│       │   │   │   │   ├── Stagger/
-│       │   │   │   │   │   ├── Ward.png
-│       │   │   │   │   │   ├── WardFinal.png
-│       │   │   │   │   │   ├── WardRise.png
-│       │   │   │   │   │   └── WardWave.png
-│       │   │   │   │   └── ReferencePoses.png
+│       │   │   │   │   └── Stagger/
+│       │   │   │       ├── Ward.png
+│       │   │   │       ├── WardFinal.png
+│       │   │   │       ├── WardRise.png
+│       │   │   │       └── WardWave.png
 │       │   │   │   ├── Effects/
 │       │   │   │   │   ├── Bash.png
 │       │   │   │   │   ├── ParryRed.png
@@ -25,7 +24,6 @@ K4RMA/
 │       │   │   │   │   ├── Shard.png
 │       │   │   │   │   ├── ShardDB.png
 │       │   │   │   │   ├── Shield.png
-│       │   │   │   │   ├── StunParry.png
 │       │   │   │   │   ├── Wave.png
 │       │   │   │   │   └── WholeShield.png
 │       │   │   │   └── Resources/
@@ -41,8 +39,6 @@ K4RMA/
 │       │   │   │                   └── Revival/
 │       │   │   │                       └── Ward.png
 │       │   │   ├── RisingSlash/
-│       │   │   │   ├── Characters/
-│       │   │   │   │   └── ReferencePoses.png
 │       │   │   │   ├── Effects/
 │       │   │   │   │   ├── Fragment0.png
 │       │   │   │   │   ├── Fragment1.png
@@ -53,7 +49,6 @@ K4RMA/
 │       │   │   │   │   ├── Fragment6.png
 │       │   │   │   │   ├── Fragment7.png
 │       │   │   │   │   ├── Impact.png
-│       │   │   │   │   ├── Parry.png
 │       │   │   │   │   ├── Shield.png
 │       │   │   │   │   ├── Slash.png
 │       │   │   │   │   ├── SlashEcho.png
@@ -72,10 +67,7 @@ K4RMA/
 │       │   │   │                   └── Revival/
 │       │   │   │                       └── Rise.png
 │       │   │   └── SwordWave/
-│       │   │       ├── Characters/
-│       │   │       │   └── ReferencePoses.png
 │       │   │       ├── Effects/
-│       │   │       │   ├── StunParry.png
 │       │   │       │   ├── SW01_StaggeredWave.png
 │       │   │       │   ├── SW02_AimedSlash.png
 │       │   │       │   ├── SW03_GroundImpact.png
@@ -122,6 +114,7 @@ K4RMA/
 │       │       │       ├── Effects/
 │       │       │       │   ├── Guardian.png
 │       │       │       │   ├── Hit.png
+│       │       │       │   ├── Parry.png
 │       │       │       │   ├── Personalization.png
 │       │       │       │   └── Player.png
 │       │       │       ├── Environments/
@@ -329,11 +322,13 @@ K4RMA/
 │   ├── VersionControlSettings.asset
 │   └── VFXManager.asset
 ├── tests/
+│   ├── test_optimize_images.py
 │   └── Unity/
 │       ├── KarmaBossIsolationChecks.cs
 │       ├── KarmaGuardPlayChecks.cs
 │       └── KarmaSW05PlayChecks.cs
 ├── tools/
+│   ├── optimize-images.py
 │   └── run-boss-playchecks.py
 ├── .gitignore
 ├── AGENTS.md

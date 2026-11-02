@@ -30,12 +30,12 @@ MonoBehaviour:
     - {fileID: -1707763843, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
     poses: []
   - id: Inheritance
-    source: Assets/K4RMA/Arts/Bosses/SwordWave/Characters/ReferencePoses.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png
     sprites:
-    - {fileID: 23252103, guid: d3e6566c508e4445972c524365826c71, type: 3}
-    - {fileID: -2127646494, guid: d3e6566c508e4445972c524365826c71, type: 3}
-    - {fileID: 404712181, guid: d3e6566c508e4445972c524365826c71, type: 3}
-    - {fileID: -1972886466, guid: d3e6566c508e4445972c524365826c71, type: 3}
+    - {fileID: 23252103, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -2127646494, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 404712181, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -1972886466, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     poses: []
   - id: SwordBossVFX
     source: Assets/K4RMA/Arts/Bosses/SwordWave/Effects
@@ -62,8 +62,8 @@ MonoBehaviour:
     poses:
     - Wave
   - id: BossStun
-    source: Assets/K4RMA/Arts/Bosses/SwordWave/Effects/StunParry.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Parry.png
     sprites:
-    - {fileID: 21300000, guid: d7d05810eb494ccfbe82b9ff57c87e5c, type: 3}
+    - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
     poses:
     - Wave

@@ -126,11 +126,12 @@ namespace KarmaPrototype
             echo.color = new Color(tint.r, tint.g, tint.b, fade * (restrainedVisual ? 0.1f : 0.45f));
             echo.transform.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(-15, 10, t));
             echo.transform.localScale = scale * (restrainedVisual ? Mathf.Lerp(0.94f, 1.08f, t) : Mathf.Lerp(0.9f, 1.35f, t));
+            float moteDamping = Mathf.Exp(-5 * Time.deltaTime);
             for (int i = 0; i < motes.Length; i++)
             {
                 ref var mote = ref motes[i];
                 mote.renderer.transform.localPosition += mote.velocity * Time.deltaTime;
-                mote.velocity *= Mathf.Exp(-5 * Time.deltaTime);
+                mote.velocity *= moteDamping;
                 mote.renderer.color = new Color(tint.r, tint.g, tint.b, fade * (1 - t));
             }
         }

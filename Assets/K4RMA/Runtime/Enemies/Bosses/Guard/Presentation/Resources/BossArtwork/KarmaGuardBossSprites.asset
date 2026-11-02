@@ -30,12 +30,12 @@ MonoBehaviour:
     - {fileID: 870262399, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
     poses: []
   - id: Inheritance
-    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ReferencePoses.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png
     sprites:
-    - {fileID: -1531423279, guid: 7edf8f663e6148a79513bafad7bff6de, type: 3}
-    - {fileID: -1318006208, guid: 7edf8f663e6148a79513bafad7bff6de, type: 3}
-    - {fileID: -984783832, guid: 7edf8f663e6148a79513bafad7bff6de, type: 3}
-    - {fileID: -303785957, guid: 7edf8f663e6148a79513bafad7bff6de, type: 3}
+    - {fileID: -1531423279, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -1318006208, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -984783832, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -303785957, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     poses: []
   - id: GuardBossVFX
     source: Assets/K4RMA/Arts/Bosses/Guard/Effects
@@ -112,8 +112,8 @@ MonoBehaviour:
     poses:
     - Ward
   - id: BossStun
-    source: Assets/K4RMA/Arts/Bosses/Guard/Effects/StunParry.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Parry.png
     sprites:
-    - {fileID: 21300000, guid: 8726544d175e4e27bf90a9cccc45b8ac, type: 3}
+    - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
     poses:
     - Ward

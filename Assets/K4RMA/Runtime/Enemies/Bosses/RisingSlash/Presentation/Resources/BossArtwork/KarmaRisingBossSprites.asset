@@ -30,12 +30,12 @@ MonoBehaviour:
     - {fileID: 942584010, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
     poses: []
   - id: Inheritance
-    source: Assets/K4RMA/Arts/Bosses/RisingSlash/Characters/ReferencePoses.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png
     sprites:
-    - {fileID: -804002876, guid: 5b88fac6b55c46ec9dc65a5bdbd1c685, type: 3}
-    - {fileID: -711018825, guid: 5b88fac6b55c46ec9dc65a5bdbd1c685, type: 3}
-    - {fileID: -114026187, guid: 5b88fac6b55c46ec9dc65a5bdbd1c685, type: 3}
-    - {fileID: 1732185949, guid: 5b88fac6b55c46ec9dc65a5bdbd1c685, type: 3}
+    - {fileID: -804002876, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -711018825, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -114026187, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 1732185949, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     poses: []
   - id: RisingBossVFX
     source: Assets/K4RMA/Arts/Bosses/RisingSlash/Effects
@@ -78,7 +78,7 @@ MonoBehaviour:
     poses:
     - Rise
   - id: BossStun
-    source: Assets/K4RMA/Arts/Bosses/RisingSlash/Effects/Parry.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Parry.png
     sprites:
     - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
     poses:

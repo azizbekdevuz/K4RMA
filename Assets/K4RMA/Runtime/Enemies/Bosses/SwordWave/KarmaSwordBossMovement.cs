@@ -128,12 +128,15 @@ namespace KarmaPrototype
                 float after = Mathf.Clamp(before + step, left, right);
                 step = after - before;
                 if (Mathf.Abs(step) <= 0.0001f) return 0;
-                foreach (var hit in Physics2D.BoxCastAll(owner.Position, KarmaSpace.Units(new Vector2(0.8f, 1.6f)), 0,
-                Vector2.right * Mathf.Sign(step), Mathf.Abs(step) + 0.1f))
+                Physics2D.BoxCast(owner.Position, KarmaSpace.Units(new Vector2(0.8f, 1.6f)), 0,
+                    Vector2.right * Mathf.Sign(step), TerrainFilter, owner.terrainHits, Mathf.Abs(step) + 0.1f);
+                foreach (var hit in owner.terrainHits)
                 if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null)
                 return 0;
                 bool floor = false;
-                foreach (var hit in Physics2D.RaycastAll(new Vector2(after, owner.Position.y), Vector2.down, KarmaSpace.GuardianGroundY + 0.5f))
+                Physics2D.Raycast(new Vector2(after, owner.Position.y), Vector2.down, TerrainFilter,
+                    owner.terrainHits, KarmaSpace.GuardianGroundY + 0.5f);
+                foreach (var hit in owner.terrainHits)
                 if (hit.collider.GetComponent<KarmaSurface>() != null) { floor = true; break; }
                 if (!floor) return 0;
                 owner.Move(step);

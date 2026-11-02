@@ -22,8 +22,7 @@ namespace KarmaPrototype
         internal int CurrentPattern { get { return (int)selected; } }
         EnemyAttack selected, previous = (EnemyAttack)(-1);
         float timer, direction, patternStarted, nextUltimate, stunnedUntil;
-        float shieldUntil, nextShield, shieldWarningUntil;
-        bool engaged, running, stopped, fullShield, frontalGuard, swordGuard, pendingParry;
+        bool engaged, running, stopped, fullShield, pendingParry;
         bool announcedEnrage;
         KarmaBossTuning Tuning { get { return game.Config.BossTuning; } }
         float Damage { get { return game.Config.enemyDamage * Tuning.damageMultiplier * behavior.Balance.damageScale; } }
@@ -40,8 +39,11 @@ namespace KarmaPrototype
         public float FightSeconds { get; private set; }
         public bool Stunned { get { return state == ActionState.Stunned; } }
         public bool Invulnerable { get { return fullShield; } }
-        public bool Armored { get { return fullShield || swordGuard || frontalGuard || FightSeconds < shieldUntil; } }
-        public bool AutoShieldActive { get { return FightSeconds < shieldUntil; } }
+        public bool Armored { get { return fullShield || behavior != null && behavior.Armored; } }
+        public bool AutoShieldActive { get { return behavior != null && behavior.AutoShieldActive; } }
+        public bool TryQueueParry() { return behavior != null && behavior.TryQueueParry(); }
+        internal Vector3? CameraFocus { get { return behavior?.CameraFocus; } }
+        internal float CameraSize(float aspect) { return behavior != null ? behavior.CameraSize(aspect) : 0; }
         public void Initialize(KarmaGame director, int stage)
         {
             game = director;

@@ -114,6 +114,8 @@ namespace KarmaPrototype
             ApplyStyle();
         }
         public void Emphasize() { baseColor.a = Mathf.Max(baseColor.a, 0.58f); }
+        // Callers own the warning palette.
+        public void SetTint(Color tint) { baseColor = tint; ApplyStyle(); }
         void Update()
         { ApplyStyle(); }
         void ApplyStyle()

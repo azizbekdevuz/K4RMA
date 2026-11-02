@@ -20,8 +20,10 @@ namespace KarmaPrototype
                 {
                     Vector2 origin = i % 2 == 0 ? first : second;
                     var mark = owner.PathMark(origin, origin + velocity * sword.WaveLife, waveSize);
+                    if (!scars) KarmaSwordAttackPolish.Warning(mark);
 
                     float warning = i == 0 ? owner.Warning(0.65f) : Mathf.Max(0.42f, 0.54f * owner.Tempo);
+                    if (!scars) KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, origin, warning, false);
                     if (!scars)
                     {
                         owner.state = ActionState.Telegraph;
@@ -30,9 +32,12 @@ namespace KarmaPrototype
                     else owner.animator.PlayWavePhase("Windup", warning);
                     yield return owner.Wait(warning);
                     owner.state = ActionState.Attack; owner.animator.Attack(); Destroy(mark.gameObject);
-                    owner.Attack(origin, velocity, waveSize, sword.WaveLife);
-                    if (!scars) sword.WaveLaunchVFX(origin, velocity, waveSize, false);
-                    else { owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("Guard"); }
+                    if (!scars)
+                    {
+                        sword.ReleaseSW01(origin, velocity, waveSize, sword.WaveLife, i % 2 != 0);
+                        sword.WaveLaunchVFX(origin, velocity, waveSize, false, i % 2 != 0);
+                    }
+                    else { owner.Attack(origin, velocity, waveSize, sword.WaveLife); owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("Guard"); }
                 }
                 yield return owner.Wait(sword.WaveLife);
             }

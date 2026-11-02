@@ -1,0 +1,104 @@
+#if UNITY_EDITOR
+using System;
+using System.Collections;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
+using UnityEditor;
+using UnityEngine;
+using KarmaPrototype;
+
+[InitializeOnLoad]
+public static class KarmaRisingPlayChecks
+{
+    const string Key = "K4RMA.RisingOwnershipChecks";
+    const BindingFlags F = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    static KarmaGame game;
+    static KarmaEnemy enemy;
+    static bool started;
+    static string error;
+    static int assertions;
+    static KarmaRisingPlayChecks() { EditorApplication.update += Pump; }
+    static void Pump()
+    {
+        if (!SessionState.GetBool(Key, false)) return;
+        EditorApplication.QueuePlayerLoopUpdate();
+        if (!EditorApplication.isPlaying) return;
+        Application.runInBackground = true; EditorApplication.isPaused = false;
+        if (!started && Time.frameCount > 2) { started = true; Run(); }
+    }
+    public static void RunBatch()
+    {
+        SessionState.SetBool(Key, true);
+        EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        EditorApplication.EnterPlaymode();
+    }
+    static object Get(object target, string name) { return target.GetType().GetField(name, F).GetValue(target); }
+    static void Set(object target, string name, object value) { target.GetType().GetField(name, F).SetValue(target, value); }
+    static object Call(object target, string name, params object[] args) { return target.GetType().GetMethod(name, F).Invoke(target, args); }
+    static void Check(bool ok, string message) { assertions++; if (!ok) throw new Exception(message); }
+    static async Task Until(Func<bool> done)
+    {
+        double end = EditorApplication.timeSinceStartup + 90;
+        while (!done()) { Check(EditorApplication.timeSinceStartup < end, "Rising pattern timeout"); await Task.Delay(10); }
+    }
+    static void Reset()
+    {
+        game.StartRun();
+        foreach (var essence in new[] { Essence.RisingSlash, Essence.SwordWave, Essence.Guard })
+        { game.Player.Essences.Preview(essence); game.Player.Essences.Confirm(out _); }
+        typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, 3);
+        Call(game, "LoadRoom", true); enemy = game.Enemies[0];
+        enemy.transform.position = new Vector3(20, KarmaSpace.GuardianGroundY, 0);
+        var body = game.Player.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
+        body.position = game.Player.transform.position = new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.02f);
+        Set(game.Player, "invulnerableUntil", Time.time + 1000);
+        Set(enemy, "engaged", true); Set(enemy, "timer", float.MaxValue);
+    }
+    static void Force(EnemyAttack pattern)
+    {
+        Call(enemy, "InterruptPattern"); Set(enemy, "selected", pattern); Set(enemy, "direction", 1f);
+        Set(enemy, "running", true); Set(enemy, "patternStarted", enemy.FightSeconds);
+        enemy.StartCoroutine((IEnumerator)Call(enemy, "RunPattern"));
+    }
+    static async void Run()
+    {
+        int exit = 0; string result;
+        try
+        {
+            Application.runInBackground = true; Time.captureDeltaTime = 1f / 60;
+            game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
+            var config = UnityEngine.Object.Instantiate(game.Config); config.playerHealth = 1000000; Set(game, "config", config);
+            Application.logMessageReceived += Capture;
+            foreach (var pattern in new[] { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.UP03, EnemyAttack.UP04, EnemyAttack.UP05 })
+            {
+                Reset(); Force(pattern);
+                await Until(() => !(bool)Get(enemy, "running"));
+                Set(enemy, "timer", float.MaxValue);
+                Check(!enemy.Invulnerable && !enemy.Armored, pattern + " clears defense");
+                Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f, pattern + " lands");
+                Check(enemy.DamageBounds.size.sqrMagnitude > 0, pattern + " preserves damage bounds");
+                var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
+                animator.GuardianPose("Attack", pattern, true, false);
+                Check(animator.CurrentPose == "AirSlash", pattern + " uses local airborne pose");
+                animator.GuardianPose("Recover", pattern, false, false);
+                Check(animator.CurrentPose == "Landing", pattern + " uses local recovery pose");
+                Debug.Log("PASS: Rising " + pattern + " executes and cleans up");
+            }
+            Reset(); Force(EnemyAttack.UP04); enemy.CancelCombat();
+            Check(!enemy.Invulnerable && !enemy.Armored, "interruption clears rising defense");
+            Reset(); float health = enemy.Health; enemy.TakeDamage(1);
+            Check(enemy.Health < health, "Rising retains normal damage");
+            Check(error == null, "no runtime error: " + error);
+            result = "PASS: Rising basic/UP01-UP05 execution, local poses, landing, defense cleanup, interruption and damage";
+        }
+        catch (Exception e) { exit = 1; result = "FAIL: " + e; Debug.LogException(e); }
+        Directory.CreateDirectory("output/validation");
+        File.WriteAllText("output/validation/rising-play-validation.txt", result + "\n");
+        Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(exit);
+    }
+    static void Capture(string message, string stack, LogType type)
+    { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/K4RMA/")) error = message; }
+}
+#endif

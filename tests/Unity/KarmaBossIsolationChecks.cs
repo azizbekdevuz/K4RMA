@@ -27,33 +27,25 @@ public static class KarmaBossIsolationChecks
     }
     static void Run()
     {
-        Check(Resources.Load<KarmaSwordBossProfile>("KarmaSwordBossProfile") != null, "Sword profile imports");
-        Check(Resources.Load<KarmaRisingBossProfile>("KarmaRisingBossProfile") != null, "Rising profile imports");
-        Check(Resources.Load<KarmaGuardBossProfile>("KarmaGuardBossProfile") != null, "Guard profile imports");
+        var fixtures = new List<KarmaBossOwnershipFixture>();
+        foreach (var type in typeof(KarmaBossOwnershipFixture).Assembly.GetTypes())
+            if (!type.IsAbstract && typeof(KarmaBossOwnershipFixture).IsAssignableFrom(type))
+                fixtures.Add((KarmaBossOwnershipFixture)Activator.CreateInstance(type, true));
+        foreach (var fixture in fixtures) fixture.CheckSettings(Check);
         CheckArtwork();
         CheckRuntimeOptimizations();
-        var first = new KarmaBossTuning(); var second = new KarmaBossTuning();
-        Check(Mathf.Approximately(first.sword.swordSpeed, 32), "Sword saved speed survives migration");
-        Check(Mathf.Approximately(first.rising.meleeReach, 8.2f), "Rising saved reach survives migration");
-        Check(Mathf.Approximately(first.guard.fragmentChaseSpeed, 30), "Guard saved speed survives migration");
-        first.sword.swordSpeed = 123; first.rising.meleeReach = 123; first.guard.fragmentChaseSpeed = 123;
-        Check(second.sword.swordSpeed == 32, "Sword runtime settings are isolated");
-        Check(Mathf.Approximately(second.rising.meleeReach, 8.2f), "Rising runtime settings are isolated");
-        Check(second.guard.fragmentChaseSpeed == 30, "Guard runtime settings are isolated");
-        Check(Resources.Load<KarmaSwordBossProfile>("KarmaSwordBossProfile").settings.swordSpeed == 32, "Runtime tuning leaves asset intact");
-        var config = ScriptableObject.CreateInstance<KarmaConfig>();
-        var clone = UnityEngine.Object.Instantiate(config);
-        config.BossTuning.guard.autoShieldPeriod = 123;
-        Check(clone.BossTuning.guard.autoShieldPeriod == 8, "Cloned game configs have private boss settings");
-        UnityEngine.Object.DestroyImmediate(config); UnityEngine.Object.DestroyImmediate(clone);
         var host = new GameObject("Boss ownership check"); host.SetActive(false);
         try
         {
             var enemy = host.AddComponent<KarmaEnemy>();
-            var types = new[] { "SwordBossBehavior", "RisingBossBehavior", "GuardBossBehavior", "BossBehavior" };
             var primaries = new[] { Essence.SwordWave, Essence.RisingSlash, Essence.Guard };
-            foreach (var typeName in types)
+            foreach (var fixture in fixtures)
             {
+                var typeName = fixture.BehaviorName;
+                typeof(KarmaEnemy).GetProperty("PrimaryType").SetValue(enemy,
+                    fixture.Primary);
+                var routed = typeof(KarmaEnemy).GetMethod("CreateBehavior", Hidden).Invoke(enemy, null);
+                Check(routed.GetType().Name == typeName, "Local registration discovers " + typeName);
                 var type = typeof(KarmaEnemy).GetNestedType(typeName, BindingFlags.NonPublic);
                 var behavior = Activator.CreateInstance(type, new object[] { enemy });
                 var build = type.GetMethod("BuildCycle");
@@ -64,23 +56,30 @@ public static class KarmaBossIsolationChecks
                     var inherited = new List<Essence>();
                     if (typeName != "BossBehavior")
                     {
-                        int primary = Array.IndexOf(types, typeName);
+                        int primary = Array.IndexOf(primaries, fixture.Primary.Value);
                         inherited.Add(primaries[primary]);
                         for (int i = 0; i < primaries.Length; i++)
                             if (i != primary && (mask & (1 << i)) != 0) inherited.Add(primaries[i]);
                     }
                     var cycle = (List<EnemyAttack>)build.Invoke(behavior, new object[] { inherited });
-                    var expected = Expected(typeName, inherited);
+                    var expected = fixture.Expected(inherited);
                     Check(string.Join(",", cycle) == string.Join(",", expected), typeName + " preserves unlock/order: " + mask);
                     foreach (var attack in cycle) Check(registered.Contains(attack), typeName + " registers " + attack);
                 }
-                if (typeName == "GuardBossBehavior")
-                    Check(registered[EnemyAttack.GroundStrike].GetType().Name == "GDBasicPattern", "Guard basic attack is locally owned");
+                Check(registered[EnemyAttack.GroundStrike].GetType().Name == fixture.BasicPattern, "Basic attack ownership: " + typeName);
+                if (fixture.Primary.HasValue)
+                {
+                    // New boss-local patterns do not require editing the shared legacy enum.
+                    var localId = (EnemyAttack)(1000 * ((int)fixture.Primary.Value + 1) + 999);
+                    baseType.GetMethod("Register", Hidden).Invoke(behavior,
+                        new object[] { localId, registered[EnemyAttack.GroundStrike] });
+                    Check(registered.Contains(localId), "Boss-local extension ID registers without shared declarations");
+                }
                 var attackHost = new GameObject("Attack ownership check");
                 try
                 {
                     var component = (KarmaBossAttack)type.GetMethod("CreateAttackComponent").Invoke(behavior, new object[] { attackHost });
-                    Check((component is KarmaSwordBossAttack) == (typeName == "SwordBossBehavior"), "Only sword uses sword flight policy");
+                    Check(component.GetType() == fixture.ProjectileType, "Projectile ownership: " + typeName);
                 }
                 finally { UnityEngine.Object.DestroyImmediate(attackHost); }
             }
@@ -236,34 +235,22 @@ public static class KarmaBossIsolationChecks
             }
         }
         Check(KarmaArtwork.Sprite("GuardianVFX", "Wave") != null, "Shared boss effects remain available");
-        Check(Resources.Load<Material>("SW05/SW05CrimsonBlade") != null, "Sword material Resources path survives move");
     }
-    static List<EnemyAttack> Expected(string boss, List<Essence> inherited)
+    sealed class NeutralOwnership : KarmaBossOwnershipFixture
     {
-        var result = new List<EnemyAttack>();
-        if (boss == "SwordBossBehavior")
-        {
-            result.Add(EnemyAttack.SW01); result.Add(EnemyAttack.SW02);
-            if (inherited.Contains(Essence.RisingSlash)) result.Add(EnemyAttack.SW03);
-            if (inherited.Contains(Essence.Guard)) result.Add(EnemyAttack.SW04);
-            if (inherited.Count == 3) result.Add(EnemyAttack.SW05);
-        }
-        else if (boss == "RisingBossBehavior")
-        {
-            result.Add(EnemyAttack.GroundStrike); result.Add(EnemyAttack.UP01); result.Add(EnemyAttack.UP02);
-            if (inherited.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
-            if (inherited.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
-            if (inherited.Count == 3) result.Add(EnemyAttack.UP05);
-        }
-        else if (boss == "GuardBossBehavior")
-        {
-            result.Add(EnemyAttack.GroundStrike); result.Add(EnemyAttack.GD02);
-            if (inherited.Contains(Essence.SwordWave)) result.Add(EnemyAttack.GD03);
-            if (inherited.Contains(Essence.RisingSlash)) result.Add(EnemyAttack.GD04);
-            if (inherited.Count == 3) result.Add(EnemyAttack.GD05);
-        }
-        else result.Add(EnemyAttack.GroundStrike);
-        return result;
+        public override Essence? Primary => null;
+        public override string BehaviorName => "BossBehavior";
+        public override List<EnemyAttack> Expected(List<Essence> inherited)
+        { return new List<EnemyAttack> { EnemyAttack.GroundStrike }; }
     }
+}
+public abstract class KarmaBossOwnershipFixture
+{
+    public abstract Essence? Primary { get; }
+    public abstract string BehaviorName { get; }
+    public virtual string BasicPattern => "GroundStrikePattern";
+    public virtual Type ProjectileType => typeof(KarmaBossAttack);
+    public abstract List<EnemyAttack> Expected(List<Essence> inherited);
+    public virtual void CheckSettings(Action<bool, string> check) { }
 }
 #endif

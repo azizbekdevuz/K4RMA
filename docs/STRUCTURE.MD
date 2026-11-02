@@ -12,10 +12,10 @@ K4RMA/
 │       │   │   │   │   │   ├── WardRise.png
 │       │   │   │   │   │   └── WardWave.png
 │       │   │   │   │   └── Stagger/
-│       │   │   │       ├── Ward.png
-│       │   │   │       ├── WardFinal.png
-│       │   │   │       ├── WardRise.png
-│       │   │   │       └── WardWave.png
+│       │   │   │   │       ├── Ward.png
+│       │   │   │   │       ├── WardFinal.png
+│       │   │   │   │       ├── WardRise.png
+│       │   │   │   │       └── WardWave.png
 │       │   │   │   ├── Effects/
 │       │   │   │   │   ├── Bash.png
 │       │   │   │   │   ├── ParryRed.png
@@ -71,9 +71,17 @@ K4RMA/
 │       │   │       │   ├── SW01_StaggeredWave.png
 │       │   │       │   ├── SW02_AimedSlash.png
 │       │   │       │   ├── SW03_GroundImpact.png
+│       │   │       │   ├── SW03_GroundScar_v6.png
 │       │   │       │   ├── SW03_RisingBlade.png
+│       │   │       │   ├── SW03_RisingBlade_v6.png
+│       │   │       │   ├── SW04_CounterBlade_v6.png
 │       │   │       │   ├── SW04_CounterWave.png
-│       │   │       │   └── SW05_AerialSword.png
+│       │   │       │   ├── SW05_AerialSword.png
+│       │   │       │   ├── Sword_Crescent_v6.png
+│       │   │       │   ├── Sword_GuardRing_v6.png
+│       │   │       │   ├── Sword_Impact_v6.png
+│       │   │       │   ├── Sword_Release_v6.png
+│       │   │       │   └── Sword_Shard_v6.png
 │       │   │       ├── Resources/
 │       │   │       │   ├── K4RMAArtwork/
 │       │   │       │   │   └── Characters/
@@ -96,9 +104,13 @@ K4RMA/
 │       │   │       │   │   ├── SW05EmbeddedWood.shader
 │       │   │       │   │   ├── SW05JudgementSword.png
 │       │   │       │   │   └── SW05WoodContact.mat
-│       │   │       │   └── KarmaAerialSword.mat
+│       │   │       │   ├── KarmaAerialSword.mat
+│       │   │       │   ├── KarmaSwordRetreatEcho.mat
+│       │   │       │   └── KarmaSwordRisePolish.mat
 │       │   │       └── Shaders/
-│       │   │           └── KarmaAerialSword.shader
+│       │   │           ├── KarmaAerialSword.shader
+│       │   │           ├── KarmaSwordRetreatEcho.shader
+│       │   │           └── KarmaSwordRisePolish.shader
 │       │   └── Common/
 │       │       ├── Resources/
 │       │       │   └── K4RMAArtwork/
@@ -176,6 +188,7 @@ K4RMA/
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
 │       │   │   │   │   │   │   └── KarmaGuardBossProfile.asset
+│       │   │   │   │   │   ├── KarmaBossTuning.Guard.cs
 │       │   │   │   │   │   ├── KarmaGuardBossProfile.cs
 │       │   │   │   │   │   └── KarmaGuardBossSettings.cs
 │       │   │   │   │   ├── KarmaEnemy.Guard.cs
@@ -193,12 +206,14 @@ K4RMA/
 │       │   │   │   │   │   ├── Resources/
 │       │   │   │   │   │   │   └── BossArtwork/
 │       │   │   │   │   │   │       └── KarmaRisingBossSprites.asset
+│       │   │   │   │   │   ├── KarmaCharacterAnimator.Rising.cs
 │       │   │   │   │   │   ├── KarmaRisingArt.cs
 │       │   │   │   │   │   ├── KarmaRisingCharge.cs
 │       │   │   │   │   │   └── KarmaRisingPolish.cs
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
 │       │   │   │   │   │   │   └── KarmaRisingBossProfile.asset
+│       │   │   │   │   │   ├── KarmaBossTuning.Rising.cs
 │       │   │   │   │   │   ├── KarmaRisingBossProfile.cs
 │       │   │   │   │   │   └── KarmaRisingBossSettings.cs
 │       │   │   │   │   ├── KarmaRisingBossBehavior.cs
@@ -209,6 +224,7 @@ K4RMA/
 │       │   │   │       │   ├── KarmaBossProjectileGeometry.cs
 │       │   │   │       │   ├── KarmaSW05RainBlade.cs
 │       │   │   │       │   ├── KarmaSwordBossAttack.cs
+│       │   │   │       │   ├── KarmaSwordScarPlanner.cs
 │       │   │   │       │   ├── SW01.cs
 │       │   │   │       │   ├── SW02.cs
 │       │   │   │       │   ├── SW03.cs
@@ -220,12 +236,19 @@ K4RMA/
 │       │   │   │       │   ├── Resources/
 │       │   │   │       │   │   └── BossArtwork/
 │       │   │   │       │   │       └── KarmaSwordBossSprites.asset
+│       │   │   │       │   ├── KarmaCharacterAnimator.Sword.cs
+│       │   │   │       │   ├── KarmaCharacterAnimator.SwordRetreat.cs
 │       │   │   │       │   ├── KarmaSW05VFX.cs
+│       │   │   │       │   ├── KarmaSwordAttackPolish.cs
+│       │   │   │       │   ├── KarmaSwordHitFeedback.cs
+│       │   │   │       │   ├── KarmaSwordRetreatAfterimages.cs
+│       │   │   │       │   ├── KarmaSwordScarRise.cs
 │       │   │   │       │   ├── KarmaWaveArtwork.cs
 │       │   │   │       │   └── KarmaWaveMotion.cs
 │       │   │   │       ├── Settings/
 │       │   │   │       │   ├── Resources/
 │       │   │   │       │   │   └── KarmaSwordBossProfile.asset
+│       │   │   │       │   ├── KarmaBossTuning.Sword.cs
 │       │   │   │       │   ├── KarmaSwordBossProfile.cs
 │       │   │   │       │   └── KarmaSwordBossSettings.cs
 │       │   │   │       ├── KarmaSwordBossBehavior.cs
@@ -322,11 +345,27 @@ K4RMA/
 │   ├── VersionControlSettings.asset
 │   └── VFXManager.asset
 ├── tests/
-│   ├── test_optimize_images.py
-│   └── Unity/
-│       ├── KarmaBossIsolationChecks.cs
-│       ├── KarmaGuardPlayChecks.cs
-│       └── KarmaSW05PlayChecks.cs
+│   ├── Unity/
+│   │   ├── Guard/
+│   │   │   ├── KarmaGuardOwnershipChecks.cs
+│   │   │   └── KarmaGuardPlayChecks.cs
+│   │   ├── RisingSlash/
+│   │   │   ├── KarmaRisingOwnershipChecks.cs
+│   │   │   └── KarmaRisingPlayChecks.cs
+│   │   ├── SwordWave/
+│   │   │   ├── KarmaSW05PlayChecks.cs
+│   │   │   ├── KarmaSwordFinalPolishChecks.cs
+│   │   │   ├── KarmaSwordOverhaulPlayChecks.cs
+│   │   │   ├── KarmaSwordOwnershipChecks.cs
+│   │   │   ├── KarmaSwordPlayChecks.cs
+│   │   │   ├── KarmaSwordPolishPlayChecks.cs
+│   │   │   ├── KarmaSwordRandomParryChecks.cs
+│   │   │   ├── KarmaSwordRetreatDashPlayChecks.cs
+│   │   │   ├── KarmaSwordSlideDistanceChecks.cs
+│   │   │   └── KarmaSwordWallCounterChecks.cs
+│   │   └── KarmaBossIsolationChecks.cs
+│   ├── test_boss_boundaries.py
+│   └── test_optimize_images.py
 ├── tools/
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py

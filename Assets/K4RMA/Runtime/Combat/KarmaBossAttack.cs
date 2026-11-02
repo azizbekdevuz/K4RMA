@@ -9,6 +9,7 @@ namespace KarmaPrototype
         protected Vector2 velocity, size;
         float remaining, damage, stun;
         KarmaAttackContact contact;
+        EnemyAttack sourcePattern;
         bool parryStun, shieldBreak;
         protected virtual bool Oriented { get { return false; } }
         protected virtual bool AttachTrail { get { return true; } }
@@ -20,7 +21,7 @@ namespace KarmaPrototype
         protected virtual bool FinishFlight(Vector2 to) { return false; }
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
             Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null,
-            bool restrainedVisual = false, bool separateLaunch = false, string extraWavePose = null, string visualSheet = "GuardianVFX", bool parryStun = false, bool shieldBreak = false, bool renderArtwork = true)
+            bool restrainedVisual = false, bool separateLaunch = false, string extraWavePose = null, string visualSheet = "GuardianVFX", bool parryStun = false, bool shieldBreak = false, bool renderArtwork = true, EnemyAttack? sourcePattern = null)
         {
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
             var attack = owner.CreateAttackComponent(go);
@@ -44,6 +45,7 @@ namespace KarmaPrototype
             }
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;
             attack.remaining = life; attack.damage = damage; attack.contact = contact ?? new KarmaAttackContact(); attack.stun = stun;
+            attack.sourcePattern = sourcePattern ?? (EnemyAttack)owner.CurrentPattern;
             return attack;
         }
         public SpriteRenderer Visual { get; private set; }
@@ -90,7 +92,7 @@ namespace KarmaPrototype
             dt = FlightStep(from, dt);
             to = from + velocity * dt;
             transform.position = to;
-            owner.TryAttackHit(from, to, size, damage, contact, stun, Oriented ? (velocity.sqrMagnitude > 0.000001f ? velocity.normalized : Vector2.right) : (Vector2?)null, parryStun, shieldBreak);
+            owner.TryAttackHit(from, to, size, damage, contact, stun, Oriented ? (velocity.sqrMagnitude > 0.000001f ? velocity.normalized : Vector2.right) : (Vector2?)null, parryStun, shieldBreak, sourcePattern);
             remaining -= Time.deltaTime;
             if (FinishFlight(to))
             { gameObject.SetActive(false); Destroy(gameObject); return; }

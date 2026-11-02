@@ -6,6 +6,8 @@ namespace KarmaPrototype
     public sealed partial class KarmaEnemy
     {
         // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
+        [BossKind(Essence.Guard)]
+        [UnityEngine.Scripting.Preserve]
         sealed class GuardBossBehavior : BossBehavior
         {
             new KarmaGuardBossSettings Settings { get { return owner.Tuning.guard; } }
@@ -13,6 +15,7 @@ namespace KarmaPrototype
             public override KarmaBossBalance Balance { get { return Settings; } }
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
+            [UnityEngine.Scripting.Preserve]
             public GuardBossBehavior(KarmaEnemy owner) : base(owner)
             {
                 Register(EnemyAttack.GroundStrike, new GDBasicPattern(owner));
@@ -56,13 +59,27 @@ namespace KarmaPrototype
                     owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * dt);
                 return false;
             }
-            public override bool PreserveAutoShield { get { return true; } }
+            public override bool Armored { get { return owner.frontalGuard || AutoShieldActive; } }
+            public override bool AutoShieldActive { get { return owner.FightSeconds < owner.shieldUntil; } }
+            public override bool BlocksSelection { get { return owner.shieldWarningUntil > 0; } }
+            public override bool ReduceDamage(Vector2 source)
+            { return owner.frontalGuard && (source.x - owner.Position.x) * owner.direction >= 0 || AutoShieldActive; }
+            public override Color ShieldColor { get { return BlocksSelection
+                ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
+            public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
+            public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
+            public override bool TryQueueParry() { return Heavy.TryQueueParry(); }
+            public override Vector3? CameraFocus { get { return owner.Invulnerable && owner.selected == EnemyAttack.GD05
+                ? new Vector3(TrialCenter, TrialRadius * 0.625f, -10) : (Vector3?)null; } }
+            public override float CameraSize(float aspect)
+            { return Mathf.Max(TrialRadius * 0.8f, (TrialRadius + KarmaSpace.Units(1)) / Mathf.Max(aspect, 0.01f)); }
             public override float ParryStunSeconds { get { return Settings.parryStunSeconds; } }
             public override float PatternTimeout { get { return owner.selected == EnemyAttack.GD05 ? 40 : owner.selected == EnemyAttack.GD03 ? 12 : 5; } }
             public override bool ConsumeQueuedParry() { return Heavy.ConsumeQueuedParry(); }
             public override void OnPlayerDamaged() { owner.trial.Hit(); }
             public override void OnInterrupted()
             {
+                owner.frontalGuard = false; owner.shieldWarningUntil = 0;
                 owner.trial.Clear();
                 if (owner.game.Player != null) owner.game.Player.ReleaseArena();
             }

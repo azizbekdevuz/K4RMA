@@ -8,7 +8,10 @@ import tempfile
 import unittest
 import zlib
 
-spec = importlib.util.spec_from_file_location('optimize_images', Path(__file__).resolve().parents[1] / 'tools/optimize-images.py')
+OPTIMIZER_PATH = Path(__file__).resolve().parents[1] / 'tools/optimize-images.py'
+spec = importlib.util.spec_from_file_location('optimize_images', OPTIMIZER_PATH)
+if spec is None or spec.loader is None:
+    raise ImportError(f'Cannot load image optimizer: {OPTIMIZER_PATH}')
 optimizer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(optimizer)
 
@@ -62,7 +65,7 @@ class PNGOptimizationTests(unittest.TestCase):
             original, _ = fixture()
             path.write_bytes(original)
             metadata.write_text('guid: preserved\n')
-            command = [sys.executable, '-B', str(Path(optimizer.__file__)), folder]
+            command = [sys.executable, '-B', str(OPTIMIZER_PATH), folder]
             result = subprocess.run(command + ['--check'], capture_output=True, text=True)
             self.assertEqual(result.returncode, 1, result.stderr)
             self.assertEqual(path.read_bytes(), original)
@@ -84,7 +87,7 @@ class PNGOptimizationTests(unittest.TestCase):
             original, _ = fixture()
             for name in ('Pose.png', 'Copy.png'):
                 (Path(folder) / name).write_bytes(original)
-            command = [sys.executable, '-B', optimizer.__file__, folder, '--duplicates-only']
+            command = [sys.executable, '-B', str(OPTIMIZER_PATH), folder, '--duplicates-only']
             result = subprocess.run(command + ['--check'], capture_output=True, text=True)
             self.assertEqual(result.returncode, 1, result.stderr)
             self.assertIn('1 byte-identical duplicate groups', result.stdout)

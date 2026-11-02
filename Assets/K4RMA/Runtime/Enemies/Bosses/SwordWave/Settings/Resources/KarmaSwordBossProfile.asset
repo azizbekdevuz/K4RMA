@@ -23,7 +23,7 @@ MonoBehaviour:
     swordRetreatStopDistance: 11.75
     swordRetreatDistance: 16
     swordRetreatDuration: 0.6
-    swordRetreatSpeed: 32
+    swordRetreatSpeed: 48
     swordMeleeSpacingMargin: 0.65
     swordApproachStartDistance: 10.5
     basicDamageMultiplier: 0.5
@@ -44,3 +44,25 @@ MonoBehaviour:
     movementScale: 1
     decisionScale: 1
     recoveryScale: 1
+    meleeBasicCooldown: 1.1
+    waveBasicCooldown: 1.5
+    swordMeleeHysteresis: 0.2
+    swordRetreatSpeedLimit: 48
+    swordRetreatAcceleration: 56
+    swordRetreatDeceleration: 72
+    pressureRetreatStartDistance: 8.2
+    pressureRetreatCooldown: 1.2
+    pressureRetreatDuration: 1.05
+    swordBackstepPreparation: 0.045
+    swordBackstepAcceleration: 420
+    swordBackstepDeceleration: 360
+    swordRetreatDashMultiplier: 2
+    swordRetreatAttackWindow: 0.65
+    swordAfterimageInterval: 0.03
+    swordAfterimageLifetime: 0.3
+    swordAfterimageAlpha: 0.58
+    swordAfterimageCapacity: 8
+    sw04DebugLogging: 0
+    scarWarningSeconds: 0.95
+    scarActiveSeconds: 0.65
+    scarRoundGap: 0.32

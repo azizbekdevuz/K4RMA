@@ -15,16 +15,9 @@ namespace KarmaPrototype
         readonly Dictionary<string, Sprite> poses = new Dictionary<string, Sprite>();
         string sheet, explicitPose;
         float poseUntil, landedUntil;
-        float waveSwingAt = float.PositiveInfinity;
-        string wavePhase;
-        float wavePhaseSwingAt = float.PositiveInfinity, waveReleasedUntil;
         bool wasAirborne;
         Vector3 guardianPreviousPosition;
         Sprite guardianAppearance;
-        internal Sprite GuardianDamageSprite { get; private set; }
-        internal Vector3 GuardianDamageScale { get; private set; }
-        internal bool GuardianPhaseOverridesPose { get; private set; }
-        internal int WaveMotionRevision { get; private set; }
         Vector3 pictureScale;
         float appearanceScale = 1;
         float empowermentAt, empowermentUntil;
@@ -52,10 +45,8 @@ namespace KarmaPrototype
         public void PlayPose(string name, float seconds)
         {
             explicitPose = name; poseUntil = Time.time + seconds;
-            waveSwingAt = float.PositiveInfinity;
-            // GuardianPose resolves Wave reservations after hurt/stun/death priority.
-            // Player and other sheets retain their immediate pose behavior.
-            if (sheet != "Wave") ShowPose(name);
+            onPoseRequested?.Invoke();
+            if (!deferExplicitPose) ShowPose(name);
         }
         void ShowPose(string name)
         {
@@ -72,7 +63,7 @@ namespace KarmaPrototype
         public void Attack() { Attack(Vector2.right); }
         public void Attack(Vector2 direction) { slashDirection = direction; actionUntil = Time.time + 0.18f; }
         public void Hurt() { hurtUntil = Time.time + 0.16f; }
-        public void Die() { EndHeavyStrike(); deathAt = Time.time; }
+        public void Die() { EndGuardianAction(); deathAt = Time.time; }
         public void Pose(float movement, bool airborne, float verticalSpeed = 0, bool crouching = false)
         {
             if (picture == null) return;

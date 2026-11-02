@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate boss ownership and existing Guard/SW05 behavior in a disposable project."""
+"""Validate boss ownership and Guard/Sword combat in a disposable project."""
 import argparse
 from pathlib import Path
 import shutil
@@ -14,15 +14,19 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--work-project', type=Path)
 parser.add_argument('--unity', type=Path, help='Override the Unity executable')
 parser.add_argument('--licensing-ipc')
-parser.add_argument('--suite', choices=('all', 'isolation', 'guard', 'sw05'), default='all')
+parser.add_argument('--suite', choices=('all', 'isolation', 'guard', 'sw05', 'sword', 'rising'), nargs='+', default=['all'])
 args = parser.parse_args()
+subprocess.run(['python3', '-m', 'unittest', 'discover', '-s', str(root / 'tests'),
+                '-p', 'test_boss_boundaries.py'], check=True)
 version = (root / 'ProjectSettings/ProjectVersion.txt').read_text().splitlines()[0].split(': ')[1]
 editor = args.unity or Path(f'/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity')
 output = root / 'output/validation'
 output.mkdir(parents=True, exist_ok=True)
 suites = [('isolation', 'KarmaBossIsolationChecks', 'boss-isolation-validation.txt'),
           ('guard', 'KarmaGuardPlayChecks', 'guard-play-validation.txt'),
-          ('sw05', 'KarmaSW05PlayChecks', 'sw05-play-validation.txt')]
+          ('sw05', 'KarmaSW05PlayChecks', 'sw05-play-validation.txt'),
+          ('sword', 'KarmaSwordFinalPolishChecks', 'sword-play-validation.txt'),
+          ('rising', 'KarmaRisingPlayChecks', 'rising-play-validation.txt')]
 with (nullcontext(str(args.work_project)) if args.work_project else tempfile.TemporaryDirectory(prefix='karma-boss-checks-')) as folder:
     project = Path(folder).resolve()
     if project == root or root in project.parents or project in root.parents:
@@ -35,10 +39,10 @@ with (nullcontext(str(args.work_project)) if args.work_project else tempfile.Tem
     for name in ('Assets', 'Packages', 'ProjectSettings'):
         shutil.copytree(root / name, project / name, dirs_exist_ok=True)
     (assets / 'Editor').mkdir(exist_ok=True)
-    for _, check, _ in suites:
-        shutil.copy2(root / f'tests/Unity/{check}.cs', assets / f'Editor/{check}.cs')
+    for check in (root / 'tests/Unity').rglob('*.cs'):
+        shutil.copy2(check, assets / 'Editor' / check.name)
     for key, check, filename in suites:
-        if args.suite not in ('all', key):
+        if 'all' not in args.suite and key not in args.suite:
             continue
         report = project / 'output/validation' / filename
         report.unlink(missing_ok=True)
@@ -57,9 +61,15 @@ with (nullcontext(str(args.work_project)) if args.work_project else tempfile.Tem
             command = [str(editor), '-batchmode', '-projectPath', str(project),
                        '-executeMethod', f'{check}.RunBatch', '-logFile', str(log),
                        '-licensingIpc', channel]
-            if key != 'sw05':
+            if key not in ('sw05', 'sword'):
                 command.insert(2, '-nographics')
+            started_at = time.time()
             result = subprocess.run(command, timeout=600)
+            if key == 'sword':
+                reports = sorted(path for path in (project / 'output/final-sword-polish').glob('*/result.txt')
+                                 if path.stat().st_mtime >= started_at)
+                if reports:
+                    report = reports[-1]
             if not report.exists():
                 raise SystemExit(f'{key}: no verdict; read {log}')
             shutil.copy2(report, output / filename)

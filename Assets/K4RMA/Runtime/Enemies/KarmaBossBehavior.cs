@@ -13,6 +13,12 @@ namespace KarmaPrototype
             public bool Restrained, SeparateLaunch, ShieldBreak;
             public Color Color;
         }
+        [System.AttributeUsage(System.AttributeTargets.Class)]
+        sealed class BossKindAttribute : System.Attribute
+        {
+            public readonly Essence Kind;
+            public BossKindAttribute(Essence kind) { Kind = kind; }
+        }
         class BossBehavior
         {
             protected readonly KarmaEnemy owner;
@@ -35,7 +41,6 @@ namespace KarmaPrototype
             public virtual List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             { return new List<EnemyAttack> { EnemyAttack.GroundStrike }; }
             public virtual bool IsUltimate(EnemyAttack attack) { return false; }
-            public virtual bool PreserveAutoShield { get { return false; } }
             public virtual float PatternTimeout { get { return 5; } }
             public virtual void OnParried() { }
             public virtual bool ConsumeQueuedParry() { return false; }
@@ -80,6 +85,25 @@ namespace KarmaPrototype
             }
             public virtual void Tick() { }
             public virtual void OnDamaged() { }
+            public virtual Bounds DamageBounds(SpriteRenderer renderer) { return renderer.bounds; }
+            public virtual void DamageFeedback(Vector2 point)
+            {
+                owner.animator.Hurt();
+                KarmaVisuals.Flash(owner.game.World, owner.Position, Vector2.one * KarmaSpace.Units(0.7f), Color.white, 0.1f);
+            }
+            public virtual bool CustomHitVisual(EnemyAttack pattern) { return false; }
+            public virtual void ContactStarting(EnemyAttack pattern, KarmaAttackContact contact) { }
+            public virtual void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged) { }
+            public virtual bool Armored { get { return false; } }
+            public virtual bool AutoShieldActive { get { return false; } }
+            public virtual bool BlocksSelection { get { return false; } }
+            public virtual bool ReduceDamage(Vector2 source) { return false; }
+            public virtual Color ShieldColor { get { return owner.fullShield ? Color.white : KarmaArtwork.BarrierColor; } }
+            public virtual void EndAction(bool keepAutoShield) { }
+            public virtual void StopCombat() { }
+            public virtual bool TryQueueParry() { return false; }
+            public virtual Vector3? CameraFocus { get { return null; } }
+            public virtual float CameraSize(float aspect) { return 0; }
             public virtual void OnSelected() { }
             public virtual void OnCompleted() { }
             public virtual void Interrupt(bool preservePressure)
@@ -91,15 +115,23 @@ namespace KarmaPrototype
             public virtual float DecisionDelay { get { return owner.game.Config.enemyDecisionDelay * owner.Tuning.decisionMultiplier * owner.Tempo * Balance.decisionScale; } }
             public virtual float RetryDelay { get { return 0.2f; } }
         }
+        static Dictionary<Essence, System.Type> behaviorTypes;
         BossBehavior CreateBehavior()
         {
-            switch (PrimaryType)
+            if (behaviorTypes == null)
             {
-                case Essence.SwordWave: return new SwordBossBehavior(this);
-                case Essence.RisingSlash: return new RisingBossBehavior(this);
-                case Essence.Guard: return new GuardBossBehavior(this);
-                default: return new BossBehavior(this);
+                behaviorTypes = new Dictionary<Essence, System.Type>();
+                foreach (var type in typeof(KarmaEnemy).GetNestedTypes(System.Reflection.BindingFlags.NonPublic))
+                {
+                    var kind = (BossKindAttribute)System.Attribute.GetCustomAttribute(type, typeof(BossKindAttribute));
+                    if (kind == null) continue;
+                    if (!typeof(BossBehavior).IsAssignableFrom(type) || behaviorTypes.ContainsKey(kind.Kind))
+                        throw new System.InvalidOperationException("Invalid or duplicate boss registration: " + type.Name);
+                    behaviorTypes.Add(kind.Kind, type);
+                }
             }
+            return PrimaryType.HasValue && behaviorTypes.TryGetValue(PrimaryType.Value, out var registered)
+                ? (BossBehavior)System.Activator.CreateInstance(registered, new object[] { this }) : new BossBehavior(this);
         }
     }
 }

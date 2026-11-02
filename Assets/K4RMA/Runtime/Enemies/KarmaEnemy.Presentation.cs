@@ -39,7 +39,7 @@ namespace KarmaPrototype
             var visual = behavior.AttackVisual(attack, velocity);
             return KarmaBossAttack.Spawn(game, this, parent != null ? parent : effectsRoot, at, velocity, size, life,
                 Damage * multiplier, visual.Color, contact, stun, visualPose ?? visual.Pose,
-                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak);
+                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak, sourcePattern: attack);
         }
         IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null, Sprite sweepSprite = null)
         {
@@ -75,7 +75,7 @@ namespace KarmaPrototype
                         "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f), WaveVisuals);
             }
         }
-        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false)
+        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
@@ -92,7 +92,10 @@ namespace KarmaPrototype
                 player.BeginCounter();
             int parries = player.ParryCount;
             float before = player.Health;
-            player.TakeDamage(amount);
+            var hitPattern = sourcePattern ?? selected;
+            behavior.ContactStarting(hitPattern, contact);
+            player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern));
+            behavior.ContactResolved(hitPattern, contact, body.center, player.ParryCount != parries, player.Health < before);
             if (player.ParryCount != parries)
             {
                 // Projectile parries remain local; GD02 is the shield-breaking parry.
@@ -101,7 +104,10 @@ namespace KarmaPrototype
                 return;
             }
             if (player.Health < before)
-            { contact.RecordDamage(); behavior.OnPlayerDamaged(); if (stun > 0 && Active) player.Stun(stun); }
+            {
+                contact.RecordDamage(); behavior.OnPlayerDamaged();
+                if (stun > 0 && Active) player.Stun(stun);
+            }
         }
     }
 }

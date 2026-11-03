@@ -1,18 +1,24 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
         // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
+        [BossKind(Essence.Guard)]
+        [UnityEngine.Scripting.Preserve]
         sealed class GuardBossBehavior : BossBehavior
         {
             new KarmaGuardBossSettings Settings { get { return owner.Tuning.guard; } }
+            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Ward") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
+            [UnityEngine.Scripting.Preserve]
             public GuardBossBehavior(KarmaEnemy owner) : base(owner)
             {
+                Register(EnemyAttack.GroundStrike, new GDBasicPattern(owner));
                 shield = new GD01Pattern(owner);
                 Heavy = new GD02Pattern(owner);
                 Register(EnemyAttack.GD02, Heavy);
@@ -20,7 +26,68 @@ namespace KarmaPrototype
                 Register(EnemyAttack.GD04, new GD04Pattern(owner, Heavy));
                 Register(EnemyAttack.GD05, new GD05Pattern(owner));
             }
-            public void Initialize() { shield.RefreshAutoShield(); owner.shieldHalo.enabled = true; owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder); }
+            public override void Initialize()
+            {
+                if (KarmaCombatVFX.ApplySprite(owner.shieldHalo, "GuardBossVFX", "Shield",
+                    KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
+                    owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
+                owner.nextShield = Settings.autoShieldPeriod;
+                shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
+                owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
+            }
+            public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
+            {
+                var owned = new HashSet<Essence>(inherited);
+                // GD01 runs independently of the attack cycle.
+                var result = new List<EnemyAttack> { EnemyAttack.GroundStrike, EnemyAttack.GD02 };
+                if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.GD03);
+                if (owned.Contains(Essence.RisingSlash)) result.Add(EnemyAttack.GD04);
+                if (owned.Count == 3) result.Add(EnemyAttack.GD05);
+                return result;
+            }
+            public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.GD05; }
+            protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
+            {
+                if (!base.Eligible(attack, distance, sight, escape)) return false;
+                if (attack == EnemyAttack.GD02) return owner.FightSeconds < owner.shieldUntil && distance <= Settings.heavyStrikeReach;
+                return attack != EnemyAttack.GD04 || escape;
+            }
+            public override bool TickMovement(float dt, float dx)
+            {
+                Face(dx);
+                if (Mathf.Abs(dx) > Settings.preferredDistance)
+                    owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * dt);
+                return false;
+            }
+            public override bool Armored { get { return owner.frontalGuard || AutoShieldActive; } }
+            public override bool AutoShieldActive { get { return owner.FightSeconds < owner.shieldUntil; } }
+            public override bool BlocksSelection { get { return owner.shieldWarningUntil > 0; } }
+            public override bool ReduceDamage(Vector2 source)
+            { return owner.frontalGuard && (source.x - owner.Position.x) * owner.direction >= 0 || AutoShieldActive; }
+            public override Color ShieldColor { get { return BlocksSelection
+                ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
+            public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
+            public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
+            public override bool TryQueueParry() { return Heavy.TryQueueParry(); }
+            public override Vector3? CameraFocus { get { return owner.Invulnerable && owner.selected == EnemyAttack.GD05
+                ? new Vector3(TrialCenter, TrialRadius * 0.625f, -10) : (Vector3?)null; } }
+            public override float CameraSize(float aspect)
+            { return Mathf.Max(TrialRadius * 0.8f, (TrialRadius + KarmaSpace.Units(1)) / Mathf.Max(aspect, 0.01f)); }
+            public override float ParryStunSeconds { get { return Settings.parryStunSeconds; } }
+            public override float PatternTimeout { get { return owner.selected == EnemyAttack.GD05 ? 40 : owner.selected == EnemyAttack.GD03 ? 12 : 5; } }
+            public override bool ConsumeQueuedParry() { return Heavy.ConsumeQueuedParry(); }
+            public override void OnPlayerDamaged() { owner.trial.Hit(); }
+            public override void OnInterrupted()
+            {
+                owner.frontalGuard = false; owner.shieldWarningUntil = 0;
+                owner.trial.Clear();
+                if (owner.game.Player != null) owner.game.Player.ReleaseArena();
+            }
+            public override void OnParried()
+            {
+                owner.shieldUntil = 0;
+                owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
+            }
             public override void Tick() { shield.Tick(); }
             public override void OnCompleted() { Heavy.Interrupt(); }
             public override BossAttackVisual AttackVisual(EnemyAttack attack, Vector2 velocity)

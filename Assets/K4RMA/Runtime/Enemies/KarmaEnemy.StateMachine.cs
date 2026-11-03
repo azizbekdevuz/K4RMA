@@ -28,18 +28,15 @@ namespace KarmaPrototype
             if (pendingParry)
             {
                 pendingParry = false; InterruptPatternCore(true);
-                if (PrimaryType == Essence.Guard)
-                { shieldUntil = 0; nextShield = FightSeconds + Mathf.Max(2, Tuning.guard.autoShieldPeriod); }
+                behavior.OnParried();
 
                 state = ActionState.Stunned; stunnedUntil = FightSeconds + Mathf.Max(0.1f, behavior.ParryStunSeconds);
                 ShowStunCue();
             }
             behavior.Tick();
-            shieldHalo.enabled = Armored || shieldWarningUntil > 0;
-            shieldHalo.color = shieldWarningUntil > 0
-                ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(FightSeconds * 8)))
-                : fullShield ? Color.white : swordGuard ? KarmaArtwork.BossSwordColor : KarmaArtwork.BarrierColor;
-            animator.GuardianPose(state.ToString(), selected, Position.y > KarmaSpace.Units(1.5f), Armored);
+            shieldHalo.enabled = Armored || behavior.BlocksSelection;
+            shieldHalo.color = behavior.ShieldColor;
+            animator.GuardianPose(ActionStateNames[(int)state], selected, Position.y > KarmaSpace.Units(1.5f), Armored);
             if (Stunned)
             {
                 if (FightSeconds < stunnedUntil) return;
@@ -47,7 +44,7 @@ namespace KarmaPrototype
             }
             if (running)
             {
-                if (FightSeconds - patternStarted > Mathf.Max(selected == EnemyAttack.GD05 ? 40 : selected == EnemyAttack.GD03 ? 12 : 5, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
+                if (FightSeconds - patternStarted > Mathf.Max(behavior.PatternTimeout, Tuning.patternTimeout) || Position.y < KarmaSpace.Units(-2) || Position.y > KarmaSpace.Units(12))
                 { InterruptPatternCore(true); state = ActionState.Approach; timer = 1.2f; }
                 return;
             }
@@ -57,7 +54,7 @@ namespace KarmaPrototype
             if (patternTestHold) return;
 #endif
             timer -= dt;
-            if (timer <= 0 && shieldWarningUntil <= 0) BeginAttack();
+            if (timer <= 0 && !behavior.BlocksSelection) BeginAttack();
         }
         void BeginAttack()
         {
@@ -68,7 +65,7 @@ namespace KarmaPrototype
             { timer = behavior.RetryDelay; return; }
             behavior.OnSelected();
             previous = selected;
-            if (KarmaPatternCatalog.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
+            if (behavior.IsUltimate(selected)) nextUltimate = FightSeconds + Mathf.Max(10, Tuning.ultimateCooldown);
             direction = game.Player.Position.x < Position.x ? -1 : 1;
             art.localScale = new Vector3(direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
             running = true; patternStarted = FightSeconds;
@@ -80,7 +77,8 @@ namespace KarmaPrototype
             yield return behavior.Execute(selected);
             if (!Active) yield break;
             ClearPatternObjects();
-            fullShield = frontalGuard = false;
+            fullShield = false;
+            behavior.EndAction(false);
             behavior.OnCompleted();
             state = ActionState.Approach; running = false;
             timer = Mathf.Max(0.22f, behavior.DecisionDelay);
@@ -93,10 +91,9 @@ namespace KarmaPrototype
         }
         IEnumerator Recovery(float seconds, bool keepAutoShield = false, bool scaleDuration = true)
         {
-            ClearPatternObjects(); fullShield = frontalGuard = false;
-            // Guard owns persistent GD01; other bosses expose their ordinary recovery.
-            if (!keepAutoShield && PrimaryType != Essence.Guard) shieldUntil = shieldWarningUntil = 0;
-            animator.EndHeavyStrike();
+            ClearPatternObjects(); fullShield = false;
+            behavior.EndAction(keepAutoShield);
+            animator.EndGuardianAction();
             state = ActionState.Recover;
 
             yield return Wait(scaleDuration ? Mathf.Max(0.38f, seconds * Mathf.Clamp(Tuning.recoveryMultiplier, 0.4f, 2) * Tempo * behavior.Balance.recoveryScale) : seconds);
@@ -105,7 +102,8 @@ namespace KarmaPrototype
         { transform.position = new Vector3(Mathf.Clamp(Position.x + distance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Position.y, 0); }
         bool ClearShot(Vector2 from, Vector2 to)
         {
-            foreach (var hit in Physics2D.LinecastAll(from, to))
+            Physics2D.Linecast(from, to, TerrainFilter, terrainHits);
+            foreach (var hit in terrainHits)
                 if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null) return false;
             return true;
         }
@@ -113,7 +111,7 @@ namespace KarmaPrototype
         void ShowStunCue()
         {
             if (stunCue != null) return;
-            var sprite = KarmaRisingArt.Get("Parry") ?? KarmaArtwork.Sprite("HitVFX", "Burst");
+            var sprite = behavior.StunSprite;
             if (sprite == null) return;
             var go = new GameObject("기절 표시");
             stunCue = go.transform;
@@ -136,16 +134,14 @@ namespace KarmaPrototype
         void InterruptPatternCore(bool preservePressure)
         {
             StopAllCoroutines(); behavior?.Interrupt(preservePressure); ClearPatternObjects(); HideStunCue();
-            trial.Clear(); if (game.Player != null) game.Player.ReleaseArena();
-            fullShield = frontalGuard = swordGuard = running = pendingParry = false;
-            shieldWarningUntil = 0;
-            if (PrimaryType != Essence.Guard) shieldUntil = 0;
+            behavior?.OnInterrupted();
+            fullShield = running = pendingParry = false;
             transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY, 0);
         }
         public void CancelCombat()
         {
             if (stopped) return;
-            stopped = true; InterruptPattern(); shieldUntil = 0;
+            stopped = true; InterruptPattern(); behavior.StopCombat();
             if (shieldHalo != null) shieldHalo.enabled = false;
         }
         void OnDisable() { if (game != null) CancelCombat(); }

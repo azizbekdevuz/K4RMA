@@ -13,6 +13,10 @@ namespace KarmaPrototype
             guardUntil = Time.time + seconds; animator.PlayPose("Guard", seconds);
         }
         public void TakeDamage(float damage)
+        { TakeDamage(damage, false); }
+        // Attack owners may supply their confirmed-contact sprite separately.
+        // Preserve the public damage API and all other sources' feedback.
+        internal void TakeDamage(float damage, bool customHitVisual)
         {
             if (!game.IsCombat || Health <= 0 || damage <= 0 || Time.time < invulnerableUntil) return;
             if (techniques.ConsumeCounter(Time.time))
@@ -45,7 +49,8 @@ namespace KarmaPrototype
             animator.Hurt();
             Health -= actual; game.DamageTaken += actual;
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
-            KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));
+            if (!customHitVisual)
+                KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));
             if (Health <= 0) game.PlayerDied();
         }
         public void Heal(float amount) { Health = Mathf.Min(game.Config.playerHealth, Health + amount); }

@@ -16,12 +16,12 @@ namespace KarmaPrototype
             public string[] poses; // Optional stable logical names for grouped single-image effects.
         }
         public Sheet[] sheets = Array.Empty<Sheet>();
-        Dictionary<string, Sprite> lookup;
+        Dictionary<(string sheet, string pose), Sprite> lookup;
         public Sprite Get(string sheet, string pose)
         {
             if (lookup == null)
             {
-                lookup = new Dictionary<string, Sprite>(StringComparer.Ordinal);
+                lookup = new Dictionary<(string sheet, string pose), Sprite>();
                 foreach (var entry in sheets)
                     if (entry != null && entry.sprites != null)
                         for (int i = 0; i < entry.sprites.Length; i++)
@@ -30,10 +30,10 @@ namespace KarmaPrototype
                             if (sprite == null) continue;
                             string logicalPose = entry.poses != null && i < entry.poses.Length && !string.IsNullOrEmpty(entry.poses[i])
                                 ? entry.poses[i] : sprite.name;
-                            lookup[entry.id + "/" + logicalPose] = sprite;
+                            lookup[(entry.id ?? string.Empty, logicalPose ?? string.Empty)] = sprite;
                         }
             }
-            lookup.TryGetValue(sheet + "/" + pose, out var result);
+            lookup.TryGetValue((sheet ?? string.Empty, pose ?? string.Empty), out var result);
             return result;
         }
         public Sprite[] All(string sheet)

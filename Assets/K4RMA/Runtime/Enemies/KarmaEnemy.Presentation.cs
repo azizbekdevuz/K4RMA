@@ -14,8 +14,7 @@ namespace KarmaPrototype
         }
         SpriteRenderer PathMark(Vector2 from, Vector2 to, Vector2 size, bool locked = true)
         {
-            if (WaveVisuals)
-                to = from + (to - from) * KarmaBossProjectileGeometry.SwordShotLife(from, to - from, 1);
+            to = behavior.WarningEndpoint(from, to);
             var marker = Mark(locked ? "고정 공격 경로" : "추적 중인 경로", Vector2.zero, Vector2.one, locked);
             marker.GetComponent<KarmaAttackWarning>().SetPath(marker, from, to, size, false, WaveVisuals,
                 behavior.GroundWarning);
@@ -30,6 +29,8 @@ namespace KarmaPrototype
                 child.gameObject.SetActive(false); Destroy(child.gameObject);
             }
         }
+        internal KarmaBossAttack CreateAttackComponent(GameObject target)
+        { return behavior.CreateAttackComponent(target); }
         KarmaBossAttack Attack(Vector2 at, Vector2 velocity, Vector2 size, float life,
             float multiplier = 1, KarmaAttackContact contact = null, float stun = 0,
             EnemyAttack? pattern = null, Transform parent = null, string visualPose = null, bool parryStun = false)
@@ -38,7 +39,7 @@ namespace KarmaPrototype
             var visual = behavior.AttackVisual(attack, velocity);
             return KarmaBossAttack.Spawn(game, this, parent != null ? parent : effectsRoot, at, velocity, size, life,
                 Damage * multiplier, visual.Color, contact, stun, visualPose ?? visual.Pose,
-                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak);
+                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak, sourcePattern: attack);
         }
         IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null, Sprite sweepSprite = null)
         {
@@ -74,7 +75,7 @@ namespace KarmaPrototype
                         "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f), WaveVisuals);
             }
         }
-        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false)
+        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
@@ -87,20 +88,26 @@ namespace KarmaPrototype
                 : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y);
             if (!hit) return;
             if (!contact.TryConsume()) return;
-            if (contact.BreaksShieldOnParry && state == ActionState.Attack && behavior is GuardBossBehavior guard && guard.Heavy.ConsumeQueuedParry())
+            if (contact.BreaksShieldOnParry && state == ActionState.Attack && behavior.ConsumeQueuedParry())
                 player.BeginCounter();
             int parries = player.ParryCount;
             float before = player.Health;
-            player.TakeDamage(amount);
+            var hitPattern = sourcePattern ?? selected;
+            behavior.ContactStarting(hitPattern, contact);
+            player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern));
+            behavior.ContactResolved(hitPattern, contact, body.center, player.ParryCount != parries, player.Health < before);
             if (player.ParryCount != parries)
             {
                 // Projectile parries remain local; GD02 is the shield-breaking parry.
                 if (contact.BreaksShieldOnParry || shieldBreak || parryStun) pendingParry = true;
-                if (parryStun) KarmaRisingPolish.ParryBreak(effectsRoot, player.Position);
+                behavior.OnAttackParried(parryStun);
                 return;
             }
             if (player.Health < before)
-            { contact.RecordDamage(); trial.Hit(); if (stun > 0 && Active) player.Stun(stun); }
+            {
+                contact.RecordDamage(); behavior.OnPlayerDamaged();
+                if (stun > 0 && Active) player.Stun(stun);
+            }
         }
     }
 }

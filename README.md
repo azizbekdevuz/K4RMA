@@ -9,4 +9,4 @@ Unity Hub에서 **Unity 6000.6.2f1**로 저장소를 열고 `Assets/K4RMA/Scenes
 - 고유화 후: 방향키 두 번으로 관통베기 / 공중 방향+J로 도약베기 / K로 반격
 - 고유화 선택: 1/2/3 → Enter · 취소/일시정지: Esc · 재도전: R · 타이틀: T
 
-[전체 파일 구조](docs/PROJECT_STRUCTURE.md)
+[파일 구조](docs/STRUCTURE.MD) · [협업 규칙](docs/RULES.MD)

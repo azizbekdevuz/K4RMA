@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9166e98874d22451090e210eb158e831, type: 3}
+  m_Name: KarmaSwordBossSprites
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
+  sheets:
+  - id: Wave
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png
+    sprites:
+    - {fileID: -1121073146, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: 976325191, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: 2124353114, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: -1971042216, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: -770909661, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: 478976777, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: -1379138260, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: 175214692, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: -1871398431, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: -131537219, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: 1430800272, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    - {fileID: -1707763843, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    poses: []
+  - id: Inheritance
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png
+    sprites:
+    - {fileID: 23252103, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -2127646494, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 404712181, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: -1972886466, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    poses: []
+  - id: SwordBossVFX
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Effects
+    sprites:
+    - {fileID: 21300000, guid: a3ae5b0965e744d496a4b9910a93b433, type: 3}
+    - {fileID: 21300000, guid: bc4723e4c02f420aa3f6547d55f158c7, type: 3}
+    - {fileID: 21300000, guid: ecc10fd108db4ed9898cc078a774745a, type: 3}
+    - {fileID: 21300000, guid: 753db3580642431fbedae47166daddeb, type: 3}
+    - {fileID: 21300000, guid: 843262fa43874a83ad32a466df051668, type: 3}
+    - {fileID: 21300000, guid: 692e0d1ec07b41a4ad8cba2e41965c39, type: 3}
+    - {fileID: 21300000, guid: fd75896186c441e59ef6b523818d150d, type: 3}
+    - {fileID: 21300000, guid: 147b0303c71c4af4aa69e3291c6bde35, type: 3}
+    - {fileID: 21300000, guid: c049d9dea0f844668a145e151179b88b, type: 3}
+    - {fileID: 21300000, guid: a5de6b04dac64b9fb95bd07f390dac1a, type: 3}
+    - {fileID: 21300000, guid: bd10f34002c24eecbfef9d4a9c636e49, type: 3}
+    - {fileID: 21300000, guid: 8bd5fa2c873e480e8e59ff959263dd61, type: 3}
+    - {fileID: 21300000, guid: 91870bb787824b41b435995fbde29a88, type: 3}
+    - {fileID: 21300000, guid: 151730b16b314dea9c2897c60219893b, type: 3}
+    - {fileID: 21300000, guid: 7057fcc08d63407f957fd979eece9d52, type: 3}
+    poses:
+    - SW01_StaggeredWave
+    - SW02_AimedSlash
+    - SW03_GroundImpact
+    - SW03_RisingBlade
+    - SW04_CounterWave
+    - SW05_AerialSword
+    - SW05_JudgementSword
+    - SW03_GroundScar_v6
+    - SW03_RisingBlade_v6
+    - SW04_CounterBlade_v6
+    - Sword_Crescent_v6
+    - Sword_GuardRing_v6
+    - Sword_Impact_v6
+    - Sword_Release_v6
+    - Sword_Shard_v6
+  - id: BossAppearance
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png
+    sprites:
+    - {fileID: -1121073146, guid: b339461aab1db4eeabb2705292e8a290, type: 3}
+    poses:
+    - Wave
+  - id: BossStun
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Parry.png
+    sprites:
+    - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
+    poses:
+    - Wave

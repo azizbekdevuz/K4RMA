@@ -136,6 +136,12 @@ namespace KarmaPrototype
 
             switch (pose)
             {
+                case "Backstep":
+                    // Hold a planted guard silhouette; never cycle the walking gait.
+                    delta.x = -0.025f;
+                    angle = 4.5f;
+                    break;
+
                 case "Idle":
                 case "Move":
                     // One existing Move image: transfer weight without lifting

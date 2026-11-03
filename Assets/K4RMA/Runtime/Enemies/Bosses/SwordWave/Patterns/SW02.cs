@@ -43,6 +43,7 @@ namespace KarmaPrototype
                 Vector2 origin = AimedSlashOrigin(owner.Position, facing);
                 Vector2 velocity = Vector2.right * facing * AimedSlashSpeed;
                 var marker = owner.PathMark(origin, origin + velocity * AimedSlashLife(origin, velocity), size, false);
+                KarmaSwordAttackPolish.Warning(marker);
                 float tracking = 0.4f * owner.Tempo, elapsed = 0;
 
                 owner.animator.PlayPose("Windup", tracking + 0.18f);
@@ -63,14 +64,18 @@ namespace KarmaPrototype
                 owner.art.localScale = new Vector3(facing * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
                 float life = AimedSlashLife(origin, velocity);
                 marker = owner.PathMark(origin, origin + velocity * life, size);
+                KarmaSwordAttackPolish.Warning(marker);
+                marker.GetComponent<KarmaAttackWarning>().Emphasize();
 
                 float warning = AimedSlashLockTime(origin, facing, size);
+                KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, origin, warning, true);
                 owner.animator.PrepareWaveAttack(warning, true);
                 yield return owner.Wait(warning);
                 if (!owner.Active) yield break;
                 marker.gameObject.SetActive(false); Destroy(marker.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack(Vector2.right * facing);
-                owner.Attack(origin, velocity, size, life, Settings.aimedDamageMultiplier);
+                var shot = owner.Attack(origin, velocity, size, life, Settings.aimedDamageMultiplier);
+                KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, velocity, size);
                 sword.WaveLaunchVFX(origin, velocity, size, true);
                 yield return owner.Wait(life);
                 yield return owner.Recovery(1.1f);

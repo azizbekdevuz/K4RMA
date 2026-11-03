@@ -16,8 +16,8 @@ namespace KarmaPrototype
             public override IEnumerator Execute() { return ExecuteWithTerrain(null); }
             public IEnumerator ExecuteWithTerrain(Coroutine terrainWave)
             {
-                Vector2 center = new Vector2(owner.Position.x + owner.direction * KarmaSpace.Units(KarmaPatternCatalog.GuardHeavyReach / 2), KarmaSpace.Units(2.2f));
-                Vector2 size = KarmaSpace.Units(new Vector2(KarmaPatternCatalog.GuardHeavyReach, 4.4f));
+                Vector2 center = new Vector2(owner.Position.x + owner.direction * (Settings.heavyStrikeReach / 2), KarmaSpace.Units(2.2f));
+                Vector2 size = new Vector2(Settings.heavyStrikeReach, KarmaSpace.Units(4.4f));
                 var mark = owner.Mark("GD02 강공격 · 패링 가능", center, size);
                 owner.state = ActionState.Telegraph; owner.animator.PrepareHeavyStrike();
                 float cueSeconds = Mathf.Max(0.1f, Settings.heavyParryCueSeconds);

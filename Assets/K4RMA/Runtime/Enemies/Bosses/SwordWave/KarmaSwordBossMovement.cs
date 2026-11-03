@@ -11,17 +11,181 @@ namespace KarmaPrototype
             KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
             float nextSwordRetreat, swordRetreatRemaining, swordRetreatUntil, swordRetreatDirection;
             float nextSwordApproach, swordApproachUntil, swordRetreatTarget, swordPressureTarget;
-            bool swordAttackedSinceRetreat = true, swordApproaching, swordPressurePending;
-            public SwordBossMovement(KarmaEnemy owner, SwordBossBehavior behavior) { this.owner = owner; this.behavior = behavior; }
+            float retreatSpeed, approachSpeed;
+            float swordRetreatMoveAt;
+            float lastRetreatDirection, lastRetreatAt = -1000;
+            int sameDirectionRetreats;
+            bool swordWallEscaping;
+            enum SlideKind { LongRetreat, Reposition, WallEscape }
+            SlideKind slideKind;
+            float nextWallEscape, wallReturnUntil, wallReturnDirection;
+            KarmaSwordRetreatAfterimages afterimages;
+            bool swordAttackedSinceRetreat, swordApproaching, swordPressurePending;
+            public SwordBossMovement(KarmaEnemy owner, SwordBossBehavior behavior)
+            {
+                this.owner = owner; this.behavior = behavior;
+            }
+            public void Initialize()
+            {
+                afterimages = owner.art.gameObject.AddComponent<KarmaSwordRetreatAfterimages>();
+                afterimages.Initialize(owner, owner.game, Settings);
+            }
             float SwordSpacingDistance()
             {
-                // Use the incoming-hit silhouette, including its asymmetric pivot.
-                // Movement/idle safety and basic-wave reach are different bands.
-                var body = owner.DamageBounds;
-                float front = owner.game.Player.Position.x < owner.Position.x ? owner.Position.x - body.min.x : body.max.x - owner.Position.x;
-                return Mathf.Max(Mathf.Clamp(Settings.swordRetreatStopDistance, 9, 14),
-                owner.game.Config.Techniques.longSlashReach + Mathf.Max(0, front)
-                + Mathf.Clamp(Settings.swordMeleeSpacingMargin, 0.25f, 1.25f));
+                // Pressure memory uses the basic wave's reach. Retreat travel
+                // is a separate displacement budget based on the player's dash.
+                return Mathf.Clamp(Settings.swordRetreatStopDistance,
+                    Mathf.Min(behavior.BasicMeleeRange + Settings.swordMeleeHysteresis, behavior.BasicWaveRange * 0.95f),
+                    behavior.BasicWaveRange * 0.95f);
+            }
+            float SwordRetreatDistance()
+            {
+                // Every ordinary slide uses two actual player dashes, including
+                // relocation toward the player. No separate 4-8-unit budget.
+                return Mathf.Max(0, owner.game.Config.Techniques.pierceDistance) * 2;
+            }
+            float SwordRetreatClearance(float direction, float requested)
+            {
+                float before = owner.Position.x;
+                float left = Mathf.Min(before, KarmaStage.BossLeftWall + 0.5f);
+                float right = Mathf.Max(before, KarmaStage.BossRightWall - 0.5f);
+                float available = Mathf.Min(requested, direction < 0 ? before - left : right - before);
+                var body = SwordMoveBounds();
+                foreach (var hit in Physics2D.BoxCastAll(body.center, body.size,
+                    0, Vector2.right * direction, available + 0.1f))
+                {
+                    if (!BlocksSwordMove(hit.collider)) continue;
+                    if (Vector2.Dot(hit.normal, Vector2.right * direction) >= -0.001f) continue;
+                    available = Mathf.Min(available, Mathf.Max(0, hit.distance - 0.1f));
+                }
+                // Validate the route, not only the destination, before choosing
+                // a side. The per-frame ground check remains the final guard.
+                for (float travel = 0.5f; travel < available; travel += 0.5f)
+                    if (!SwordFloorAt(before + direction * travel))
+                    { available = Mathf.Max(0, travel - 0.5f); break; }
+                if (!SwordFloorAt(before + direction * available)) return 0;
+                return Mathf.Max(0, available);
+            }
+            Bounds SwordMoveBounds()
+            {
+                var collider = owner.GetComponent<Collider2D>();
+                return collider != null && collider.enabled && !collider.isTrigger ? collider.bounds
+                    : new Bounds(owner.Position, KarmaSpace.Units(new Vector2(0.8f, 1.6f)));
+            }
+            bool BlocksSwordMove(Collider2D collider)
+            {
+                // Boss roots have no solid player-contact collider. Preserve
+                // that rule; add no invulnerability or collision suppression.
+                if (collider.transform.IsChildOf(owner.game.Player.transform))
+                {
+                    var body = owner.GetComponent<Collider2D>();
+                    return body != null && body.enabled && !body.isTrigger && !collider.isTrigger
+                        && !Physics2D.GetIgnoreLayerCollision(body.gameObject.layer, collider.gameObject.layer)
+                        && !Physics2D.GetIgnoreCollision(body, collider);
+                }
+                return !collider.isTrigger && collider.GetComponent<PlatformEffector2D>() == null
+                    && !collider.transform.IsChildOf(owner.transform)
+                    && !collider.transform.IsChildOf(owner.game.Player.transform)
+                    && collider.GetComponentInParent<KarmaEnemy>() == null;
+            }
+            bool SwordFloorAt(float x)
+            {
+                foreach (var hit in Physics2D.RaycastAll(new Vector2(x, owner.Position.y), Vector2.down, KarmaSpace.GuardianGroundY + 0.5f))
+                    if (hit.collider.GetComponent<KarmaSurface>() != null) return true;
+                return false;
+            }
+            bool ChooseRetreat(float dx, out float direction, out float travel)
+            {
+                float requested = SwordRetreatDistance();
+                float away = dx < 0 ? 1 : -1;
+                float leftRoom = SwordRetreatClearance(-1, requested);
+                float rightRoom = SwordRetreatClearance(1, requested);
+                slideKind = SlideKind.LongRetreat;
+                // A wall escape is relocation, distinct from a player-facing
+                // backstep. It may cross the player under existing non-solid
+                // boss rules, but must pass the same terrain/floor sweep.
+                // Detect either approaching boundary, independently of which
+                // side the player occupies. Never offer the wallward candidate.
+                bool leftBlocked = leftRoom < Mathf.Min(6, requested * 0.45f);
+                bool rightBlocked = rightRoom < Mathf.Min(6, requested * 0.45f);
+                if (leftBlocked || rightBlocked)
+                {
+                    float escapeDirection = leftBlocked ? 1 : -1;
+                    float blockedRoom = leftBlocked ? leftRoom : rightRoom;
+                    float escapeBudget = owner.game.Config.Techniques.pierceDistance * 3;
+                    float escapeRoom = SwordRetreatClearance(escapeDirection, escapeBudget);
+                    if (owner.FightSeconds >= nextWallEscape && escapeRoom >= Mathf.Max(4, blockedRoom + 2)
+                        && !(owner.FightSeconds < wallReturnUntil && escapeDirection == wallReturnDirection))
+                    {
+                        direction = escapeDirection; travel = escapeRoom;
+                        swordWallEscaping = true;
+                        slideKind = SlideKind.WallEscape;
+                        wallReturnDirection = -direction;
+                        nextWallEscape = owner.FightSeconds + 5;
+                        lastRetreatDirection = direction; lastRetreatAt = owner.FightSeconds;
+                        sameDirectionRetreats = 1;
+                        return true;
+                    }
+                    direction = travel = 0;
+                    nextSwordRetreat = owner.FightSeconds + 0.65f;
+                    swordAttackedSinceRetreat = false;
+                    behavior.RequestBasic();
+                    return false;
+                }
+                direction = 0; travel = 0;
+                bool recent = owner.FightSeconds - lastRetreatAt < 8;
+                var candidates = new SlideCandidate[2]; int count = 0;
+                // Ordinary repositioning may change sides under the same existing
+                // non-solid boss rule as wall relocation. Solid-player sweeps
+                // still reject it. Never end a move on top of the player.
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    if (owner.FightSeconds < wallReturnUntil && side == wallReturnDirection) continue;
+                    float room = side < 0 ? leftRoom : rightRoom;
+                    if (room < 4) continue;
+                    float distance = Mathf.Min(room, requested);
+                    if (Mathf.Abs(owner.Position.x + side * distance - owner.game.Player.Position.x) < 3)
+                        continue;
+                    float gap = Mathf.Abs(owner.Position.x + side * distance - owner.game.Player.Position.x);
+                    float weight = SlideWeight(side, distance, recent) / (1 + Mathf.Abs(gap - 8) * 0.12f);
+                    if (Mathf.Abs(dx) < 3 && side == away) weight *= 1.5f;
+                    candidates[count++] = new SlideCandidate { direction = side, distance = distance, weight = weight,
+                        kind = side == away ? SlideKind.LongRetreat : SlideKind.Reposition };
+                }
+                // If both sides exist, a third consecutive same-side choice is
+                // disallowed. With only one safe side, yield to combat instead.
+                float total = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    if (recent && sameDirectionRetreats >= 2 && candidates[i].direction == lastRetreatDirection)
+                        candidates[i].weight = 0;
+                    total += candidates[i].weight;
+                }
+                if (total <= 0)
+                {
+                    nextSwordRetreat = owner.FightSeconds + 0.65f; swordAttackedSinceRetreat = false;
+                    sameDirectionRetreats = 0; behavior.RequestBasic(); return false;
+                }
+                float pick = Random.value * total; var chosen = default(SlideCandidate);
+                for (int i = 0; i < count; i++)
+                {
+                    if (candidates[i].weight <= 0) continue;
+                    chosen = candidates[i]; pick -= chosen.weight;
+                    if (pick <= 0) break;
+                }
+                direction = chosen.direction; travel = chosen.distance; slideKind = chosen.kind;
+                sameDirectionRetreats = recent && direction == lastRetreatDirection ? sameDirectionRetreats + 1 : 1;
+                lastRetreatDirection = direction; lastRetreatAt = owner.FightSeconds;
+                return true;
+            }
+            struct SlideCandidate { public float direction, distance, weight; public SlideKind kind; }
+            float SlideWeight(float direction, float distance, bool recent)
+            {
+                float end = owner.Position.x + direction * distance;
+                float clearance = Mathf.Min(end - (KarmaStage.BossLeftWall + 0.5f), KarmaStage.BossRightWall - 0.5f - end);
+                float wallPressure = 1 - Mathf.Clamp01(clearance / 16);
+                return Mathf.Lerp(1, 0.08f, wallPressure * wallPressure)
+                    * (recent && direction == lastRetreatDirection ? 0.25f : 1);
             }
             public void RememberSwordPressure()
             {
@@ -35,39 +199,70 @@ namespace KarmaPrototype
             {
                 if (swordRetreatRemaining <= 0)
                 {
-                    // SW01's existing minimum range is wider than a close SW02.
-                    // After using SW02, make room once if that rule still excludes
-                    // SW01; keep its attack range and the inherited cycle intact.
-                    bool waveRoom = owner.previous == EnemyAttack.SW02 && owner.attacks.Contains(EnemyAttack.SW01)
-                    && !KarmaPatternCatalog.CanSelect(EnemyAttack.SW01, owner.previous, Mathf.Abs(dx) / KarmaSpace.Scale,
-                    owner.game.Player.Airborne, true, false, true, true);
                     float safeGap = Mathf.Max(swordPressureTarget, SwordSpacingDistance());
                     bool pressure = swordPressurePending && Mathf.Abs(dx) < safeGap;
-                    // React before the player has reached the wide melee body.
-                    // The completed-attack token and cooldown still limit escapes.
-                    bool nearMelee = Mathf.Abs(dx) < Mathf.Max(Settings.swordRetreatStartDistance,
-                    safeGap - Mathf.Clamp(Settings.swordMeleeSpacingMargin, 0.25f, 1.25f));
-                    if ((!waveRoom && !pressure && !nearMelee)
-                    || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat || owner.game.Player.ContinuousSwordAttack)
+                    float distance = Mathf.Abs(dx);
+                    bool tooClose = distance < behavior.BasicMeleeRange * 0.55f;
+                    bool nearMelee = tooClose || distance < Settings.pressureRetreatStartDistance
+                        && !behavior.BasicMeleeCanReach(owner.Position, owner.game.Player.Position);
+                    bool repositionOpportunity = !pressure && !nearMelee && distance <= behavior.BasicWaveRange + 3;
+                    // Never evade on spawn. A completed action and the existing
+                    // cooldown are required before each single spacing step.
+                    if ((!pressure && !nearMelee && !repositionOpportunity)
+                    || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat)
                     return false;
-                    swordApproaching = false;
+                    if (repositionOpportunity && Random.value > 0.35f)
+                    { nextSwordRetreat = owner.FightSeconds + 0.6f; return false; }
+                    if (!ChooseRetreat(dx, out var chosenDirection, out var chosenTravel)) return false;
+                    swordApproaching = false; approachSpeed = 0; retreatSpeed = 0;
                     swordPressurePending = false;
                     swordPressureTarget = 0;
-                    swordRetreatTarget = safeGap;
-                    swordRetreatDirection = dx < 0 ? 1 : -1;
-                    swordRetreatRemaining = Mathf.Clamp(Settings.swordRetreatDistance, 2, 18);
-                    swordRetreatUntil = owner.FightSeconds + Mathf.Clamp(Settings.swordRetreatDuration, 0.35f, 0.75f);
-                    nextSwordRetreat = owner.FightSeconds + Mathf.Max(4.5f, Settings.swordRetreatCooldown);
+                    swordRetreatDirection = chosenDirection;
+                    // Even inside the ordinary facing dead zone, a backstep
+                    // must face its target rather than slide forward.
+                    bool relocating = slideKind != SlideKind.LongRetreat;
+                    owner.direction = relocating ? (dx < 0 ? -1 : 1) : -swordRetreatDirection;
+                    owner.art.localScale = new Vector3(owner.direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
+                    swordRetreatRemaining = chosenTravel;
+                    // The endpoint measures this boss's displacement, not its
+                    // changing gap to the pursuer. A 9.5-unit gap used to stop a
+                    // nominal nine-unit retreat after only a few world units.
+                    swordRetreatTarget = owner.Position.x + swordRetreatDirection * swordRetreatRemaining;
+                    float topSpeed = Mathf.Min(Mathf.Max(1, Settings.swordRetreatSpeed), Mathf.Max(1, Settings.swordRetreatSpeedLimit));
+                    float requiredTime = Mathf.Clamp(Settings.swordBackstepPreparation, 0, 0.08f)
+                        + swordRetreatRemaining / topSpeed
+                        + topSpeed / (2 * Mathf.Max(1, Settings.swordBackstepAcceleration))
+                        + topSpeed / (2 * Mathf.Max(1, Settings.swordBackstepDeceleration)) + 0.12f;
+                    swordRetreatUntil = owner.FightSeconds + Mathf.Max(Settings.pressureRetreatDuration, requiredTime);
+                    swordRetreatMoveAt = owner.FightSeconds + Mathf.Clamp(Settings.swordBackstepPreparation, 0, 0.08f);
+                    nextSwordRetreat = owner.FightSeconds + Mathf.Clamp(
+                        Mathf.Min(Settings.swordRetreatCooldown, Settings.pressureRetreatCooldown), 1.1f, 1.5f);
                     // Even a blocked attempt yields to an attack before retrying.
                     swordAttackedSinceRetreat = false;
+                    if (swordRetreatRemaining < 0.12f)
+                    { FinishSwordRetreat(); return false; }
+                    // Facing can change if the player crosses behind a long
+                    // slide; sample real travel in either direction throughout.
+                    afterimages.BeginRetreat(true);
                 }
-                float stop = swordRetreatTarget;
-                if (owner.FightSeconds >= swordRetreatUntil || dx * swordRetreatDirection >= 0 || Mathf.Abs(dx) >= stop)
+                float toEndpoint = (swordRetreatTarget - owner.Position.x) * swordRetreatDirection;
+                // A change in player side is not a physical obstruction. The
+                // swept collision/floor checks still guard every movement step.
+                if (owner.FightSeconds >= swordRetreatUntil || toEndpoint <= 0.001f)
                 { FinishSwordRetreat(); return false; }
-                // A short burst can gain ground on pursuit; ordinary walking was
-                // slower than the player and reduced the gap despite moving away.
-                float speed = Mathf.Min(Mathf.Max(1, Settings.swordRetreatSpeed), owner.game.Config.moveSpeed * 2.5f);
-                float step = swordRetreatDirection * Mathf.Min(Mathf.Min(swordRetreatRemaining, stop - Mathf.Abs(dx)), speed * dt);
+                if (owner.FightSeconds < swordRetreatMoveAt) return true;
+                float remaining = Mathf.Min(swordRetreatRemaining, toEndpoint);
+                float braking = Mathf.Max(1, Settings.swordBackstepDeceleration);
+                float speed = Mathf.Min(Mathf.Max(1, Settings.swordRetreatSpeed),
+                    Mathf.Max(1, Settings.swordRetreatSpeedLimit));
+                // Brake for both the remaining distance and the duration budget.
+                float brakingStep = braking * dt;
+                speed = Mathf.Min(speed, Mathf.Sqrt(brakingStep * brakingStep + 2 * braking * remaining) - brakingStep,
+                    braking * Mathf.Max(0, swordRetreatUntil - owner.FightSeconds));
+                retreatSpeed = Mathf.MoveTowards(retreatSpeed, speed,
+                    (speed < retreatSpeed ? braking : Mathf.Max(1, Settings.swordBackstepAcceleration)) * dt);
+                float step = swordRetreatDirection * Mathf.Min(remaining, retreatSpeed * dt);
+                if (Mathf.Abs(step) < 0.0001f) { FinishSwordRetreat(); return false; }
                 float travelled = MoveSwordOnGround(step);
                 if (travelled <= 0.0001f) { FinishSwordRetreat(); return false; }
                 swordRetreatRemaining = Mathf.Max(0, swordRetreatRemaining - travelled);
@@ -79,15 +274,35 @@ namespace KarmaPrototype
             {
                 swordRetreatRemaining = 0;
                 swordRetreatTarget = 0;
+                retreatSpeed = 0;
+                afterimages.EndRetreat();
+                if (swordWallEscaping)
+                {
+                    swordWallEscaping = false;
+                    wallReturnUntil = owner.FightSeconds + 3;
+                    nextWallEscape = Mathf.Max(nextWallEscape, owner.FightSeconds + 3);
+                }
                 // A new hit during this move remains queued behind the cooldown;
                 // starting the move already consumed the previous request.
                 behavior.RequestBasic();
-                owner.timer = Mathf.Max(owner.timer, 0.18f);
-                nextSwordApproach = owner.FightSeconds + Mathf.Max(0.25f, owner.timer + 0.05f);
+                owner.timer = Mathf.Clamp(owner.timer, 0.18f, 0.28f);
+                float attackWindow = Mathf.Clamp(Settings.swordRetreatAttackWindow, 0.5f, 0.8f);
+                nextSwordRetreat = Mathf.Max(nextSwordRetreat, owner.FightSeconds + attackWindow);
+                nextSwordApproach = owner.FightSeconds + Mathf.Max(attackWindow, owner.timer + 0.05f);
             }
             bool ApproachSword(float dt, float dx)
             {
-                float distance = Mathf.Abs(dx), preferred = Mathf.Max(Mathf.Clamp(Settings.swordPreferredDistance, 9, 14), SwordSpacingDistance());
+                // Relocation can put the pursuer behind the boss. Apply the
+                // existing three-second wall-return guard to walking as well,
+                // so approach cannot undo the escape before attacks get a turn.
+                if (owner.FightSeconds < wallReturnUntil && Mathf.Sign(dx) == wallReturnDirection)
+                {
+                    if (swordApproaching) FinishSwordApproach();
+                    return false;
+                }
+                float distance = Mathf.Abs(dx), preferred = Mathf.Min(Settings.swordPreferredDistance, behavior.BasicWaveRange * 0.9f);
+                // An available medium-range basic should not be postponed by walking.
+                if (!swordApproaching && distance <= behavior.BasicWaveRange && behavior.HasSwordCandidate(owner.Position)) return false;
                 if (distance <= preferred)
                 {
                     if (swordApproaching) FinishSwordApproach();
@@ -105,7 +320,9 @@ namespace KarmaPrototype
                 if (owner.FightSeconds >= swordApproachUntil && behavior.HasSwordCandidate(owner.Position))
                 { FinishSwordApproach(); return false; }
                 float speed = Mathf.Min(owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale, owner.game.Config.moveSpeed * 0.8f);
-                float step = Mathf.Sign(dx) * Mathf.Min(distance - preferred, speed * dt);
+                speed = Mathf.Min(speed, Mathf.Sqrt(2 * Mathf.Max(1, Settings.swordRetreatDeceleration) * (distance - preferred)));
+                approachSpeed = Mathf.MoveTowards(approachSpeed, speed, Mathf.Max(1, Settings.swordRetreatAcceleration) * dt);
+                float step = Mathf.Sign(dx) * Mathf.Min(distance - preferred, approachSpeed * dt);
                 if (MoveSwordOnGround(step) <= 0.0001f)
                 {
                     FinishSwordApproach();
@@ -117,6 +334,7 @@ namespace KarmaPrototype
             void FinishSwordApproach()
             {
                 swordApproaching = false;
+                approachSpeed = 0;
                 nextSwordApproach = owner.FightSeconds + Mathf.Max(0.25f, owner.timer + 0.05f);
             }
             float MoveSwordOnGround(float step)
@@ -129,12 +347,16 @@ namespace KarmaPrototype
                 float after = Mathf.Clamp(before + step, left, right);
                 step = after - before;
                 if (Mathf.Abs(step) <= 0.0001f) return 0;
-                foreach (var hit in Physics2D.BoxCastAll(owner.Position, KarmaSpace.Units(new Vector2(0.8f, 1.6f)), 0,
+                var body = SwordMoveBounds();
+                foreach (var hit in Physics2D.BoxCastAll(body.center, body.size, 0,
                 Vector2.right * Mathf.Sign(step), Mathf.Abs(step) + 0.1f))
-                if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null)
+                if (BlocksSwordMove(hit.collider)
+                    && Vector2.Dot(hit.normal, Vector2.right * Mathf.Sign(step)) < -0.001f)
                 return 0;
                 bool floor = false;
-                foreach (var hit in Physics2D.RaycastAll(new Vector2(after, owner.Position.y), Vector2.down, KarmaSpace.GuardianGroundY + 0.5f))
+                Physics2D.Raycast(new Vector2(after, owner.Position.y), Vector2.down, TerrainFilter,
+                    owner.terrainHits, KarmaSpace.GuardianGroundY + 0.5f);
+                foreach (var hit in owner.terrainHits)
                 if (hit.collider.GetComponent<KarmaSurface>() != null) { floor = true; break; }
                 if (!floor) return 0;
                 owner.Move(step);
@@ -147,7 +369,12 @@ namespace KarmaPrototype
                 if (Mathf.Abs(dx) > 0.5f) owner.direction = Mathf.Sign(dx);
                 if (owner.direction == 0) owner.direction = owner.art.localScale.x < 0 ? -1 : 1;
                 owner.art.localScale = new Vector3(owner.direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
-                if (!RetreatSword(dt, dx) && !ApproachSword(dt, dx)) return false;
+                bool wasRetreating = swordRetreatRemaining > 0;
+                if (RetreatSword(dt, dx))
+                { owner.animator.ShowSwordRetreat(); return true; }
+                // Finish on this frame before considering an approach on the next.
+                if (wasRetreating) return true;
+                if (!ApproachSword(dt, dx)) return false;
                 owner.animator.ShowGuardianSpacing(); return true;
             }
             public void ObservePressure()
@@ -156,12 +383,15 @@ namespace KarmaPrototype
                 else if (Mathf.Abs(owner.game.Player.Position.x - owner.Position.x) > Mathf.Max(swordPressureTarget, SwordSpacingDistance()) + 0.25f)
                 { swordPressurePending = false; swordPressureTarget = 0; }
             }
-            public void OnSelected() { swordRetreatRemaining = 0; swordApproaching = false; }
+            public void OnSelected() { swordRetreatRemaining = 0; swordWallEscaping = false; swordApproaching = false; retreatSpeed = approachSpeed = 0; afterimages.EndRetreat(); }
             public void OnCompleted() { swordAttackedSinceRetreat = true; }
             public void Interrupt(bool preservePressure)
             {
                 swordRetreatRemaining = 0; swordApproaching = false; nextSwordApproach = 0;
+                swordWallEscaping = false;
+                retreatSpeed = approachSpeed = 0;
                 swordRetreatTarget = 0;
+                afterimages.Clear();
                 if (!preservePressure || !owner.Active) { swordPressurePending = false; swordPressureTarget = 0; }
             }
         }

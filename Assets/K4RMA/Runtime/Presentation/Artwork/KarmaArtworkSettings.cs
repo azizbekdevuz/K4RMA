@@ -20,9 +20,6 @@ namespace KarmaPrototype
 
         [Header("수호자 외형 — Sprite를 연결하세요")]
         [InspectorName("기본 수호자")] public Sprite neutralGuardian;
-        [InspectorName("검 수호자")] public Sprite swordGuardian;
-        [InspectorName("상승 수호자")] public Sprite risingGuardian;
-        [InspectorName("결계 수호자")] public Sprite guardGuardian;
 
         [Header("스테이지 — Sprite를 연결하세요")]
         [InspectorName("도장 배경")] public Sprite dojoBackground;
@@ -47,7 +44,7 @@ namespace KarmaPrototype
         public Sprite Guardian(Essence? type)
         {
             if (!type.HasValue && neutralGuardian != null) return neutralGuardian;
-            return type == Essence.SwordWave ? swordGuardian : type == Essence.RisingSlash ? risingGuardian : guardGuardian;
+            return KarmaArtwork.Sprite("BossAppearance", type == Essence.SwordWave ? "Wave" : type == Essence.RisingSlash ? "Rise" : "Ward");
         }
 
         public Texture2D Texture(string name) { return name == "MenuBackground" ? menuBackground : null; }

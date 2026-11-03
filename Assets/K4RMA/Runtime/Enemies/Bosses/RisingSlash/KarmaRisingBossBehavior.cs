@@ -1,16 +1,22 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
         // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
+        [BossKind(Essence.RisingSlash)]
+        [UnityEngine.Scripting.Preserve]
         sealed class RisingBossBehavior : BossBehavior
         {
             new KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
+            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Rise") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride;
             int selectionCursor;
+
+            [UnityEngine.Scripting.Preserve]
             public RisingBossBehavior(KarmaEnemy owner) : base(owner)
             {
                 Register(EnemyAttack.GroundStrike, new UPBasicPattern(owner));
@@ -20,6 +26,19 @@ namespace KarmaPrototype
                 Register(EnemyAttack.UP04, new UP04Pattern(owner));
                 Register(EnemyAttack.UP05, new UP05Pattern(owner));
             }
+            public override void Initialize() { owner.animator.ConfigureRisingPresentation(); }
+            public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
+            {
+                var owned = new HashSet<Essence>(inherited);
+                var result = new List<EnemyAttack> { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02 };
+                if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
+                if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
+                if (owned.Count == 3) result.Add(EnemyAttack.UP05);
+                return result;
+            }
+            public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
+            public override void OnAttackParried(bool stun)
+            { if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position); }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {
@@ -33,10 +52,38 @@ namespace KarmaPrototype
                 return false;
             }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
-            { return (attack != EnemyAttack.GroundStrike || distance <= Settings.meleeReach) && base.Eligible(attack, distance, sight, escape); }
-            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
-            {
-                return RisingSlashRules.TrySelect(owner.attacks, candidate => Eligible(candidate, distance, sight, escape), ref selectionCursor, out attack);
+protected override bool Eligible(
+    EnemyAttack attack,
+    float distance,
+    bool sight,
+    bool escape)
+{
+    if (!base.Eligible(attack, distance, sight, escape))
+        return false;
+
+    if (attack == EnemyAttack.GroundStrike)
+        return distance <= Settings.meleeReach;
+
+    if (attack == EnemyAttack.UP02)
+        return owner.previous != attack &&
+               (owner.game.Player.Airborne ||
+                distance <= KarmaSpace.Units(8));
+
+    return attack != EnemyAttack.UP03 || escape;
+}
+
+public override bool TrySelect(
+    float distance,
+    bool sight,
+    bool escape,
+    out EnemyAttack attack)
+{
+    return RisingSlashRules.TrySelect(
+        owner.attacks,
+        candidate => Eligible(candidate, distance, sight, escape),
+        ref selectionCursor,
+        out attack);
+}
             }
             public override float DecisionDelay { get { return Mathf.Max(0.26f, base.DecisionDelay * Settings.attackDecisionMultiplier); } }
 

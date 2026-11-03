@@ -6,6 +6,9 @@ namespace KarmaPrototype
     [Serializable]
     public sealed class KarmaGuardBossSettings : KarmaBossBalance
     {
+        [Header("방어형 · 이동 및 사거리")]
+        [Min(0.1f)] public float preferredDistance = 3 * KarmaSpace.Scale;
+        [Min(0.1f)] public float heavyStrikeReach = 4 * KarmaSpace.Scale;
         [Header("방어형 · 미정 항목의 조정 가능한 초기값")]
         [Min(0.1f)] public float heavyStrikeDamageMultiplier = 1.5f, shieldThrowDamageMultiplier = 0.8f, shieldFragmentDamageMultiplier = 0.8f;
         [Min(0.1f)] public float trialWaveWidth = 1.2f * KarmaSpace.Scale, trialWaveHeight = 0.5f * KarmaSpace.Scale;

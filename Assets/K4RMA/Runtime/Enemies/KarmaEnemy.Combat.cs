@@ -4,7 +4,6 @@ namespace KarmaPrototype
     public sealed partial class KarmaEnemy
     {
         SpriteRenderer[] damageRenderers;
-        KarmaWaveMotion damageMotion;
         internal bool PresentationActive { get { return Active && isActiveAndEnabled; } }
         // Only the guardian artwork contributes: attack VFX and shield halos are separate objects.
         public Bounds DamageBounds
@@ -14,14 +13,13 @@ namespace KarmaPrototype
                 if (damageRenderers == null || damageRenderers.Length == 0)
                 {
                     damageRenderers = art.GetComponentsInChildren<SpriteRenderer>();
-                    damageMotion = art.GetComponent<KarmaWaveMotion>();
                 }
                 Bounds bounds = default;
                 bool found = false;
                 foreach (var renderer in damageRenderers)
                 {
                     if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer.sprite == null) continue;
-                    var body = damageMotion != null ? damageMotion.GetDamageBounds(renderer) : renderer.bounds;
+                    var body = behavior != null ? behavior.DamageBounds(renderer) : renderer.bounds;
                     if (!found) { bounds = body; found = true; }
                     else bounds.Encapsulate(body);
                 }
@@ -47,24 +45,23 @@ namespace KarmaPrototype
             if (!Alive || !game.IsCombat || amount <= 0 || stopped) return;
             engaged = true;
             if (fullShield) return;
-            bool front = frontalGuard && (source.x - Position.x) * direction >= 0;
-            bool reduced = front || swordGuard || FightSeconds < shieldUntil;
+            bool reduced = behavior.ReduceDamage(source);
             behavior.OnDamaged();
             if (reduced)
             {
                 amount *= Mathf.Clamp01(behavior.Balance.shieldDamageMultiplier);
                 KarmaRemnantVFX.Impact(game, Position, Essence.Guard);
             }
-            ReceiveDamage(amount);
+            ReceiveDamage(amount, source);
         }
-        void ReceiveDamage(float amount)
+        void ReceiveDamage(float amount, Vector2 source)
         {
 #if UNITY_EDITOR
             if (patternTestHold) amount = Mathf.Min(amount, Mathf.Max(0f, Health - MaxHealth * 0.35f));
 #endif
             if (amount <= 0) return;
-            animator.Hurt(); Health = Mathf.Max(0, Health - amount);
-            KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Units(0.7f), Color.white, 0.1f);
+            behavior.DamageFeedback(ClosestDamagePoint(source));
+            Health = Mathf.Max(0, Health - amount);
             if (Health <= 0)
             {
                 CancelCombat(); art.SetParent(game.World, true); animator.Die();

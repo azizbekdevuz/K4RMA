@@ -3,7 +3,7 @@ using UnityEngine;
 namespace KarmaPrototype
 {
     [Serializable]
-    public sealed class KarmaBossTuning
+    public sealed partial class KarmaBossTuning
     {
         [Header("보스 공통")]
         [Min(1)] public float stageOneHealth = 1050, stageTwoHealth = 1550, stageThreeHealth = 2050, finalHealth = 2800;
@@ -16,10 +16,6 @@ namespace KarmaPrototype
         [Range(0.65f, 1.5f)] public float warningMultiplier = 0.9f;
         [Min(10)] public float ultimateCooldown = 20;
         [Min(5)] public float patternTimeout = 30;
-        [Header("보스별 독립 설정")]
-        public KarmaSwordBossSettings sword = new KarmaSwordBossSettings();
-        public KarmaRisingBossSettings rising = new KarmaRisingBossSettings();
-        public KarmaGuardBossSettings guard = new KarmaGuardBossSettings();
         public float HealthFor(int stage)
         {
             float hp = stage == 0 ? stageOneHealth : stage == 1 ? stageTwoHealth : stage == 2 ? stageThreeHealth : finalHealth;

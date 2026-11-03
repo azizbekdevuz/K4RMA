@@ -50,9 +50,6 @@ namespace KarmaPrototype
             }
             float dx = game.Player.Position.x - Position.x;
             if (behavior.TickMovement(dt, dx)) return;
-#if UNITY_EDITOR
-            if (patternTestHold) return;
-#endif
             timer -= dt;
             if (timer <= 0 && !behavior.BlocksSelection) BeginAttack();
         }

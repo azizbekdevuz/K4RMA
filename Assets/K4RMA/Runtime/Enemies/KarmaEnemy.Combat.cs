@@ -56,9 +56,6 @@ namespace KarmaPrototype
         }
         void ReceiveDamage(float amount, Vector2 source)
         {
-#if UNITY_EDITOR
-            if (patternTestHold) amount = Mathf.Min(amount, Mathf.Max(0f, Health - MaxHealth * 0.35f));
-#endif
             if (amount <= 0) return;
             behavior.DamageFeedback(ClosestDamagePoint(source));
             Health = Mathf.Max(0, Health - amount);

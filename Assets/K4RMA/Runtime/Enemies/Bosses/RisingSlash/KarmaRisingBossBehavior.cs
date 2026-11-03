@@ -14,8 +14,6 @@ namespace KarmaPrototype
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Rise") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride;
-            int selectionCursor;
-
             [UnityEngine.Scripting.Preserve]
             public RisingBossBehavior(KarmaEnemy owner) : base(owner)
             {
@@ -55,13 +53,8 @@ namespace KarmaPrototype
             {
                 if (!base.Eligible(attack, distance, sight, escape)) return false;
                 if (attack == EnemyAttack.GroundStrike) return distance <= Settings.meleeReach;
-                if (attack == EnemyAttack.UP02)
-                    return owner.previous != attack && (owner.game.Player.Airborne || distance <= KarmaSpace.Units(8));
+                if (attack == EnemyAttack.UP02) return owner.previous != attack && (owner.game.Player.Airborne || distance <= KarmaSpace.Units(8));
                 return attack != EnemyAttack.UP03 || escape;
-            }
-            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
-            {
-                return RisingSlashRules.TrySelect(owner.attacks, candidate => Eligible(candidate, distance, sight, escape), ref selectionCursor, out attack);
             }
             public override float DecisionDelay { get { return Mathf.Max(0.26f, base.DecisionDelay * Settings.attackDecisionMultiplier); } }
 

@@ -51,11 +51,11 @@ namespace KarmaPrototype
                 { InterruptPatternCore(true); state = ActionState.Approach; timer = 1.2f; }
                 return;
             }
+            float dx = game.Player.Position.x - Position.x;
+            if (behavior.TickMovement(dt, dx)) return;
 #if UNITY_EDITOR
             if (patternTestHold) return;
 #endif
-            float dx = game.Player.Position.x - Position.x;
-            if (behavior.TickMovement(dt, dx)) return;
             timer -= dt;
             if (timer <= 0 && shieldWarningUntil <= 0) BeginAttack();
         }

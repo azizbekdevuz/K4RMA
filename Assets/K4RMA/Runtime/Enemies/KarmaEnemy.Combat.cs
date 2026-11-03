@@ -59,6 +59,9 @@ namespace KarmaPrototype
         }
         void ReceiveDamage(float amount)
         {
+#if UNITY_EDITOR
+            if (patternTestHold) amount = Mathf.Min(amount, Mathf.Max(0f, Health - MaxHealth * 0.35f));
+#endif
             if (amount <= 0) return;
             animator.Hurt(); Health = Mathf.Max(0, Health - amount);
             KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Units(0.7f), Color.white, 0.1f);

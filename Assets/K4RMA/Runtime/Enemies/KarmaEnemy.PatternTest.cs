@@ -6,6 +6,38 @@ namespace KarmaPrototype
     {
         bool patternTestHold;
         public bool PatternTestRunning { get { return patternTestHold && running; } }
+        public bool PracticeBusy { get { return running || Stunned || pendingParry; } }
+
+        public void ArmPatternIsolation()
+        {
+            patternTestHold = true;
+            stopped = false;
+            engaged = true;
+        }
+
+        public void ReleasePatternIsolation()
+        {
+            if (running) InterruptPattern();
+            patternTestHold = false;
+            timer = 0.8f;
+        }
+
+        public void ReplayIsolatedPattern(EnemyAttack attack)
+        {
+            if (game == null || game.Player == null || running) return;
+            patternTestHold = true;
+            stopped = false;
+            engaged = true;
+            if (!Alive) Health = MaxHealth;
+            selected = attack;
+            previous = (EnemyAttack)(-1);
+            direction = game.Player.Position.x < Position.x ? -1f : 1f;
+            art.localScale = new Vector3(direction * KarmaSpace.GuardianArtScale, Mathf.Abs(art.localScale.y), 1f);
+            state = ActionState.Approach;
+            running = true;
+            patternStarted = FightSeconds;
+            StartCoroutine(RunPattern());
+        }
 
         public void BeginRisingPatternTest(EnemyAttack attack)
         {

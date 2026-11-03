@@ -46,6 +46,13 @@ namespace KarmaPrototype
             Enemies.Add(enemy);
             Phase = RunPhase.Combat;
         }
+#if UNITY_EDITOR
+        public void LoadPracticeRoom(int stage)
+        {
+            StageIndex = Mathf.Clamp(stage, 0, 3);
+            LoadRoom(true);
+        }
+#endif
         public void EnemyDefeated(KarmaEnemy enemy, Transform fallenArt = null)
         {
             BossSplits[StageIndex] = enemy.FightSeconds;

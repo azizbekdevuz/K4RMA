@@ -52,38 +52,16 @@ namespace KarmaPrototype
                 return false;
             }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
-protected override bool Eligible(
-    EnemyAttack attack,
-    float distance,
-    bool sight,
-    bool escape)
-{
-    if (!base.Eligible(attack, distance, sight, escape))
-        return false;
-
-    if (attack == EnemyAttack.GroundStrike)
-        return distance <= Settings.meleeReach;
-
-    if (attack == EnemyAttack.UP02)
-        return owner.previous != attack &&
-               (owner.game.Player.Airborne ||
-                distance <= KarmaSpace.Units(8));
-
-    return attack != EnemyAttack.UP03 || escape;
-}
-
-public override bool TrySelect(
-    float distance,
-    bool sight,
-    bool escape,
-    out EnemyAttack attack)
-{
-    return RisingSlashRules.TrySelect(
-        owner.attacks,
-        candidate => Eligible(candidate, distance, sight, escape),
-        ref selectionCursor,
-        out attack);
-}
+            {
+                if (!base.Eligible(attack, distance, sight, escape)) return false;
+                if (attack == EnemyAttack.GroundStrike) return distance <= Settings.meleeReach;
+                if (attack == EnemyAttack.UP02)
+                    return owner.previous != attack && (owner.game.Player.Airborne || distance <= KarmaSpace.Units(8));
+                return attack != EnemyAttack.UP03 || escape;
+            }
+            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
+            {
+                return RisingSlashRules.TrySelect(owner.attacks, candidate => Eligible(candidate, distance, sight, escape), ref selectionCursor, out attack);
             }
             public override float DecisionDelay { get { return Mathf.Max(0.26f, base.DecisionDelay * Settings.attackDecisionMultiplier); } }
 

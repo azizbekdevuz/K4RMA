@@ -120,8 +120,9 @@ namespace KarmaPrototype
                 else other++;
             }
             Check(pursuit == RisingSlashRules.PursuitRepeats * 2 && other == 4, "R3 schedule weight 2:2:1:1:1:1");
-            var all = KarmaPatternCatalog.BuildCycle(new List<Essence> { Essence.RisingSlash, Essence.SwordWave, Essence.Guard });
-            var log = Simulate(all, 320, 6f, 3f, true, true);
+            var all = RisingCycle(new[] { Essence.RisingSlash, Essence.SwordWave, Essence.Guard });
+            Check(all.Count == 6, "R3 full inheritance unlocks six Rising attacks");
+            var log = Simulate(all, 320, 6f, true, true);
             Check(log.Total == 320, "R3 every full-cycle decision resolves");
             Check(log.Count(EnemyAttack.UP01) == 80 && log.Count(EnemyAttack.UP02) == 80, "R3 pursuit slots " + log);
             Check(log.Count(EnemyAttack.GroundStrike) == 40 && log.Count(EnemyAttack.UP03) == 40, "R3 other slots " + log);
@@ -130,26 +131,26 @@ namespace KarmaPrototype
             Check(log.Count(EnemyAttack.UP02) > log.Count(EnemyAttack.UP04), "R3 UP02 exceeds another pattern");
             Check(log.Ineligible == 0 && log.ConsecutiveUp02 == 0 && log.UltimateViolations == 0, "R3 no illegal picks " + log);
 
-            var rising = KarmaPatternCatalog.BuildCycle(new List<Essence> { Essence.RisingSlash });
-            var basic = Simulate(rising, 320, 6f, 3f, true, true);
+            var rising = RisingCycle(new[] { Essence.RisingSlash });
+            var basic = Simulate(rising, 320, 6f, true, true);
             Check(basic.Count(EnemyAttack.UP03) + basic.Count(EnemyAttack.UP04) + basic.Count(EnemyAttack.UP05) == 0, "R3 locked patterns stay locked");
             Check(basic.Count(EnemyAttack.UP01) == 128 && basic.Count(EnemyAttack.UP02) == 128 && basic.Count(EnemyAttack.GroundStrike) == 64, "R3 early cycle still prefers pursuit " + basic);
             Check(basic.Ineligible == 0 && basic.ConsecutiveUp02 == 0, "R3 early cycle remains legal");
 
-            var guard = KarmaPatternCatalog.BuildCycle(new List<Essence> { Essence.RisingSlash, Essence.Guard });
-            var guarded = Simulate(guard, 300, 6f, 3f, true, true);
+            var guard = RisingCycle(new[] { Essence.RisingSlash, Essence.Guard });
+            var guarded = Simulate(guard, 300, 6f, true, true);
             Check(guarded.Count(EnemyAttack.UP03) == 0 && guarded.Count(EnemyAttack.UP05) == 0, "R3 sword and ultimate stay absent");
             Check(guarded.Count(EnemyAttack.UP01) == 100 && guarded.Count(EnemyAttack.UP02) == 100, "R3 guard inheritance keeps pursuit ahead " + guarded);
             Check(guarded.Count(EnemyAttack.UP04) > 0 && guarded.Count(EnemyAttack.GroundStrike) > 0, "R3 eligible non-pursuit attacks are not starved");
 
-            var distant = Simulate(all, 300, 18f, 9f, true, true);
+            var distant = Simulate(all, 300, 18f, true, true);
             Check(distant.Count(EnemyAttack.UP02) == 0 && distant.Count(EnemyAttack.GroundStrike) == 0, "R3 far target removes UP02 and melee");
             Check(distant.Count(EnemyAttack.UP01) == 120 && distant.Count(EnemyAttack.UP05) == 60, "R3 UP01 remains the pursuit choice " + distant);
             Check(distant.Count(EnemyAttack.UP01) > distant.Count(EnemyAttack.UP03), "R3 distant UP01 still exceeds others");
             Check(distant.Ineligible == 0, "R3 distant selection never cheats eligibility");
 
-            var onlyBasic = KarmaPatternCatalog.BuildCycle(new List<Essence>());
-            var strikes = Simulate(onlyBasic, 300, 6f, 3f, true, true);
+            var onlyBasic = new List<EnemyAttack> { EnemyAttack.GroundStrike };
+            var strikes = Simulate(onlyBasic, 300, 6f, true, true);
             Check(strikes.Total == 300 && strikes.Count(EnemyAttack.GroundStrike) == 300, "R3 sole eligible attack is always chosen");
 
             int cursor = 0;
@@ -158,12 +159,23 @@ namespace KarmaPrototype
             bool found = RisingSlashRules.TrySelect(all, delegate(EnemyAttack attack) { probes++; return false; }, ref cursor, out rejected);
             Check(!found && probes == RisingSlashRules.PursuitSchedule.Length, "R3 one decision cannot loop forever");
 
-            var cooled = Simulate(all, 320, 6f, 3f, true, true, 10);
+            var cooled = Simulate(all, 320, 6f, true, true, 10);
             Check(cooled.UltimateViolations == 0 && cooled.Count(EnemyAttack.UP05) > 0, "R3 ultimate respects cooldown and still appears " + cooled);
             Check(cooled.ConsecutiveUp02 == 0 && cooled.Ineligible == 0, "R3 cooldown run stays legal");
         }
 
-        static SelectionLog Simulate(List<EnemyAttack> cycle, int decisions, float worldDistance, float unscaledDistance, bool ultimateReady, bool escape, int ultimateGap = 0)
+        // Mirrors RisingBossBehavior.BuildCycle. An empty order is not a Rising boss; the base behavior then offers only the basic strike.
+        static List<EnemyAttack> RisingCycle(IReadOnlyList<Essence> inherited)
+        {
+            var owned = new HashSet<Essence>(inherited);
+            var result = new List<EnemyAttack> { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02 };
+            if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
+            if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
+            if (owned.Count == 3) result.Add(EnemyAttack.UP05);
+            return result;
+        }
+
+        static SelectionLog Simulate(List<EnemyAttack> cycle, int decisions, float worldDistance, bool ultimateReady, bool escape, int ultimateGap = 0)
         {
             var log = new SelectionLog();
             int cursor = 0;
@@ -177,12 +189,12 @@ namespace KarmaPrototype
                 EnemyAttack picked;
                 bool ok = RisingSlashRules.TrySelect(cycle, delegate(EnemyAttack attack)
                 {
-                    return HostEligible(attack, cycle, previous, worldDistance, 8.2f, unscaledDistance, false, true, false, escape, readyNow);
+                    return HostEligible(attack, cycle, previous, worldDistance, 8.2f, false, escape, readyNow);
                 }, ref cursor, out picked);
                 if (!ok) continue;
                 log.Total++;
                 log.Add(picked);
-                if (!HostEligible(picked, cycle, previous, worldDistance, 8.2f, unscaledDistance, false, true, false, escape, readyNow)) log.Ineligible++;
+                if (!HostEligible(picked, cycle, previous, worldDistance, 8.2f, false, escape, readyNow)) log.Ineligible++;
                 if (picked == EnemyAttack.UP02 && previous == EnemyAttack.UP02) log.ConsecutiveUp02++;
                 if (picked == EnemyAttack.UP05 && !readyNow) log.UltimateViolations++;
                 if (picked == EnemyAttack.UP05 && ultimateGap > 0) { ready = false; readyAgain = i + ultimateGap; }
@@ -191,14 +203,18 @@ namespace KarmaPrototype
             return log;
         }
 
+        // Mirrors BossBehavior.Eligible plus RisingBossBehavior.Eligible. Distance is world units; UP02's reach is 8 design units.
         static bool HostEligible(EnemyAttack attack, IReadOnlyList<EnemyAttack> cycle, EnemyAttack previous, float worldDistance, float meleeReach,
-            float unscaledDistance, bool airborne, bool sight, bool shield, bool escape, bool ultimateReady)
+            bool airborne, bool escape, bool ultimateReady)
         {
             bool listed = false;
             for (int i = 0; i < cycle.Count; i++) if (cycle[i] == attack) listed = true;
             if (!listed) return false;
+            if (attack == EnemyAttack.UP05 && !(ultimateReady && previous != EnemyAttack.UP05)) return false;
             if (attack == EnemyAttack.GroundStrike && worldDistance > meleeReach) return false;
-            return KarmaPatternCatalog.CanSelect(attack, previous, unscaledDistance, airborne, sight, shield, escape, ultimateReady);
+            if (attack == EnemyAttack.UP02 && !(previous != attack && (airborne || worldDistance <= 16f))) return false;
+            if (attack == EnemyAttack.UP03 && !escape) return false;
+            return true;
         }
 
         sealed class SelectionLog
@@ -258,11 +274,10 @@ namespace KarmaPrototype
                 Check(speed > 1f, "R4 fragment moves " + i);
                 Check(ends.Add(aim.EndX.ToString("0.00") + "," + aim.EndY.ToString("0.00")), "R4 distinct path " + i);
             }
-            string asset = File.ReadAllText(RepoFile("Assets/K4RMA/Settings/KarmaConfig.asset"));
-            int rising = asset.IndexOf("\n    rising:", StringComparison.Ordinal);
-            int guard = asset.IndexOf("\n    guard:", StringComparison.Ordinal);
-            Check(rising > 0 && guard > rising, "R4 config has a rising block");
-            string block = asset.Substring(rising, guard - rising);
+            string asset = File.ReadAllText(RepoFile("Assets/K4RMA/Runtime/Enemies/Bosses/RisingSlash/Settings/Resources/KarmaRisingBossProfile.asset"));
+            int settings = asset.IndexOf("\n  settings:", StringComparison.Ordinal);
+            Check(settings > 0 && asset.Contains("m_Name: KarmaRisingBossProfile"), "R4 profile is the rising tuning source");
+            string block = asset.Substring(settings);
             Check(block.Contains("riseHeight: 8"), "R4 serialized rise height unchanged");
             Check(block.Contains("fragmentLifetime: 0.92"), "R4 fragment lifetime unchanged");
             Check(block.Contains("fragmentParryStunSeconds: 2"), "R4 parry stun duration unchanged");

@@ -55,6 +55,12 @@ Desktop.ini
 /Assets/StreamingAssets/aa.meta
 /Assets/StreamingAssets/aa/
 
+# Generated native current-image inventory
+/Assets/K4RMA/Editor/CompleteArtInventory.asset*
+
+# Personal Cursor development instructions
+docs/cursor-rising-slash/
+.cursor/
 
 # Python caches and temporary backups
 __pycache__/

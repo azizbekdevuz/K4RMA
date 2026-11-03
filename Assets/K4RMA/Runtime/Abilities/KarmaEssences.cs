@@ -40,6 +40,9 @@ namespace KarmaPrototype
         public bool HasActive(Essence e) { return !HasRemnant(e); }
         public float Cooldown(Essence e) { return Mathf.Max(0, readyAt[(int)e] - Time.time); }
         public void Initialize(KarmaPlayer owner, KarmaGame director) { player = owner; game = director; }
+#if UNITY_EDITOR
+        public void GrantForPractice(Essence essence) { progression.TryInternalize(essence); }
+#endif
         public void ResetTemporaryState()
         {
             for (int i = 0; i < readyAt.Length; i++) readyAt[i] = 0;

@@ -45,8 +45,7 @@ namespace KarmaPrototype
                     KarmaAttackContact contact = RisingSlashRules.NewStrikeContact();
                     var slash = owner.Attack(center, Vector2.zero, size, strike.ActiveSeconds, Settings.meleeDamageMultiplier * strike.DamageShare, contact, 0f, visualPose: "Cleave");
                     if (slash != null) slash.Repaint(KarmaRisingArt.Get(strike.SpritePose), true);
-                    Vector2 arc = i == RisingSlashRules.BasicStrikeCount - 1 ? size * new Vector2(1.18f, 1.22f) : size;
-                    KarmaRisingPolish.BasicArc(owner.effectsRoot, center, arc, owner.direction, strike.SpritePose);
+                    KarmaRisingPolish.BasicArc(owner.effectsRoot, center, size, owner.direction, strike.SpritePose);
                     yield return owner.Wait(strike.ActiveSeconds);
                     if (i < RisingSlashRules.BasicStrikeCount - 1) yield return owner.Wait(RisingSlashRules.BasicGapSeconds);
                 }

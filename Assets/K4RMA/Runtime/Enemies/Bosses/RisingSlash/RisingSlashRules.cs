@@ -29,9 +29,9 @@ namespace KarmaPrototype
         {
             switch (index)
             {
-                case 0: return Strike(0, 0.10f, 0.34f, 1.35f, 1.05f, 2.55f, 1.20f, "Slash");
-                case 1: return Strike(1, 0.10f, 0.34f, 1.55f, 0.42f, 2.75f, 1.05f, "SlashEcho");
-                default: return Strike(2, 0.12f, 0.42f, 1.75f, 0.72f, 3.20f, 1.70f, "Slash");
+                case 0: return Strike(0, 0.10f, 0.34f, 1.35f, 1.05f, 2.55f, 1.20f, "SlashHigh");
+                case 1: return Strike(1, 0.10f, 0.34f, 1.55f, 0.42f, 2.75f, 1.05f, "SlashLow");
+                default: return Strike(2, 0.12f, 0.42f, 1.75f, 0.72f, 3.20f, 1.70f, "SlashFinish");
             }
         }
 

@@ -14,17 +14,17 @@ namespace KarmaPrototype
     {
         public static void PursuitStreak(Transform parent, Vector2 at, float direction)
         {
-            var sprite = KarmaRisingArt.Get("SlashEcho");
+            var sprite = KarmaRisingArt.Get("RushTrail") ?? KarmaRisingArt.Get("SlashEcho");
             if (parent == null || sprite == null) return;
             var sweep = KarmaCombatVFX.Burst(parent, at + Vector2.up * KarmaSpace.Units(1.05f), sprite,
-                "상승 돌진", KarmaSpace.Units(new Vector2(2.8f, 0.55f)), 0.18f, 0f, new Color(0.35f, 0.95f, 1f));
+                "상승 돌진", KarmaSpace.Units(new Vector2(3.2f, 0.9f)), 0.2f, 0f, Color.white);
             FaceEffect(sweep, parent, direction);
         }
         public static void MeleeTell(Transform parent, Vector2 at, float direction)
         {
-            var sprite = KarmaRisingArt.Get("Slash");
+            var sprite = KarmaRisingArt.Get("BladeWarn") ?? KarmaRisingArt.Get("Slash");
             if (parent == null || sprite == null) return;
-            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 예고", KarmaSpace.Units(new Vector2(2.2f, 0.7f)), 0.2f, 0f, new Color(1f, 0.86f, 0.45f));
+            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 예고", KarmaSpace.Units(new Vector2(2.4f, 1.6f)), 0.22f, 0f, Color.white);
             FaceEffect(sweep, parent, direction);
         }
         static void FaceEffect(SpriteRenderer sweep, Transform parent, float direction)
@@ -44,8 +44,15 @@ namespace KarmaPrototype
         {
             var sprite = KarmaRisingArt.Get(pose);
             if (parent == null || sprite == null) return;
-            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 삼연베기", size, 0.12f, 0f, Color.white);
+            float life = pose == "SlashFinish" ? 0.18f : 0.11f;
+            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 삼연베기", size, life, 0f, Color.white);
             FaceEffect(sweep, parent, direction);
+            if (pose == "SlashFinish")
+            {
+                var burst = KarmaRisingArt.Get("HitBurst");
+                if (burst != null)
+                    KarmaCombatVFX.Burst(parent, at, burst, "마무리 충격", KarmaSpace.Units(new Vector2(1.8f, 1.8f)), 0.16f, 0f, Color.white);
+            }
         }
         public static void LockPop(Transform parent, Vector2 at)
         {

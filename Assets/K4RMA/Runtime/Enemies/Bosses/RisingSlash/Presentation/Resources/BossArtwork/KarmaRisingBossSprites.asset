@@ -55,6 +55,12 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 170760d645d34ae8810e86d814f20879, type: 3}
     - {fileID: 21300000, guid: 6e418b95ba6e4fa28dac557d2e5b206b, type: 3}
     - {fileID: 21300000, guid: 5516be8ed8c44302910390904f8d7b70, type: 3}
+    - {fileID: 21300000, guid: a1c4e8b27d3f4a61b9e0c5d8f2174ab3, type: 3}
+    - {fileID: 21300000, guid: b2d5f9c38e404b72c0f1d6e9a3285bc4, type: 3}
+    - {fileID: 21300000, guid: c3e60ad49f515c83d102e7fab4396cd5, type: 3}
+    - {fileID: 21300000, guid: d4f71be5a0626d94e213f80bc54a7de6, type: 3}
+    - {fileID: 21300000, guid: e5082cf6b1737ea5f324091cd65b8ef7, type: 3}
+    - {fileID: 21300000, guid: f6193d07c2848fb604351a2de76c9f08, type: 3}
     poses:
     - Fragment0
     - Fragment1
@@ -71,6 +77,12 @@ MonoBehaviour:
     - SlashEcho
     - Wave
     - WaveEcho
+    - RushTrail
+    - BladeWarn
+    - SlashHigh
+    - SlashLow
+    - SlashFinish
+    - HitBurst
   - id: BossAppearance
     source: Assets/K4RMA/Arts/Bosses/RisingSlash/Resources/K4RMAArtwork/Characters/Guardians/Base/Rise.png
     sprites:

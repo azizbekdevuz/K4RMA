@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
@@ -10,11 +11,25 @@ namespace KarmaPrototype
         string wavePhase;
         float wavePhaseSwingAt = float.PositiveInfinity, waveReleasedUntil;
         internal int WaveMotionRevision { get; private set; }
+        Dictionary<string, Sprite> swordDamagePoses;
+        Sprite swordDamageFallback;
+        bool swordPresentationConfigured;
         internal void ConfigureSwordPresentation()
         {
+            if (sheet != "Wave" || swordPresentationConfigured) return;
+            swordPresentationConfigured = true;
+            // ConfigureSheet reads the common library, which has no base Wave
+            // sheet. Keep its original damage policy BEFORE filling the display
+            // poses; inherited forms already supplied their own sixteen poses.
+            swordDamagePoses = new Dictionary<string, Sprite>(poses);
+            swordDamageFallback = picture.sprite;
+            foreach (var sprite in KarmaArtwork.Sprites("Wave"))
+                if (sprite != null && !poses.ContainsKey(sprite.name)) poses.Add(sprite.name, sprite);
+            ConfigureSW02Frames();
             guardianPose = SwordGuardianPose;
             deferExplicitPose = true;
             onPoseRequested = () => waveSwingAt = float.PositiveInfinity;
+            onActionEnded = EndSW02PresentationAction;
         }
         public void PrepareWaveAttack(float warningSeconds, bool aimed)
         {
@@ -52,7 +67,8 @@ namespace KarmaPrototype
             // Poses follow the actual combat state, including long attacks and recovery.
             if (picture == null || deathAt >= 0) return;
             if (EmpowermentPose()) return;
-            picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            picture.color = action == "Stunned" ? new Color(0.52f, 0.72f, 0.86f, pictureColor.a)
+                : Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
             transform.localRotation = Quaternion.identity;
             bool basicWave = sheet == "Wave" && (attack == EnemyAttack.SWBasic || attack == EnemyAttack.SW01 || attack == EnemyAttack.SW02);
             bool waveAction = basicWave && (action == "Telegraph" || action == "Attack");
@@ -85,10 +101,14 @@ namespace KarmaPrototype
                 : (transform.position - guardianPreviousPosition).sqrMagnitude > 0.00001f
                     ? "Move" : "Idle";
             if (!poses.ContainsKey(pose)) pose = "Idle";
-            // Compute the same pose-dependent damage silhouette as before this
-            // integration, before selecting the additional presentation phases.
-            Sprite damageSprite = poses.TryGetValue(pose, out var original) ? original : picture.sprite;
-            bool damageComposed = guardianAppearance != null && (pose == "Idle" || pose == "Guard");
+            // Compute the pre-loading damage silhouette before selecting the
+            // additional presentation phases.
+            // Base Wave previously kept its initial Idle cutout in every state.
+            // The displayed sprite can now change, so it must never become the
+            // fallback for incoming damage. Inherited pose bounds stay intact.
+            string damagePose = swordDamagePoses.ContainsKey(pose) ? pose : "Idle";
+            Sprite damageSprite = swordDamagePoses.TryGetValue(damagePose, out var original) ? original : swordDamageFallback;
+            bool damageComposed = guardianAppearance != null && (damagePose == "Idle" || damagePose == "Guard");
             if (damageComposed) damageSprite = guardianAppearance;
             Vector3 damageScale = pictureScale * (damageComposed ? appearanceScale : 1);
             bool phaseOverridesPose = false;
@@ -116,17 +136,19 @@ namespace KarmaPrototype
             bool composed = guardianAppearance != null && (pose == "Idle" || pose == "Guard") && !attackGuard;
             if (composed) picture.sprite = guardianAppearance;
             picture.transform.localScale = pictureScale * (composed ? appearanceScale : 1);
+            ApplySW02Presentation(action, attack);
             if (sheet == "Wave")
             {
                 GuardianDamageSprite = damageSprite; GuardianDamageScale = damageScale;
                 GuardianPhaseOverridesPose = phaseOverridesPose || picture.sprite != damageSprite
                     || picture.transform.localScale != damageScale;
             }
-            // Keep the selected single-pose cutout through every phase while
-            // retaining logical poses, transform motion and the old hit silhouette.
+            // Secondary motion consumes this display pose; damage continues to
+            // use the separately saved sprite, scale and authored foot transform.
             guardianPreviousPosition = transform.position;
             picture.transform.localPosition = pictureHome;
-            picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            picture.color = action == "Stunned" ? new Color(0.52f, 0.72f, 0.86f, pictureColor.a)
+                : Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
             transform.localRotation = Quaternion.identity;
         }
     }

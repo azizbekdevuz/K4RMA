@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: KarmaSwordBossProfile
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSwordBossProfile
   settings:
-    swordDecisionMultiplier: 0.75
+    swordDecisionMultiplier: 0.35
     swordSelectionRetry: 0.1
     swordBasicCooldown: 2.4
     swordPreferredDistance: 11.75
@@ -21,7 +21,7 @@ MonoBehaviour:
     swordRetreatCooldown: 5
     swordRetreatStartDistance: 6.25
     swordRetreatStopDistance: 11.75
-    swordRetreatDistance: 16
+    swordRetreatDistance: 32
     swordRetreatDuration: 0.6
     swordRetreatSpeed: 48
     swordMeleeSpacingMargin: 0.65
@@ -42,22 +42,23 @@ MonoBehaviour:
     shieldDamageMultiplier: 0.3
     damageScale: 1
     movementScale: 1
-    decisionScale: 1
-    recoveryScale: 1
+    decisionScale: 0.65
+    recoveryScale: 0.55
     meleeBasicCooldown: 1.1
     waveBasicCooldown: 1.5
     swordMeleeHysteresis: 0.2
     swordRetreatSpeedLimit: 48
     swordRetreatAcceleration: 56
     swordRetreatDeceleration: 72
-    pressureRetreatStartDistance: 8.2
-    pressureRetreatCooldown: 1.2
+    pressureRetreatStartDistance: 9.2
+    pressureRetreatCooldown: 1.1
     pressureRetreatDuration: 1.05
     swordBackstepPreparation: 0.045
     swordBackstepAcceleration: 420
     swordBackstepDeceleration: 360
-    swordRetreatDashMultiplier: 2
+    swordRetreatDashMultiplier: 4
     swordRetreatAttackWindow: 0.65
+    swordWallReturnCooldown: 2.5
     swordAfterimageInterval: 0.03
     swordAfterimageLifetime: 0.3
     swordAfterimageAlpha: 0.58

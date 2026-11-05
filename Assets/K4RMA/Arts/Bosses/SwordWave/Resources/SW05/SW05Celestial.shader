@@ -5,7 +5,7 @@ Shader "K4RMA/SW05/Celestial"
         [PerRendererData] _MainTex ("Sprite", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _Progress ("Progress", Float) = 0
-        _Mode ("Sigil / Wake / Pillar", Float) = 0
+        _Mode ("Sigil / Wake / Pillar / Contact", Float) = 0
     }
     SubShader
     {
@@ -49,29 +49,38 @@ Shader "K4RMA/SW05/Celestial"
                 float light;
                 if (_Mode < 0.5)
                 {
-                    float ring = exp(-abs(r - 0.72) * 95) + exp(-abs(r - 0.86) * 140) * 0.5;
-                    float runes = pow(saturate(cos(a * 12)), 18) * exp(-abs(r - 0.79) * 100);
+                    float segments = smoothstep(0.12, 0.28, abs(sin(a * 4 + _Progress * 5)));
+                    float ring = exp(-abs(r - 0.72) * 110) + exp(-abs(r - 0.86) * 150) * 0.58 * segments;
+                    float runes = pow(saturate(cos(a * 12 - _Progress * 6)), 18) * exp(-abs(r - 0.79) * 100);
+                    float inner = exp(-abs(r - 0.48) * 140) * pow(saturate(cos(a * 4 + _Progress * 4)), 3);
                     float star = exp(-abs(p.x) * 55) * exp(-abs(p.y) * 3)
                                + exp(-abs(p.y) * 55) * exp(-abs(p.x) * 3);
-                    light = (ring + runes + star * 0.45 + exp(-r*r*9)*0.12) * fade;
+                    light = (ring + runes + inner * 0.33 + star * 0.32 + exp(-r*r*14)*0.08) * fade;
                 }
                 else if (_Mode < 1.5)
                 {
                     // Soft envelope, bright central filament and forked wisps.
                     float taper = saturate(1 - abs(p.y));
-                    light = (exp(-p.x*p.x*45) + exp(-p.x*p.x*5)*0.22) * taper*taper * 0.7;
-                    light += exp(-abs(abs(p.x) - 0.2 - 0.08*sin(p.y*15))*70) * taper * 0.18;
+                    light = (exp(-p.x*p.x*110) + exp(-p.x*p.x*12)*0.16) * taper*taper * 0.72;
+                    light += exp(-abs(abs(p.x) - 0.15 - 0.045*sin(p.y*19 - _Progress*16))*95) * taper * 0.21;
                 }
-                else
+                else if (_Mode < 2.5)
                 {
-                    float curtain = exp(-p.x*p.x*5) * 0.45;
-                    float ribs = pow(saturate(cos(p.x*25 + sin(p.y*4))), 18) * 0.5;
-                    float dust = pow(saturate(sin(p.x*51 + p.y*23 - _Progress*40)), 35) * 0.4;
+                    float curtain = exp(-p.x*p.x*14) * 0.28;
+                    float ribs = pow(saturate(cos(p.x*25 + sin(p.y*4 - _Progress*5))), 24) * 0.42;
+                    float dust = pow(saturate(sin(p.x*51 + p.y*23 - _Progress*40)), 45) * 0.33;
                     float envelope = smoothstep(0, 0.15, _Progress) * (1-smoothstep(0.7, 1, _Progress));
                     light = (curtain + ribs + dust) * envelope * (1-p.y*p.y);
                 }
+                else
+                {
+                    float radius = lerp(0.12, 0.85, 1-pow(1-saturate(_Progress),3));
+                    light = exp(-abs(r-radius)*65) * (1-_Progress)*(1-_Progress);
+                    light += exp(-r*r*35) * exp(-_Progress*10) * 0.45;
+                }
                 light *= 1 - smoothstep(0.9, 1, max(abs(p.x), abs(p.y)));
-                return half4(i.color.rgb * (1 + light*0.5), saturate(light) * i.color.a);
+                half3 tint = lerp(i.color.rgb, half3(1.55,0.78,0.38), saturate(light)*0.38);
+                return half4(tint * (1 + light*0.35), saturate(light) * i.color.a);
             }
             ENDHLSL
         }

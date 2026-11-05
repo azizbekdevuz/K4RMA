@@ -263,10 +263,49 @@ public static class KarmaSwordWallCounterChecks
     static async Task CheckParry(int index, bool allFlying)
     {
         await StartCounter(); await HoldShots(allFlying ? 4 : index + 1);
+        // This fixture verifies the pre-final boss's whole-body stun response.
+        typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, 2);
         var volley = Volley; var shots = Shots; var contacts = Contacts; var slots = (Transform[])Get(volley, "Slots");
         var earlier = new List<KarmaBossAttack>(); for (int i = 0; i < index; i++) earlier.Add(shots[i]);
-        var other = OtherShot(); RealParry(shots[index]);
+        var other = OtherShot();
+        var pool = KarmaSwordVfxPool.For(game);
+        // Seed still-live launch effects, including queued slots, so cancellation
+        // cannot pass only because their normal short lifetime happened to end.
+        for (int i = index; i < 4; i++)
+        {
+            pool.Flash(Enemy, "Sword_Release_v6", Enemy.Position, Vector2.one, 0.13f, scope: slots[i]);
+            pool.Sparks(Enemy, Enemy.Position, Vector2.right, 1, 10, slots[i]);
+            if (shots[i] != null) pool.Echo(Enemy, shots[i].Visual, 0.3f, 0.12f, slots[i]);
+        }
+        pool.Sparks(Enemy, Enemy.Position, Vector2.right, 1, 10, other.transform);
+        RealParry(shots[index]);
         Check((int)Get(volley, "LastAllowed") == index, "only the parried sequence caps this volley");
+        Check(!shots[index].gameObject.activeInHierarchy, "parried blade stops at contact instead of continuing its flight");
+        bool unrelatedEffect = false; int dissolves = 0;
+        foreach (var entry in (Array)Get(pool, "entries"))
+        {
+            if (!(bool)Get(entry, "active")) continue;
+            var scope = (Transform)Get(entry, "scope");
+            if (scope == other.transform) unrelatedEffect = true;
+            for (int i = index; i < 4; i++)
+                Check(scope == null || scope != slots[i] && !scope.IsChildOf(slots[i]), "canceled shot leaves no launch particles or flight echoes");
+            var renderer = (SpriteRenderer)Get(entry, "renderer");
+            if (renderer.sprite == KarmaWaveArtwork.Sprite("SW04_CounterBlade_v2") && scope == null)
+            {
+                dissolves++;
+                Check((Vector3)Get(entry, "velocity") == Vector3.zero && (float)Get(entry, "growth") < 0,
+                    "successors dissolve in place with no projectile-like motion");
+            }
+        }
+        Check(unrelatedEffect && dissolves == 3 - index, "only canceled successors dissolve; unrelated effects remain");
+        var success = game.World.GetComponentsInChildren<KarmaSwordParryFeedback>();
+        Check(success.Length == 1 && success[0].GetComponent<LineRenderer>() != null
+            && success[0].GetComponent<Collider2D>() == null && success[0].GetComponent<KarmaBossAttack>() == null,
+            "single visible success ring is cosmetic only");
+        Check(Vector2.Distance(success[0].transform.position, game.Player.GetComponent<Collider2D>().bounds.center) < 0.001f,
+            "success feedback stays at the player's confirmed parry point");
+        Call(Behavior, "CounterParried", contacts[index]);
+        Check(game.World.GetComponentsInChildren<KarmaSwordParryFeedback>().Length == 1, "duplicate contact cannot replay success or cancellation");
         for (int later = index + 1; later < 4; later++)
         {
             Check(slots[later] == null || !slots[later].gameObject.activeInHierarchy, "later collision and VFX inactive synchronously");
@@ -275,15 +314,18 @@ public static class KarmaSwordWallCounterChecks
             Enemy.TryAttackHit(game.Player.Position, game.Player.Position, Vector2.one * 10, 1, contacts[later], 0, sourcePattern: EnemyAttack.SW04);
             Check(game.Player.Health == health, "canceled later contact causes no damage");
         }
-        foreach (var shot in earlier) Check(shot != null && shot.gameObject.activeInHierarchy, "earlier projectile is not retroactively removed");
-        Check(other != null && other.gameObject.activeInHierarchy && !Enemy.Stunned, "other patterns and existing local-parry boss state preserved");
+        foreach (var shot in earlier) Check(shot != null && !shot.gameObject.activeInHierarchy, "parry suppresses earlier live contacts before the stun transition");
+        Check(other != null && !other.gameObject.activeInHierarchy, "parry suppresses overlapping ordinary attacks in the same frame");
         Shot("counter-parry-" + (index + 1) + "-" + allFlying);
         await Seconds(0.3f);
+        Check(Enemy.Stunned && !Enemy.Armored && !(bool)Get(Enemy, "running"), "successful parry interrupts the whole boss and removes its guard");
+        Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "stun leaves no live projectile");
+        Check(game.World.GetComponentsInChildren<KarmaSwordParryFeedback>().Length == 0, "success ring expires naturally");
         for (int later = index + 1; later < 4; later++) Check(shots[later] == null || !shots[later].gameObject.activeInHierarchy, "pending releases stay canceled");
         foreach (var shot in shots) if (shot != null) Set(shot, "remaining", 0f);
         await Until(() => Volley == null);
         Check(!(bool)Get(Counter, "guardResponseRunning"), "counter state ends normally");
-        Log("parry " + (index + 1) + " " + (allFlying ? "all four flying" : "later shots pending") + ": later only canceled synchronously; earlier/other retained; state drains");
+        Log("parry " + (index + 1) + " " + (allFlying ? "all four flying" : "later shots pending") + ": volley cancellation is synchronous; boss stunned and every live attack interrupted");
     }
     static async Task CheckNonParry()
     {

@@ -10,8 +10,11 @@ namespace KarmaPrototype
         static readonly Color Ember = new Color(1, 0.36f, 0.2f);
         static Material celestial, crimsonBlade, woodMaterial, contactMaterial;
         static Sprite judgementSword;
+        static readonly Sprite[] impactFrames = new Sprite[4];
         static readonly int Progress = Shader.PropertyToID("_Progress");
         static readonly int Mode = Shader.PropertyToID("_Mode");
+        static readonly int Formation = Shader.PropertyToID("_Formation");
+        static readonly int Dissolve = Shader.PropertyToID("_Dissolve");
         KarmaGame game;
         Transform follow;
         SpriteRenderer sigil;
@@ -19,7 +22,7 @@ namespace KarmaPrototype
         Vector3 baseScale;
         Color plantedTint;
         float age, life, mode;
-        bool falling, corona, warning, planted, seal;
+        bool falling, corona, warning, planted, seal, forming, impact;
 
         static Material Celestial
         {
@@ -31,7 +34,7 @@ namespace KarmaPrototype
         }
         public static void ApplySword(SpriteRenderer renderer, Vector2 size, Vector2 velocity)
         {
-            if (judgementSword == null) judgementSword = KarmaArtwork.Sprite("SwordBossVFX", "SW05_JudgementSword");
+            if (judgementSword == null) judgementSword = KarmaArtwork.Sprite("SwordBossVFX", "SW05_JudgementSword_v2");
             if (judgementSword == null) throw new System.InvalidOperationException("Missing SW05 judgement sword artwork");
             renderer.sprite = judgementSword;
             if (crimsonBlade == null) crimsonBlade = Resources.Load<Material>("SW05/SW05CrimsonBlade");
@@ -40,7 +43,9 @@ namespace KarmaPrototype
             renderer.flipX = renderer.flipY = false;
             // The opaque weapon (not its transparent aura) occupies the
             // same long/transverse rectangle that the existing planner reserves.
-            renderer.transform.localScale = new Vector3(size.y * 100 / 444, size.x * 100 / 1470, 1);
+            // v2 opaque core: 540 x 1476 px at PPU100, with its authored
+            // center pivot halfway between pommel and downward tip.
+            renderer.transform.localScale = new Vector3(size.y * 100 / 540, size.x * 100 / 1476, 1);
             renderer.transform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg + 90);
             renderer.color = Color.white;
         }
@@ -89,20 +94,28 @@ namespace KarmaPrototype
             trail.time = duration; trail.minVertexDistance = 0.08f;
             trail.widthCurve = new AnimationCurve(new Keyframe(0, width), new Keyframe(0.18f, width * 0.65f), new Keyframe(1, 0));
             var gradient = new Gradient();
-            gradient.SetKeys(new[] { new GradientColorKey(new Color(1, 0.7f, 0.5f), 0), new GradientColorKey(Radiance, 0.3f), new GradientColorKey(new Color(0.28f, 0.035f, 0.025f), 1) },
-                new[] { new GradientAlphaKey(0.7f, 0), new GradientAlphaKey(0.28f, 0.3f), new GradientAlphaKey(0, 1) });
+            gradient.SetKeys(new[] { new GradientColorKey(new Color(1, 0.91f, 0.72f), 0), new GradientColorKey(Radiance, 0.25f), new GradientColorKey(new Color(0.24f, 0.025f, 0.018f), 1) },
+                new[] { new GradientAlphaKey(0.64f, 0), new GradientAlphaKey(0.20f, 0.3f), new GradientAlphaKey(0, 1) });
             trail.colorGradient = gradient; trail.sortingOrder = 23;
             trail.numCapVertices = 4; trail.numCornerVertices = 4;
         }
         public static void Ascent(SpriteRenderer blade, Vector2 size)
         {
             Trail(blade, size.y * 0.3f, 0.28f);
+            // Reveal is material-only: the pattern still owns ascent, scale,
+            // rotation, stagger, opacity and the moment this becomes damage.
+            var fx = blade.gameObject.AddComponent<KarmaSW05VFX>();
+            fx.game = Object.FindAnyObjectByType<KarmaGame>();
+            fx.sigil = blade; fx.forming = true; fx.life = 0.42f;
+            fx.properties = new MaterialPropertyBlock();
+            fx.properties.SetFloat(Formation, 0);
+            blade.SetPropertyBlock(fx.properties);
         }
         public static void CastPillar(Transform root, KarmaGame game, Vector2 caster, float life)
         {
             float height = caster.y + 10;
             var beam = Create(root, game, new Vector2(caster.x, height / 2), new Vector2(5, height),
-                life, 2, new Color(0.9f, 0.18f, 0.09f, 0.28f));
+                life, 2, new Color(0.9f, 0.18f, 0.09f, 0.18f));
             beam.sigil.name = "SW05 summoning pillar / no damage";
             var ring = Create(root, game, caster + Vector2.up * 6, new Vector2(70, 10.56f), life, 0,
                 new Color(0.9f, 0.16f, 0.09f, 0.58f));
@@ -121,6 +134,12 @@ namespace KarmaPrototype
         {
             Vector2 tip = center + axis * (size.x / 2);
             WoodContact(root, game, new Vector2(tip.x, 0.05f), size);
+            GroundImpact(root, game, new Vector2(tip.x, 0.05f), size, depth);
+            // A low, brief contact pulse accompanies the existing wood shadow.
+            // It has no collider, debris, screen shake or gameplay callback.
+            var contact = Create(root, game, new Vector2(tip.x, 0.08f),
+                new Vector2(Mathf.Max(0.7f, size.y * 1.8f), 0.42f), 0.20f, 3, new Color(1, 0.43f, 0.17f, 0.42f));
+            contact.sigil.name = "SW05 contact pressure pulse / no damage";
             var sword = KarmaVisuals.Box(root, "SW05 wood-embedded sword / no damage",
                 center + axis * (size.x * 0.14f), Vector2.one, Color.white, 24);
             // Keep exactly the airborne picture, palette and depth tint. A
@@ -131,6 +150,24 @@ namespace KarmaPrototype
             ApplyDepth(sword, depth);
             var fx = sword.gameObject.AddComponent<KarmaSW05VFX>();
             fx.game = game; fx.sigil = sword; fx.planted = true; fx.life = 0.65f; fx.plantedTint = sword.color;
+            fx.properties = new MaterialPropertyBlock();
+        }
+        static void GroundImpact(Transform root, KarmaGame game, Vector2 at, Vector2 size, float depth)
+        {
+            for (int i = 0; i < impactFrames.Length; i++)
+                if (impactFrames[i] == null) impactFrames[i] = KarmaArtwork.Sprite("SwordBossVFX", "SW05_Impact_" + i);
+            if (impactFrames[0] == null) throw new System.InvalidOperationException("Missing SW05 ground impact artwork");
+            var sr = KarmaVisuals.Box(root, "SW05 animated ground impact / no damage", at, Vector2.one, Color.white, 30);
+            sr.sprite = impactFrames[0];
+            if (crimsonBlade == null) crimsonBlade = Resources.Load<Material>("SW05/SW05CrimsonBlade");
+            sr.sharedMaterial = crimsonBlade;
+            // One constant sheet scale, per-frame contact pivots. Never fit
+            // individual frame bounds: the expanding ring must stay grounded.
+            float scale = Mathf.Max(0.65f, size.y * 2.8f) / 5.06f;
+            sr.transform.localScale = Vector3.one * scale;
+            ApplyDepth(sr, depth); sr.sortingOrder += 3;
+            var fx = sr.gameObject.AddComponent<KarmaSW05VFX>();
+            fx.game = game; fx.sigil = sr; fx.impact = true; fx.life = 0.36f; fx.plantedTint = sr.color;
         }
         static void WoodContact(Transform root, KarmaGame game, Vector2 at, Vector2 size)
         {
@@ -146,6 +183,22 @@ namespace KarmaPrototype
             if (game == null || game.Phase != RunPhase.Combat) { Destroy(gameObject); return; }
             if (game.Paused) return;
             age += Time.deltaTime;
+            if (forming)
+            {
+                properties.SetFloat(Formation, Mathf.SmoothStep(0, 1, Mathf.Clamp01(age / life)));
+                sigil.SetPropertyBlock(properties);
+                if (age >= life) Destroy(this);
+                return;
+            }
+            if (impact)
+            {
+                int frame = age < 0.045f ? 0 : age < 0.105f ? 1 : age < 0.215f ? 2 : 3;
+                sigil.sprite = impactFrames[frame];
+                var tint = plantedTint;
+                tint.a *= 1 - Mathf.SmoothStep(0.215f, life, age); sigil.color = tint;
+                if (age >= life) Destroy(gameObject);
+                return;
+            }
             if (falling)
             {
                 if (follow != null && follow.gameObject.activeInHierarchy)
@@ -156,6 +209,11 @@ namespace KarmaPrototype
             {
                 float fade = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.25f, life, age));
                 var tint = plantedTint; tint.a *= fade; sigil.color = tint;
+                if (properties != null)
+                {
+                    properties.SetFloat(Dissolve, 1 - fade);
+                    sigil.SetPropertyBlock(properties);
+                }
                 if (age >= life) Destroy(gameObject);
                 return;
             }
@@ -172,13 +230,13 @@ namespace KarmaPrototype
                 float progress = Mathf.Clamp01(age / life);
                 transform.localScale = baseScale * Mathf.Lerp(0.35f, 1, Mathf.SmoothStep(0, 1, progress * 4));
                 sigil.color = new Color(0.9f, 0.16f, 0.09f, 0.58f * (1 - Mathf.SmoothStep(0.7f, 1, progress)));
-                Paint(0.2f);
+                Paint(0.15f + progress * 0.28f);
                 if (age >= life) Destroy(gameObject);
                 return;
             }
             if (warning)
             {
-                Paint(0.2f);
+                Paint(0.18f + 0.045f * Mathf.Sin(age * 9));
                 // Pattern owns warning lifetime, including the final yield frame.
                 return;
             }

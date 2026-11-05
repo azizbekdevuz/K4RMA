@@ -6,6 +6,7 @@ Shader "K4RMA/SW05/EmbeddedWood"
         _Color ("Tint", Color) = (1,1,1,1)
         _GroundY ("Wood surface height", Float) = 0.035
         _ContactShadow ("Contact shadow", Float) = 0
+        _Dissolve ("Harmless planted sword dissolve", Range(0,1)) = 0
     }
     SubShader
     {
@@ -26,7 +27,7 @@ Shader "K4RMA/SW05/EmbeddedWood"
             SAMPLER(sampler_MainTex);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
-                float _GroundY, _ContactShadow;
+                float _GroundY, _ContactShadow, _Dissolve;
             CBUFFER_END
             struct Input { float3 vertex : POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Output { float4 vertex : SV_POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; float worldY : TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
@@ -52,6 +53,10 @@ Shader "K4RMA/SW05/EmbeddedWood"
                     return half4(i.color.rgb, alpha * i.color.a);
                 }
                 half4 source = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                // Dissolve upward within the existing 0.65 s harmless linger.
+                float grain = frac(sin(dot(floor(i.uv * float2(90, 220)), float2(12.9898, 78.233))) * 43758.5453);
+                float mask = i.uv.y * 0.85 + grain * 0.15;
+                source.a *= smoothstep(_Dissolve - 0.03, _Dissolve + 0.03, mask);
                 return half4(SW05CrimsonPalette(source.rgb), source.a) * i.color;
             }
             ENDHLSL

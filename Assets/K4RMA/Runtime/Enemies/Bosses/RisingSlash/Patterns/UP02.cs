@@ -18,7 +18,10 @@ namespace KarmaPrototype
                 while (elapsed < 0.36f && owner.Active)
                 {
                     if (owner.game.Paused) { yield return null; continue; }
+                    var body = owner.game.Player.GetComponent<Rigidbody2D>();
+                    float lead = RisingSlashRules.InterceptLead(body != null ? body.linearVelocity.x * 0.18f : 0f, KarmaSpace.Units(1.6f));
                     target = owner.game.Player.Position;
+                    target.x += lead;
                     target.x = Mathf.Clamp(target.x, Mathf.Max(KarmaStage.ArenaLeft + 2, origin.x - KarmaSpace.Units(7)), Mathf.Min(KarmaStage.ArenaRight - 2, origin.x + KarmaSpace.Units(7)));
                     target.y = Mathf.Clamp(target.y, KarmaSpace.Units(2.5f), KarmaSpace.Units(7));
                     if (path == null) path = RisingPath(origin, target, bodyAttackSize, KarmaRisingCue.Tracking);

@@ -35,6 +35,8 @@ namespace KarmaPrototype
                     yield return owner.Wait(owner.Warning(Mathf.Min(0.46f, Settings.crossingWarning)));
                     if (mark != null) Destroy(mark.gameObject);
                     float duration = Mathf.Clamp(Vector2.Distance(points[i], points[i + 1]) / KarmaSpace.Units(16f), 0.22f, 0.4f);
+                    if (i == 7) duration = Mathf.Min(0.34f, duration);
+                    KarmaRisingPolish.PursuitStreak(owner.effectsRoot, owner.Position, points[i + 1].x < points[i].x ? -1f : 1f);
                     yield return owner.Motion(points[i + 1], duration, slash, null, trail);
                 }
                 yield return owner.Motion(new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground), 0.26f, Vector2.zero);

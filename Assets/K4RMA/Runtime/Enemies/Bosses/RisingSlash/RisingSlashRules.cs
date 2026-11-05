@@ -25,6 +25,29 @@ namespace KarmaPrototype
         // Three shares replace the old single melee hit. 0.34 + 0.34 + 0.42 = 1.10, not 3.00.
         public const float BasicDamageBudget = 1.10f;
 
+        // Forward steps during the three committed strikes. Facing does not change between them.
+        public static float BasicAdvance(int index)
+        {
+            if (index <= 0) return 0.42f;
+            return index == 1 ? 0.55f : 0.72f;
+        }
+
+        public static EnemyAttack ContextualPreference(float distance, float meleeReach, bool airborne, bool retreating, bool nearWall)
+        {
+            if (nearWall && distance > meleeReach * 0.55f) return EnemyAttack.UP01;
+            if (airborne) return EnemyAttack.UP02;
+            if (distance <= meleeReach * 0.72f) return EnemyAttack.GroundStrike;
+            if (retreating) return EnemyAttack.UP01;
+            return EnemyAttack.UP02;
+        }
+
+        public static float InterceptLead(float velocityX, float maximum)
+        {
+            if (velocityX > maximum) return maximum;
+            if (velocityX < -maximum) return -maximum;
+            return velocityX;
+        }
+
         public static RisingBasicStrike BasicStrike(int index)
         {
             switch (index)

@@ -69,6 +69,18 @@ namespace KarmaPrototype
             }
             public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
             {
+                var body = owner.game.Player.GetComponent<Rigidbody2D>();
+                float velocityX = body != null ? body.linearVelocity.x : 0f;
+                float signed = owner.game.Player.Position.x - owner.Position.x;
+                bool retreating = Mathf.Abs(velocityX) > 1.2f && Mathf.Abs(signed) > 0.4f && Mathf.Sign(velocityX) == Mathf.Sign(signed);
+                float wall = Mathf.Min(owner.Position.x - KarmaStage.BossLeftWall, KarmaStage.BossRightWall - owner.Position.x);
+                bool nearWall = wall < KarmaSpace.Units(2.5f);
+                EnemyAttack preferred = RisingSlashRules.ContextualPreference(distance, Settings.meleeReach, owner.game.Player.Airborne, retreating, nearWall);
+                if (preferred != owner.previous && Eligible(preferred, distance, sight, escape))
+                {
+                    attack = preferred;
+                    return true;
+                }
                 return RisingSlashRules.TrySelect(owner.attacks, candidate => Eligible(candidate, distance, sight, escape), ref selectionCursor, out attack);
             }
             public override float DecisionDelay { get { return Mathf.Max(0.26f, base.DecisionDelay * Settings.attackDecisionMultiplier); } }

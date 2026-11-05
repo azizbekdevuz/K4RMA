@@ -11,31 +11,34 @@ namespace KarmaPrototype
             public override IEnumerator Execute()
             {
                 float gap = owner.game.Player.Position.x - owner.Position.x;
-                owner.direction = gap < 0 ? -1 : 1;
-                owner.art.localScale = new Vector3(owner.direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
+                float face = gap < 0f ? -1f : 1f;
+                owner.direction = face;
+                owner.art.localScale = new Vector3(face * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
                 float stop = KarmaSpace.Units(1.75f);
                 if (Mathf.Abs(gap) > stop + KarmaSpace.Units(0.35f))
                 {
                     float step = Mathf.Min(Mathf.Abs(gap) - stop, KarmaSpace.Units(5.5f));
                     float duration = Mathf.Clamp(step / KarmaSpace.Units(18f), 0.12f, 0.26f);
-                    Vector2 close = new Vector2(Mathf.Clamp(owner.Position.x + owner.direction * step, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
+                    Vector2 close = new Vector2(Mathf.Clamp(owner.Position.x + face * step, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
                     owner.state = ActionState.Approach;
-                    KarmaRisingPolish.PursuitStreak(owner.effectsRoot, owner.Position, owner.direction);
+                    KarmaRisingPolish.PursuitStreak(owner.effectsRoot, owner.Position, face);
                     yield return owner.Motion(close, duration, Vector2.zero);
                 }
                 owner.state = ActionState.Telegraph;
                 Vector2 tellSize = KarmaSpace.Units(new Vector2(3.4f, 2.2f));
-                Vector2 tellCenter = new Vector2(owner.Position.x + owner.direction * KarmaSpace.Units(1.7f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.85f));
+                Vector2 tellCenter = new Vector2(owner.Position.x + face * KarmaSpace.Units(1.7f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.85f));
                 var mark = owner.Mark("기본 삼연베기", tellCenter, tellSize);
-                KarmaRisingPolish.MeleeTell(owner.effectsRoot, tellCenter, owner.direction);
+                KarmaRisingPolish.MeleeTell(owner.effectsRoot, tellCenter, face);
 
                 yield return owner.Wait(owner.Warning(0.24f));
                 if (mark != null) Destroy(mark.gameObject);
                 for (int i = 0; i < RisingSlashRules.BasicStrikeCount && owner.Active; i++)
                 {
-                    float dx = owner.game.Player.Position.x - owner.Position.x;
-                    owner.direction = dx < 0f ? -1f : 1f;
-                    owner.art.localScale = new Vector3(owner.direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
+                    owner.direction = face;
+                    owner.art.localScale = new Vector3(face * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
+                    float advance = KarmaSpace.Units(RisingSlashRules.BasicAdvance(i));
+                    Vector2 stepTo = new Vector2(Mathf.Clamp(owner.Position.x + face * advance, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
+                    yield return owner.Motion(stepTo, 0.07f, Vector2.zero);
                     RisingBasicStrike strike = RisingSlashRules.BasicStrike(i);
                     float centerX, centerY, sizeX, sizeY;
                     RisingSlashRules.BasicStrikeBox(owner.Position.x, KarmaSpace.GuardianGroundY, owner.direction, KarmaSpace.Scale, strike, out centerX, out centerY, out sizeX, out sizeY);

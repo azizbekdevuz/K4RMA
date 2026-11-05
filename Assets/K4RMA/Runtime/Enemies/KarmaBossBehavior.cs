@@ -85,6 +85,7 @@ namespace KarmaPrototype
             }
             public virtual void Tick() { }
             public virtual void OnDamaged() { }
+            public virtual void ReducedDamageFeedback() { }
             public virtual Bounds DamageBounds(SpriteRenderer renderer) { return renderer.bounds; }
             public virtual void DamageFeedback(Vector2 point)
             {

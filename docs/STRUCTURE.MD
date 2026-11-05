@@ -78,24 +78,11 @@ K4RMA/
 │       │   │       │   │   ├── SW01_AimedSlash_LowerHalf_v2.png
 │       │   │       │   │   ├── SW01_AimedSlash_UpperHalf_v2.png
 │       │   │       │   │   ├── SW01_CrescentWave_v4.png
-│       │   │       │   │   ├── SW01_StaggeredWave_v2.png
-│       │   │       │   │   ├── SW01_StaggeredWave_v3.png
 │       │   │       │   │   ├── SW02_AimedSlash_v2.png
-│       │   │       │   │   ├── SW03_GroundScar_v2.png
-│       │   │       │   │   ├── SW03_GroundScar_v3.png
-│       │   │       │   │   ├── SW03_GroundScar_v4.png
 │       │   │       │   │   ├── SW03_GroundScar_v5.png
-│       │   │       │   │   ├── SW03_HitFlash_v3.png
-│       │   │       │   │   ├── SW03_HitFlash_v4.png
 │       │   │       │   │   ├── SW03_HitFlash_v5.png
-│       │   │       │   │   ├── SW03_RisingBlade_v2.png
-│       │   │       │   │   ├── SW03_RisingBlade_v3.png
-│       │   │       │   │   ├── SW03_RisingBlade_v4.png
 │       │   │       │   │   ├── SW03_RisingBlade_v5.png
-│       │   │       │   │   ├── SW04_CounterBlade_v2.png
-│       │   │       │   │   ├── SWBasic_CrescentWave_v3.png
-│       │   │       │   │   ├── SWBasic_Wave_v2.png
-│       │   │       │   │   └── Sword_HitBurst_v2.png
+│       │   │       │   │   └── SWBasic_CrescentWave_v3.png
 │       │   │       │   ├── SW01_StaggeredWave.png
 │       │   │       │   ├── SW02_AimedSlash.png
 │       │   │       │   ├── SW03_GroundImpact.png

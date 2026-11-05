@@ -77,6 +77,8 @@ namespace KarmaPrototype
             public override bool BlocksSelection { get { return owner.shieldWarningUntil > 0; } }
             public override bool ReduceDamage(Vector2 source)
             { return owner.frontalGuard && (source.x - owner.Position.x) * owner.direction >= 0 || AutoShieldActive; }
+            public override void ReducedDamageFeedback()
+            { KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard); }
             public override Color ShieldColor { get { return BlocksSelection
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }

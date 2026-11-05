@@ -236,6 +236,8 @@ namespace KarmaPrototype
             }
             public override bool Armored { get { return counter.Guarding; } }
             public override bool ReduceDamage(Vector2 source) { return counter.Guarding; }
+            public override void ReducedDamageFeedback()
+            { KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard); }
             public override Color ShieldColor { get { return owner.fullShield ? Color.white
                 : counter.Guarding ? new Color(0.42f, 0.68f, 1) : base.ShieldColor; } }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)

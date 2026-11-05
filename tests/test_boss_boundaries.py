@@ -43,6 +43,11 @@ class BossBoundaries(unittest.TestCase):
                 with self.subTest(path=path.relative_to(ROOT)):
                     self.assertFalse(set(re.findall(r'\b\w+\b', code(path))) & foreign)
 
+    def test_shared_enemy_host_does_not_choose_a_boss_effect(self):
+        for path in (RUNTIME / 'Enemies').glob('*.cs'):
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertNotRegex(code(path), r'\bEssence\.(?:Guard|SwordWave|RisingSlash)\b')
+
     def test_owned_state_and_presentation_stay_with_the_owner(self):
         members = {
             'SwordWave': {'waveSwingAt', 'wavePhase', 'wavePhaseSwingAt', 'waveReleasedUntil',

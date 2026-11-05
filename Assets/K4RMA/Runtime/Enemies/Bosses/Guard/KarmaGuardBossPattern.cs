@@ -18,7 +18,6 @@ namespace KarmaPrototype
                 owner.shieldUntil = owner.shieldWarningUntil = 0;
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }
-            protected Vector2 WaveSize { get { return new Vector2(Settings.trialWaveWidth, Settings.trialWaveHeight); } }
         }
     }
 }

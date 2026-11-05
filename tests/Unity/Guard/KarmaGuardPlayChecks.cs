@@ -24,14 +24,10 @@ public static class KarmaGuardPlayChecks
     static void Pump()
     {
         if (!SessionState.GetBool(BatchKey, false)) return;
-        // Enable background updates before waiting for the first Play Mode frame.
-        // Otherwise a batch Editor can stall before Run() ever gets to enable it.
-        if (EditorApplication.isPlaying)
-        { Application.runInBackground = true; EditorApplication.isPaused = false; }
         EditorApplication.QueuePlayerLoopUpdate();
         // Unity Search may enable Error Pause during its initial index build.
         // Clear only pre-test startup pauses; runtime errors are captured below.
-        if (!started && EditorApplication.isPlaying) EditorApplication.isPaused = false;
+        if (!started && EditorApplication.isPlaying) { Application.runInBackground = true; EditorApplication.isPaused = false; }
         if (!started && EditorApplication.isPlaying && Time.frameCount > 1)
         { started = true; RunBatchChecks(); }
 
@@ -88,7 +84,10 @@ public static class KarmaGuardPlayChecks
 
     public static Task<string> Run() => RunChecks(false);
     public static Task<string> RunGD03Only() => RunChecks(true);
-    static async Task<string> RunChecks(bool shardsOnly)
+    public static Task<string> RunMoltenOnly() => RunChecks(false, true);
+    public static Task<string> RunGD04Only() => RunChecks(false, gd04Only: true);
+    public static Task<string> RunGD05Only() => RunChecks(false, gd05Only: true);
+    static async Task<string> RunChecks(bool shardsOnly, bool moltenOnly = false, bool gd04Only = false, bool gd05Only = false)
     {
         Check(Application.isPlaying, "Play Mode required");
         game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
@@ -110,6 +109,35 @@ public static class KarmaGuardPlayChecks
             while (Time.frameCount <= frame && EditorApplication.timeSinceStartup < frameDeadline)
             { EditorApplication.QueuePlayerLoopUpdate(); await Task.Delay(50); }
             Check(Time.frameCount > frame, "guard checks run on an advancing player loop");
+            if (gd05Only)
+            {
+                await CheckGuardDome();
+                Check(runtimeError == null, "GD05 emits no game runtime errors: " + runtimeError);
+                string gd05Result = "PASS: " + assertions + " GD05 ricochet, thresholds, pursuit and parry assertions";
+                Directory.CreateDirectory("output/validation");
+                File.WriteAllText("output/validation/gd05-validation.txt", gd05Result + "\n");
+                return gd05Result;
+            }
+            if (gd04Only)
+            {
+                await CheckGroundSlam();
+                await CheckBarrierHeat();
+                await CheckBarrierCounterChain();
+                Check(runtimeError == null, "GD04 presentation and chain emit no game runtime errors: " + runtimeError);
+                string gd04Result = "PASS: " + assertions + " GD04 pose, basalt and chain assertions";
+                Directory.CreateDirectory("output/validation");
+                File.WriteAllText("output/validation/gd04-validation.txt", gd04Result + "\n");
+                return gd04Result;
+            }
+            if (moltenOnly)
+            {
+                await CheckMoltenHeavy();
+                Check(runtimeError == null, "GD02 molten presentation emits no game runtime errors: " + runtimeError);
+                string moltenResult = "PASS: " + assertions + " GD02 molten timing, form, facing and cleanup assertions";
+                Directory.CreateDirectory("output/validation");
+                File.WriteAllText("output/validation/gd02-molten-validation.txt", moltenResult + "\n");
+                return moltenResult;
+            }
             if (shardsOnly)
             {
                 await CheckThrowToSplit();
@@ -120,6 +148,8 @@ public static class KarmaGuardPlayChecks
                 File.WriteAllText("output/validation/gd03-connected-regression-validation.txt", shardResult + "\n");
                 return shardResult;
             }
+            await KarmaGuardBasicDodgeChecks.Run();
+            await CheckMoltenHeavy();
             await CheckPersistentShield();
             Reset();
             Call(enemy, "BreakAutoShield");
@@ -187,7 +217,7 @@ public static class KarmaGuardPlayChecks
                     || game.Player.Position.y - KarmaSpace.PlayerHalfHeight >= b.max.y - 0.02f;
             }
             Check(clearOfSteps, "GD04 rising steps lift the player without trapping them inside an adjacent step");
-            Check(Attacks().Length == 0, "GD04 standing wall blocks movement without ongoing damage");
+            Check(Attacks().Length == 0, "GD04 settled wall has no lingering impact hitboxes");
             await Task.Delay(25);
 
             float before = enemy.Health;
@@ -216,150 +246,11 @@ public static class KarmaGuardPlayChecks
             CheckStairGeometry(Walls());
             Check(enemy.Facing == 1, "GD04 near the arena edge chooses one direction with room for every step");
 
+            await CheckGroundSlam();
+            await CheckBarrierHeat();
             await CheckBarrierCounterChain();
 
-            config.BossTuning.guard.trialAttackCount = 5;
-            config.BossTuning.guard.trialAllowedHits = 0;
-            Reset();
-            typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.45f);
-            Force(EnemyAttack.GD05);
-            float immuneHealth = enemy.Health;
-            enemy.TakeDamage(enemy.MaxHealth * 10);
-            Check(enemy.Invulnerable && enemy.Health == immuneHealth, "GD05 is immune from the room-formation telegraph");
-            await Until(() => enemy.TrialActive, 3);
-            var dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
-            Check(dome != null && dome.GetComponent<EdgeCollider2D>().pointCount == 65, "GD05 creates a semicircular room with a curved roof");
-            Check(Mathf.Approximately(dome.Radius, 20) && Mathf.Approximately(Get<float>(game.Player, "arenaLeft"), 1.2f)
-                && Mathf.Approximately(Get<float>(game.Player, "arenaRight"), 38.8f), "GD05 enlarged dome and confinement agree");
-            var roofView = game.GameCamera.WorldToViewportPoint(new Vector3(20, dome.Radius, 0));
-            var floorView = game.GameCamera.WorldToViewportPoint(new Vector3(20, 0, 0));
-            Check(roofView.y < 0.8f && floorView.y > 0.04f, "GD05 camera fits the enlarged dome below the HUD");
-            Check(dome.Overlaps(new Vector2(20, dome.Radius * 0.5f), Vector2.zero)
-                && !dome.Overlaps(new Vector2(20 + dome.Radius + 1, 0), Vector2.zero)
-                && !dome.Overlaps(new Vector2(20, -1), Vector2.zero), "GD05 room blast follows the dome footprint");
-            Check(Get<bool>(game.Player, "confined"), "GD05 confines the player during the trial");
-            float clock = enemy.FightSeconds;
-            float domeClock = dome.PhaseSeconds;
-            game.TogglePause();
-            await Task.Delay(150);
-            Check(enemy.FightSeconds == clock && enemy.TrialActive && dome.PhaseSeconds == domeClock, "GD05 pause freezes combat, trial and dome clocks");
-            game.TogglePause();
-            var cues = new[] { "낮은 파동", "봉인 낙하", "양쪽 협공", "바닥 봉인", "높낮이 연속" };
-            var seen = new HashSet<string>();
-            var peaks = new Dictionary<string, int>();
-            bool trialGeometry = true, sharedContact = true, safeGaps = true, scaledAttacks = true;
-            await Until(() =>
-            {
-                foreach (string cue in cues)
-                    if (enemy.TrialActive && cue == cues[Get<KarmaTrialState>(enemy, "trial").Completed % cues.Length])
-                    {
-                        seen.Add(cue);
-                        var shots = Attacks();
-                        if (!peaks.ContainsKey(cue) || shots.Length > peaks[cue]) peaks[cue] = shots.Length;
-                        if (shots.Length > 0)
-                        {
-                            var contact = Get<KarmaAttackContact>(shots[0], "contact");
-                            var xs = new List<float>();
-                            foreach (var shot in shots)
-                            {
-                                var size = Get<Vector2>(shot, "size");
-                                var p = (Vector2)shot.transform.position;
-                                var farCorner = new Vector2(Mathf.Abs(p.x - 20) + size.x / 2, p.y + size.y / 2);
-                                trialGeometry &= p.y - size.y / 2 >= -0.02f && farCorner.magnitude <= dome.Radius + 0.05f;
-                                sharedContact &= ReferenceEquals(contact, Get<KarmaAttackContact>(shot, "contact"));
-                                Vector2 baseline = cue == "봉인 낙하" ? KarmaSpace.Units(new Vector2(0.65f, 0.85f))
-                                    : cue == "바닥 봉인" ? KarmaSpace.Units(new Vector2(0.9f, 3.8f))
-                                    : new Vector2(config.BossTuning.guard.trialWaveWidth, config.BossTuning.guard.trialWaveHeight);
-                                scaledAttacks &= Vector2.Distance(size, baseline * 1.3f) < 0.01f;
-                                xs.Add(p.x);
-                            }
-                            if ((cue == "봉인 낙하" || cue == "바닥 봉인") && shots.Length == 5)
-                            {
-                                xs.Sort(); float width = Get<Vector2>(shots[0], "size").x;
-                                for (int i = 1; i < xs.Count; i++)
-                                    safeGaps &= xs[i] - xs[i - 1] - width > KarmaSpace.PlayerHalfWidth * 2 + 0.4f;
-                            }
-                        }
-                    }
-                if (enemy.Invulnerable)
-                {
-                    float beforeImmune = enemy.Health;
-                    enemy.TakeDamage(100);
-                    if (enemy.Health != beforeImmune) throw new Exception("GD05 lost immunity before recovery");
-                }
-                return State() == "Recover";
-            }, 22);
-            Check(seen.Count == 5, "GD05 runs five different readable attack beats");
-            foreach (var expected in new[] { new KeyValuePair<string, int>("낮은 파동", 2),
-                new KeyValuePair<string, int>("봉인 낙하", 5), new KeyValuePair<string, int>("양쪽 협공", 4),
-                new KeyValuePair<string, int>("바닥 봉인", 5), new KeyValuePair<string, int>("높낮이 연속", 4) })
-                Check(peaks[expected.Key] == expected.Value, "GD05 larger simultaneous count: " + expected.Key);
-            Check(trialGeometry && scaledAttacks, "GD05 enlarged attacks and complete paths stay inside the semicircle");
-            Check(sharedContact && safeGaps, "GD05 expanded volleys share one contact and leave usable rain/pillar corridors");
-            clock = enemy.FightSeconds;
-            Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined")
-                && UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>() == null, "GD05 success dissolves the room and releases arena restrictions");
-            Check(!enemy.AutoShieldActive, "GD05 success removes the room and breaks GD01");
-            immuneHealth = enemy.Health; enemy.TakeDamage(100);
-            Check(!enemy.Invulnerable && enemy.Health < immuneHealth, "GD05 success unlocks real damage during the punish window");
-            await Until(() => !Get<bool>(enemy, "running"), 7);
-            Check(enemy.FightSeconds - clock >= config.BossTuning.guard.trialStunSeconds - 0.08f,
-                "GD05 success retains the full configured punish window even while enraged");
-
-            Reset();
-            Force(EnemyAttack.GD05);
-            await Until(() => enemy.TrialActive, 3);
-            Set(game.Player, "invulnerableUntil", 0f);
-            enemy.TryAttackHit(game.Player.Position, game.Player.Position, Vector2.one, 10, new KarmaAttackContact(), 0);
-            Set(game.Player, "invulnerableUntil", Time.time + 100);
-            var trial = Get<KarmaTrialState>(enemy, "trial");
-            Check(trial.Hits == 1 && !trial.Finished && enemy.TrialActive, "GD05 excess hits do not end the trial early");
-            await Until(() => UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>()?.Charging == true, 22);
-            dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
-            Check(!enemy.TrialActive && Get<bool>(game.Player, "confined") && dome != null && dome.Charging,
-                "GD05 failure keeps the room intact while charging its explosion");
-            immuneHealth = enemy.Health; enemy.TakeDamage(enemy.MaxHealth * 10);
-            Check(enemy.Invulnerable && enemy.Health == immuneHealth, "GD05 failed-room overload remains immune");
-            clock = dome.PhaseSeconds;
-            game.TogglePause(); await Task.Delay(150);
-            Check(dome.PhaseSeconds == clock && dome.Charging, "GD05 overload animation pauses with gameplay");
-            game.TogglePause();
-            health = game.Player.Health; Set(game.Player, "invulnerableUntil", 0f);
-            await Until(() => dome.Exploding, 2);
-            Check(dome.gameObject.activeInHierarchy && Attacks().Length == 0,
-                "GD05 shell itself explodes without spawning a generic giant attack");
-            await Seconds(0.25f);
-            Check(Mathf.Abs(health - game.Player.Health - config.enemyDamage * config.BossTuning.damageMultiplier * config.BossTuning.guard.trialExplosionMultiplier) < 0.01f,
-                "GD05 room explosion deals exactly one configured hit");
-            await Until(() => !Get<bool>(enemy, "running"), 5);
-            Check(!Get<bool>(game.Player, "confined") && Attacks().Length == 0, "GD05 failure cleans up attacks and movement restrictions");
-            Check(enemy.AutoShieldActive, "GD05 room detonation does not break GD01");
-            immuneHealth = enemy.Health; enemy.TakeDamage(100);
-            Check(!enemy.Invulnerable && enemy.Health < immuneHealth, "GD05 failure releases immunity after the room explosion");
-
-            config.BossTuning.guard.trialAttackCount = 3;
-            Reset(); Force(EnemyAttack.GD05);
-            await Until(() => enemy.TrialActive, 3);
-            Set(game.Player, "invulnerableUntil", 0f);
-            enemy.TryAttackHit(game.Player.Position, game.Player.Position, Vector2.one, 10, new KarmaAttackContact(), 0);
-            Set(game.Player, "invulnerableUntil", Time.time + 100);
-            await Until(() => UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>()?.Charging == true, 15);
-            dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
-            await Until(() => dome.PhaseSeconds >= 0.9f, 2);
-            health = game.Player.Health; parries = game.Player.ParryCount;
-            Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
-            await Until(() => dome.Exploding, 2); await Seconds(0.25f);
-            Check(game.Player.ParryCount == parries + 1 && game.Player.Health == health,
-                "GD05 room detonation retains a timed counter opportunity");
-            await Until(() => !Get<bool>(enemy, "running"), 5);
-
-            Reset();
-            Force(EnemyAttack.GD05);
-            await Until(() => enemy.TrialActive, 3);
-            game.PlayerDied();
-            Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined") && Attacks().Length == 0
-                && UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>() == null && !enemy.Invulnerable,
-                "GD05 death cancels the trial and releases the player synchronously");
+            await CheckGuardDome();
 
             Check(runtimeError == null, "guard paths emit no Unity runtime errors: " + runtimeError);
 
@@ -384,6 +275,52 @@ public static class KarmaGuardPlayChecks
     {
         if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
             && (stack.Contains("Karma") || message.Contains("override geometry"))) runtimeError = message;
+    }
+
+    static async Task CheckMoltenHeavy()
+    {
+        var orders = new[] {
+            new[] { Essence.Guard },
+            new[] { Essence.Guard, Essence.SwordWave },
+            new[] { Essence.Guard, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave }
+        };
+        foreach (var order in orders)
+        foreach (int facing in new[] { -1, 1 })
+        {
+            Reset(order);
+            Place(new Vector2(enemy.Position.x + facing * 6, KarmaSpace.PlayerHalfHeight));
+            string form = order.Length == 3 ? "WardFinal" : order.Length == 1 ? "Ward"
+                : order[1] == Essence.SwordWave ? "WardWave" : "WardRise";
+            var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
+            var picture = Get<SpriteRenderer>(animator, "picture");
+            Force(EnemyAttack.GD02, facing);
+            var normal = KarmaArtwork.Sprite("GuardHeavy" + form, "Windup");
+            var molten = KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Windup") ?? normal;
+            Check(picture.sprite == normal && !enemy.HeavyParryWindowOpen, "GD02 starts with the original cool weapon: " + form);
+            Vector3 scale = picture.transform.localScale, position = picture.transform.localPosition;
+            await Until(() => enemy.HeavyParryWindowOpen, 2);
+            var effects = Get<Transform>(enemy, "effectsRoot");
+            Check(molten != null && picture.sprite == molten && effects.Find("GD02 parry cue") == null,
+                "GD02 signals the parry window with the molten weapon and no hand glow: " + form);
+            Check(normal.rect == molten.rect && normal.pivot == molten.pivot && normal.pixelsPerUnit == molten.pixelsPerUnit,
+                "GD02 molten sheet preserves its original frame, foot pivot and resolution: " + form);
+            Check(picture.transform.localScale == scale && picture.transform.localPosition == position && enemy.Facing == facing,
+                "GD02 heat swap preserves body scale, position and facing: " + form);
+            float clock = enemy.FightSeconds;
+            game.TogglePause(); await Task.Delay(80);
+            Check(enemy.FightSeconds == clock && picture.sprite == molten, "GD02 molten cue stays fixed during pause");
+            game.TogglePause();
+            await Until(() => animator.CurrentPose == "GD02/Downstroke", 2);
+            Check(picture.sprite == (KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Downstroke") ?? KarmaArtwork.Sprite("GuardHeavy" + form, "Downstroke")), "GD02 downstroke keeps the molten blade");
+            await Until(() => animator.CurrentPose == "GD02/FollowThrough", 1);
+            Check(picture.sprite == (KarmaArtwork.Sprite("GuardHeavyMolten" + form, "FollowThrough") ?? KarmaArtwork.Sprite("GuardHeavy" + form, "FollowThrough")), "GD02 follow-through keeps the molten blade");
+            await Until(() => State() == "Recover", 3);
+            await Seconds(0.04f);
+            Check(!enemy.HeavyParryWindowOpen && !Array.Exists(KarmaArtwork.Sprites("GuardHeavyMolten" + form),
+                sprite => sprite == picture.sprite), "GD02 recovery clears the overheated presentation");
+        }
     }
 
     static SpriteRenderer[] Fragments()
@@ -458,9 +395,9 @@ public static class KarmaGuardPlayChecks
         foreach (var piece in Fragments())
         {
             sameObjects &= ids.Contains(piece);
-            spreadFinished &= Vector2.Distance(piece.transform.position, impact) > KarmaSpace.Units(1.4f);
+            spreadFinished &= Mathf.Abs(Vector2.Distance(piece.transform.position, impact) - KarmaSpace.Units(3)) < 0.02f;
         }
-        Check(sameObjects && spreadFinished, "GD03 keeps the same shards from shattering into their spread formation");
+        Check(sameObjects && spreadFinished, "GD03 keeps the same shards and spreads them to twice the previous radius");
         var readyPositions = Array.ConvertAll(born, p => p.transform.position);
         await Seconds(0.12f);
         bool stillAiming = true;
@@ -528,7 +465,11 @@ public static class KarmaGuardPlayChecks
                 Vector2 p = piece.transform.position;
                 var trail = piece.GetComponent<TrailRenderer>();
                 compact &= Mathf.Max(piece.sprite.bounds.size.x * Mathf.Abs(piece.transform.localScale.x),
-                    piece.sprite.bounds.size.y * Mathf.Abs(piece.transform.localScale.y)) <= KarmaSpace.Units(0.65f) + 0.01f;
+                    piece.sprite.bounds.size.y * Mathf.Abs(piece.transform.localScale.y)) <= KarmaSpace.Units(0.65f * 1.5f) + 0.01f;
+                if (!piece.name.EndsWith("분열"))
+                    Check(Mathf.Abs(Mathf.Max(piece.sprite.bounds.size.x * Mathf.Abs(piece.transform.localScale.x),
+                        piece.sprite.bounds.size.y * Mathf.Abs(piece.transform.localScale.y)) - KarmaSpace.Units(0.65f * 1.5f)) < 0.01f,
+                        "GD03 shard remains 1.5 times larger through aiming, chasing, stopping and returning");
                 if (piece.name.EndsWith("추적"))
                 {
                     heatStates &= piece.sprite == hot && piece.sharedMaterial == KarmaVisuals.DefaultMaterial;
@@ -579,7 +520,7 @@ public static class KarmaGuardPlayChecks
         Check(homing > 20 && aligned >= homing * 0.9f, "GD03 outbound shields follow the moving player");
         Check(fixedReturn > 20, "GD03 return paths stay fixed despite subsequent player movement");
         Check(heatStates && trailStates, "GD03 hot tracking and cooled return use distinct sprites and red/gray trails");
-        Check(compact, "GD03 selected art retains the existing compact projectile footprint");
+        Check(compact, "GD03 enlarged art stays within the intended visual footprint");
         Check(Fragments().Length == 0 && enemy.AutoShieldActive, "GD03 cleans every shield while preserving GD01");
 
         // Isolate one shield to prove its outward hit cannot consume its return hit.
@@ -627,6 +568,91 @@ public static class KarmaGuardPlayChecks
         return found;
     }
 
+    static async Task CheckGroundSlam()
+    {
+        foreach (var order in new[] {
+            new[] { Essence.Guard }, new[] { Essence.Guard, Essence.SwordWave }, new[] { Essence.Guard, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash }, new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave }
+        })
+        foreach (int facing in new[] { -1, 1 })
+        {
+            Reset(order);
+            Place(enemy.Position + Vector2.right * (facing * KarmaSpace.Units(10)));
+            var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
+            var picture = Get<SpriteRenderer>(animator, "picture");
+            Force(EnemyAttack.GD04, facing);
+            for (int frame = 0; frame < 4; frame++)
+            {
+                int expected = frame;
+                await Until(() => Get<int>(animator, "groundSlamFrame") == expected, 2);
+                Check(picture.sprite != null, "GD04 retains valid artwork with the existing sprite library");
+            }
+            await Until(() => Walls().Count == 6, 5);
+            CheckStairGeometry(Walls());
+            foreach (var step in RisingSteps())
+            {
+                var art = step.GetComponent<SpriteRenderer>();
+                Check(art.sprite != null && art.flipX == (facing < 0), "GD04 terrain has valid artwork and facing");
+            }
+            Call(enemy, "InterruptPattern");
+            Check(Get<int>(animator, "groundSlamFrame") == -1, "GD04 interruption clears its pose override");
+        }
+    }
+
+    static async Task CheckBarrierHeat()
+    {
+        Reset();
+        var settings = game.Config.BossTuning.guard;
+        float gap = settings.barrierStepGap;
+        settings.barrierStepGap = 0.48f;
+        try
+        {
+            var player = game.Player;
+            var body = player.GetComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            Place(new Vector2(enemy.Position.x - KarmaSpace.Units(15), KarmaSpace.PlayerHalfHeight));
+            Force(EnemyAttack.GD04);
+            await Until(() => Walls().Count > 0, 2);
+            Physics2D.SyncTransforms();
+            var first = Walls()[0].GetComponent<BoxCollider2D>().bounds;
+            var onStep = new Vector2(first.center.x, first.max.y + KarmaSpace.PlayerHalfHeight + 0.01f);
+            Place(onStep);
+            Set(player, "invulnerableUntil", 0f);
+            float health = player.Health;
+            int parries = player.ParryCount;
+            await Seconds(0.16f);
+            Check(player.Health == health && !player.Airborne, "GD04 grants a grace period on the hot ledge");
+            float clock = enemy.FightSeconds;
+            game.TogglePause(); await Task.Delay(420);
+            Check(player.Health == health && enemy.FightSeconds == clock, "GD04 heat freezes during pause");
+            game.TogglePause();
+            player.BeginCounter();
+            player.BeginGuard(1);
+            await Until(() => player.Health < health, 1);
+            float damage = game.Config.enemyDamage * game.Config.BossTuning.damageMultiplier
+                * settings.damageScale * settings.barrierHeatDamageMultiplier;
+            Check(Mathf.Abs((health - player.Health) - damage) < 0.02f && player.ParryCount == parries && !player.Stunned,
+                "GD04 heat ticks once at the configured damage without parry or hit stun");
+            Check(KarmaArtwork.Sprite("GuardBasaltHeat", "Sparks") == null || Get<Transform>(enemy, "effectsRoot").Find("GD04 hot step sparks") != null, "GD04 shows foot sparks on real damage");
+            clock = enemy.FightSeconds;
+            health = player.Health;
+            await Until(() => player.Health < health, 1);
+            Check(enemy.FightSeconds - clock >= settings.barrierHeatInterval - 0.04f
+                && Mathf.Abs((health - player.Health) - damage) < 0.02f, "GD04 steps share a single damage cadence");
+            Place(onStep + Vector2.up * KarmaSpace.Units(1.5f));
+            health = player.Health;
+            await Seconds(0.55f);
+            Check(player.Health == health && player.Airborne, "GD04 heat does not follow a player who jumps");
+            Place(onStep);
+            await Seconds(0.16f);
+            Check(player.Health == health, "GD04 grants the grace period again after landing");
+            Call(enemy, "InterruptPattern");
+            await Seconds(0.55f);
+            Check(player.Health == health && Walls().Count == 0, "GD04 heat stops when the steps are removed");
+        }
+        finally { settings.barrierStepGap = gap; }
+    }
+
     static async Task StartRearChain(Essence[] order, int facing, bool late = false)
     {
         Reset(order);
@@ -664,10 +690,11 @@ public static class KarmaGuardPlayChecks
         {
             await StartRearChain(order, facing);
             float clock = enemy.FightSeconds;
-            Vector2 cue = Get<Transform>(enemy, "effectsRoot").Find("GD02 parry cue").position;
+            var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
+            var picture = Get<SpriteRenderer>(animator, "picture");
+            var molten = picture.sprite;
             game.TogglePause(); await Task.Delay(150);
-            Check(enemy.FightSeconds == clock
-                && Vector2.Distance(Get<Transform>(enemy, "effectsRoot").Find("GD02 parry cue").position, cue) < 0.001f,
+            Check(enemy.FightSeconds == clock && picture.sprite == molten,
                 "pause freezes the chained parry cue and terrain sequence");
             game.TogglePause();
             float health = game.Player.Health;
@@ -845,12 +872,122 @@ public static class KarmaGuardPlayChecks
             Call(enemy, "InterruptPattern");
         }
         Check(selected.Contains(EnemyAttack.GD02) && selected.Contains(EnemyAttack.GD03)
-            && selected.Contains(EnemyAttack.GD04) && selected.Contains(EnemyAttack.GD05),
+            && selected.Contains(EnemyAttack.GD04) && !selected.Contains(EnemyAttack.GD05),
             "persistent GD01 does not force GD02 forever or starve inherited attacks");
         game.PlayerDied();
         Check(!enemy.AutoShieldActive && !Get<SpriteRenderer>(enemy, "shieldHalo").enabled,
             "ending combat cleans up GD01 state and visual");
     }
+
+    static async Task CheckGuardDome()
+    {
+        Reset();
+        Set(enemy, "nextUltimate", 0f);
+        Call(enemy, "BeginAttack");
+        Check(Get<EnemyAttack>(enemy, "selected") != EnemyAttack.GD05, "GD05 cannot roll at high health");
+        Call(enemy, "InterruptPattern");
+
+        Place(new Vector2(33, KarmaSpace.PlayerHalfHeight));
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.5f);
+        Call(enemy, "BeginAttack");
+        Check(Get<EnemyAttack>(enemy, "selected") == EnemyAttack.GD05 && enemy.Invulnerable,
+            "GD05 takes priority at 50 percent and protects the boss during room formation");
+        await Until(() => enemy.TrialActive, 3);
+        var player = game.Player;
+        var effects = Get<Transform>(enemy, "effectsRoot");
+        var shield = effects.Find("GD05 튕기는 방패");
+        var dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
+        Check(shield != null && shield.GetComponent<SpriteRenderer>().sprite == (KarmaArtwork.Sprite("GuardDomeShield", "Ricochet") ?? KarmaArtwork.Sprite("GuardBossVFX", "Shield"))
+            && dome != null && dome.GetComponent<EdgeCollider2D>().pointCount == 65
+            && Get<bool>(player, "confined") && !enemy.Invulnerable, "GD05 forms the existing dome with the approved round shield and a vulnerable boss");
+        float startX = enemy.Position.x;
+        await Until(() => enemy.HeavyParryWindowOpen, 3);
+        Check(enemy.Position.x > startX + 2 && enemy.Facing == 1, "GD05 pursues the player before starting the heavy strike");
+        float bossHp = enemy.Health, playerHp = player.Health;
+        int parries = player.ParryCount;
+        Vector3 shieldAt = shield.position;
+        float clock = enemy.FightSeconds;
+        game.TogglePause(); await Task.Delay(180);
+        Check(enemy.FightSeconds == clock && shield.position == shieldAt, "GD05 pause freezes both the shield and heavy strike clock");
+        game.TogglePause();
+        player.Essences.TryCounter();
+        await Until(() => enemy.Stunned, 3);
+        Check(player.ParryCount == parries + 1 && player.Health == playerHp && enemy.Health == bossHp
+            && enemy.TrialActive && !Get<bool>(enemy, "pendingParry"), "GD05 heavy parry deals zero damage to both and keeps the room alive");
+        shieldAt = shield.position;
+        float stunX = enemy.Position.x;
+        await Seconds(0.25f);
+        Check(enemy.Stunned && Mathf.Approximately(enemy.Position.x, stunX) && Vector3.Distance(shield.position, shieldAt) > 1,
+            "GD05 shield continues flying while only the boss is stunned");
+        await Until(() => !enemy.Stunned, 2);
+
+        const float physicalRadius = 1.8f;
+        bool reversedX = false, reversedY = false, inside = true;
+        Vector2 previous = shield.position, previousDelta = Vector2.zero;
+        double deadline = EditorApplication.timeSinceStartup + 14;
+        while (enemy.TrialActive && EditorApplication.timeSinceStartup < deadline)
+        {
+            Vector2 position = shield.position;
+            Vector2 delta = position - previous;
+            if (delta.sqrMagnitude > 0.000001f)
+            {
+                reversedX |= delta.x * previousDelta.x < 0;
+                reversedY |= delta.y * previousDelta.y < 0;
+                previousDelta = delta;
+                previous = position;
+            }
+            inside &= position.y >= physicalRadius - 0.025f
+                && (position - (Vector2)dome.transform.position).magnitude <= dome.Radius - physicalRadius + 0.025f;
+            await Task.Delay(10);
+        }
+        Check(inside && reversedX && reversedY, "GD05 shield stays inside the floor and curved roof and reflects on both axes");
+        Check(!enemy.TrialActive && !Get<bool>(player, "confined"), "GD05 duration releases confinement");
+        await Until(() => !Get<bool>(enemy, "running"), 3);
+        Check(shield == null && UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>() == null, "GD05 removes the projectile and dome after the phase");
+
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.3f);
+        Call(enemy, "BeginAttack");
+        Check(Get<EnemyAttack>(enemy, "selected") != EnemyAttack.GD05, "GD05 cannot repeat above the second threshold");
+        Call(enemy, "InterruptPattern");
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.25f);
+        Call(enemy, "BeginAttack");
+        Check(Get<EnemyAttack>(enemy, "selected") == EnemyAttack.GD05, "GD05 takes priority again at 25 percent despite its cooldown");
+        Call(enemy, "InterruptPattern");
+        Call(enemy, "BeginAttack");
+        Check(Get<EnemyAttack>(enemy, "selected") != EnemyAttack.GD05, "GD05 is exhausted after two uses");
+
+        Reset(new[] { Essence.Guard });
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.2f);
+        Call(enemy, "BeginAttack");
+        Check(Get<EnemyAttack>(enemy, "selected") != EnemyAttack.GD05, "GD05 remains a final-form attack");
+
+        Reset();
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.2f);
+        for (int i = 0; i < 3; i++)
+        {
+            Call(enemy, "BeginAttack");
+            Check((Get<EnemyAttack>(enemy, "selected") == EnemyAttack.GD05) == (i < 2),
+                "GD05 records both thresholds when one hit crosses both");
+            Call(enemy, "InterruptPattern");
+        }
+
+        Reset();
+        Place(new Vector2(25, KarmaSpace.Units(1.65f)));
+        Set(game.Player, "invulnerableUntil", 0f);
+        Force(EnemyAttack.GD05);
+        playerHp = game.Player.Health;
+        await Until(() => game.Player.Health < playerHp, 4);
+        float damage = game.Config.enemyDamage * game.Config.BossTuning.damageMultiplier * game.Config.BossTuning.guard.damageScale
+            * game.Config.BossTuning.guard.trialDamageMultiplier;
+        Check(Mathf.Abs(playerHp - game.Player.Health - damage) < 0.02f, "GD05 flying shield deals its own contact damage");
+        game.PlayerDied();
+        Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined") && Attacks().Length == 0,
+            "GD05 death clears the room and frees the player");
+        Check(!KarmaBossGeometry.SweptCircle(1.8f, 1.8f, 1.8f, 1.8f, 1, 0, 0, 1, 1)
+            && KarmaBossGeometry.SweptCircle(-3, 1.5f, 3, 1.5f, 1, 0, 0, 1, 1),
+            "GD05 round sweep rejects square corners and detects a fast crossing");
+    }
+
 
     static void Reset(Essence[] order = null)
     {

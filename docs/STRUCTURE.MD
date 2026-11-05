@@ -157,8 +157,7 @@ K4RMA/
 │       │       │       │   │   │   └── Neutral.png
 │       │       │       │   │   └── ReferencePoses.png
 │       │       │       │   └── Player/
-│       │       │       │       ├── Actions.png
-│       │       │       │       └── AerialActions.png
+│       │       │       │       └── Actions.png
 │       │       │       ├── Effects/
 │       │       │       │   ├── Guardian.png
 │       │       │       │   ├── Hit.png
@@ -188,7 +187,7 @@ K4RMA/
 │       │   ├── KarmaTechniqueState.cs
 │       │   └── KarmaTypes.cs
 │       ├── Editor/
-│       │   └── KarmaBossPracticeWindow.cs
+│       │   └── KarmaBossPractice.cs
 │       ├── Resources/
 │       │   ├── KarmaArtworkSettings.asset
 │       │   ├── KarmaCombatGlow.mat
@@ -210,7 +209,7 @@ K4RMA/
 │       │   │   ├── Bosses/
 │       │   │   │   ├── Guard/
 │       │   │   │   │   ├── Editor/
-│       │   │   │   │   │   └── KarmaGuardPracticeWindow.cs
+│       │   │   │   │   │   └── KarmaGuardPracticeMenu.cs
 │       │   │   │   │   ├── Patterns/
 │       │   │   │   │   │   ├── GD01.cs
 │       │   │   │   │   │   ├── GD02.cs
@@ -240,7 +239,7 @@ K4RMA/
 │       │   │   │   │   └── KarmaGuardBossPattern.cs
 │       │   │   │   ├── RisingSlash/
 │       │   │   │   │   ├── Editor/
-│       │   │   │   │   │   └── KarmaRisingPracticeWindow.cs
+│       │   │   │   │   │   └── KarmaRisingPracticeMenu.cs
 │       │   │   │   │   ├── Patterns/
 │       │   │   │   │   │   ├── UP01.cs
 │       │   │   │   │   │   ├── UP02.cs
@@ -268,7 +267,7 @@ K4RMA/
 │       │   │   │   │   └── KarmaRisingBossPattern.cs
 │       │   │   │   └── SwordWave/
 │       │   │   │       ├── Editor/
-│       │   │   │       │   └── KarmaSwordPracticeWindow.cs
+│       │   │   │       │   └── KarmaSwordPracticeMenu.cs
 │       │   │   │       ├── Patterns/
 │       │   │   │       │   ├── KarmaAerialSwordPlanner.cs
 │       │   │   │       │   ├── KarmaBossProjectileGeometry.cs

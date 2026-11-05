@@ -31,65 +31,31 @@ namespace KarmaPrototype
                 body.linearVelocity = new Vector2(0, body.linearVelocity.y);
                 return;
             }
-            float horizontal = move * game.Config.moveSpeed;
-            body.gravityScale = game.Config.gravityScale;
-            body.linearVelocity = new Vector2(horizontal, body.linearVelocity.y);
             if (airSlashRunning)
             {
                 DamageAirSlash();
                 if (!game.IsCombat) { CancelAirSlash(); return; }
                 AdvanceAirSlash();
             }
-            if (airHangLeft > 0)
+            else
             {
-                airHangLeft = Mathf.Max(0, airHangLeft - Time.fixedDeltaTime);
-                body.gravityScale = 0;
-                body.linearVelocity = new Vector2(horizontal, 0);
-                if (airHangLeft <= 0)
+                body.gravityScale = game.Config.gravityScale;
+                float horizontal = move * game.Config.moveSpeed;
+                if (airRecoveryLeft > 0)
                 {
-                    body.gravityScale = game.Config.gravityScale;
-                    body.linearVelocity = new Vector2(horizontal, game.Config.jumpSpeed * game.Config.Techniques.pogoJumpScale);
+                    float weight = Mathf.Clamp01(airRecoveryLeft / Mathf.Max(0.02f, game.Config.Techniques.airSlashRecovery));
+                    horizontal = Mathf.Lerp(horizontal, airLaunchX, weight * weight);
+                    airRecoveryLeft = Mathf.Max(0, airRecoveryLeft - Time.fixedDeltaTime);
+                }
+                body.linearVelocity = new Vector2(horizontal, body.linearVelocity.y);
+                if (jumpBufferedUntil > Time.time && Time.time - lastGrounded < 0.1f)
+                {
+                    body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.jumpSpeed);
+                    jumpBufferedUntil = 0;
+                    lastGrounded = -10;
                 }
             }
-            if (doubleJumpDelay > 0)
-            {
-                doubleJumpDelay = Mathf.Max(0, doubleJumpDelay - Time.fixedDeltaTime);
-                body.gravityScale = 0;
-                body.linearVelocity = new Vector2(horizontal, 0);
-                if (doubleJumpDelay <= 0) LaunchDoubleJump();
-            }
-            ConsumeJumpBuffer();
-            if (jumpCutAvailable && !KarmaInput.Held(KarmaAction.Jump) && body.linearVelocity.y > 0)
-            {
-                body.linearVelocity = new Vector2(horizontal, body.linearVelocity.y * game.Config.Techniques.jumpReleaseMultiplier);
-                jumpCutAvailable = false;
-            }
             if (Position.y < KarmaSpace.Units(-8)) game.PlayerDied();
-        }
-        bool jumpCutAvailable;
-        void ConsumeJumpBuffer()
-        {
-            if (jumpBufferedUntil <= Time.time) return;
-            if (Time.time - lastGrounded < 0.1f)
-            {
-                body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.jumpSpeed);
-                jumpBufferedUntil = 0; lastGrounded = -10; jumpCutAvailable = true;
-            }
-            else if (Airborne && doubleJumpDelay <= 0 && Essences.HasRemnant(Essence.RisingSlash) && techniques.TryAirJump())
-            {
-                jumpBufferedUntil = 0; airHangLeft = 0;
-                doubleJumpDelay = game.Config.Techniques.doubleJumpAnticipation;
-                animator.PlayPose("DoubleJumpStart", Mathf.Max(Time.fixedDeltaTime, doubleJumpDelay));
-                Essences.NotifyUnique(Essence.RisingSlash);
-                if (doubleJumpDelay <= 0) LaunchDoubleJump();
-            }
-        }
-        void LaunchDoubleJump()
-        {
-            body.gravityScale = game.Config.gravityScale;
-            body.linearVelocity = new Vector2(move * game.Config.moveSpeed, game.Config.jumpSpeed * game.Config.Techniques.doubleJumpScale);
-            jumpCutAvailable = true;
-            animator.PlayPose("DoubleJumpRise", 0.16f);
         }
         public bool ReadyForPersonalization => Grounded() && Mathf.Abs(body.linearVelocity.y) < 0.1f;
         public bool ReadyForDefeat => ReadyForPersonalization || Position.y < KarmaSpace.Units(-8);
@@ -117,7 +83,7 @@ namespace KarmaPrototype
             body.position = position;
             body.linearVelocity = Vector2.zero;
             move = 0; jumpBufferedUntil = 0; lastGrounded = -10; nextSword = 0;
-            Crouching = false; jumpCutAvailable = false;
+            Crouching = false;
             separatingForCeremony = false; ceremonyMove = 0;
             invulnerableUntil = guardUntil = 0;
             CancelAirSlash();

@@ -40,8 +40,8 @@ namespace KarmaPrototype
                 : KarmaArtwork.Sprite("Player", "Idle");
             SpriteArt(new Rect(845, 195, 315, 350), illustration);
             Label(845, 555, 315, 30, "수호자의 시험", centered);
-            if (GUI.Button(new Rect(155, 625, 280, 50), "이전 [←]", menuButton)) { storyPage = Mathf.Max(0, storyPage - 1); storyScroll = Vector2.zero; }
-            if (GUI.Button(new Rect(500, 625, 280, 50), "다음 [→]", menuButton)) { storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1); storyScroll = Vector2.zero; }
+            if (GUI.Button(new Rect(155, 625, 280, 50), "이전 [Left Arrow]", menuButton)) { storyPage = Mathf.Max(0, storyPage - 1); storyScroll = Vector2.zero; }
+            if (GUI.Button(new Rect(500, 625, 280, 50), "다음 [Right Arrow]", menuButton)) { storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1); storyScroll = Vector2.zero; }
             if (GUI.Button(new Rect(845, 625, 280, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();
         }
         void ControlsScreen()
@@ -51,12 +51,12 @@ namespace KarmaPrototype
             SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             string Key(KarmaAction action) => KarmaInput.BindingLabel(action);
             Label(115, 175, 750, 420,
-                $"{Key(KarmaAction.Left)} / {Key(KarmaAction.Right)} : 이동    {Key(KarmaAction.Jump)} : 점프\n{Key(KarmaAction.Attack)} : 검 공격 / 방향 + 공중 베기\n\n{Key(KarmaAction.SwordWave)} : 검기    {Key(KarmaAction.RisingSlash)} : 상승베기    {Key(KarmaAction.Guard)} : 방어\n고유화 후 원형 기술은 고유화 동작으로 바뀝니다.\n\n{Key(KarmaAction.Pierce)} + 방향 : 관통베기 · 검기 고유화 후\n공중 {Key(KarmaAction.Jump)} : 더블점프 · 상승베기 고유화 후\n{Key(KarmaAction.Down)} + {Key(KarmaAction.Attack)} : 아래 베기 · 명중하면 짧은 체공과 반동\n{Key(KarmaAction.Counter)} : 반격\n\n1 / 2 / 3 → Enter : 고유화 선택 / 확정    Esc : 취소\nEsc : 일시정지    O : 타이틀·일시정지에서 환경설정\nR : 처음부터    T : 타이틀 · 일시정지 또는 결과 화면\n\n사망하면 Stage 1부터 다시 시작합니다.", text);
-            Label(115, 595, 750, 28, "↓ / S 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
+                $"{Key(KarmaAction.Left)} / {Key(KarmaAction.Right)} : 이동    {Key(KarmaAction.Jump)} : 점프\n{Key(KarmaAction.Attack)} : 검 공격\n\n{Key(KarmaAction.SwordWave)} : 검기    {Key(KarmaAction.RisingSlash)} : 상승베기    {Key(KarmaAction.Guard)} : 방어\n고유화 후 원형 기술은 고유화 동작으로 바뀝니다.\n\n{Key(KarmaAction.Pierce)} + 방향 : 관통베기 · 검기 고유화 후\n공중 방향 + {Key(KarmaAction.Attack)} : 도약베기 · 상승베기 고유화 후\n{Key(KarmaAction.Counter)} : 반격\n\n1 / 2 / 3 → Enter : 고유화 선택 / 확정    Esc : 취소\nEsc : 일시정지    O : 타이틀·일시정지에서 환경설정\nR : 처음부터    T : 타이틀 · 일시정지 또는 결과 화면\n\n사망하면 Stage 1부터 다시 시작합니다.", text);
+            Label(115, 595, 750, 28, $"{Key(KarmaAction.Down)} / Down Arrow 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
             SpriteArt(new Rect(915, 175, 250, 105), SkillIcon(Essence.SwordWave, false));
             Label(915, 280, 250, 28, "검기 · 관통베기", centered);
             SpriteArt(new Rect(915, 325, 250, 105), SkillIcon(Essence.RisingSlash, false));
-            Label(915, 430, 250, 28, "상승베기 · 더블점프", centered);
+            Label(915, 430, 250, 28, "상승베기 · 도약베기", centered);
             SpriteArt(new Rect(915, 475, 250, 105), SkillIcon(Essence.Guard, false));
             Label(915, 580, 250, 28, "방어 · 반격", centered);
             if (GUI.Button(new Rect(440, 635, 400, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();

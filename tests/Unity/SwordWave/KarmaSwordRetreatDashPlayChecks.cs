@@ -116,12 +116,12 @@ public static class KarmaSwordRetreatDashPlayChecks
         SessionState.SetBool(Key, false); EditorApplication.Exit(exit);
     }
     [Serializable] sealed class DashMetrics
-    { public float configuredDistance, rightDistance, leftDistance, solidWallDistance, boundaryDistance, pogoJumpScale, airSlashDuration; public string motion = "atomic MoveSlash, not speed * duration; Pierce pose 0.22s"; }
+    { public float configuredDistance, rightDistance, leftDistance, solidWallDistance, boundaryDistance, airSlashDistance, airSlashDuration; public string motion = "atomic MoveSlash, not speed * duration; Pierce pose 0.22s"; }
     static async Task CheckDash()
     {
         Reset(); await Frames(3);
         var metrics = new DashMetrics { configuredDistance = game.Config.Techniques.pierceDistance,
-            pogoJumpScale = game.Config.Techniques.pogoJumpScale, airSlashDuration = game.Config.Techniques.airSlashDuration };
+            airSlashDistance = game.Config.Techniques.airSlashDistance, airSlashDuration = game.Config.Techniques.airSlashDuration };
         foreach (int facing in new[] { -1, 1 })
         {
             Place(20); Vector2 from = game.Player.Position;

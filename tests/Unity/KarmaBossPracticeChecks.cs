@@ -49,49 +49,33 @@ public abstract class KarmaSelectionFixture
 }
 public static class KarmaBossPracticeChecks
 {
-    const BindingFlags F = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-    static FieldInfo Field(Type t, string n) { for (; t != null; t = t.BaseType) { var f = t.GetField(n, F); if (f != null) return f; } throw new MissingFieldException(n); }
-    static async Task Until(Func<bool> condition, double timeout = 180)
+    static async Task Until(Func<bool> done)
     {
-        double deadline = EditorApplication.timeSinceStartup + timeout;
-        while (!condition()) { if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Practice validation timed out"); EditorApplication.QueuePlayerLoopUpdate(); await Task.Delay(15); }
+        double deadline = EditorApplication.timeSinceStartup + 180;
+        while (!done()) { if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Practice sequence timed out"); await Task.Delay(15); }
     }
     public static async Task<string> Run()
     {
         if (!Application.isPlaying) throw new Exception("Practice checks require Play Mode");
-        int bosses = 0;
-        foreach (var type in typeof(KarmaSelectionFixture).Assembly.GetTypes())
+        int bosses = 0, patterns = 0;
+        foreach (var definition in KarmaBossPractice.Definitions)
         {
-            if (type.IsAbstract || !typeof(KarmaSelectionFixture).IsAssignableFrom(type)) continue;
-            var fixture = (KarmaSelectionFixture)Activator.CreateInstance(type);
-            Type windowType = null;
-            foreach (var candidate in typeof(KarmaBossPracticeWindow).Assembly.GetTypes())
-                if (!candidate.IsAbstract && typeof(KarmaBossPracticeWindow).IsAssignableFrom(candidate))
+            KarmaBossPractice.Request(definition.Kind, KarmaBossPractice.Mode.Sequence);
+            await Until(() => KarmaBossPractice.Status == definition.Name + " · 전체 패턴 순회 완료");
+            var game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
+            foreach (var type in typeof(KarmaSelectionFixture).Assembly.GetTypes())
+                if (!type.IsAbstract && typeof(KarmaSelectionFixture).IsAssignableFrom(type))
                 {
-                    var probe = (KarmaBossPracticeWindow)ScriptableObject.CreateInstance(candidate);
-                    var kind = (Essence)candidate.GetProperty("Kind", F).GetValue(probe);
-                    UnityEngine.Object.DestroyImmediate(probe);
-                    if (kind == fixture.Kind) windowType = candidate;
+                    var fixture = (KarmaSelectionFixture)Activator.CreateInstance(type);
+                    if (fixture.Kind == definition.Kind) fixture.Run(game.Enemies[0], game);
                 }
-            if (windowType == null) throw new Exception("Missing local practice window: " + fixture.Kind);
-            var window = (KarmaBossPracticeWindow)EditorWindow.GetWindow(windowType);
-            try
-            {
-                window.CreateGUI();
-                if (window.rootVisualElement.childCount < 10) throw new Exception("Practice controls failed to construct");
-                window.RequestRoom(false, false, true);
-                await Until(() => ((string)Field(windowType, "lastStatus").GetValue(window)).Contains("전체 패턴 순회 완료"));
-                var game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>(); var enemy = game.Enemies[0];
-                if (enemy.PrimaryType != fixture.Kind) throw new Exception("Wrong boss practice room");
-                fixture.Run(enemy, game);
-                window.RequestRoom(true, false, false);
-                await Until(() => ((string)Field(windowType, "lastStatus").GetValue(window)).Contains("전체 패턴 전투 시작"), 10);
-                bosses++;
-            }
-            finally { window.Close(); }
+            KarmaBossPractice.Request(definition.Kind, KarmaBossPractice.Mode.Combat);
+            await Until(() => KarmaBossPractice.Status == definition.Name + " · 전체 패턴 연습");
+            bosses++; patterns += definition.Patterns.Length;
         }
-        if (bosses != 3) throw new Exception("Expected all three local practice windows");
-        return "PASS: three boss practice windows, all 18 patterns, combat entry and 6000 weighted selections";
+        KarmaBossPractice.Stop();
+        if (bosses != 3 || patterns != 18) throw new Exception("Expected three bosses and eighteen patterns including passive GD01");
+        return "PASS: three direct practice menus, all eighteen patterns, combat entry and 6000 weighted selections";
     }
 }
 #endif

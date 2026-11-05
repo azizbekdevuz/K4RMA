@@ -46,7 +46,7 @@ namespace KarmaPrototype
         {
             string[] names = stage == 0
                 ? new[] { "Gate", "Steps", "Well", "Rope", "LeftTree", "RightTree", "Leaves", "Rocks", "Bush", "Wood" }
-                : new[] { "Lantern", "TrainingPost", "WaveBanner", "RiseBanner", "WardBanner", "Rail" };
+                : new[] { "Lantern", "TrainingPost", "WaveBanner", "RiseBanner", "WardBanner" };
             for (int i = 0; i < names.Length; i++)
             {
                 var sprite = KarmaArtwork.Sprite("Props", names[i]);

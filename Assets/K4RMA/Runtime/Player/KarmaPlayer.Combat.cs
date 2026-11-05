@@ -29,9 +29,9 @@ namespace KarmaPrototype
         {
             if (!CanSword()) return;
             // Preserve a simultaneous jump + attack press through the takeoff frame.
-            if (airSlashBufferedUntil > Time.time &&
+            if (Essences.HasRemnant(Essence.RisingSlash) && airSlashBufferedUntil > Time.time &&
                 jumpBufferedUntil > Time.time && !Airborne) return;
-            if (Airborne && airSlashBufferedUntil > Time.time)
+            if (Essences.HasRemnant(Essence.RisingSlash) && Airborne && airSlashBufferedUntil > Time.time && techniques.TryAirSlash())
             {
                 BeginAirSlash(AttackDirection());
                 return;
@@ -79,15 +79,14 @@ namespace KarmaPrototype
                 SwordHit(enemy, direction);
             }
         }
-        bool SwordHit(KarmaEnemy enemy, Vector2 direction)
+        void SwordHit(KarmaEnemy enemy, Vector2 direction)
         {
             float before = enemy.Health;
             Vector2 point = enemy.ClosestDamagePoint(Position);
             enemy.TakeDamage(game.Config.swordDamage);
-            if (enemy.Health >= before) return false;
+            if (enemy.Health >= before) return;
             KarmaRemnantVFX.SwordImpact(game, point, direction);
             game.SwordHitFeedback();
-            return true;
         }
         Vector2 MoveSlash(Vector2 direction, float distance)
         {

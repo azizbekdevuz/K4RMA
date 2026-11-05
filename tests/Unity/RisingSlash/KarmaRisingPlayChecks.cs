@@ -62,6 +62,50 @@ public static class KarmaRisingPlayChecks
         Set(enemy, "running", true); Set(enemy, "patternStarted", enemy.FightSeconds);
         enemy.StartCoroutine((IEnumerator)Call(enemy, "RunPattern"));
     }
+    public static string CheckPoseConnections()
+    {
+        var director = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
+        int count = 0;
+        try
+        {
+            foreach (var order in new[] {
+                new[] { Essence.RisingSlash },
+                new[] { Essence.RisingSlash, Essence.SwordWave },
+                new[] { Essence.RisingSlash, Essence.Guard },
+                new[] { Essence.RisingSlash, Essence.SwordWave, Essence.Guard },
+                new[] { Essence.RisingSlash, Essence.Guard, Essence.SwordWave } })
+            {
+                director.StartRun();
+                foreach (var kind in order) { director.Player.Essences.Preview(kind); director.Player.Essences.Confirm(out _); }
+                typeof(KarmaGame).GetProperty("StageIndex").SetValue(director, order.Length);
+                Call(director, "LoadRoom", true);
+                var actor = director.Enemies[0]; var animator = actor.GetComponentInChildren<KarmaCharacterAnimator>();
+                var renderer = (SpriteRenderer)Get(animator, "picture");
+                var expected = order.Length == 1 ? KarmaArtwork.Sprites("Rise")
+                    : KarmaArtwork.InheritedPoses(KarmaArtwork.GuardianFormName(order));
+                Check(expected.Length >= 12, "Every Rising body has its authored pose library");
+                Action<string, EnemyAttack, bool, string> pose = (state, attack, air, name) =>
+                {
+                    animator.GuardianPose(state, attack, air, false);
+                    var sprite = Array.Find(expected, entry => entry.name == name);
+                    Check(sprite != null && renderer.sprite == sprite,
+                        "Actual Rising Sprite connection: " + string.Join(">", order) + "/" + name + " got=" + renderer.sprite.name);
+                    count++;
+                };
+                pose("Telegraph", EnemyAttack.UP01, false, "Windup");
+                pose("Attack", EnemyAttack.UP01, false, "Rising");
+                pose("Attack", EnemyAttack.UP02, false, "Slash");
+                pose("Attack", EnemyAttack.UP01, true, "AirSlash");
+                pose("Recover", EnemyAttack.UP01, false, "Landing");
+                pose("Stunned", EnemyAttack.UP01, false, "Hurt");
+                animator.transform.position += Vector3.right * 0.2f;
+                pose("Approach", EnemyAttack.UP01, false, "Dash");
+                pose("Approach", EnemyAttack.UP01, false, "Idle");
+            }
+            return "PASS: " + count + " actual Rising base/inherited Sprite connections";
+        }
+        finally { director.StartRun(); }
+    }
     static async void Run()
     {
         int exit = 0; string result;
@@ -71,6 +115,7 @@ public static class KarmaRisingPlayChecks
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             var config = UnityEngine.Object.Instantiate(game.Config); config.playerHealth = 1000000; Set(game, "config", config);
             Application.logMessageReceived += Capture;
+            Debug.Log(CheckPoseConnections());
             foreach (var pattern in new[] { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.UP03, EnemyAttack.UP04, EnemyAttack.UP05 })
             {
                 Reset(); Force(pattern);

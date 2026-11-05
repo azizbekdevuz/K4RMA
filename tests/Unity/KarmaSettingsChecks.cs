@@ -25,6 +25,14 @@ public static class KarmaSettingsChecks
         try
         {
             KarmaInput.ResetBindings();
+            Check(KarmaInput.BindingLabel(KarmaAction.Left) == "A" && KarmaInput.BindingLabel(KarmaAction.Right) == "D"
+                && KarmaInput.BindingLabel(KarmaAction.Jump) == "Space"
+                && KarmaInput.BindingLabel(KarmaAction.RisingSlash) == "Left Shift", "Key labels use English physical key names");
+            Check(KarmaInput.TrySetBinding(KarmaAction.Pierce, "<Keyboard>/f10", out _) && KarmaInput.BindingLabel(KarmaAction.Pierce) == "F10",
+                "Rebound function keys keep their English key name");
+            Check(KarmaInput.TrySetBinding(KarmaAction.Pierce, "<Keyboard>/rightShift", out _) && KarmaInput.BindingLabel(KarmaAction.Pierce) == "Right Shift",
+                "Rebound modifier keys keep their English key name");
+            KarmaInput.ResetBindings();
             Check(KarmaInput.BindingLabel(KarmaAction.Pierce).ToUpperInvariant() == "U", "Unique sword input defaults to U");
             game.OpenSettings(); Check(game.SettingsOpen && game.Paused, "Opening options pauses combat");
             KarmaInput.BeginRebinding(KarmaAction.Pierce);

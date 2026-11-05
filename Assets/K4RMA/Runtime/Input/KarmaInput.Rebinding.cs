@@ -17,7 +17,34 @@ namespace KarmaPrototype
             KarmaAction.Attack, KarmaAction.Pierce, KarmaAction.Counter, KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard
         };
         public static string BindingLabel(KarmaAction id)
-        { Initialize(); return actions[(int)id].GetBindingDisplayString(0); }
+        {
+            Initialize();
+            // Display the physical key path, not the OS's current Hangul/IME label.
+            string path = actions[(int)id].bindings[0].effectivePath;
+            if (string.IsNullOrEmpty(path)) return "Unbound";
+            string key = path.Substring(path.LastIndexOf('/') + 1);
+            if (key.Length == 1) return key.ToUpperInvariant();
+            switch (key)
+            {
+                case "space": return "Space";
+                case "escape": return "Esc";
+                case "enter": return "Enter";
+                case "tab": return "Tab";
+                case "leftShift": return "Left Shift";
+                case "rightShift": return "Right Shift";
+                case "leftCtrl": return "Left Ctrl";
+                case "rightCtrl": return "Right Ctrl";
+                case "leftAlt": return "Left Alt";
+                case "rightAlt": return "Right Alt";
+                case "leftArrow": return "Left Arrow";
+                case "rightArrow": return "Right Arrow";
+                case "upArrow": return "Up Arrow";
+                case "downArrow": return "Down Arrow";
+            }
+            if (key.StartsWith("f", StringComparison.Ordinal) && int.TryParse(key.Substring(1), out _)) return key.ToUpperInvariant();
+            string words = System.Text.RegularExpressions.Regex.Replace(key, "([a-z])([A-Z0-9])", "$1 $2");
+            return char.ToUpperInvariant(words[0]) + words.Substring(1);
+        }
         public static void BeginRebinding(KarmaAction id)
         {
             Initialize(); CancelRebinding();

@@ -51,11 +51,19 @@ namespace KarmaPrototype
             GameCamera.transform.rotation = Quaternion.identity;
             GameCamera.transform.position = new Vector3(12, 4.4f, -10);
             gameObject.AddComponent<KarmaHUD>().Initialize(this);
+            KarmaPreferences.ApplyAudio();
             Time.timeScale = 1;
         }
         void Update()
         {
             UpdateHitFeedback();
+            if (SettingsOpen)
+            {
+                if (!KarmaInput.RebindingThisFrame && KarmaInput.Pressed(KarmaAction.Pause)) CloseSettings();
+                return;
+            }
+            if (KarmaInput.Pressed(KarmaAction.Settings) && (Phase == RunPhase.Title || Paused))
+            { OpenSettings(); return; }
             if (Phase == RunPhase.Title)
             {
                 if (KarmaInput.Pressed(KarmaAction.Confirm)) StartRun();

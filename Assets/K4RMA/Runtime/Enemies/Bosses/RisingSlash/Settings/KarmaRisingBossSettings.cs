@@ -6,6 +6,8 @@ namespace KarmaPrototype
     [Serializable]
     public sealed class KarmaRisingBossSettings : KarmaBossBalance
     {
+        [NonSerialized] KarmaRisingPatternWeights.RisingPatternWeightValues patternWeights;
+        public KarmaRisingPatternWeights.RisingPatternWeightValues Weights => patternWeights ?? (patternWeights = KarmaRisingPatternWeights.LoadCopy());
         [Header("상승베기형")]
         [Min(0.1f)] public float preferredDistance = 2.05f * KarmaSpace.Scale, meleeReach = 4.1f * KarmaSpace.Scale;
         [Min(0.1f)] public float approachSpeedMultiplier = 1.55f, attackDecisionMultiplier = 0.58f;

@@ -6,6 +6,8 @@ namespace KarmaPrototype
     [Serializable]
     public sealed class KarmaSwordBossSettings : KarmaBossBalance
     {
+        [NonSerialized] KarmaSwordPatternWeights.SwordPatternWeightValues patternWeights;
+        public KarmaSwordPatternWeights.SwordPatternWeightValues Weights => patternWeights ?? (patternWeights = KarmaSwordPatternWeights.LoadCopy());
         [Header("검기형 · 초기 밸런스")]
         // Post-action selection; committed warnings keep their full dodge window.
         [Range(0.25f, 1.5f)] public float swordDecisionMultiplier = 0.35f;

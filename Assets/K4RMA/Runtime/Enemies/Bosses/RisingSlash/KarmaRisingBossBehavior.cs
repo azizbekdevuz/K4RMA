@@ -10,6 +10,9 @@ namespace KarmaPrototype
         [UnityEngine.Scripting.Preserve]
         sealed class RisingBossBehavior : BossBehavior
         {
+#if UNITY_EDITOR
+            public bool PracticeHold;
+#endif
             new KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Rise") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
@@ -34,12 +37,34 @@ namespace KarmaPrototype
                 if (owned.Count == 3) result.Add(EnemyAttack.UP05);
                 return result;
             }
+            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
+            {
+                attack = default; float total = 0;
+                foreach (var candidate in owner.attacks)
+                {
+                    if (!Eligible(candidate, distance, sight, escape)) continue;
+                    float weight = candidate == EnemyAttack.GroundStrike ? Settings.Weights.basicWeight
+                        : candidate == EnemyAttack.UP01 ? Settings.Weights.up01Weight
+                        : candidate == EnemyAttack.UP02 ? Settings.Weights.up02Weight * (owner.game.Player.Airborne ? Settings.Weights.airborneUp02Multiplier : 1)
+                        : candidate == EnemyAttack.UP03 ? Settings.Weights.up03Weight
+                        : candidate == EnemyAttack.UP04 ? Settings.Weights.up04Weight : Settings.Weights.up05Weight;
+                    if (candidate == owner.previous) weight *= Settings.Weights.repeatWeightScale;
+                    weight = Mathf.Max(0, weight);
+                    if (weight <= 0) continue;
+                    total += weight;
+                    if (total <= weight || Random.value * total < weight) attack = candidate;
+                }
+                return total > 0;
+            }
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
             public override void OnAttackParried(bool stun)
             { if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position); }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {
+#if UNITY_EDITOR
+                if (PracticeHold) return true;
+#endif
                 Face(dx);
                 if (Mathf.Abs(dx) > Settings.preferredDistance)
                 {

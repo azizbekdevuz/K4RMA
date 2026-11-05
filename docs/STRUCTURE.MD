@@ -157,7 +157,8 @@ K4RMA/
 │       │       │       │   │   │   └── Neutral.png
 │       │       │       │   │   └── ReferencePoses.png
 │       │       │       │   └── Player/
-│       │       │       │       └── Actions.png
+│       │       │       │       ├── Actions.png
+│       │       │       │       └── AerialActions.png
 │       │       │       ├── Effects/
 │       │       │       │   ├── Guardian.png
 │       │       │       │   ├── Hit.png
@@ -186,6 +187,8 @@ K4RMA/
 │       │   ├── KarmaStory.cs
 │       │   ├── KarmaTechniqueState.cs
 │       │   └── KarmaTypes.cs
+│       ├── Editor/
+│       │   └── KarmaBossPracticeWindow.cs
 │       ├── Resources/
 │       │   ├── KarmaArtworkSettings.asset
 │       │   ├── KarmaCombatGlow.mat
@@ -201,10 +204,13 @@ K4RMA/
 │       │   │   ├── KarmaBossBalance.cs
 │       │   │   ├── KarmaBossTuning.cs
 │       │   │   ├── KarmaConfig.cs
+│       │   │   ├── KarmaPreferences.cs
 │       │   │   └── KarmaTechniqueTuning.cs
 │       │   ├── Enemies/
 │       │   │   ├── Bosses/
 │       │   │   │   ├── Guard/
+│       │   │   │   │   ├── Editor/
+│       │   │   │   │   │   └── KarmaGuardPracticeWindow.cs
 │       │   │   │   │   ├── Patterns/
 │       │   │   │   │   │   ├── GD01.cs
 │       │   │   │   │   │   ├── GD02.cs
@@ -223,14 +229,18 @@ K4RMA/
 │       │   │   │   │   │   └── KarmaHeavyStrikeMotion.cs
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
-│       │   │   │   │   │   │   └── KarmaGuardBossProfile.asset
+│       │   │   │   │   │   │   ├── KarmaGuardBossProfile.asset
+│       │   │   │   │   │   │   └── KarmaGuardPatternWeights.asset
 │       │   │   │   │   │   ├── KarmaBossTuning.Guard.cs
 │       │   │   │   │   │   ├── KarmaGuardBossProfile.cs
-│       │   │   │   │   │   └── KarmaGuardBossSettings.cs
+│       │   │   │   │   │   ├── KarmaGuardBossSettings.cs
+│       │   │   │   │   │   └── KarmaGuardPatternWeights.cs
 │       │   │   │   │   ├── KarmaEnemy.Guard.cs
 │       │   │   │   │   ├── KarmaGuardBossBehavior.cs
 │       │   │   │   │   └── KarmaGuardBossPattern.cs
 │       │   │   │   ├── RisingSlash/
+│       │   │   │   │   ├── Editor/
+│       │   │   │   │   │   └── KarmaRisingPracticeWindow.cs
 │       │   │   │   │   ├── Patterns/
 │       │   │   │   │   │   ├── UP01.cs
 │       │   │   │   │   │   ├── UP02.cs
@@ -248,13 +258,17 @@ K4RMA/
 │       │   │   │   │   │   └── KarmaRisingPolish.cs
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
-│       │   │   │   │   │   │   └── KarmaRisingBossProfile.asset
+│       │   │   │   │   │   │   ├── KarmaRisingBossProfile.asset
+│       │   │   │   │   │   │   └── KarmaRisingPatternWeights.asset
 │       │   │   │   │   │   ├── KarmaBossTuning.Rising.cs
 │       │   │   │   │   │   ├── KarmaRisingBossProfile.cs
-│       │   │   │   │   │   └── KarmaRisingBossSettings.cs
+│       │   │   │   │   │   ├── KarmaRisingBossSettings.cs
+│       │   │   │   │   │   └── KarmaRisingPatternWeights.cs
 │       │   │   │   │   ├── KarmaRisingBossBehavior.cs
 │       │   │   │   │   └── KarmaRisingBossPattern.cs
 │       │   │   │   └── SwordWave/
+│       │   │   │       ├── Editor/
+│       │   │   │       │   └── KarmaSwordPracticeWindow.cs
 │       │   │   │       ├── Patterns/
 │       │   │   │       │   ├── KarmaAerialSwordPlanner.cs
 │       │   │   │       │   ├── KarmaBossProjectileGeometry.cs
@@ -285,10 +299,12 @@ K4RMA/
 │       │   │   │       │   └── KarmaWaveMotion.cs
 │       │   │   │       ├── Settings/
 │       │   │   │       │   ├── Resources/
-│       │   │   │       │   │   └── KarmaSwordBossProfile.asset
+│       │   │   │       │   │   ├── KarmaSwordBossProfile.asset
+│       │   │   │       │   │   └── KarmaSwordPatternWeights.asset
 │       │   │   │       │   ├── KarmaBossTuning.Sword.cs
 │       │   │   │       │   ├── KarmaSwordBossProfile.cs
-│       │   │   │       │   └── KarmaSwordBossSettings.cs
+│       │   │   │       │   ├── KarmaSwordBossSettings.cs
+│       │   │   │       │   └── KarmaSwordPatternWeights.cs
 │       │   │   │       ├── KarmaSwordBossBehavior.cs
 │       │   │   │       ├── KarmaSwordBossMovement.cs
 │       │   │   │       └── KarmaSwordBossPattern.cs
@@ -304,9 +320,11 @@ K4RMA/
 │       │   │   ├── KarmaBootstrap.cs
 │       │   │   ├── KarmaGame.Camera.cs
 │       │   │   ├── KarmaGame.cs
-│       │   │   └── KarmaGame.Progression.cs
+│       │   │   ├── KarmaGame.Progression.cs
+│       │   │   └── KarmaGame.Settings.cs
 │       │   ├── Input/
-│       │   │   └── KarmaInput.cs
+│       │   │   ├── KarmaInput.cs
+│       │   │   └── KarmaInput.Rebinding.cs
 │       │   ├── Player/
 │       │   │   ├── KarmaPlayer.AirSlash.cs
 │       │   │   ├── KarmaPlayer.Ceremony.cs
@@ -334,7 +352,8 @@ K4RMA/
 │       │   ├── UI/
 │       │   │   ├── KarmaHUD.Combat.cs
 │       │   │   ├── KarmaHUD.cs
-│       │   │   └── KarmaHUD.Screens.cs
+│       │   │   ├── KarmaHUD.Screens.cs
+│       │   │   └── KarmaHUD.Settings.cs
 │       │   └── World/
 │       │       ├── KarmaSpace.cs
 │       │       ├── KarmaStage.cs
@@ -390,11 +409,16 @@ K4RMA/
 │   ├── Unity/
 │   │   ├── Guard/
 │   │   │   ├── KarmaGuardBasicDodgeChecks.cs
+│   │   │   ├── KarmaGuardCameraChecks.cs
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
-│   │   │   └── KarmaGuardPlayChecks.cs
+│   │   │   ├── KarmaGuardPlayChecks.cs
+│   │   │   └── KarmaGuardSelectionChecks.cs
+│   │   ├── Player/
+│   │   │   └── KarmaPlayerAirChecks.cs
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
-│   │   │   └── KarmaRisingPlayChecks.cs
+│   │   │   ├── KarmaRisingPlayChecks.cs
+│   │   │   └── KarmaRisingSelectionChecks.cs
 │   │   ├── SwordWave/
 │   │   │   ├── KarmaSW02AnimationChecks.cs
 │   │   │   ├── KarmaSW02InheritedChecks.cs
@@ -410,11 +434,16 @@ K4RMA/
 │   │   │   ├── KarmaSwordPoseLoadingChecks.cs
 │   │   │   ├── KarmaSwordRandomParryChecks.cs
 │   │   │   ├── KarmaSwordRetreatDashPlayChecks.cs
+│   │   │   ├── KarmaSwordSelectionChecks.cs
 │   │   │   ├── KarmaSwordSkillVfxChecks.cs
 │   │   │   ├── KarmaSwordSlideDistanceChecks.cs
 │   │   │   ├── KarmaSwordTempoRangeChecks.cs
 │   │   │   └── KarmaSwordWallCounterChecks.cs
-│   │   └── KarmaBossIsolationChecks.cs
+│   │   ├── KarmaBossIsolationChecks.cs
+│   │   ├── KarmaBossPracticeChecks.cs
+│   │   ├── KarmaCameraCoverageChecks.cs
+│   │   ├── KarmaFeatureChecks.cs
+│   │   └── KarmaSettingsChecks.cs
 │   ├── test_boss_boundaries.py
 │   └── test_optimize_images.py
 ├── tools/

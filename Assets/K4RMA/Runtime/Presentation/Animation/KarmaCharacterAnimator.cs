@@ -34,6 +34,9 @@ namespace KarmaPrototype
             var library = KarmaArtwork.Settings.spriteLibrary;
             if (library == null) return;
             foreach (var sprite in library.All(name)) if (sprite != null) poses[sprite.name] = sprite;
+            if (name == "Player")
+                foreach (var sprite in Resources.LoadAll<Sprite>("K4RMAArtwork/Characters/Player/AerialActions"))
+                    if (sprite != null) poses[sprite.name] = sprite;
             if (name == "Player" && poses.TryGetValue("Run", out var run))
             {
                 // The second movement key pose is also used for jump takeoff in
@@ -111,7 +114,7 @@ namespace KarmaPrototype
                     wasAirborne = airborne;
                     string pose = Time.time < hurtUntil ? "Hurt"
                         : Time.time < poseUntil ? (explicitPose == "Pierce" && poseUntil - Time.time > 0.15f ? "Dash" : explicitPose)
-                        : Time.time < actionUntil ? (slashDirection.y < -0.25f ? "AirSlash"
+                        : Time.time < actionUntil ? (slashDirection.y < -0.25f ? (poses.ContainsKey("DownSlash") ? "DownSlash" : "AirSlash")
                             : slashDirection.y > 0.25f ? "Rising"
                             : actionUntil - Time.time > 0.13f ? "Windup"
                             : actionUntil - Time.time > 0.07f ? "Slash" : "FollowThrough")

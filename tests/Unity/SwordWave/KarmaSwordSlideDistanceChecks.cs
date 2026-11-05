@@ -59,7 +59,7 @@ public static class KarmaSwordSlideDistanceChecks
         UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
     }
     [Serializable] sealed class Row { public string scenario, kind, stop; public float direction, requested, planned, actual, seconds, peakSpeed; public int frames; }
-    [Serializable] sealed class Metrics { public int left, right, attacks, failures, consecutiveEvades, reached, targetStops, collisionStops, timeoutStops, interruptedStops, inFlight; public List<Row> moves = new List<Row>(); }
+    [Serializable] sealed class Metrics { public int left, right, attacks, failures, consecutiveEvades, reached, targetStops, collisionStops, timeoutStops, interruptedStops, inFlight; public float maxIdleSeconds; public List<Row> moves = new List<Row>(); }
     static readonly List<Row> samples = new List<Row>();
     static Row StartRow(string scenario, float from) => new Row { scenario = scenario, kind = Kind, direction = (float)Get(Movement, "swordRetreatDirection"), planned = Mathf.Abs((float)Get(Movement, "swordRetreatTarget") - from), requested = Kind == "WallEscape" ? (baseline ? 32 : 48) : baseline ? 16 : 32 };
     static string Stop(Row r) => Mathf.Abs(r.actual - r.planned) < 0.01f ? "TargetReached" : Enemy.FightSeconds >= (float)Get(Movement, "swordRetreatUntil") ? "Timeout" : (bool)Get(Enemy, "running") || Enemy.Stunned ? "Interrupted" : "CollisionOrGround";
@@ -121,6 +121,7 @@ public static class KarmaSwordSlideDistanceChecks
         Reset(); Place(16.5f); UnityEngine.Random.InitState(6104); Set(Enemy, "running", false); Set(Enemy, "timer", 0f);
         var m = new Metrics(); float start = Enemy.FightSeconds, nextHit = start + 0.6f, from = 0, lastPattern = -1, began = 0, previous = 0; Row row = null;
         int attacksAtPreviousEvade = -1;
+        float idleSince = start;
         var probe = new GameObject("slide distance pursuit 60Hz").AddComponent<KarmaSwordDashFrameProbe>();
         probe.Before = () =>
         {
@@ -152,12 +153,16 @@ public static class KarmaSwordSlideDistanceChecks
                     m.moves.Add(row); row = null;
                 }
             }
+            // Weighted selection can choose longer skills. Guard pressure by measuring
+            // actual unengaged time rather than requiring the old rotation's exact throughput.
+            if ((bool)Get(Enemy, "running") || Remaining > 0) idleSince = Enemy.FightSeconds;
+            else m.maxIdleSeconds = Mathf.Max(m.maxIdleSeconds, Enemy.FightSeconds - idleSince);
             float p = (float)Get(Enemy, "patternStarted"); if ((bool)Get(Enemy, "running") && p != lastPattern) { m.attacks++; lastPattern = p; }
         };
         await Until(() => Enemy.FightSeconds - start >= 60); m.inFlight = row != null ? 1 : 0; probe.Before = probe.After = null; UnityEngine.Object.Destroy(probe.gameObject);
         File.WriteAllText(output + "/pursuit60.json", JsonUtility.ToJson(m, true));
-        Check(m.attacks >= 25 && m.left > 0 && m.right > 0 && m.failures == 0 && m.consecutiveEvades == 0, "attacks and both directions continue without failed moves or attack-free consecutive evades");
-        Log("60s seed6104: moves " + m.moves.Count + ", left/right " + m.left + "/" + m.right + ", attacks " + m.attacks + ", failures " + m.failures + ", consecutive evades " + m.consecutiveEvades + ", nominal reached " + m.reached);
+        Check(m.attacks >= 12 && m.maxIdleSeconds < 3 && m.left > 0 && m.right > 0 && m.failures == 0 && m.consecutiveEvades == 0, "weighted skills sustain pressure with no three-second idle gap, failed moves or attack-free consecutive evades: attacks=" + m.attacks + ", maxIdle=" + m.maxIdleSeconds);
+        Log("60s seed6104: moves " + m.moves.Count + ", left/right " + m.left + "/" + m.right + ", attacks " + m.attacks + ", failures " + m.failures + ", consecutive evades " + m.consecutiveEvades + ", max idle " + m.maxIdleSeconds.ToString("F3") + ", nominal reached " + m.reached);
     }
     static void Safety()
     {

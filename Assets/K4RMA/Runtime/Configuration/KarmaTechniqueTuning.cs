@@ -13,16 +13,17 @@ namespace KarmaPrototype
         [Min(0)] public float hitShakeSeconds = 0.09f;
         [Min(0)] public float hitShakeStrength = 0.075f * KarmaSpace.Scale;
         [Header("고유화 기술")]
-        [Min(0.05f)] public float doubleTapWindow = 0.25f;
         [Min(0.1f)] public float pierceDistance = 4 * KarmaSpace.Scale;
         [Tooltip("관통베기로 실제 이동한 순간부터 적용하는 짧은 피격 무적 시간")]
         [Range(0, 0.2f)] public float pierceInvulnerabilitySeconds = 0.1f;
-        [Min(0.1f)] public float airSlashDistance = 1.2f * KarmaSpace.Scale;
-        [Min(0.02f)] public float airSlashDuration = 0.12f;
-        [Min(0.02f)] public float airSlashRecovery = 0.16f;
+        [Min(0.02f)] public float airSlashDuration = 0.18f;
         [Min(0.02f)] public float airSlashInputBuffer = 0.16f;
-        [Min(0.1f)] public float airSlashJumpScale = 0.9f;
-        [Min(0)] public float airSlashHorizontalBoost = 1.5f;
+        [Header("공중 이동 · 명중 반동")]
+        [Range(0, 0.08f)] public float airHitHangSeconds = 0.045f;
+        [Range(0.1f, 0.8f)] public float pogoJumpScale = 0.42f;
+        [Range(0.4f, 1)] public float doubleJumpScale = 0.85f;
+        [Range(0, 0.08f)] public float doubleJumpAnticipation = 0.035f;
+        [Range(0.2f, 0.9f)] public float jumpReleaseMultiplier = 0.5f;
         [Min(0.05f)] public float counterWindow = 0.18f;
         [Min(0.2f)] public float counterCooldown = 1.1f;
         [Min(1)] public float counterDamage = 85;

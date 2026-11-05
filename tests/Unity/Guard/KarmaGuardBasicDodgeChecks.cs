@@ -82,7 +82,12 @@ public static class KarmaGuardBasicDodgeChecks
                     float dodgeAt = liveControls && jump ? 0.52f : 0.25f;
                     if (!dodged && enemy.FightSeconds - started > dodgeAt)
                     {
-                        if (liveControls && jump) Set(game.Player, "jumpBufferedUntil", Time.time + 0.12f);
+                        if (liveControls && jump)
+                        {
+                            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Space));
+                            InputSystem.Update();
+                            Set(game.Player, "jumpBufferedUntil", Time.time + 0.12f);
+                        }
                         else if (liveControls) InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.D));
                         else place(new Vector2(20 + side * (jump ? 6 : 18), jump ? 12 : KarmaSpace.PlayerHalfHeight));
                         dodged = true;

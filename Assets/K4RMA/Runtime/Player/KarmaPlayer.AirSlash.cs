@@ -4,30 +4,30 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaPlayer
     {
-        readonly KarmaAirSlashMotion airSlashMotion = new KarmaAirSlashMotion();
         readonly HashSet<KarmaEnemy> airSlashHits = new HashSet<KarmaEnemy>();
         internal bool ContinuousSwordAttack { get { return airSlashRunning; } }
-        bool airSlashRunning;
+        bool airSlashRunning, airSlashBounced;
         Vector2 airSlashDirection, airSlashPrevious;
-        float airSlashBufferedUntil, airRecoveryLeft, airLaunchX;
+        float airSlashBufferedUntil, airSlashLeft, airHangLeft, doubleJumpDelay;
         void BeginAirSlash(Vector2 direction)
         {
             var tuning = game.Config.Techniques;
             airSlashDirection = direction;
             airSlashPrevious = Position;
-            airSlashMotion.Begin(tuning.airSlashDuration);
-            airSlashRunning = true;
-            airSlashHits.Clear(); airSlashBufferedUntil = 0; airRecoveryLeft = 0;
-            jumpBufferedUntil = 0; lastGrounded = -10;
+            airSlashLeft = tuning.airSlashDuration;
+            airSlashRunning = true; airSlashBounced = false;
+            airSlashHits.Clear(); airSlashBufferedUntil = 0;
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
-            animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
-            Essences.NotifyUnique(Essence.RisingSlash);
-            KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
+            animator.PlayPose(direction.y < -0.5f ? "DownSlashWindup" : direction.y > 0.5f ? "Rising" : "Slash", tuning.airSlashDuration);
+            if (Essences.HasRemnant(Essence.RisingSlash)) Essences.NotifyUnique(Essence.RisingSlash);
+            KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration);
         }
         void DamageAirSlash()
         {
+            if (airSlashDirection.y < -0.5f && airSlashLeft > game.Config.Techniques.airSlashDuration * 0.65f)
+            { airSlashPrevious = Position; return; }
             Vector2 from = airSlashPrevious + airSlashDirection * KarmaSpace.Units(0.35f);
             Vector2 to = Position + airSlashDirection * KarmaSpace.Units(0.85f);
             airSlashPrevious = Position;
@@ -36,32 +36,31 @@ namespace KarmaPrototype
                 if (enemy == null || !enemy.Alive || airSlashHits.Contains(enemy)) continue;
                 if (!enemy.IntersectsDamagePath(from, to, KarmaSpace.Units(0.75f))) continue;
                 airSlashHits.Add(enemy);
-                SwordHit(enemy, airSlashDirection);
+                if (SwordHit(enemy, airSlashDirection) && airSlashDirection.y < -0.5f && !airSlashBounced)
+                {
+                    airSlashBounced = true;
+                    airHangLeft = game.Config.Techniques.airHitHangSeconds;
+                    body.linearVelocity = new Vector2(body.linearVelocity.x, 0);
+                    techniques.RefreshAirJump();
+                    animator.PlayPose("AirHang", airHangLeft);
+                }
             }
         }
         void AdvanceAirSlash()
         {
-            var tuning = game.Config.Techniques;
-            if (airSlashMotion.Active)
-            {
-                // Rigidbody movement keeps interpolation and terrain collision active.
-                body.gravityScale = 0;
-                float travel = airSlashMotion.Advance(Time.fixedDeltaTime) * tuning.airSlashDistance;
-                body.linearVelocity = airSlashDirection * (travel / Time.fixedDeltaTime);
-            }
-            else
-            {
-                airSlashRunning = false; airSlashHits.Clear();
-                body.gravityScale = game.Config.gravityScale;
-                airRecoveryLeft = Mathf.Max(0.02f, tuning.airSlashRecovery);
-                airLaunchX = airSlashDirection.x * game.Config.moveSpeed * tuning.airSlashHorizontalBoost;
-                body.linearVelocity = new Vector2(airLaunchX, game.Config.jumpSpeed * tuning.airSlashJumpScale);
-            }
+            airSlashLeft = Mathf.Max(0, airSlashLeft - Time.fixedDeltaTime);
+            if (!airSlashBounced && airSlashDirection.y < -0.5f)
+                animator.PlayPose(airSlashLeft > game.Config.Techniques.airSlashDuration * 0.65f
+                    ? "DownSlashWindup" : airSlashLeft > game.Config.Techniques.airSlashDuration * 0.2f
+                    ? "DownSlash" : "DownSlashRecover", Time.fixedDeltaTime * 2);
+            if (airSlashLeft > 0 && Airborne) return;
+            airSlashRunning = false; airSlashHits.Clear();
         }
         void CancelAirSlash()
         {
-            airSlashRunning = false; airSlashMotion.Reset(); airSlashHits.Clear();
-            airSlashBufferedUntil = airRecoveryLeft = 0;
+            airSlashRunning = false; airSlashHits.Clear();
+            airSlashBufferedUntil = airSlashLeft = airHangLeft = doubleJumpDelay = 0;
+            if (body != null && game != null) body.gravityScale = game.Config.gravityScale;
         }
     }
 }

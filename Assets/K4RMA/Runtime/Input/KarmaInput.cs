@@ -8,11 +8,11 @@ namespace KarmaPrototype
     {
         Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Guard,
         Interact, Pause, Confirm, Restart, Title, Story, Controls, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
-        PreviousPage, NextPage, ToggleInvincibility
+        PreviousPage, NextPage, ToggleInvincibility, Pierce, Settings
     }
 
     // Shared actions stay enabled in menus and while Time.timeScale is zero.
-    public static class KarmaInput
+    public static partial class KarmaInput
     {
         static InputActionMap map;
         static InputAction[] actions;
@@ -21,9 +21,11 @@ namespace KarmaPrototype
         static void Reset()
         {
             // Also runs when entering Play with domain reload disabled.
+            CancelRebinding();
             if (map != null) map.Dispose();
             map = null;
             actions = null;
+            RebindMessage = null; rebindHandledFrame = -1;
             Application.quitting -= Reset;
         }
 
@@ -56,6 +58,13 @@ namespace KarmaPrototype
             Bind(KarmaAction.PreviousPage, "leftArrow", "upArrow");
             Bind(KarmaAction.NextPage, "rightArrow", "downArrow");
             Bind(KarmaAction.ToggleInvincibility, "p");
+            Bind(KarmaAction.Pierce, "u");
+            Bind(KarmaAction.Settings, "o");
+            if (PlayerPrefs.HasKey(BindingsKey))
+            {
+                try { map.LoadBindingOverridesFromJson(PlayerPrefs.GetString(BindingsKey)); }
+                catch (System.Exception) { map.RemoveAllBindingOverrides(); }
+            }
             map.Enable();
             Application.quitting += Reset;
         }
@@ -87,16 +96,5 @@ namespace KarmaPrototype
         public static float Horizontal => (Held(KarmaAction.Right) ? 1 : 0) - (Held(KarmaAction.Left) ? 1 : 0);
         public static float Vertical => (Held(KarmaAction.Up) ? 1 : 0) - (Held(KarmaAction.Down) ? 1 : 0);
 
-        public static bool DirectionPressed(int direction)
-        {
-            switch (direction)
-            {
-                case 1: return Pressed(KarmaAction.Left);
-                case 2: return Pressed(KarmaAction.Right);
-                case 3: return Pressed(KarmaAction.Up);
-                case 4: return Pressed(KarmaAction.Down);
-                default: return false;
-            }
-        }
     }
 }

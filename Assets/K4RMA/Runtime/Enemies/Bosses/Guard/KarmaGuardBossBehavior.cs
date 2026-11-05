@@ -10,6 +10,9 @@ namespace KarmaPrototype
         [UnityEngine.Scripting.Preserve]
         sealed class GuardBossBehavior : BossBehavior
         {
+#if UNITY_EDITOR
+            public bool PracticeHold;
+#endif
             new KarmaGuardBossSettings Settings { get { return owner.Tuning.guard; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Ward") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
@@ -57,6 +60,9 @@ namespace KarmaPrototype
             }
             public override bool TickMovement(float dt, float dx)
             {
+#if UNITY_EDITOR
+                if (PracticeHold) return true;
+#endif
                 Face(dx);
                 if (Mathf.Abs(dx) > Settings.preferredDistance)
                 {
@@ -102,7 +108,20 @@ namespace KarmaPrototype
                     attack = EnemyAttack.GD05;
                     return true;
                 }
-                return base.TrySelect(distance, sight, escape, out attack);
+                attack = default; float total = 0;
+                foreach (var candidate in owner.attacks)
+                {
+                    if (!Eligible(candidate, distance, sight, escape)) continue;
+                    float weight = candidate == EnemyAttack.GroundStrike ? Settings.Weights.basicWeight
+                        : candidate == EnemyAttack.GD02 ? Settings.Weights.gd02Weight
+                        : candidate == EnemyAttack.GD03 ? Settings.Weights.gd03Weight : Settings.Weights.gd04Weight;
+                    if (candidate == owner.previous) weight *= Settings.Weights.repeatWeightScale;
+                    weight = Mathf.Max(0, weight);
+                    if (weight <= 0) continue;
+                    total += weight;
+                    if (total <= weight || Random.value * total < weight) attack = candidate;
+                }
+                return total > 0;
             }
             public override void OnSelected() { if (owner.selected == EnemyAttack.GD05) domeUses++; }
             public override void OnCompleted() { Heavy.Interrupt(); }

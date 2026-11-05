@@ -6,6 +6,8 @@ namespace KarmaPrototype
     [Serializable]
     public sealed class KarmaGuardBossSettings : KarmaBossBalance
     {
+        [NonSerialized] KarmaGuardPatternWeights.GuardPatternWeightValues patternWeights;
+        public KarmaGuardPatternWeights.GuardPatternWeightValues Weights => patternWeights ?? (patternWeights = KarmaGuardPatternWeights.LoadCopy());
         [Header("방어형 · 이동 및 사거리")]
         [Min(0.1f)] public float preferredDistance = 3 * KarmaSpace.Scale;
         [Min(0.1f)] public float heavyStrikeReach = 4 * KarmaSpace.Scale;

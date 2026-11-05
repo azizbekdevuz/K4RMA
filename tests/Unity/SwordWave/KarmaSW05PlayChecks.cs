@@ -320,7 +320,13 @@ public static class KarmaSW05PlayChecks
             Check(changed, "successive slams have different landing layouts");
             Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f, "boss lands");
             Check(!Get<bool>(enemy, "fullShield"), "landing releases shield");
-            Check(Root.childCount == 0, "completion cleans pattern objects");
+            await Seconds(0.04f);
+            foreach (Transform child in Root)
+                Check(child.name == "Sword persistent attacks" && child.childCount == 0,
+                    "completion leaves only the empty persistent attack container");
+            Check(Root.GetComponentsInChildren<KarmaBossAttack>(true).Length == 0
+                && Root.GetComponentsInChildren<KarmaSW05VFX>(true).Length == 0,
+                "completion cleans every live and inactive attack/VFX");
             Force(); await Until(() => Forming().Length > 0, 8);
             Call(enemy, "InterruptPattern"); await Seconds(0.1f);
             Check(Forming().Length == 0 && Root.GetComponentsInChildren<KarmaSW05VFX>().Length == 0, "interrupt cleans sky blades and VFX");

@@ -47,8 +47,8 @@ namespace KarmaPrototype
         void Update()
         {
             if (game == null) return;
-            if (KarmaInput.Pressed(KarmaAction.ToggleInvincibility)) ToggleTestInvincibility();
-            if (game.Paused) { airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
+            if (!game.SettingsOpen && KarmaInput.Pressed(KarmaAction.ToggleInvincibility)) ToggleTestInvincibility();
+            if (game.Paused) { airSlashBufferedUntil = 0; return; }
             if (!game.IsCombat) ClearStatus();
             aura.enabled = Shielded;
             remnantHalo.enabled = techniques.CounterReady(Time.time);
@@ -60,15 +60,15 @@ namespace KarmaPrototype
                 && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;
             animator.Pose(game.Phase == RunPhase.GuardianFallen ? ceremonyMove : move,
                 airborne, body.linearVelocity.y, Crouching);
-            if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
-            if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; techniques.ClearDirectionTap(); return; }
+            if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; return; }
+            if (Stunned) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; return; }
             move = Crouching ? 0 : KarmaInput.Horizontal;
             if (move != 0) Facing = move > 0 ? 1 : -1;
             art.localScale = new Vector3(Facing, 1, 1);
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;
             if (game.IsCombat)
             {
-                ReadUniqueDirectionTap();
+                ReadUniqueSwordInput();
                 if (KarmaInput.Pressed(KarmaAction.Attack)) airSlashBufferedUntil = Time.time + game.Config.Techniques.airSlashInputBuffer;
                 if (KarmaInput.Held(KarmaAction.Attack) || airSlashBufferedUntil > Time.time) Attack();
                 if (KarmaInput.Pressed(KarmaAction.SwordWave)) Essences.TryUse(Essence.SwordWave);
@@ -76,7 +76,6 @@ namespace KarmaPrototype
                 if (KarmaInput.Pressed(KarmaAction.Guard)) Essences.TryUse(Essence.Guard);
                 if (KarmaInput.Pressed(KarmaAction.Counter)) Essences.TryCounter();
             }
-            else techniques.ClearDirectionTap();
         }
 
     }

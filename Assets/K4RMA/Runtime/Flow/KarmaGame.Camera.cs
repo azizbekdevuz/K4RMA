@@ -106,12 +106,12 @@ namespace KarmaPrototype
             lastShake = Vector3.zero;
             if (IsCombat && hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds) > 0)
             {
-                float strength = Config.Techniques.hitShakeStrength * hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds);
+                float strength = Config.Techniques.hitShakeStrength * KarmaPreferences.ScreenShake * hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds);
                 lastShake = new Vector3(Mathf.Sin(Time.unscaledTime * 97) * strength, Mathf.Sin(Time.unscaledTime * 73) * strength * 0.55f, 0);
             }
             if (IsCombat && !Paused && Time.time < presentationShakeUntil)
                 lastShake += new Vector3(Mathf.Sin(Time.time * 83), Mathf.Sin(Time.time * 67) * 0.5f, 0)
-                    * Config.Techniques.hitShakeStrength * presentationShakeStrength;
+                    * Config.Techniques.hitShakeStrength * KarmaPreferences.ScreenShake * presentationShakeStrength;
             GameCamera.transform.position += lastShake;
         }
     }

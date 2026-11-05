@@ -19,49 +19,24 @@ namespace KarmaPrototype
         }
         public void Reset() { slowUntil = shakeUntil = 0; }
     }
-    // Frame-rate independent travel curve: quick slash, then a soft deceleration.
-    public sealed class KarmaAirSlashMotion
-    {
-        float elapsed, duration;
-        public bool Active { get { return duration > 0 && elapsed < duration; } }
-        public void Begin(float seconds) { elapsed = 0; duration = Math.Max(0.02f, seconds); }
-        static float Distance(float t) { return (t - 0.25f * t * t) / 0.75f; }
-        public float Advance(float seconds)
-        {
-            if (!Active || seconds <= 0) return 0;
-            float before = elapsed / duration;
-            elapsed = Math.Min(duration, elapsed + seconds);
-            return Distance(elapsed / duration) - Distance(before);
-        }
-        public void Reset() { elapsed = duration = 0; }
-    }
     // Runtime supplies scaled time; no physics, input or visuals here.
     public sealed class KarmaTechniqueState
     {
-        int lastDirection;
-        float lastTap = -100, counterUntil;
-        bool counterArmed, airSlashUsed;
-        public bool DirectionTap(int direction, float now, float window)
+        float counterUntil;
+        bool counterArmed, airJumpUsed;
+        public bool TryAirJump()
         {
-            if (direction < 1 || direction > 4) { ClearDirectionTap(); return false; }
-            bool ready = lastDirection == direction && now >= lastTap && now - lastTap <= Math.Max(0, window);
-            if (ready) ClearDirectionTap();
-            else { lastDirection = direction; lastTap = now; }
-            return ready;
+            if (airJumpUsed) return false;
+            airJumpUsed = true; return true;
         }
-        public void ClearDirectionTap() { lastDirection = 0; lastTap = -100; }
-        public bool TryAirSlash()
-        {
-            if (airSlashUsed) return false;
-            airSlashUsed = true; return true;
-        }
-        public void Land() { airSlashUsed = false; }
+        public void RefreshAirJump() { airJumpUsed = false; }
+        public void Land() { RefreshAirJump(); }
         public void ArmCounter(float now, float window) { counterArmed = true; counterUntil = now + Math.Max(0, window); }
         public bool CounterReady(float now) { return counterArmed && now < counterUntil; }
         public bool ConsumeCounter(float now)
         {
             bool ready = CounterReady(now); counterArmed = false; return ready;
         }
-        public void Reset() { ClearDirectionTap(); Land(); counterArmed = false; counterUntil = 0; }
+        public void Reset() { Land(); counterArmed = false; counterUntil = 0; }
     }
 }

@@ -8,7 +8,7 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD : MonoBehaviour
     {
         KarmaGame game;
-        GUIStyle title, heading, text, small, button, menuButton, centered;
+        GUIStyle title, heading, text, small, button, menuButton, centered, keyButton;
         Font runtimeFont;
         readonly string[] names = { "검기", "상승베기", "방어" };
         public void Initialize(KarmaGame director) { game = director; }
@@ -46,12 +46,13 @@ namespace KarmaPrototype
             text = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true };
             small = new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true };
             button = new GUIStyle(GUI.skin.button) { fontSize = 18, wordWrap = true, padding = new RectOffset(15, 15, 10, 10) };
+            keyButton = new GUIStyle(button) { fontSize = 16, padding = new RectOffset(6, 6, 3, 3) };
             menuButton = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
             menuButton.normal.textColor = new Color(0.92f, 0.9f, 0.82f);
             menuButton.hover.textColor = Color.white;
             centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
             foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
-            foreach (var s in new[] { title, heading, text, small, button, menuButton, centered }) if (font != null) s.font = font;
+            foreach (var s in new[] { title, heading, text, small, button, menuButton, centered, keyButton }) if (font != null) s.font = font;
         }
         void OnGUI()
         {
@@ -63,6 +64,10 @@ namespace KarmaPrototype
                 Quaternion.identity, new Vector3(scale, scale, 1));
             if (game.Phase == RunPhase.Title || game.Phase == RunPhase.Story || game.Phase == RunPhase.Controls)
                 Art(new Rect(0, 0, 1280, 720), "MenuBackground");
+            if (game.SettingsOpen)
+            {
+                SettingsScreen(); GUI.matrix = saved; return;
+            }
             if (game.Phase == RunPhase.Title) TitleScreen();
             else if (game.Phase == RunPhase.Story) StoryScreen();
             else if (game.Phase == RunPhase.Controls) ControlsScreen();

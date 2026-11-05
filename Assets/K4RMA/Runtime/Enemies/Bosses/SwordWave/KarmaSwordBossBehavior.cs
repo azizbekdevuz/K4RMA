@@ -111,31 +111,41 @@ namespace KarmaPrototype
                 // bypass ordinary cooldown/repeat rules after the current action.
                 if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed)
                 { next = EnemyAttack.SW05; return true; }
-                bool basic = owner.FightSeconds >= nextSwordBasic && sight && SwordAttackCanReach(EnemyAttack.SWBasic, owner.game.Player.Position);
-                // Broaden close-range basics without taking a ready SW05's inherited
-                // cycle turn. The original due-basic / <2.5-unit priority stays intact.
-                bool ultimateReady = owner.attacks.Contains(EnemyAttack.SW05)
-                    && SwordCandidateAvailable(EnemyAttack.SW05, owner.Position, distance, sight, escape);
-                if (!skillAfterRetreat && basic && (consecutiveBasics < 2 || ultimateReady || basicAfterRetreat) && (swordBasicDue || distance < KarmaSpace.Units(2.5f)
-                    || !ultimateReady && (BasicMeleeCanReach(owner.Position, owner.game.Player.Position)
-                        || distance <= BasicWaveRange && consecutiveBasics == 0)))
+                bool basic = Settings.Weights.swBasicWeight > 0 && owner.FightSeconds >= nextSwordBasic && sight && SwordAttackCanReach(EnemyAttack.SWBasic, owner.game.Player.Position);
+                // Due basics and retreat follow-ups remain readable guaranteed responses.
+                // Other ready basics join the same weighted pool as the eligible skills.
+                if (!skillAfterRetreat && basic && consecutiveBasics < 2 && (swordBasicDue || basicAfterRetreat))
                 { next = EnemyAttack.SWBasic; return true; }
                 bool repeatAvailable = false;
-                for (int i = 0; i < owner.attacks.Count; i++)
+                var repeated = owner.previous;
+                float total = !skillAfterRetreat && basic && consecutiveBasics < 2
+                    ? Settings.Weights.swBasicWeight * (distance < KarmaSpace.Units(2.5f) ? Settings.Weights.closeBasicMultiplier : 1) : 0;
+                if (total > 0) next = EnemyAttack.SWBasic;
+                foreach (var candidate in owner.attacks)
                 {
-                    var candidate = owner.attacks[cycleIndex++ % owner.attacks.Count];
                     if (!SwordCandidateAvailable(candidate, owner.Position, distance, sight, escape)) continue;
-                    // Keep the inherited cycle; repeat only when all other unlocked skills are ineligible.
-                    if (candidate == owner.previous) { next = candidate; repeatAvailable = true; continue; }
-                    next = candidate;
-                    return true;
+                    // Keep immediate-repeat protection; use a repeat only if no other skill is available.
+                    if (candidate == owner.previous) { repeated = candidate; repeatAvailable = true; continue; }
+                    float weight = candidate == EnemyAttack.SW01 ? Settings.Weights.sw01Weight
+                        : candidate == EnemyAttack.SW02 ? Settings.Weights.sw02Weight
+                        : candidate == EnemyAttack.SW03 ? Settings.Weights.sw03Weight : Settings.Weights.sw04Weight;
+                    weight = Mathf.Max(0, weight);
+                    if (weight <= 0) continue;
+                    total += weight;
+                    if (total <= weight || Random.value * total < weight) next = candidate;
                 }
-                if (!repeatAvailable && basic) { next = EnemyAttack.SWBasic; return true; }
-                return repeatAvailable;
+                if (total > 0) return true;
+                if (basic) { next = EnemyAttack.SWBasic; return true; }
+                if (repeatAvailable && Settings.Weights.allowRepeatFallback) { next = repeated; return true; }
+                return false;
             }
             bool SwordCandidateAvailable(EnemyAttack candidate, Vector2 from, float distance, bool sight, bool escape)
             {
                 if (candidate == EnemyAttack.SW05) return ultimate.ThresholdPending && !counter.Formed;
+                if (candidate == EnemyAttack.SW01 && Settings.Weights.sw01Weight <= 0
+                    || candidate == EnemyAttack.SW02 && Settings.Weights.sw02Weight <= 0
+                    || candidate == EnemyAttack.SW03 && Settings.Weights.sw03Weight <= 0
+                    || candidate == EnemyAttack.SW04 && Settings.Weights.sw04Weight <= 0) return false;
                 if (candidate == EnemyAttack.SW04 && (counter.Formed || owner.FightSeconds < counter.NextReadyAt)) return false;
                 // Keep the defensive overlay readable: its four committed counters
                 // can accompany ordinary waves, while larger set pieces wait for it.
@@ -164,6 +174,9 @@ namespace KarmaPrototype
             bool swordBasicDue = true, basicAfterRetreat, skillAfterRetreat;
             Transform persistentRoot;
             public Transform PersistentRoot { get { return persistentRoot; } }
+#if UNITY_EDITOR
+            public bool PracticeHold;
+#endif
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
@@ -271,6 +284,9 @@ namespace KarmaPrototype
             { return TrySelectSwordAttack(distance, sight, escape, out attack); }
             public override bool TickMovement(float dt, float dx)
             {
+#if UNITY_EDITOR
+                if (PracticeHold) return true;
+#endif
                 if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed) return false;
                 return movement.Tick(dt, dx);
             }

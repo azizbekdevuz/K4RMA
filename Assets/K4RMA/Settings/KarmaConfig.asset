@@ -47,14 +47,14 @@ MonoBehaviour:
     hitStopSeconds: 0.035
     hitShakeSeconds: 0.09
     hitShakeStrength: 0.15
-    doubleTapWindow: 0.25
     pierceDistance: 8
-    airSlashDistance: 2.4
-    airSlashDuration: 0.12
-    airSlashRecovery: 0.16
+    airSlashDuration: 0.18
     airSlashInputBuffer: 0.16
-    airSlashJumpScale: 0.9
-    airSlashHorizontalBoost: 1.5
+    airHitHangSeconds: 0.045
+    pogoJumpScale: 0.42
+    doubleJumpScale: 0.85
+    doubleJumpAnticipation: 0.035
+    jumpReleaseMultiplier: 0.5
     counterWindow: 0.18
     counterCooldown: 1.1
     counterDamage: 85

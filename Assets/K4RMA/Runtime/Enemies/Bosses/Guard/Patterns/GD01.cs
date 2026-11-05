@@ -10,7 +10,8 @@ namespace KarmaPrototype
             public GD01Pattern(KarmaEnemy owner) : base(owner) { }
             public void Tick()
             {
-                if (owner.PrimaryType != Essence.Guard || owner.FightSeconds < owner.shieldUntil || owner.trial.Active || owner.Stunned || owner.state == ActionState.Recover || owner.frontalGuard) return;
+                if (owner.PrimaryType != Essence.Guard || owner.FightSeconds < owner.shieldUntil
+                    || (owner.running && owner.selected == EnemyAttack.GD05) || owner.Stunned || owner.state == ActionState.Recover || owner.frontalGuard) return;
                 if (owner.shieldWarningUntil > 0)
                 {
                     if (owner.FightSeconds >= owner.shieldWarningUntil) RefreshAutoShield();

@@ -9,6 +9,8 @@ namespace KarmaPrototype
             public GD03Pattern(KarmaEnemy owner) : base(owner) { }
 
             const float FragmentBaseChaseSeconds = 0.65f, FragmentMaxChaseSeconds = 5;
+            // Enlarge the artwork and its trail; the damage footprint stays at 0.55 units.
+            const float FragmentVisualScale = 1.5f;
             public override IEnumerator Execute()
             {
                 owner.state = ActionState.Telegraph;
@@ -51,7 +53,7 @@ namespace KarmaPrototype
                 for (int i = 0; i < count; i++)
                 {
                     float angle = Mathf.Lerp(155, 25, i / (float)(count - 1)) * Mathf.Deg2Rad;
-                    spread[i] = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * KarmaSpace.Units(1.5f);
+                    spread[i] = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * KarmaSpace.Units(3);
                     pieces[i] = KarmaVisuals.Box(owner.effectsRoot, "GD03 방패 " + (i + 1) + " 분열", impact, Vector2.one, Color.white, 27);
                     SetFragmentHeat(pieces[i], true);
                     scales[i] = pieces[i].transform.localScale;
@@ -159,12 +161,12 @@ namespace KarmaPrototype
             static void SetFragmentHeat(SpriteRenderer piece, bool hot)
             {
                 KarmaCombatVFX.ApplySprite(piece, "GuardBossVFX", hot ? "ShardHot" : "ShardCooled",
-                    KarmaSpace.Units(Vector2.one * 0.65f), true);
+                    KarmaSpace.Units(Vector2.one * 0.65f * FragmentVisualScale), true);
                 piece.sharedMaterial = KarmaVisuals.DefaultMaterial; piece.color = Color.white;
-                SetShieldTrail(piece, hot);
+                SetShieldTrail(piece, hot, FragmentVisualScale);
             }
 
-            static TrailRenderer SetShieldTrail(SpriteRenderer piece, bool hot)
+            static TrailRenderer SetShieldTrail(SpriteRenderer piece, bool hot, float visualScale = 1)
             {
                 var trail = piece.GetComponent<TrailRenderer>();
                 if (trail == null)
@@ -177,7 +179,7 @@ namespace KarmaPrototype
                 }
                 trail.emitting = false; trail.Clear();
                 trail.time = hot ? 0.1f : 0.055f;
-                trail.startWidth = KarmaSpace.Units(hot ? 0.1f : 0.07f);
+                trail.startWidth = KarmaSpace.Units(hot ? 0.1f : 0.07f) * visualScale;
                 trail.startColor = hot ? new Color(1, 0.12f, 0.025f, 0.7f) : new Color(0.65f, 0.7f, 0.75f, 0.45f);
                 trail.endColor = hot ? new Color(1, 0.3f, 0.04f, 0) : new Color(0.65f, 0.7f, 0.75f, 0);
                 return trail;

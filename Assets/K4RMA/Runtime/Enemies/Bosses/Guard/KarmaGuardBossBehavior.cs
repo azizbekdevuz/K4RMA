@@ -15,6 +15,8 @@ namespace KarmaPrototype
             public override KarmaBossBalance Balance { get { return Settings; } }
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
+            public readonly GD05Pattern Dome;
+            int domeUses;
             [UnityEngine.Scripting.Preserve]
             public GuardBossBehavior(KarmaEnemy owner) : base(owner)
             {
@@ -24,7 +26,8 @@ namespace KarmaPrototype
                 Register(EnemyAttack.GD02, Heavy);
                 Register(EnemyAttack.GD03, new GD03Pattern(owner));
                 Register(EnemyAttack.GD04, new GD04Pattern(owner, Heavy));
-                Register(EnemyAttack.GD05, new GD05Pattern(owner));
+                Dome = new GD05Pattern(owner, Heavy);
+                Register(EnemyAttack.GD05, Dome);
             }
             public override void Initialize()
             {
@@ -48,7 +51,7 @@ namespace KarmaPrototype
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.GD05; }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
-                if (!base.Eligible(attack, distance, sight, escape)) return false;
+                if (attack == EnemyAttack.GD05 || !base.Eligible(attack, distance, sight, escape)) return false;
                 if (attack == EnemyAttack.GD02) return owner.FightSeconds < owner.shieldUntil && distance <= Settings.heavyStrikeReach;
                 return attack != EnemyAttack.GD04 || escape;
             }
@@ -56,7 +59,11 @@ namespace KarmaPrototype
             {
                 Face(dx);
                 if (Mathf.Abs(dx) > Settings.preferredDistance)
+                {
                     owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * dt);
+                    // The host updates poses before movement. Refresh once after the actual step.
+                    owner.animator.GuardianPose("Approach", owner.selected, false, Armored);
+                }
                 return false;
             }
             public override bool Armored { get { return owner.frontalGuard || AutoShieldActive; } }
@@ -69,18 +76,16 @@ namespace KarmaPrototype
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
             public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
             public override bool TryQueueParry() { return Heavy.TryQueueParry(); }
-            public override Vector3? CameraFocus { get { return owner.Invulnerable && owner.selected == EnemyAttack.GD05
+            public override Vector3? CameraFocus { get { return (owner.Invulnerable || Dome.Active) && owner.selected == EnemyAttack.GD05
                 ? new Vector3(TrialCenter, TrialRadius * 0.625f, -10) : (Vector3?)null; } }
             public override float CameraSize(float aspect)
             { return Mathf.Max(TrialRadius * 0.8f, (TrialRadius + KarmaSpace.Units(1)) / Mathf.Max(aspect, 0.01f)); }
             public override float ParryStunSeconds { get { return Settings.parryStunSeconds; } }
             public override float PatternTimeout { get { return owner.selected == EnemyAttack.GD05 ? 40 : owner.selected == EnemyAttack.GD03 ? 12 : 5; } }
             public override bool ConsumeQueuedParry() { return Heavy.ConsumeQueuedParry(); }
-            public override void OnPlayerDamaged() { owner.trial.Hit(); }
             public override void OnInterrupted()
             {
                 owner.frontalGuard = false; owner.shieldWarningUntil = 0;
-                owner.trial.Clear();
                 if (owner.game.Player != null) owner.game.Player.ReleaseArena();
             }
             public override void OnParried()
@@ -89,7 +94,23 @@ namespace KarmaPrototype
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }
             public override void Tick() { shield.Tick(); }
+            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
+            {
+                if (domeUses < 2 && owner.attacks.Contains(EnemyAttack.GD05)
+                    && owner.Health <= owner.MaxHealth * (domeUses == 0 ? 0.5f : 0.25f))
+                {
+                    attack = EnemyAttack.GD05;
+                    return true;
+                }
+                return base.TrySelect(distance, sight, escape, out attack);
+            }
+            public override void OnSelected() { if (owner.selected == EnemyAttack.GD05) domeUses++; }
             public override void OnCompleted() { Heavy.Interrupt(); }
+            public override Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.GuardDamageBounds(renderer); }
+            public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
+            {
+                if (parried && contact.ParryWithoutRiposte && Dome.Active) Dome.StunFromParry();
+            }
             public override BossAttackVisual AttackVisual(EnemyAttack attack, Vector2 velocity)
             {
                 string pose = attack == EnemyAttack.GD03 ? "Shard" : attack == EnemyAttack.GD04 ? "Pillar"

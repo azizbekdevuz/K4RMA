@@ -8,7 +8,6 @@ using UnityEditor;
 using UnityEngine;
 using KarmaPrototype;
 
-// Executed in the disposable project by run-sword-slide-distance-checks.ps1.
 [InitializeOnLoad]
 public static class KarmaSwordSlideDistanceChecks
 {

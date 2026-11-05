@@ -433,31 +433,6 @@ K4RMA/
 │   ├── test_boss_boundaries.py
 │   └── test_optimize_images.py
 ├── tools/
-│   ├── SwordWave/
-│   │   ├── docs/
-│   │   │   ├── SWORDWAVE_HIT_ART_REVISION.md
-│   │   │   ├── SWORDWAVE_IMPROVEMENTS.md
-│   │   │   ├── SWORDWAVE_OVERHAUL_20261102.md
-│   │   │   ├── SWORDWAVE_PLAYTEST_REVISION.md
-│   │   │   ├── SWORDWAVE_POLISH_20261102.md
-│   │   │   ├── SWORDWAVE_RANDOM_PARRY2_20261102.md
-│   │   │   ├── SWORDWAVE_RETREAT_DASH_REVISION.md
-│   │   │   ├── SWORDWAVE_RETREAT_REVISION.md
-│   │   │   ├── SWORDWAVE_SLIDE16_24_20261102.md
-│   │   │   └── SWORDWAVE_WALL_SCAR_COUNTER_20261102.md
-│   │   ├── prepare-sw02-sheet.py
-│   │   ├── prepare-sword-final-polish-art.py
-│   │   ├── prepare-sword-overhaul-art.ps1
-│   │   ├── prepare-sword-polish-art.ps1
-│   │   ├── run-sword-final-polish-checks.ps1
-│   │   ├── run-sword-overhaul-checks.ps1
-│   │   ├── run-sword-playchecks.ps1
-│   │   ├── run-sword-polish-checks.ps1
-│   │   ├── run-sword-random-parry-checks.ps1
-│   │   ├── run-sword-retreat-dash-checks.ps1
-│   │   ├── run-sword-retreat-playchecks.ps1
-│   │   ├── run-sword-slide-distance-checks.ps1
-│   │   └── run-sword-wall-counter-checks.ps1
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
 ├── .gitignore

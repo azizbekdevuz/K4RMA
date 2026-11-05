@@ -43,11 +43,19 @@ namespace KarmaPrototype
             public override bool TickMovement(float dt, float dx)
             {
                 Face(dx);
-                if (Mathf.Abs(dx) > Settings.preferredDistance)
+                float gap = Mathf.Abs(dx);
+                if (gap > Settings.preferredDistance)
                 {
-                    owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * Settings.approachSpeedMultiplier * dt);
+                    bool burst = gap < Settings.meleeReach * 1.65f;
+                    float speed = Settings.approachSpeedMultiplier * (burst ? 2.35f : 1f);
+                    owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * speed * dt);
+                    float strideGap = burst ? 0.07f : 0.12f;
                     if (owner.FightSeconds >= nextStride)
-                    { nextStride = owner.FightSeconds + 0.12f; KarmaRisingPolish.Stride(owner.effectsRoot, owner.Position, Mathf.Sign(dx)); }
+                    {
+                        nextStride = owner.FightSeconds + strideGap;
+                        if (burst) KarmaRisingPolish.PursuitStreak(owner.effectsRoot, owner.Position, Mathf.Sign(dx));
+                        else KarmaRisingPolish.Stride(owner.effectsRoot, owner.Position, Mathf.Sign(dx));
+                    }
                 }
                 return false;
             }

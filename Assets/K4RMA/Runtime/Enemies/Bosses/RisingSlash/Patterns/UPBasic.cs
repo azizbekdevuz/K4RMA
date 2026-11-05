@@ -13,17 +13,21 @@ namespace KarmaPrototype
                 float gap = owner.game.Player.Position.x - owner.Position.x;
                 owner.direction = gap < 0 ? -1 : 1;
                 owner.art.localScale = new Vector3(owner.direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
-                if (Mathf.Abs(gap) > KarmaSpace.Units(2.45f))
+                float stop = KarmaSpace.Units(1.75f);
+                if (Mathf.Abs(gap) > stop + KarmaSpace.Units(0.35f))
                 {
-                    float step = Mathf.Clamp(Mathf.Abs(gap) - KarmaSpace.Units(1.9f), 0f, KarmaSpace.Units(2.6f));
+                    float step = Mathf.Min(Mathf.Abs(gap) - stop, KarmaSpace.Units(5.5f));
+                    float duration = Mathf.Clamp(step / KarmaSpace.Units(18f), 0.12f, 0.26f);
                     Vector2 close = new Vector2(Mathf.Clamp(owner.Position.x + owner.direction * step, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
                     owner.state = ActionState.Approach;
-                    yield return owner.Motion(close, 0.16f, Vector2.zero);
+                    KarmaRisingPolish.PursuitStreak(owner.effectsRoot, owner.Position, owner.direction);
+                    yield return owner.Motion(close, duration, Vector2.zero);
                 }
                 owner.state = ActionState.Telegraph;
                 Vector2 tellSize = KarmaSpace.Units(new Vector2(3.4f, 2.2f));
                 Vector2 tellCenter = new Vector2(owner.Position.x + owner.direction * KarmaSpace.Units(1.7f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.85f));
                 var mark = owner.Mark("기본 삼연베기", tellCenter, tellSize);
+                KarmaRisingPolish.MeleeTell(owner.effectsRoot, tellCenter, owner.direction);
 
                 yield return owner.Wait(owner.Warning(0.24f));
                 if (mark != null) Destroy(mark.gameObject);
@@ -41,7 +45,8 @@ namespace KarmaPrototype
                     KarmaAttackContact contact = RisingSlashRules.NewStrikeContact();
                     var slash = owner.Attack(center, Vector2.zero, size, strike.ActiveSeconds, Settings.meleeDamageMultiplier * strike.DamageShare, contact, 0f, visualPose: "Cleave");
                     if (slash != null) slash.Repaint(KarmaRisingArt.Get(strike.SpritePose), true);
-                    KarmaRisingPolish.BasicArc(owner.effectsRoot, center, size, owner.direction, strike.SpritePose);
+                    Vector2 arc = i == RisingSlashRules.BasicStrikeCount - 1 ? size * new Vector2(1.18f, 1.22f) : size;
+                    KarmaRisingPolish.BasicArc(owner.effectsRoot, center, arc, owner.direction, strike.SpritePose);
                     yield return owner.Wait(strike.ActiveSeconds);
                     if (i < RisingSlashRules.BasicStrikeCount - 1) yield return owner.Wait(RisingSlashRules.BasicGapSeconds);
                 }

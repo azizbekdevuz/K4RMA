@@ -12,8 +12,8 @@ namespace KarmaPrototype
                 // SW01 and SW02 share the exact same complete source Sprite.
                 case "SW02_AimedSlash": case "SW02_AimedSlash_v2":
                 case "SW01_CrescentWave_v4": case "SWBasic_CrescentWave_v3": return "Sword_Crescent_v6";
-                case "SW03_GroundScar_v5": return "SW03_GroundScar_v6";
-                case "SW03_RisingBlade_v5": return "SW03_RisingBlade_v6";
+                case "SW03_GroundScar_v5": case "SW03_GroundScar_v6": return "SW03_GroundScar_v7";
+                case "SW03_RisingBlade_v5": case "SW03_RisingBlade_v6": return "SW03_RisingBlade_v7";
                 case "SW04_CounterBlade_v2": return "SW04_CounterBlade_v6";
                 case "SW03_HitFlash_v5": case "Sword_HitBurst_v2": return "Sword_Impact_v6";
                 default: return pose;
@@ -34,10 +34,14 @@ namespace KarmaPrototype
             pose = Resolve(pose);
             switch (pose)
             {
-                case "Sword_Crescent_v6": return new Rect(51, 42, 967, 1449);
+                case "Sword_Crescent_v6": return new Rect(59, 66, 942, 1412);
                 case "SW03_GroundScar_v6": return new Rect(30, 37, 966, 179);
-                case "SW03_RisingBlade_v6": return new Rect(35, 34, 190, 1467);
-                case "SW04_CounterBlade_v6": return new Rect(30, 73, 957, 111);
+                // Bottom is the bright ground-contact point, not the glow's tail.
+                case "SW03_RisingBlade_v6": return new Rect(162, 146, 700, 1344);
+                case "SW03_GroundScar_v7": return new Rect(80, 287, 2018, 172);
+                case "SW03_RisingBlade_v7": return new Rect(325, 140, 374, 1348);
+                case "SW03_HitCut_v7": return new Rect(113, 108, 1076, 1038);
+                case "SW04_CounterBlade_v6": return new Rect(46, 251, 2073, 244);
                 case "Sword_Impact_v6": return new Rect(41, 91, 398, 364);
                 case "Sword_Release_v6": return new Rect(70, 95, 391, 327);
                 case "Sword_GuardRing_v6": return new Rect(27, 51, 459, 409);
@@ -81,6 +85,8 @@ namespace KarmaPrototype
             // New poses load independently; legacy SW05 and shared
             // SW03_GroundImpact references keep their original library sprites.
             KarmaVisuals.ApplyMaterial(renderer);
+            if (Resolve(pose) == "SW03_GroundScar_v7") KarmaSwordSkillSurface.Apply(renderer, 5);
+            else if (Resolve(pose) == "SW04_CounterBlade_v6") KarmaSwordSkillSurface.Apply(renderer, 3);
             if (pose == "SW05_AerialSword")
             {
                 var material = Resources.Load<Material>("KarmaAerialSword");

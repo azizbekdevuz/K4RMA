@@ -47,6 +47,7 @@ namespace KarmaPrototype
                 float tracking = 0.4f * owner.Tempo, elapsed = 0;
 
                 owner.animator.PlayPose("Windup", tracking + 0.18f);
+                owner.animator.BeginSW02Presentation(tracking);
                 while (elapsed < tracking && owner.Active)
                 {
                     if (owner.game.Paused) { yield return null; continue; }
@@ -70,23 +71,28 @@ namespace KarmaPrototype
                 float warning = AimedSlashLockTime(origin, facing, size);
                 KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, origin, warning, true);
                 owner.animator.PrepareWaveAttack(warning, true);
+                owner.animator.LockSW02Presentation(warning);
                 yield return owner.Wait(warning);
                 if (!owner.Active) yield break;
                 marker.gameObject.SetActive(false); Destroy(marker.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack(Vector2.right * facing);
-                var shot = owner.Attack(origin, velocity, size, life, Settings.aimedDamageMultiplier);
+                owner.animator.ReleaseSW02Presentation();
+                var shot = owner.Attack(origin, velocity, size, life, Settings.aimedDamageMultiplier,
+                    parent: sword.PersistentRoot);
                 KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, velocity, size);
                 sword.WaveLaunchVFX(origin, velocity, size, true);
-                yield return owner.Wait(life);
+                yield return owner.Wait(0.12f);
+                owner.animator.RecoverSW02Presentation();
                 yield return owner.Recovery(1.1f);
             }
+            public override void Interrupt() { owner.animator.CancelSW02Presentation(); }
             public override bool CanReach(Vector2 from, Vector2 target)
             {
                 float facing = target.x < from.x ? -1 : 1;
                 Vector2 origin = AimedSlashOrigin(from, facing), velocity = Vector2.right * facing * AimedSlashSpeed;
                 float life = AimedSlashLife(origin, velocity);
-                float duration = 0.4f * owner.Tempo + AimedSlashLockTime(origin, facing, sword.SwordSize(EnemyAttack.SW02)) + life
-                    + Mathf.Max(0.38f, 1.1f * Mathf.Clamp(owner.Tuning.recoveryMultiplier, 0.4f, 2) * owner.Tempo);
+                float duration = 0.4f * owner.Tempo + AimedSlashLockTime(origin, facing, sword.SwordSize(EnemyAttack.SW02)) + 0.12f
+                    + Mathf.Max(0.38f, 1.1f * Mathf.Clamp(owner.Tuning.recoveryMultiplier, 0.4f, 2) * owner.Tempo * sword.Balance.recoveryScale);
                 return duration < Mathf.Max(5, owner.Tuning.patternTimeout)
                     && sword.SwordShotCanReach(origin, velocity, sword.SwordSize(EnemyAttack.SW02), life, target);
             }

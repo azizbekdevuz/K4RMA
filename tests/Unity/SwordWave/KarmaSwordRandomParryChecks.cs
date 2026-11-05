@@ -168,6 +168,7 @@ public static class KarmaSwordRandomParryChecks
     }
     static async Task ParryScenario(string name, int target, bool evadeFirst, bool walkAfterHit, bool earlyFirst)
     {
+        using var inputRouting = new GameplayKeyboardScope(keyboard);
         scenario = name; Reset(); Keys(false, false, null); Place(35);
         game.Player.GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Dynamic;
         // Remove only the old test harness's setup invulnerability. Never reset it after a hit.
@@ -187,7 +188,7 @@ public static class KarmaSwordRandomParryChecks
         probe.Before = () =>
         {
             // Keep this isolated SW04 volley intact; no extra boss attacks or root movement.
-            if (!(bool)Get(Enemy, "running")) Set(Enemy, "running", true);
+            if (!Enemy.Stunned && !(bool)Get(Enemy, "pendingParry") && !(bool)Get(Enemy, "running")) Set(Enemy, "running", true);
             if (shots[0] != null && release1 < 0) release1 = Enemy.FightSeconds;
             metrics.firstHit |= contacts[0].DealtDamage;
             if (metrics.firstHit && metrics.hit1At == 0) metrics.hit1At = Time.time;
@@ -265,6 +266,26 @@ public static class KarmaSwordRandomParryChecks
         if (evadeFirst) Check(!metrics.firstHit && jumped, "real Space jump evades first shot");
         if (target < 0) Check(metrics.anyCounterReady && metrics.parries == 0 && metrics.cancelled == 0 && metrics.released == 4, "expired K never fabricates success or cancellation");
         Log(name + ": hit1=" + metrics.firstHit + ", target=" + metrics.targetResult + ", parries=" + metrics.parries + ", cancel=" + metrics.cancelled + ", K cooldown=" + metrics.cooldownOnK.ToString("F3") + ", K invul=" + metrics.invulOnK.ToString("F3"));
+    }
+    // Batch validation has no focused Game view. Route queued device events
+    // through the real input actions without arming or synthesizing a parry.
+    sealed class GameplayKeyboardScope : IDisposable
+    {
+        readonly InputSettings.BackgroundBehavior background;
+        readonly InputSettings.EditorInputBehaviorInPlayMode routing;
+        public GameplayKeyboardScope(Keyboard device)
+        {
+            background = InputSystem.settings.backgroundBehavior;
+            routing = InputSystem.settings.editorInputBehaviorInPlayMode;
+            InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            InputSystem.EnableDevice(device); device.MakeCurrent();
+        }
+        public void Dispose()
+        {
+            InputSystem.settings.editorInputBehaviorInPlayMode = routing;
+            InputSystem.settings.backgroundBehavior = background;
+        }
     }
     static string Kind()
     {

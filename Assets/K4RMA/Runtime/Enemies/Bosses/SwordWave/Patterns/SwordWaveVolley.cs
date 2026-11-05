@@ -19,7 +19,9 @@ namespace KarmaPrototype
                 for (int i = 0; i < shots; i++)
                 {
                     Vector2 origin = i % 2 == 0 ? first : second;
-                    var mark = owner.PathMark(origin, origin + velocity * sword.WaveLife, waveSize);
+                    float life = scars ? sword.WaveLife
+                        : KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
+                    var mark = owner.PathMark(origin, origin + velocity * life, waveSize);
                     if (!scars) KarmaSwordAttackPolish.Warning(mark);
 
                     float warning = i == 0 ? owner.Warning(0.65f) : Mathf.Max(0.42f, 0.54f * owner.Tempo);
@@ -34,20 +36,22 @@ namespace KarmaPrototype
                     owner.state = ActionState.Attack; owner.animator.Attack(); Destroy(mark.gameObject);
                     if (!scars)
                     {
-                        sword.ReleaseSW01(origin, velocity, waveSize, sword.WaveLife, i % 2 != 0);
+                        sword.ReleaseSW01(origin, velocity, waveSize, life, i % 2 != 0);
                         sword.WaveLaunchVFX(origin, velocity, waveSize, false, i % 2 != 0);
                     }
                     else { owner.Attack(origin, velocity, waveSize, sword.WaveLife); owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("Guard"); }
                 }
-                yield return owner.Wait(sword.WaveLife);
+                // Released SW01 lanes own their boundary lifetime independently.
+                yield return owner.Wait(scars ? sword.WaveLife : 0.12f);
             }
             public static bool CanReach(KarmaEnemy owner, SwordBossBehavior sword, EnemyAttack attack, Vector2 from, Vector2 target)
             {
                 float facing = target.x < from.x ? -1 : 1;
                 Vector2 origin = from + Vector2.right * facing * KarmaSpace.Scale;
                 Vector2 velocity = Vector2.right * facing * Mathf.Max(KarmaSpace.Scale, owner.Tuning.sword.swordSpeed);
-                return sword.SwordShotCanReach(new Vector2(origin.x, KarmaSpace.Units(1.05f)), velocity, sword.SwordSize(attack), sword.WaveLife, target)
-                    || sword.SwordShotCanReach(new Vector2(origin.x, KarmaSpace.Units(3.3f)), velocity, sword.SwordSize(attack), sword.WaveLife, target);
+                float life = attack == EnemyAttack.SW01 ? float.MaxValue : sword.WaveLife;
+                return sword.SwordShotCanReach(new Vector2(origin.x, KarmaSpace.Units(1.05f)), velocity, sword.SwordSize(attack), life, target)
+                    || sword.SwordShotCanReach(new Vector2(origin.x, KarmaSpace.Units(3.3f)), velocity, sword.SwordSize(attack), life, target);
             }
         }
     }

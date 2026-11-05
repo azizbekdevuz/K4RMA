@@ -10,8 +10,10 @@ namespace KarmaPrototype
             public UP03Pattern(KarmaEnemy owner) : base(owner) { }
             public override IEnumerator Execute()
             {
+                float face = owner.direction < 0f ? -1f : 1f;
+                Vector2 spaced = new Vector2(Mathf.Clamp(owner.Position.x + face * KarmaSpace.Units(1.1f), KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
+                yield return owner.Motion(spaced, 0.16f, Vector2.zero);
                 Vector2 start = new Vector2(owner.Position.x, KarmaSpace.GuardianGroundY);
-                yield return owner.Motion(start, 0.14f, Vector2.zero);
                 float room = owner.direction > 0 ? KarmaStage.ArenaRight - 1.2f - start.x : start.x - (KarmaStage.ArenaLeft + 1.2f);
                 float height = Mathf.Clamp(Settings.groundBladeHeight, KarmaSpace.Units(4.4f), KarmaSpace.Units(6.4f));
                 float gap = KarmaSpace.Units(0.45f);

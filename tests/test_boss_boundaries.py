@@ -21,7 +21,7 @@ class BossBoundaries(unittest.TestCase):
         for path in BOSSES.rglob('*.cs'):
             owned_types.update(re.findall(r'\b(?:class|struct|enum)\s+(\w+)', code(path)))
         owned_types -= SHARED_PARTIALS
-        for path in RUNTIME.rglob('*.cs'):
+        for path in [*RUNTIME.rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Core').rglob('*.cs')]:
             if BOSSES in path.parents:
                 continue
             text = code(path)
@@ -50,7 +50,7 @@ class BossBoundaries(unittest.TestCase):
                           'ShowSwordRetreat', 'ShowGuardianSpacing', 'ConfigureSwordPresentation',
                           'GuardianDamageSprite', 'GuardianDamageScale', 'GuardianPhaseOverridesPose'},
             'Guard': {'shieldUntil', 'nextShield', 'shieldWarningUntil', 'frontalGuard',
-                      'guardStagger', 'heavyStrike', 'EndHeavyStrike', 'ConfigureHeavyStrike',
+                      'TryGuardCircleHit', 'guardStagger', 'heavyStrike', 'EndHeavyStrike', 'ConfigureHeavyStrike',
                       'PrepareHeavyStrike', 'SwingHeavyStrike', 'HeavyHandPosition'},
             'RisingSlash': {'ConfigureRisingPresentation'},
         }
@@ -64,6 +64,12 @@ class BossBoundaries(unittest.TestCase):
     def test_boss_owned_tests_are_in_owner_folders(self):
         for path in (ROOT / 'tests/Unity').glob('*.cs'):
             self.assertNotRegex(path.name, r'Karma(?:Sword|SW05|Guard|Rising)')
+
+    def test_boss_art_and_tools_use_owned_paths(self):
+        self.assertFalse((ROOT / 'Assets/K4RMA/Art').exists())
+        self.assertFalse((ROOT / 'Assets/K4RMA/Art.meta').exists())
+        for path in (ROOT / 'tools').glob('*sword*'):
+            self.fail(f'SwordWave tools belong in tools/SwordWave: {path.name}')
 
     def test_boss_registrations_are_local_and_preserved(self):
         for owner, name in [('SwordWave', 'Sword'), ('RisingSlash', 'Rising'), ('Guard', 'Guard')]:

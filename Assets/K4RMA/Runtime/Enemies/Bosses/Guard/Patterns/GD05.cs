@@ -124,8 +124,8 @@ namespace KarmaPrototype
                         float boundary = Mathf.Min(arc, floor);
                         float travel = Mathf.Min(remaining, boundary);
                         Vector2 next = position + velocity * travel;
-                        owner.TryAttackHit(center + position, center + next, Vector2.zero,
-                            owner.Damage * Settings.trialDamageMultiplier, contact, 0, hitRadius: radius);
+                        owner.TryGuardCircleHit(center + position, center + next, radius,
+                            owner.Damage * Settings.trialDamageMultiplier, contact);
                         position = next;
                         if (boundary > remaining) break;
                         Vector2 normal = floor <= arc ? Vector2.up : -position.normalized;

@@ -56,8 +56,13 @@ namespace KarmaPrototype
 
                 int parries = owner.game.Player.ParryCount;
                 var contact = new KarmaAttackContact(breaksShieldOnParry: !inDome, parryWithoutRiposte: inDome);
-                var hitbox = owner.Attack(center, Vector2.zero, size, 0.18f, Settings.heavyStrikeDamageMultiplier,
-                    contact, Settings.heavyHitStunSeconds, pattern: EnemyAttack.GD02, renderArtwork: !inDome);
+                var hitbox = inDome
+                    ? KarmaBossAttack.Spawn(owner.game, owner, owner.effectsRoot, center, Vector2.zero, size, 0.18f,
+                        owner.Damage * Settings.heavyStrikeDamageMultiplier, new Color(1, 0.7f, 0.12f),
+                        contact, Settings.heavyHitStunSeconds, "Bash", visualSheet: "GuardBossVFX",
+                        renderArtwork: false, sourcePattern: EnemyAttack.GD02)
+                    : owner.Attack(center, Vector2.zero, size, 0.18f, Settings.heavyStrikeDamageMultiplier,
+                        contact, Settings.heavyHitStunSeconds, pattern: EnemyAttack.GD02);
                 owner.TryAttackHit(center, center, size, owner.Damage * Settings.heavyStrikeDamageMultiplier, contact, Settings.heavyHitStunSeconds);
                 if (owner.game.Player.ParryCount != parries)
                 {

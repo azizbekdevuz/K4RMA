@@ -67,16 +67,49 @@ K4RMA/
 │       │   │   │                   └── Revival/
 │       │   │   │                       └── Rise.png
 │       │   │   └── SwordWave/
+│       │   │       ├── Characters/
+│       │   │       │   └── SW02/
+│       │   │       │       ├── Wave_SW02_Transitions.png
+│       │   │       │       ├── WaveFinal_SW02_Transitions.png
+│       │   │       │       ├── WaveRise_SW02_Transitions.png
+│       │   │       │       └── WaveWard_SW02_Transitions.png
 │       │   │       ├── Effects/
+│       │   │       │   ├── Variants/
+│       │   │       │   │   ├── SW01_AimedSlash_LowerHalf_v2.png
+│       │   │       │   │   ├── SW01_AimedSlash_UpperHalf_v2.png
+│       │   │       │   │   ├── SW01_CrescentWave_v4.png
+│       │   │       │   │   ├── SW01_StaggeredWave_v2.png
+│       │   │       │   │   ├── SW01_StaggeredWave_v3.png
+│       │   │       │   │   ├── SW02_AimedSlash_v2.png
+│       │   │       │   │   ├── SW03_GroundScar_v2.png
+│       │   │       │   │   ├── SW03_GroundScar_v3.png
+│       │   │       │   │   ├── SW03_GroundScar_v4.png
+│       │   │       │   │   ├── SW03_GroundScar_v5.png
+│       │   │       │   │   ├── SW03_HitFlash_v3.png
+│       │   │       │   │   ├── SW03_HitFlash_v4.png
+│       │   │       │   │   ├── SW03_HitFlash_v5.png
+│       │   │       │   │   ├── SW03_RisingBlade_v2.png
+│       │   │       │   │   ├── SW03_RisingBlade_v3.png
+│       │   │       │   │   ├── SW03_RisingBlade_v4.png
+│       │   │       │   │   ├── SW03_RisingBlade_v5.png
+│       │   │       │   │   ├── SW04_CounterBlade_v2.png
+│       │   │       │   │   ├── SWBasic_CrescentWave_v3.png
+│       │   │       │   │   ├── SWBasic_Wave_v2.png
+│       │   │       │   │   └── Sword_HitBurst_v2.png
 │       │   │       │   ├── SW01_StaggeredWave.png
 │       │   │       │   ├── SW02_AimedSlash.png
 │       │   │       │   ├── SW03_GroundImpact.png
 │       │   │       │   ├── SW03_GroundScar_v6.png
+│       │   │       │   ├── SW03_GroundScar_v7.png
+│       │   │       │   ├── SW03_HitCut_v7.png
 │       │   │       │   ├── SW03_RisingBlade.png
 │       │   │       │   ├── SW03_RisingBlade_v6.png
+│       │   │       │   ├── SW03_RisingBlade_v7.png
 │       │   │       │   ├── SW04_CounterBlade_v6.png
 │       │   │       │   ├── SW04_CounterWave.png
 │       │   │       │   ├── SW05_AerialSword.png
+│       │   │       │   ├── SW05GroundImpact_v2.png
+│       │   │       │   ├── SW05JudgementSword_v2.png
 │       │   │       │   ├── Sword_Crescent_v6.png
 │       │   │       │   ├── Sword_GuardRing_v6.png
 │       │   │       │   ├── Sword_Impact_v6.png
@@ -106,11 +139,13 @@ K4RMA/
 │       │   │       │   │   └── SW05WoodContact.mat
 │       │   │       │   ├── KarmaAerialSword.mat
 │       │   │       │   ├── KarmaSwordRetreatEcho.mat
-│       │   │       │   └── KarmaSwordRisePolish.mat
+│       │   │       │   ├── KarmaSwordRisePolish.mat
+│       │   │       │   └── KarmaSwordSkillPolish.mat
 │       │   │       └── Shaders/
 │       │   │           ├── KarmaAerialSword.shader
 │       │   │           ├── KarmaSwordRetreatEcho.shader
-│       │   │           └── KarmaSwordRisePolish.shader
+│       │   │           ├── KarmaSwordRisePolish.shader
+│       │   │           └── KarmaSwordSkillPolish.shader
 │       │   └── Common/
 │       │       ├── Resources/
 │       │       │   └── K4RMAArtwork/
@@ -177,6 +212,7 @@ K4RMA/
 │       │   │   │   │   │   ├── GD04.cs
 │       │   │   │   │   │   ├── GD05.cs
 │       │   │   │   │   │   ├── GDBasic.cs
+│       │   │   │   │   │   ├── KarmaGuardGeometry.cs
 │       │   │   │   │   │   └── KarmaTrialState.cs
 │       │   │   │   │   ├── Presentation/
 │       │   │   │   │   │   ├── Resources/
@@ -238,11 +274,13 @@ K4RMA/
 │       │   │   │       │   │       └── KarmaSwordBossSprites.asset
 │       │   │   │       │   ├── KarmaCharacterAnimator.Sword.cs
 │       │   │   │       │   ├── KarmaCharacterAnimator.SwordRetreat.cs
+│       │   │   │       │   ├── KarmaCharacterAnimator.SwordSW02.cs
 │       │   │   │       │   ├── KarmaSW05VFX.cs
 │       │   │   │       │   ├── KarmaSwordAttackPolish.cs
 │       │   │   │       │   ├── KarmaSwordHitFeedback.cs
 │       │   │   │       │   ├── KarmaSwordRetreatAfterimages.cs
 │       │   │   │       │   ├── KarmaSwordScarRise.cs
+│       │   │   │       │   ├── KarmaSwordSkillSurface.cs
 │       │   │   │       │   ├── KarmaWaveArtwork.cs
 │       │   │   │       │   └── KarmaWaveMotion.cs
 │       │   │   │       ├── Settings/
@@ -345,28 +383,66 @@ K4RMA/
 │   ├── VersionControlSettings.asset
 │   └── VFXManager.asset
 ├── tests/
+│   ├── SwordWavePlanner/
+│   │   ├── NuGet.Config
+│   │   ├── Program.cs
+│   │   └── SwordWavePlanner.csproj
 │   ├── Unity/
 │   │   ├── Guard/
+│   │   │   ├── KarmaGuardBasicDodgeChecks.cs
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
 │   │   │   └── KarmaGuardPlayChecks.cs
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
 │   │   │   └── KarmaRisingPlayChecks.cs
 │   │   ├── SwordWave/
+│   │   │   ├── KarmaSW02AnimationChecks.cs
+│   │   │   ├── KarmaSW02InheritedChecks.cs
+│   │   │   ├── KarmaSW02SpriteImportChecks.cs
+│   │   │   ├── KarmaSW03ArtworkChecks.cs
+│   │   │   ├── KarmaSW05ArtworkChecks.cs
 │   │   │   ├── KarmaSW05PlayChecks.cs
 │   │   │   ├── KarmaSwordFinalPolishChecks.cs
 │   │   │   ├── KarmaSwordOverhaulPlayChecks.cs
 │   │   │   ├── KarmaSwordOwnershipChecks.cs
 │   │   │   ├── KarmaSwordPlayChecks.cs
 │   │   │   ├── KarmaSwordPolishPlayChecks.cs
+│   │   │   ├── KarmaSwordPoseLoadingChecks.cs
 │   │   │   ├── KarmaSwordRandomParryChecks.cs
 │   │   │   ├── KarmaSwordRetreatDashPlayChecks.cs
+│   │   │   ├── KarmaSwordSkillVfxChecks.cs
 │   │   │   ├── KarmaSwordSlideDistanceChecks.cs
+│   │   │   ├── KarmaSwordTempoRangeChecks.cs
 │   │   │   └── KarmaSwordWallCounterChecks.cs
 │   │   └── KarmaBossIsolationChecks.cs
 │   ├── test_boss_boundaries.py
 │   └── test_optimize_images.py
 ├── tools/
+│   ├── SwordWave/
+│   │   ├── docs/
+│   │   │   ├── SWORDWAVE_HIT_ART_REVISION.md
+│   │   │   ├── SWORDWAVE_IMPROVEMENTS.md
+│   │   │   ├── SWORDWAVE_OVERHAUL_20261102.md
+│   │   │   ├── SWORDWAVE_PLAYTEST_REVISION.md
+│   │   │   ├── SWORDWAVE_POLISH_20261102.md
+│   │   │   ├── SWORDWAVE_RANDOM_PARRY2_20261102.md
+│   │   │   ├── SWORDWAVE_RETREAT_DASH_REVISION.md
+│   │   │   ├── SWORDWAVE_RETREAT_REVISION.md
+│   │   │   ├── SWORDWAVE_SLIDE16_24_20261102.md
+│   │   │   └── SWORDWAVE_WALL_SCAR_COUNTER_20261102.md
+│   │   ├── prepare-sw02-sheet.py
+│   │   ├── prepare-sword-final-polish-art.py
+│   │   ├── prepare-sword-overhaul-art.ps1
+│   │   ├── prepare-sword-polish-art.ps1
+│   │   ├── run-sword-final-polish-checks.ps1
+│   │   ├── run-sword-overhaul-checks.ps1
+│   │   ├── run-sword-playchecks.ps1
+│   │   ├── run-sword-polish-checks.ps1
+│   │   ├── run-sword-random-parry-checks.ps1
+│   │   ├── run-sword-retreat-dash-checks.ps1
+│   │   ├── run-sword-retreat-playchecks.ps1
+│   │   ├── run-sword-slide-distance-checks.ps1
+│   │   └── run-sword-wall-counter-checks.ps1
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
 ├── .gitignore

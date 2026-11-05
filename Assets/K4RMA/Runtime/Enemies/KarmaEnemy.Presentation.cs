@@ -33,13 +33,13 @@ namespace KarmaPrototype
         { return behavior.CreateAttackComponent(target); }
         KarmaBossAttack Attack(Vector2 at, Vector2 velocity, Vector2 size, float life,
             float multiplier = 1, KarmaAttackContact contact = null, float stun = 0,
-            EnemyAttack? pattern = null, Transform parent = null, string visualPose = null, bool parryStun = false, bool renderArtwork = true)
+            EnemyAttack? pattern = null, Transform parent = null, string visualPose = null, bool parryStun = false)
         {
             var attack = pattern ?? selected;
             var visual = behavior.AttackVisual(attack, velocity);
             return KarmaBossAttack.Spawn(game, this, parent != null ? parent : effectsRoot, at, velocity, size, life,
                 Damage * multiplier, visual.Color, contact, stun, visualPose ?? visual.Pose,
-                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak, renderArtwork, sourcePattern: attack);
+                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak, sourcePattern: attack);
         }
         IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null, Sprite sweepSprite = null)
         {
@@ -75,21 +75,25 @@ namespace KarmaPrototype
                         "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f), WaveVisuals);
             }
         }
-        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null, float hitRadius = 0)
+        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
             var collider = player.GetComponent<Collider2D>();
             var body = collider != null && collider.enabled ? collider.bounds : new Bounds(p, KarmaSpace.PlayerSize);
             p = body.center;
-            bool hit = hitRadius > 0
-                ? KarmaBossGeometry.SweptCircle(from.x, from.y, to.x, to.y, hitRadius, p.x, p.y, body.extents.x, body.extents.y)
-                : attackAxis.HasValue
+            bool hit = attackAxis.HasValue
                 ? KarmaBossGeometry.SweptOrientedBox(from.x, from.y, to.x, to.y, p.x, p.y, attackAxis.Value.x, attackAxis.Value.y,
                     size.x, size.y, body.extents.x, body.extents.y)
                 : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y);
-            if (!hit) return;
-            if (!contact.TryConsume()) return;
+            if (hit) ResolveAttackHit(body.center, amount, contact, stun, parryStun, shieldBreak, sourcePattern);
+        }
+        // Geometry belongs to the attack owner; damage and contact lifecycle stay in the host.
+        void ResolveAttackHit(Vector2 point, float amount, KarmaAttackContact contact, float stun,
+            bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
+        {
+            if (!Active || game.Paused || !contact.TryConsume()) return;
+            var player = game.Player;
             if ((contact.BreaksShieldOnParry || contact.ParryWithoutRiposte) && state == ActionState.Attack && behavior.ConsumeQueuedParry())
                 player.BeginCounter();
             int parries = player.ParryCount;
@@ -97,7 +101,7 @@ namespace KarmaPrototype
             var hitPattern = sourcePattern ?? selected;
             behavior.ContactStarting(hitPattern, contact);
             player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern), !contact.ParryWithoutRiposte);
-            behavior.ContactResolved(hitPattern, contact, body.center, player.ParryCount != parries, player.Health < before);
+            behavior.ContactResolved(hitPattern, contact, point, player.ParryCount != parries, player.Health < before);
             if (player.ParryCount != parries)
             {
                 // Projectile parries remain local; GD02 is the shield-breaking parry.

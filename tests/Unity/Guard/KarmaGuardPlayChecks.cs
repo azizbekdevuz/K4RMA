@@ -983,8 +983,8 @@ public static class KarmaGuardPlayChecks
         game.PlayerDied();
         Check(!enemy.TrialActive && !Get<bool>(game.Player, "confined") && Attacks().Length == 0,
             "GD05 death clears the room and frees the player");
-        Check(!KarmaBossGeometry.SweptCircle(1.8f, 1.8f, 1.8f, 1.8f, 1, 0, 0, 1, 1)
-            && KarmaBossGeometry.SweptCircle(-3, 1.5f, 3, 1.5f, 1, 0, 0, 1, 1),
+        Check(!KarmaGuardGeometry.SweptCircle(1.8f, 1.8f, 1.8f, 1.8f, 1, 0, 0, 1, 1)
+            && KarmaGuardGeometry.SweptCircle(-3, 1.5f, 3, 1.5f, 1, 0, 0, 1, 1),
             "GD05 round sweep rejects square corners and detects a fast crossing");
     }
 

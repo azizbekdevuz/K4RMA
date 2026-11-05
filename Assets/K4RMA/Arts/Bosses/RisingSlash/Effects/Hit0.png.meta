@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b2d5f9c38e404b72c0f1d6e9a3285bc4
+guid: f66d5550c2848fb604351a2de76c9f00
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -112,13 +112,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: BladeWarn
+      name: Hit0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 192
-        height: 160
+        width: 200
+        height: 200
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,7 +127,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 22bb33cc44dd55ee66ff7788990011aa
+      spriteID: ff66555088990011aa22bb33cc44d0
       internalID: 21300000
       vertices: []
       indices: 
@@ -147,7 +147,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      BladeWarn: 21300000
+      Hit0: 21300000
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d4f71be5a0626d94e213f80bc54a7de6
+guid: a77e6663d3950c94a4351b3ef87da013
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -112,13 +112,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SlashLow
+      name: Sky3
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 360
-        height: 160
+        width: 320
+        height: 140
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,7 +127,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 44dd55ee66ff7788990011aa22bb33cc
+      spriteID: aa776663990011aa22bb33cc44dd53
       internalID: 21300000
       vertices: []
       indices: 
@@ -147,7 +147,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SlashLow: 21300000
+      Sky3: 21300000
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

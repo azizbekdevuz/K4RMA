@@ -23,6 +23,7 @@ namespace KarmaPrototype
                 if (risePath != null) Destroy(risePath.gameObject);
                 charge = BeginRisingCharge(KarmaRisingCue.Tracking);
                 SpriteRenderer path = null;
+                KarmaRisingClip beacon = null;
                 float elapsed = 0f;
                 Vector2 tracked = SampleLanding(apex.x);
                 owner.state = ActionState.Attack;
@@ -36,6 +37,8 @@ namespace KarmaPrototype
                         Vector2 at = Vector2.Lerp(start, apex, along);
                         owner.transform.position = at;
                         tracked = SampleLanding(apex.x);
+                        if (beacon == null) beacon = KarmaRisingPolish.SkyBeacon(owner.effectsRoot, tracked);
+                        else if (beacon != null) beacon.Place(tracked);
                         if (path == null) path = RisingPath(at, tracked, bodyAttackSize, KarmaRisingCue.Tracking);
                         else path.GetComponent<KarmaAttackWarning>().SetPath(path, at, tracked, bodyAttackSize);
                     }
@@ -51,6 +54,7 @@ namespace KarmaPrototype
                 Vector2 impact = new Vector2(locked.ImpactX, locked.ImpactY);
                 Vector2 area = new Vector2(locked.AreaWidth, locked.AreaHeight);
                 if (path != null) Destroy(path.gameObject);
+                if (beacon != null) Destroy(beacon.gameObject);
                 if (charge != null) charge.Lock();
                 var drop = RisingPath(apex, landing, bodyAttackSize, KarmaRisingCue.Locked);
                 var zone = owner.Mark("UP01 착지 범위", impact, area);
@@ -62,6 +66,7 @@ namespace KarmaPrototype
                 if (zone != null) Destroy(zone.gameObject);
                 var contact = new KarmaAttackContact();
                 yield return owner.Motion(landing, RisingSlashRules.Up01DropSeconds, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
+                KarmaRisingPolish.SkyImpact(owner.effectsRoot, impact);
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 var blast = owner.Attack(impact, Vector2.zero, area, 0.22f, Settings.landingDamageMultiplier, contact, 0f, visualPose: "GroundRing");
                 if (blast != null) blast.Repaint(KarmaRisingArt.Get("Impact"), true);

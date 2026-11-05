@@ -14,6 +14,7 @@ namespace KarmaPrototype
                 owner.fullShield = true;
                 owner.state = ActionState.Approach;
                 KarmaRisingPolish.ShieldPlant(owner.effectsRoot, start, KarmaSpace.Units(new Vector2(2.2f, 2.6f)));
+                KarmaRisingPolish.AegisBreak(owner.effectsRoot, start, RisingSlashRules.Up04AscentSeconds);
                 float rise = RisingSlashRules.PursuitRiseAboveGround(Settings.riseHeight, KarmaSpace.Units(2.4f), KarmaSpace.Units(5.2f));
                 float apexY = KarmaSpace.GuardianGroundY + rise;
                 Vector2 apex = new Vector2(Mathf.Clamp(start.x, KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), apexY);
@@ -45,6 +46,7 @@ namespace KarmaPrototype
                 for (int i = 0; i < warnings.Length; i++) if (warnings[i] != null) Destroy(warnings[i].gameObject);
                 owner.fullShield = false;
                 KarmaRisingPolish.ShieldPlant(owner.effectsRoot, landing, KarmaSpace.Units(new Vector2(2.4f, 2.4f)));
+                KarmaRisingPolish.AegisBreak(owner.effectsRoot, landing, 0.55f);
                 for (int i = 0; i < count && owner.Active; i++)
                 {
                     var shot = owner.Attack(launches[i], velocities[i], shard, life, Settings.fragmentDamageMultiplier, new KarmaAttackContact(), 0f, visualPose: "Blade", parryStun: RisingSlashRules.FragmentParryStun);

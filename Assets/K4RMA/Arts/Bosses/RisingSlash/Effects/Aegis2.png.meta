@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a1c4e8b27d3f4a61b9e0c5d8f2174ab3
+guid: b88f7772e4061da5b5462c4f098eb12a
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -112,13 +112,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: RushTrail
+      name: Aegis2
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 320
-        height: 128
+        width: 200
+        height: 200
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,7 +127,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 11aa22bb33cc44dd55ee66ff77889900
+      spriteID: bb8877720011aa22bb33cc44dd55ee2
       internalID: 21300000
       vertices: []
       indices: 
@@ -147,7 +147,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      RushTrail: 21300000
+      Aegis2: 21300000
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

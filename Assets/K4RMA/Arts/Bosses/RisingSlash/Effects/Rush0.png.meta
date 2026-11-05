@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: f6193d07c2848fb604351a2de76c9f08
+guid: a11e00007d3f4a61b9e0c5d8f2174ab0
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -112,13 +112,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: HitBurst
+      name: Rush0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 192
-        height: 192
+        width: 280
+        height: 120
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,7 +127,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 66ff7788990011aa22bb33cc44dd55ee
+      spriteID: aa11000033cc44dd55ee66ff77889900
       internalID: 21300000
       vertices: []
       indices: 
@@ -147,7 +147,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      HitBurst: 21300000
+      Rush0: 21300000
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

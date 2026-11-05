@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c3e60ad49f515c83d102e7fab4396cd5
+guid: b88f7775e4061da5b5462c4f098eb15a
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -112,13 +112,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SlashHigh
+      name: Aegis5
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 360
-        height: 180
+        width: 200
+        height: 200
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -127,7 +127,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 33cc44dd55ee66ff7788990011aa22bb
+      spriteID: bb8877750011aa22bb33cc44dd55ee5
       internalID: 21300000
       vertices: []
       indices: 
@@ -147,7 +147,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SlashHigh: 21300000
+      Aegis5: 21300000
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

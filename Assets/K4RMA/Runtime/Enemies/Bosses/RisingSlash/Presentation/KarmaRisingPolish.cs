@@ -14,45 +14,32 @@ namespace KarmaPrototype
     {
         public static void PursuitStreak(Transform parent, Vector2 at, float direction)
         {
-            var sprite = KarmaRisingArt.Get("RushTrail") ?? KarmaRisingArt.Get("SlashEcho");
-            if (parent == null || sprite == null) return;
-            var sweep = KarmaCombatVFX.Burst(parent, at + Vector2.up * KarmaSpace.Units(1.05f), sprite,
-                "상승 돌진", KarmaSpace.Units(new Vector2(3.2f, 0.9f)), 0.2f, 0f, Color.white);
-            FaceEffect(sweep, parent, direction);
+            KarmaRisingClip.Play(parent, at + Vector2.up * KarmaSpace.Units(1.05f), KarmaSpace.Units(new Vector2(4.8f, 1.7f)), direction, KarmaRisingClip.Rush, 0.48f);
         }
         public static void MeleeTell(Transform parent, Vector2 at, float direction)
         {
-            var sprite = KarmaRisingArt.Get("BladeWarn") ?? KarmaRisingArt.Get("Slash");
-            if (parent == null || sprite == null) return;
-            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 예고", KarmaSpace.Units(new Vector2(2.4f, 1.6f)), 0.22f, 0f, Color.white);
-            FaceEffect(sweep, parent, direction);
+            KarmaRisingClip.Play(parent, at, KarmaSpace.Units(new Vector2(2.8f, 2.1f)), direction, KarmaRisingClip.Warn, 0.36f, 47);
         }
-        static void FaceEffect(SpriteRenderer sweep, Transform parent, float direction)
+        public static void SkyImpact(Transform parent, Vector2 at)
         {
-            if (sweep == null) return;
-            Transform vfx = sweep.transform.parent;
-            if (vfx == null || vfx == parent) { sweep.flipX = direction < 0f; return; }
-            Vector3 place = vfx.localPosition;
-            Vector3 scale = vfx.localScale;
-            float width = Mathf.Abs(scale.x);
-            if (width < 0.001f) width = 1f;
-            scale.x = (direction < 0f ? -1f : 1f) * width;
-            vfx.localScale = scale;
-            vfx.localPosition = place;
+            KarmaRisingClip.Play(parent, at, KarmaSpace.Units(new Vector2(6.4f, 1.8f)), 1f, KarmaRisingClip.Sky, 0.5f, 44);
+        }
+        public static KarmaRisingClip SkyBeacon(Transform parent, Vector2 at)
+        {
+            return KarmaRisingClip.Play(parent, at, KarmaSpace.Units(new Vector2(3.4f, 1.1f)), 1f, new[] { "Sky0", "Sky1", "Sky2" }, 0.7f, 43);
+        }
+        public static void AegisBreak(Transform parent, Vector2 at, float seconds)
+        {
+            KarmaRisingClip.Play(parent, at + Vector2.up * KarmaSpace.Units(1.15f), KarmaSpace.Units(new Vector2(2.8f, 2.8f)), 1f, KarmaRisingClip.Aegis, seconds, 45);
         }
         public static void BasicArc(Transform parent, Vector2 at, Vector2 size, float direction, string pose)
         {
-            var sprite = KarmaRisingArt.Get(pose);
-            if (parent == null || sprite == null) return;
-            float life = pose == "SlashFinish" ? 0.18f : 0.11f;
-            var sweep = KarmaCombatVFX.Burst(parent, at, sprite, "기본 삼연베기", size, life, 0f, Color.white);
-            FaceEffect(sweep, parent, direction);
+            if (parent == null) return;
+            string[] frames = pose == "SlashLow" ? KarmaRisingClip.Low : pose == "SlashFinish" ? KarmaRisingClip.Fin : KarmaRisingClip.High;
+            float life = pose == "SlashFinish" ? 0.42f : 0.32f;
+            KarmaRisingClip.Play(parent, at, size, direction, frames, life, 48);
             if (pose == "SlashFinish")
-            {
-                var burst = KarmaRisingArt.Get("HitBurst");
-                if (burst != null)
-                    KarmaCombatVFX.Burst(parent, at, burst, "마무리 충격", KarmaSpace.Units(new Vector2(1.8f, 1.8f)), 0.16f, 0f, Color.white);
-            }
+                KarmaRisingClip.Play(parent, at, KarmaSpace.Units(new Vector2(2.4f, 2.4f)), direction, KarmaRisingClip.Hit, 0.4f, 49);
         }
         public static void LockPop(Transform parent, Vector2 at)
         {

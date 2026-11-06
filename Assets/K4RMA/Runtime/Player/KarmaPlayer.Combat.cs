@@ -79,14 +79,15 @@ namespace KarmaPrototype
                 SwordHit(enemy, direction);
             }
         }
-        void SwordHit(KarmaEnemy enemy, Vector2 direction)
+        bool SwordHit(KarmaEnemy enemy, Vector2 direction)
         {
             float before = enemy.Health;
             Vector2 point = enemy.ClosestDamagePoint(Position);
             enemy.TakeDamage(game.Config.swordDamage);
-            if (enemy.Health >= before) return;
+            if (enemy.Health >= before) return false;
             KarmaRemnantVFX.SwordImpact(game, point, direction);
             game.SwordHitFeedback();
+            return true;
         }
         Vector2 MoveSlash(Vector2 direction, float distance)
         {

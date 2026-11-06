@@ -9,15 +9,26 @@ namespace KarmaPrototype
         internal bool ContinuousSwordAttack { get { return airSlashRunning; } }
         bool airSlashRunning;
         Vector2 airSlashDirection, airSlashPrevious;
-        float airSlashBufferedUntil, airRecoveryLeft, airLaunchX;
+        float airSlashBufferedUntil, airRecoveryLeft, airSlashHoverLeft;
+        float airSlashExitX;
+        Vector2 airSlashStartVelocity;
+        float airSlashLaunchX, airSlashCruiseX, airSlashLaunchY;
+        bool airSlashDownward, airSlashRebounded;
         void BeginAirSlash(Vector2 direction)
         {
             var tuning = game.Config.Techniques;
             airSlashDirection = direction;
+            airSlashDownward = direction.y < -0.25f;
+            airSlashRebounded = false;
+            airSlashStartVelocity = body.linearVelocity;
+            ConfigureAirSlashVelocity(direction, tuning);
             airSlashPrevious = Position;
             airSlashMotion.Begin(tuning.airSlashDuration);
             airSlashRunning = true;
             airSlashHits.Clear(); airSlashBufferedUntil = 0; airRecoveryLeft = 0;
+            airSlashHoverLeft = airSlashDownward ? tuning.airSlashDownHover : 0;
+            body.gravityScale = airSlashHoverLeft > 0 ? 0 : game.Config.gravityScale;
+            body.linearVelocity = new Vector2(airSlashLaunchX, airSlashLaunchY);
             jumpBufferedUntil = 0; lastGrounded = -10;
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
@@ -36,7 +47,12 @@ namespace KarmaPrototype
                 if (enemy == null || !enemy.Alive || airSlashHits.Contains(enemy)) continue;
                 if (!enemy.IntersectsDamagePath(from, to, KarmaSpace.Units(0.75f))) continue;
                 airSlashHits.Add(enemy);
-                SwordHit(enemy, airSlashDirection);
+                if (SwordHit(enemy, airSlashDirection) && airSlashDownward && !airSlashRebounded)
+                {
+                    airSlashRebounded = true;
+                    body.linearVelocity = new Vector2(body.linearVelocity.x,
+                        Mathf.Max(body.linearVelocity.y, game.Config.Techniques.airSlashDownRebound));
+                }
             }
         }
         void AdvanceAirSlash()
@@ -44,24 +60,60 @@ namespace KarmaPrototype
             var tuning = game.Config.Techniques;
             if (airSlashMotion.Active)
             {
-                // Rigidbody movement keeps interpolation and terrain collision active.
-                body.gravityScale = 0;
-                float travel = airSlashMotion.Advance(Time.fixedDeltaTime) * tuning.airSlashDistance;
-                body.linearVelocity = airSlashDirection * (travel / Time.fixedDeltaTime);
+                airSlashMotion.Advance(Time.fixedDeltaTime);
+                float progress = airSlashMotion.Progress;
+                float eased = progress * progress * (3f - 2f * progress);
+                body.linearVelocity = new Vector2(Mathf.Lerp(airSlashLaunchX, airSlashCruiseX, eased),
+                    body.linearVelocity.y);
+                if (airSlashDownward)
+                {
+                    airSlashHoverLeft = Mathf.Max(0, airSlashHoverLeft - Time.fixedDeltaTime);
+                    body.gravityScale = airSlashHoverLeft > 0 ? 0 : game.Config.gravityScale;
+                }
             }
             else
             {
                 airSlashRunning = false; airSlashHits.Clear();
-                body.gravityScale = game.Config.gravityScale;
                 airRecoveryLeft = Mathf.Max(0.02f, tuning.airSlashRecovery);
-                airLaunchX = airSlashDirection.x * game.Config.moveSpeed * tuning.airSlashHorizontalBoost;
-                body.linearVelocity = new Vector2(airLaunchX, game.Config.jumpSpeed * tuning.airSlashJumpScale);
+                airSlashExitX = body.linearVelocity.x;
+                body.gravityScale = game.Config.gravityScale;
             }
+        }
+        void ConfigureAirSlashVelocity(Vector2 direction, KarmaTechniqueTuning tuning)
+        {
+            float duration = Mathf.Max(0.02f, tuning.airSlashDuration);
+            float gravity = Physics2D.gravity.y * game.Config.gravityScale;
+            if (direction.y > 0.75f)
+            {
+                airSlashLaunchX = airSlashStartVelocity.x;
+                airSlashCruiseX = airSlashStartVelocity.x;
+                airSlashLaunchY = tuning.airSlashUpDistance / duration - gravity * duration * 0.5f;
+                return;
+            }
+            if (direction.y > 0.25f)
+            {
+                float horizontal = tuning.airSlashDiagonalDistance * 0.7071f / duration;
+                airSlashLaunchX = Mathf.Sign(direction.x) * (2f * horizontal - game.Config.moveSpeed);
+                airSlashCruiseX = Mathf.Sign(direction.x) * game.Config.moveSpeed;
+                airSlashLaunchY = horizontal - gravity * duration * 0.5f;
+                return;
+            }
+            if (direction.y < -0.25f)
+            {
+                airSlashLaunchX = airSlashStartVelocity.x * 0.65f + direction.x * game.Config.moveSpeed * 0.15f;
+                airSlashCruiseX = airSlashStartVelocity.x * 0.5f + direction.x * game.Config.moveSpeed * 0.1f;
+                airSlashLaunchY = Mathf.Min(0, airSlashStartVelocity.y) * 0.2f;
+                return;
+            }
+            float horizontalSpeed = tuning.airSlashHorizontalDistance / duration;
+            airSlashLaunchX = Mathf.Sign(direction.x) * (2f * horizontalSpeed - game.Config.moveSpeed);
+            airSlashCruiseX = Mathf.Sign(direction.x) * game.Config.moveSpeed;
+            airSlashLaunchY = tuning.airSlashHorizontalRise / duration - gravity * duration * 0.5f;
         }
         void CancelAirSlash()
         {
             airSlashRunning = false; airSlashMotion.Reset(); airSlashHits.Clear();
-            airSlashBufferedUntil = airRecoveryLeft = 0;
+            airSlashBufferedUntil = airRecoveryLeft = airSlashHoverLeft = 0;
         }
     }
 }

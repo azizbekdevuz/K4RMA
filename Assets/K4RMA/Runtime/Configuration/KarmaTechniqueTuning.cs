@@ -20,8 +20,13 @@ namespace KarmaPrototype
         [Min(0.02f)] public float airSlashDuration = 0.12f;
         [Min(0.02f)] public float airSlashRecovery = 0.16f;
         [Min(0.02f)] public float airSlashInputBuffer = 0.16f;
-        [Min(0.1f)] public float airSlashJumpScale = 0.9f;
-        [Min(0)] public float airSlashHorizontalBoost = 1.5f;
+        [Min(0.05f)] public float airSlashUpDistance = 1.55f * KarmaSpace.Scale;
+        [Min(0.05f)] public float airSlashDiagonalDistance = 2f * KarmaSpace.Scale;
+        [Min(0.05f)] public float airSlashHorizontalDistance = 2.15f * KarmaSpace.Scale;
+        [Min(0.05f)] public float airSlashHorizontalRise = 0.35f * KarmaSpace.Scale;
+        [Range(0.06f, 0.08f)] public float airSlashDownHover = 0.07f;
+        [Min(0)] public float airSlashDownRebound = 6 * KarmaSpace.Scale;
+        [Range(0, 1)] public float airSlashMomentumReturn = 0.35f;
         [Min(0.05f)] public float counterWindow = 0.18f;
         [Min(0.2f)] public float counterCooldown = 1.1f;
         [Min(1)] public float counterDamage = 85;

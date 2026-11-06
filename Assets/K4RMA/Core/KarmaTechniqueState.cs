@@ -24,6 +24,7 @@ namespace KarmaPrototype
     {
         float elapsed, duration;
         public bool Active { get { return duration > 0 && elapsed < duration; } }
+        public float Progress { get { return duration <= 0 ? 1 : Math.Min(1, elapsed / duration); } }
         public void Begin(float seconds) { elapsed = 0; duration = Math.Max(0.02f, seconds); }
         static float Distance(float t) { return (t - 0.25f * t * t) / 0.75f; }
         public float Advance(float seconds)

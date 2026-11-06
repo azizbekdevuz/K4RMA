@@ -18,8 +18,6 @@ MonoBehaviour:
     heavyStrikeDamageMultiplier: 1.5
     shieldThrowDamageMultiplier: 0.8
     shieldFragmentDamageMultiplier: 0.8
-    trialWaveWidth: 2.4
-    trialWaveHeight: 1
     trialDamageMultiplier: 0.65
     autoShieldPeriod: 8
     autoShieldWarning: 0.8
@@ -35,13 +33,15 @@ MonoBehaviour:
     barrierStepGap: 0.22
     fragmentAimWarning: 0.5
     barrierRecovery: 1.2
-    trialAttackCount: 7
-    trialAllowedHits: 1
-    trialAttackGap: 0.65
-    trialStunSeconds: 4
-    trialExplosionMultiplier: 2.5
     shieldDamageMultiplier: 0.3
     damageScale: 1
     movementScale: 1
     decisionScale: 1
     recoveryScale: 1
+    barrierHeatDamageMultiplier: 0.25
+    barrierHeatGrace: 0.3
+    barrierHeatInterval: 0.5
+    trialDuration: 9
+    trialShieldSpeed: 10
+    trialChaseSpeed: 7.5
+    trialParryStunSeconds: 1.1

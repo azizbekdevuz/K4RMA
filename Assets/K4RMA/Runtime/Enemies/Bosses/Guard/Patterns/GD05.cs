@@ -42,7 +42,7 @@ namespace KarmaPrototype
                 owner.fullShield = false;
                 owner.state = ActionState.Approach;
 
-                var sprite = KarmaArtwork.Sprite("GuardDomeShield", "Ricochet") ?? KarmaArtwork.Sprite("GuardBossVFX", "Shield");
+                var sprite = KarmaArtwork.Sprite("GuardDomeShield", "Ricochet");
                 float radius = KarmaSpace.Units(0.9f);
                 float heading = owner.game.Player.Position.x < TrialCenter ? -1 : 1;
                 var start = center + KarmaSpace.Units(new Vector2(heading * 1.55f, 1.65f));

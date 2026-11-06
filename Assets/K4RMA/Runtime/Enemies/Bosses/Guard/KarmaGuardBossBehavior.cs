@@ -34,9 +34,6 @@ namespace KarmaPrototype
             }
             public override void Initialize()
             {
-                if (KarmaCombatVFX.ApplySprite(owner.shieldHalo, "GuardBossVFX", "Shield",
-                    KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
-                    owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
                 owner.nextShield = Settings.autoShieldPeriod;
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);

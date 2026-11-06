@@ -297,7 +297,7 @@ public static class KarmaGuardPlayChecks
             var picture = Get<SpriteRenderer>(animator, "picture");
             Force(EnemyAttack.GD02, facing);
             var normal = KarmaArtwork.Sprite("GuardHeavy" + form, "Windup");
-            var molten = KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Windup") ?? normal;
+            var molten = KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Windup");
             Check(picture.sprite == normal && !enemy.HeavyParryWindowOpen, "GD02 starts with the original cool weapon: " + form);
             Vector3 scale = picture.transform.localScale, position = picture.transform.localPosition;
             await Until(() => enemy.HeavyParryWindowOpen, 2);
@@ -313,9 +313,9 @@ public static class KarmaGuardPlayChecks
             Check(enemy.FightSeconds == clock && picture.sprite == molten, "GD02 molten cue stays fixed during pause");
             game.TogglePause();
             await Until(() => animator.CurrentPose == "GD02/Downstroke", 2);
-            Check(picture.sprite == (KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Downstroke") ?? KarmaArtwork.Sprite("GuardHeavy" + form, "Downstroke")), "GD02 downstroke keeps the molten blade");
+            Check(picture.sprite == KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Downstroke"), "GD02 downstroke keeps the molten blade");
             await Until(() => animator.CurrentPose == "GD02/FollowThrough", 1);
-            Check(picture.sprite == (KarmaArtwork.Sprite("GuardHeavyMolten" + form, "FollowThrough") ?? KarmaArtwork.Sprite("GuardHeavy" + form, "FollowThrough")), "GD02 follow-through keeps the molten blade");
+            Check(picture.sprite == KarmaArtwork.Sprite("GuardHeavyMolten" + form, "FollowThrough"), "GD02 follow-through keeps the molten blade");
             await Until(() => State() == "Recover", 3);
             await Seconds(0.04f);
             Check(!enemy.HeavyParryWindowOpen && !Array.Exists(KarmaArtwork.Sprites("GuardHeavyMolten" + form),
@@ -580,19 +580,27 @@ public static class KarmaGuardPlayChecks
             Place(enemy.Position + Vector2.right * (facing * KarmaSpace.Units(10)));
             var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
             var picture = Get<SpriteRenderer>(animator, "picture");
+            string form = order.Length == 3 ? "WardFinal" : order.Length == 1 ? "Ward"
+                : order[1] == Essence.SwordWave ? "WardWave" : "WardRise";
             Force(EnemyAttack.GD04, facing);
-            for (int frame = 0; frame < 4; frame++)
+            foreach (string pose in new[] { "Windup", "Descent", "Contact", "Rebound" })
             {
-                int expected = frame;
-                await Until(() => Get<int>(animator, "groundSlamFrame") == expected, 2);
-                Check(picture.sprite != null, "GD04 retains valid artwork with the existing sprite library");
+                await Until(() => animator.CurrentPose == "GD04/" + pose, 2);
+                Check(picture.sprite == KarmaArtwork.Sprite("GuardSlam" + form, pose), "GD04 uses the matching A2 pose: " + form + "/" + pose);
+                if (pose == "Contact") Check(RisingSteps().Count == 1, "GD04 starts the wave on shield contact");
             }
             await Until(() => Walls().Count == 6, 5);
-            CheckStairGeometry(Walls());
-            foreach (var step in RisingSteps())
+            var walls = Walls();
+            var steps = RisingSteps();
+            CheckStairGeometry(walls);
+            for (int i = 0; i < steps.Count; i++)
             {
-                var art = step.GetComponent<SpriteRenderer>();
-                Check(art.sprite != null && art.flipX == (facing < 0), "GD04 terrain has valid artwork and facing");
+                var art = steps[i].GetComponent<SpriteRenderer>();
+                var wall = walls[i].GetComponent<BoxCollider2D>().bounds;
+                Check(art.sprite == KarmaArtwork.Sprite("GuardBasalt", "Step" + (i + 1)) && art.flipX == (facing < 0),
+                    "GD04 step uses its own mirrored basalt art");
+                Check(Mathf.Abs(art.bounds.min.y) < 0.025f && Mathf.Abs(steps[i].position.y - wall.max.y) < 0.025f,
+                    "GD04 basalt base and hot ledge meet the floor and collider top");
             }
             Call(enemy, "InterruptPattern");
             Check(Get<int>(animator, "groundSlamFrame") == -1, "GD04 interruption clears its pose override");
@@ -633,7 +641,7 @@ public static class KarmaGuardPlayChecks
                 * settings.damageScale * settings.barrierHeatDamageMultiplier;
             Check(Mathf.Abs((health - player.Health) - damage) < 0.02f && player.ParryCount == parries && !player.Stunned,
                 "GD04 heat ticks once at the configured damage without parry or hit stun");
-            Check(KarmaArtwork.Sprite("GuardBasaltHeat", "Sparks") == null || Get<Transform>(enemy, "effectsRoot").Find("GD04 hot step sparks") != null, "GD04 shows foot sparks on real damage");
+            Check(Get<Transform>(enemy, "effectsRoot").Find("GD04 hot step sparks") != null, "GD04 shows foot sparks on real damage");
             clock = enemy.FightSeconds;
             health = player.Health;
             await Until(() => player.Health < health, 1);
@@ -897,7 +905,7 @@ public static class KarmaGuardPlayChecks
         var effects = Get<Transform>(enemy, "effectsRoot");
         var shield = effects.Find("GD05 튕기는 방패");
         var dome = UnityEngine.Object.FindAnyObjectByType<KarmaGuardDome>();
-        Check(shield != null && shield.GetComponent<SpriteRenderer>().sprite == (KarmaArtwork.Sprite("GuardDomeShield", "Ricochet") ?? KarmaArtwork.Sprite("GuardBossVFX", "Shield"))
+        Check(shield != null && shield.GetComponent<SpriteRenderer>().sprite == KarmaArtwork.Sprite("GuardDomeShield", "Ricochet")
             && dome != null && dome.GetComponent<EdgeCollider2D>().pointCount == 65
             && Get<bool>(player, "confined") && !enemy.Invulnerable, "GD05 forms the existing dome with the approved round shield and a vulnerable boss");
         float startX = enemy.Position.x;

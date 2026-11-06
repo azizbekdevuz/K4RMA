@@ -28,11 +28,8 @@ namespace KarmaPrototype
             foreach (var sprite in KarmaArtwork.Sprites("GuardHeavyMolten" + key))
                 for (int i = 0; i < names.Length; i++) if (sprite.name == names[i]) heatedPoses[i] = sprite;
             for (int i = 0; i < names.Length; i++)
-            {
-                if (poses[i] == null)
+                if (poses[i] == null || heatedPoses[i] == null)
                     throw new System.InvalidOperationException("GD02 공격 자세가 없습니다: " + key + "/" + names[i]);
-                if (heatedPoses[i] == null) heatedPoses[i] = poses[i];
-            }
             float bodyFraction = key == "Ward" ? 0.65f : key == "WardRise" ? 0.54f : 0.56f;
             scale = originalScale * (picture.sprite.bounds.size.y / (poses[0].bounds.size.y * bodyFraction));
         }

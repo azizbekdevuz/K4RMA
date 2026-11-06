@@ -48,7 +48,7 @@ namespace KarmaPrototype
                 owner.state = ActionState.Attack; owner.animator.Attack(Vector2.down);
                 owner.animator.SetGroundSlamFrame(2);
                 KarmaCombatVFX.Burst(owner.effectsRoot, owner.animator.GroundSlamContact,
-                    (KarmaArtwork.Sprite("GuardBasaltDebris", "Burst") ?? KarmaArtwork.Sprite("GuardBossVFX", "Bash")), "GD04 ground impact",
+                    KarmaArtwork.Sprite("GuardBasaltDebris", "Burst"), "GD04 ground impact",
                     KarmaSpace.Units(new Vector2(1.65f, 1.4f)), 0.23f, 0, new Color(1, 0.54f, 0.26f), true);
                 float reboundAt = owner.FightSeconds + 0.12f;
                 bool finished = false;
@@ -107,12 +107,10 @@ namespace KarmaPrototype
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 var visual = KarmaVisuals.Box(owner.effectsRoot, "GD04 상승 지면 " + number, center, Vector2.one, Color.white, 9);
                 var sprite = KarmaArtwork.Sprite("GuardBasalt", "Step" + Mathf.Min(number, 6));
-                bool basalt = sprite != null;
-                sprite = sprite ?? KarmaArtwork.Sprite("GuardBossVFX", "Pillar");
                 visual.sprite = sprite;
                 visual.flipX = direction < 0;
                 // The sprite pivot is the hot ledge. Align it with the collider's top.
-                Vector3 scale = new Vector3(size.x / sprite.bounds.size.x, size.y / (basalt ? -sprite.bounds.min.y : sprite.bounds.size.y), 1);
+                Vector3 scale = new Vector3(size.x / sprite.bounds.size.x, size.y / -sprite.bounds.min.y, 1);
                 visual.transform.localScale = scale;
                 float elapsed = 0;
                 while (elapsed < 0.18f && owner.Active)
@@ -121,7 +119,7 @@ namespace KarmaPrototype
                     elapsed += Time.deltaTime;
                     float t = 1 - Mathf.Pow(1 - Mathf.Clamp01(elapsed / 0.18f), 2);
                     visual.transform.localScale = new Vector3(scale.x, scale.y * t, 1);
-                    visual.transform.position = new Vector2(center.x, (basalt ? size.y : -sprite.bounds.min.y * scale.y) * t);
+                    visual.transform.position = new Vector2(center.x, size.y * t);
                     yield return null;
                 }
                 // The boss may already have turned into GD02 while this terrain is still rising.

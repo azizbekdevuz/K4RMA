@@ -33,7 +33,7 @@ public static class KarmaSettingsChecks
             Check(KarmaInput.TrySetBinding(KarmaAction.Pierce, "<Keyboard>/rightShift", out _) && KarmaInput.BindingLabel(KarmaAction.Pierce) == "Right Shift",
                 "Rebound modifier keys keep their English key name");
             KarmaInput.ResetBindings();
-            Check(KarmaInput.BindingLabel(KarmaAction.Pierce).ToUpperInvariant() == "U", "Unique sword input defaults to U");
+            Check(KarmaInput.BindingLabel(KarmaAction.Pierce).ToUpperInvariant() == "L", "Unique sword input defaults to L");
             game.OpenSettings(); Check(game.SettingsOpen && game.Paused, "Opening options pauses combat");
             KarmaInput.BeginRebinding(KarmaAction.Pierce);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.I)); InputSystem.Update();
@@ -46,7 +46,7 @@ public static class KarmaSettingsChecks
             KarmaInput.BeginRebinding(KarmaAction.Pierce);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Escape)); InputSystem.Update();
             Check(!KarmaInput.Rebinding && KarmaInput.BindingLabel(KarmaAction.Pierce).ToUpperInvariant() == "I", "Escape cancels capture without changing the key");
-            KarmaInput.ResetBindings(); Check(KarmaInput.BindingLabel(KarmaAction.Pierce).ToUpperInvariant() == "U", "Reset restores default U binding");
+            KarmaInput.ResetBindings(); Check(KarmaInput.BindingLabel(KarmaAction.Pierce).ToUpperInvariant() == "L", "Reset restores default L binding");
             KarmaPreferences.Muted = false; KarmaPreferences.MasterVolume = 0.4f; KarmaPreferences.MusicVolume = 0.25f; KarmaPreferences.EffectsVolume = 0.75f;
             Check(Mathf.Approximately(AudioListener.volume, 0.4f) && Mathf.Approximately(KarmaPreferences.EffectiveMusicVolume, 0.1f)
                 && Mathf.Approximately(KarmaPreferences.EffectiveEffectsVolume, 0.3f), "Master and channel volume values are applied consistently");

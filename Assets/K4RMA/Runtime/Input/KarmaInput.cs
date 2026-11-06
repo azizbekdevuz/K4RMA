@@ -58,7 +58,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.PreviousPage, "leftArrow", "upArrow");
             Bind(KarmaAction.NextPage, "rightArrow", "downArrow");
             Bind(KarmaAction.ToggleInvincibility, "p");
-            Bind(KarmaAction.Pierce, "u");
+            Bind(KarmaAction.Pierce, "l");
             Bind(KarmaAction.Settings, "o");
             if (PlayerPrefs.HasKey(BindingsKey))
             {

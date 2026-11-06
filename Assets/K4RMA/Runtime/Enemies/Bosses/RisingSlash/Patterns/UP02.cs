@@ -4,46 +4,39 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
-        // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
         sealed class UP02Pattern : RisingBossPattern
         {
             public UP02Pattern(KarmaEnemy owner) : base(owner) { }
-            IEnumerator AirPursuit(bool recover)
+            public override IEnumerator Execute()
             {
-                Vector2 origin = owner.Position, target = origin;
-                SpriteRenderer path = null;
+                Vector2 start = owner.Position;
+                Vector2 target = start;
                 owner.state = ActionState.Telegraph;
                 var charge = BeginRisingCharge(KarmaRisingCue.Tracking);
+                SpriteRenderer path = null;
                 float elapsed = 0;
-                while (elapsed < 0.36f && owner.Active)
+                while (elapsed < 0.18f && owner.Active)
                 {
                     if (owner.game.Paused) { yield return null; continue; }
-                    target = owner.game.Player.Position;
-                    target.x = Mathf.Clamp(target.x, Mathf.Max(KarmaStage.ArenaLeft + 2, origin.x - KarmaSpace.Units(7)), Mathf.Min(KarmaStage.ArenaRight - 2, origin.x + KarmaSpace.Units(7)));
-                    target.y = Mathf.Clamp(target.y, KarmaSpace.Units(2.5f), KarmaSpace.Units(7));
-                    if (path == null) path = RisingPath(origin, target, bodyAttackSize, KarmaRisingCue.Tracking);
-                    else path.GetComponent<KarmaAttackWarning>().SetPath(path, origin, target, bodyAttackSize);
-                    elapsed += Time.deltaTime; yield return null;
+                    var player = owner.game.Player;
+                    var body = player.GetComponent<Rigidbody2D>();
+                    target = player.Position + (body != null ? body.linearVelocity * 0.1f : Vector2.zero);
+                    target.x = Mathf.Clamp(target.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall);
+                    target.y = Mathf.Clamp(target.y + KarmaSpace.Units(0.65f),
+                        KarmaSpace.GuardianGroundY + KarmaSpace.Units(1.2f), KarmaSpace.Units(7));
+                    if (path == null) path = RisingPath(start, target, bodyAttackSize, KarmaRisingCue.Tracking);
+                    else path.GetComponent<KarmaAttackWarning>().SetPath(path, start, target, bodyAttackSize);
+                    elapsed += Time.deltaTime;
+                    yield return null;
                 }
-                if (path != null) Destroy(path.gameObject);
                 if (charge != null) charge.Lock();
-                KarmaRisingPolish.LockPop(owner.effectsRoot, target);
-                path = RisingPath(origin, target, bodyAttackSize, KarmaRisingCue.Locked);
-
-                yield return owner.Wait(owner.Warning(0.36f));
+                yield return owner.Wait(0.08f);
                 EndRisingCharge(charge);
                 if (path != null) Destroy(path.gameObject);
-                yield return owner.Motion(target, 0.28f, bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
-                yield return owner.Motion(new Vector2(target.x, KarmaSpace.GuardianGroundY), 0.32f, Vector2.zero);
-                if (recover && owner.Enraged)
-                {
-                    yield return owner.Wait(Mathf.Max(0.45f, Settings.crossingReset * owner.Tempo));
-                    yield return AirPursuit(false);
-                }
-                if (recover) yield return owner.Recovery(0.9f);
+                yield return owner.Motion(target, DashSeconds(target), bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
+                // The pursuit ends in the air: drop immediately rather than resetting on the floor.
+                yield return new UP01Pattern(owner, pursuit: true).Execute();
             }
-            public override IEnumerator Execute() { return AirPursuit(true); }
-
         }
     }
 }

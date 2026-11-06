@@ -106,6 +106,38 @@ public static class KarmaRisingPlayChecks
         }
         finally { director.StartRun(); }
     }
+    static EnemyAttack SelectAttack(float distance)
+    {
+        var behavior = Get(enemy, "behavior");
+        object[] args = { distance, true, true, default(EnemyAttack) };
+        Check((bool)behavior.GetType().GetMethod("TrySelect", F).Invoke(behavior, args), "Rising selects an attack");
+        return (EnemyAttack)args[3];
+    }
+    static void CheckAttackMix()
+    {
+        Reset();
+        var behavior = Get(enemy, "behavior");
+        for (int i = 0; i < 1; i++)
+        { Set(enemy, "selected", EnemyAttack.UP01); Call(behavior, "OnSelected"); }
+        Check(SelectAttack(18f) == EnemyAttack.GroundStrike, "A skill links into a basic dash at long approach range");
+        Set(enemy, "selected", EnemyAttack.GroundStrike); Call(behavior, "OnSelected");
+        for (int i = 0; i < 20; i++)
+            Check(SelectAttack(6f) != EnemyAttack.UP05, "UP05 is unavailable above half health");
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.5f);
+        Check(SelectAttack(6f) == EnemyAttack.UP05, "Half health prioritizes UP05 despite initial cooldown");
+        Set(enemy, "selected", EnemyAttack.UP05); Call(behavior, "OnSelected");
+        Check(SelectAttack(6f) != EnemyAttack.UP05, "Half health UP05 is consumed once");
+        typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.25f);
+        Check(SelectAttack(6f) == EnemyAttack.UP05, "Quarter health prioritizes the second UP05");
+        Call(behavior, "OnSelected");
+        for (int i = 0; i < 20; i++)
+            Check(SelectAttack(6f) != EnemyAttack.UP05, "UP05 stays unavailable after both thresholds");
+        Reset();
+        var body = game.Player.GetComponent<Rigidbody2D>();
+        body.position = game.Player.transform.position = new Vector2(24, KarmaSpace.Units(4));
+        Check(SelectAttack(4f) == EnemyAttack.UP02, "Airborne player prioritizes UP02 pursuit");
+        Debug.Log("PASS: Rising basic skill links, airborne pursuit and once-per-threshold UP05 selection");
+    }
     static async void Run()
     {
         int exit = 0; string result;
@@ -116,10 +148,31 @@ public static class KarmaRisingPlayChecks
             var config = UnityEngine.Object.Instantiate(game.Config); config.playerHealth = 1000000; Set(game, "config", config);
             Application.logMessageReceived += Capture;
             Debug.Log(CheckPoseConnections());
+            CheckAttackMix();
             foreach (var pattern in new[] { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.UP03, EnemyAttack.UP04, EnemyAttack.UP05 })
             {
-                Reset(); Force(pattern);
-                await Until(() => !(bool)Get(enemy, "running"));
+                Reset();
+                if (pattern == EnemyAttack.UP01 || pattern == EnemyAttack.UP04)
+                    enemy.transform.position += Vector3.up * KarmaSpace.Units(3);
+                Force(pattern);
+                bool pursued = false, shards = false;
+                await Until(() =>
+                {
+                    pursued |= enemy.Position.y > KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.5f);
+                    shards |= Array.Exists(((Transform)Get(enemy, "effectsRoot")).GetComponentsInChildren<KarmaBossAttack>(), shot => shot.name == "방패 파편");
+                    return !(bool)Get(enemy, "running");
+                });
+                if (pattern == EnemyAttack.UP02)
+                {
+                    Check(pursued, "UP02 pursues into the air");
+                    Check(shards, "UP02 chains the falling UP01 with shards");
+                    var fragmentRoot = (Transform)Get(enemy, "behavior").GetType().GetProperty("PersistentEffects", F).GetValue(Get(enemy, "behavior"));
+                    Check(fragmentRoot != null && fragmentRoot.GetComponentsInChildren<KarmaBossAttack>().Length > 0,
+                        "Landing fragments survive recovery cleanup");
+                    Call(enemy, "InterruptPattern");
+                    Check(fragmentRoot.GetComponentsInChildren<KarmaBossAttack>().Length == 0,
+                        "Interruption disables remaining landing fragments");
+                }
                 Set(enemy, "timer", float.MaxValue);
                 Check(!enemy.Invulnerable && !enemy.Armored, pattern + " clears defense");
                 Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f, pattern + " lands");

@@ -8,6 +8,13 @@ namespace KarmaPrototype
             protected KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
             protected RisingBossPattern(KarmaEnemy owner) : base(owner) { }
             readonly protected Vector2 bodyAttackSize = KarmaSpace.Units(new Vector2(1.4f, 1.8f));
+            // Two player SwordWave dash distances take 0.24 seconds; longer travel never accelerates.
+            protected float DashSeconds(Vector2 target, bool ultimate = false)
+            {
+                float speed = Mathf.Max(1f, owner.game.Config.Techniques.pierceDistance) * 2f / 0.24f;
+                if (ultimate) speed *= 1.6f;
+                return Mathf.Max(0.02f, Vector2.Distance(owner.Position, target) / speed);
+            }
             protected SpriteRenderer RisingPath(Vector2 from, Vector2 to, Vector2 size, KarmaRisingCue cue)
             {
                 var color = cue == KarmaRisingCue.Locked

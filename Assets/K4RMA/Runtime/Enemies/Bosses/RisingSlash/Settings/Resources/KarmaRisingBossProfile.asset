@@ -15,8 +15,8 @@ MonoBehaviour:
   settings:
     preferredDistance: 4.1
     meleeReach: 8.2
-    approachSpeedMultiplier: 1.55
-    attackDecisionMultiplier: 0.58
+    approachSpeedMultiplier: 1.85
+    attackDecisionMultiplier: 0.45
     meleeDamageMultiplier: 0.8
     landingDamageMultiplier: 1
     waveDamageMultiplier: 1.15

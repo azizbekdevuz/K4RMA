@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: KarmaRisingPatternWeights
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaRisingPatternWeights
   weights:
-    basicWeight: 3
+    basicWeight: 12
     up01Weight: 3
     up02Weight: 2
     up03Weight: 2

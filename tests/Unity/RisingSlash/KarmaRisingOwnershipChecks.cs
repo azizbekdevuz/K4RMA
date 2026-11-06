@@ -13,7 +13,6 @@ public sealed class KarmaRisingOwnershipChecks : KarmaBossOwnershipFixture
     {
             var result = new List<EnemyAttack> { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02 };
             if (inherited.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
-            if (inherited.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
             if (inherited.Count == 3) result.Add(EnemyAttack.UP05);
         return result;
     }

@@ -11,7 +11,7 @@ namespace KarmaPrototype
             public override IEnumerator Execute()
             {
                 Vector2 start = new Vector2(owner.Position.x, KarmaSpace.GuardianGroundY);
-                yield return owner.Motion(start, 0.14f, Vector2.zero);
+                yield return owner.Motion(start, DashSeconds(start), Vector2.zero);
                 float room = owner.direction > 0 ? KarmaStage.ArenaRight - 1.2f - start.x : start.x - (KarmaStage.ArenaLeft + 1.2f);
                 float height = Mathf.Clamp(Settings.groundBladeHeight, KarmaSpace.Units(4.4f), KarmaSpace.Units(6.4f));
                 float gap = KarmaSpace.Units(0.45f);

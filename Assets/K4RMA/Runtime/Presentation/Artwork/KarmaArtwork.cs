@@ -131,31 +131,33 @@ namespace KarmaPrototype
         }
         public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)
         {
+            // The first stage keeps its mountain dojo. Later stages keep the existing trial hall.
             bool mountain = stage == 0 && Settings.mountainBackground != null;
             var original = mountain ? Settings.mountainBackground : Settings.dojoBackground;
-            var panorama = mountain ? Settings.mountainPanorama : Settings.dojoPanorama;
-            var sprite = panorama != null ? panorama : original;
-            int coverage = panorama != null ? Mathf.Max(1, Settings.panoramaCoverage) : 1;
-            if (sprite == null) throw new InvalidOperationException("도장 배경 슬롯이 비어 있습니다.");
-            // Keep the original central scene at its authored world-space pixel density.
-            float frameWidth = panorama != null ? KarmaStage.BackgroundWidth : 50;
-            float frameHeight = original != null ? 50 * original.rect.height / original.rect.width
-                : frameWidth * sprite.rect.height / sprite.rect.width;
-            float floorFromTop = mountain ? (panorama != null ? 0.724f : 0.74f) : 0.8f;
-            float width = frameWidth * coverage;
-            float height = frameHeight * coverage;
+            var sprite = mountain
+                ? (Settings.mountainPanorama != null ? Settings.mountainPanorama : original)
+                : (Settings.dojoPanorama != null ? Settings.dojoPanorama : original);
+            int coverage = sprite != original ? Mathf.Max(1, Settings.panoramaCoverage) : 1;
+            if (sprite == null || original == null) throw new InvalidOperationException("전투장 배경 슬롯이 비어 있습니다.");
+            float frameWidth = sprite != original ? KarmaStage.BackgroundWidth : 50;
+            float frameHeight = 50 * original.rect.height / original.rect.width;
+            // The extended mountain image keeps Background.png's original center pixels,
+            // so its ground row stays at the original 0.74 vertical position.
+            float floorFromTop = mountain ? 0.74f : 0.8f;
+            float width = frameWidth * coverage, height = frameHeight * coverage;
             floorFromTop = (coverage - 1) / (2f * coverage) + floorFromTop / coverage;
-            var go = new GameObject(stage == 0 ? "Mountain dojo artwork" : "Trial hall artwork");
+            var center = new Vector3(20, 0, 0);
+            var go = new GameObject(mountain ? "Mountain dojo artwork" : "Trial hall artwork");
             go.transform.SetParent(parent, false);
-            // Account for a replacement sprite's actual pivot, too.
-            go.transform.localPosition = new Vector3(20 + (sprite.pivot.x / sprite.rect.width - 0.5f) * width,
+            go.transform.localPosition = center + new Vector3(
+                (sprite.pivot.x / sprite.rect.width - 0.5f) * width,
                 (sprite.pivot.y / sprite.rect.height - (1 - floorFromTop)) * height, 0);
             go.transform.localScale = new Vector3(width / sprite.bounds.size.x, height / sprite.bounds.size.y, 1);
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite; renderer.sortingOrder = -20; KarmaVisuals.ApplyMaterial(renderer);
-            // The extra painted area covers camera travel; it must not change the original zoom.
             if (game != null) game.FrameStageBackground(coverage > 1
-                ? new Bounds(renderer.bounds.center, new Vector3(frameWidth, frameHeight, renderer.bounds.size.z)) : renderer.bounds);
+                ? new Bounds(renderer.bounds.center, new Vector3(frameWidth, frameHeight, renderer.bounds.size.z))
+                : renderer.bounds);
             return true;
         }
     }

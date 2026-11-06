@@ -15,10 +15,25 @@ namespace KarmaPrototype
         Vector3 lastShake;
         Bounds stageBackgroundBounds;
         bool hasStageBackground;
+        internal static Rect ScreenViewport(float width, float height)
+        {
+            float scale = Mathf.Min(width / 1280f, height / 720f);
+            float viewWidth = 1280 * scale, viewHeight = 720 * scale;
+            return new Rect((width - viewWidth) / 2, (height - viewHeight) / 2, viewWidth, viewHeight);
+        }
+        void UpdateCameraViewport()
+        {
+            if (GameCamera == null || Screen.width <= 0 || Screen.height <= 0) return;
+            Rect view = ScreenViewport(Screen.width, Screen.height);
+            GameCamera.rect = new Rect(view.x / Screen.width, view.y / Screen.height,
+                view.width / Screen.width, view.height / Screen.height);
+            GameCamera.aspect = 16f / 9;
+        }
         public void FrameStageBackground(Bounds bounds)
         {
             stageBackgroundBounds = bounds;
             hasStageBackground = true;
+            UpdateCameraViewport();
             FitStageBackground(true);
         }
         void FitStageBackground(bool snap = false)
@@ -66,6 +81,7 @@ namespace KarmaPrototype
         }
         void LateUpdate()
         {
+            UpdateCameraViewport();
             if (Player == null) return;
             if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
                 || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)

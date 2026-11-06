@@ -68,10 +68,7 @@ namespace KarmaPrototype
             float t = Mathf.InverseLerp(empowermentAt, empowermentUntil, Time.time);
             if (sheet == "Player")
             {
-                string pose = t < 0.42f ? "Guard" : t < 0.76f
-                    ? empowermentEssence == Essence.Guard ? "Parry" : empowermentEssence == Essence.RisingSlash ? "Rising" : "FollowThrough"
-                    : "Idle";
-                ShowPose(pose);
+                SamplePlayerClip("Transition");
             }
             else
             {

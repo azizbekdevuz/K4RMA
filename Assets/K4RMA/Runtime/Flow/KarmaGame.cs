@@ -52,14 +52,19 @@ namespace KarmaPrototype
             GameCamera.transform.position = new Vector3(12, 4.4f, -10);
             gameObject.AddComponent<KarmaHUD>().Initialize(this);
             KarmaPreferences.ApplyAudio();
+            InitializeDisplaySettings();
             Time.timeScale = 1;
         }
         void Update()
         {
+            UpdateDisplaySettings();
             UpdateHitFeedback();
             if (SettingsOpen)
             {
-                if (!KarmaInput.RebindingThisFrame && KarmaInput.Pressed(KarmaAction.Pause)) CloseSettings();
+                if (!KarmaInput.RebindingThisFrame && KarmaInput.Pressed(KarmaAction.Pause))
+                {
+                    if (DisplayConfirmationPending) RevertDisplaySettings(); else CloseSettings();
+                }
                 return;
             }
             if (KarmaInput.Pressed(KarmaAction.Settings) && (Phase == RunPhase.Title || Paused))
@@ -109,7 +114,7 @@ namespace KarmaPrototype
             if (Phase == RunPhase.Defeat && KarmaInput.Pressed(KarmaAction.Restart)) RetryRoom();
         }
 
-        void OnDisable() { Time.timeScale = 1; }
+        void OnDisable() { RevertDisplaySettings(); Time.timeScale = 1; }
         void OnDestroy() { if (ownsConfig && config != null) Destroy(config); }
     }
 }

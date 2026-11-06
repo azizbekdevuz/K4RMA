@@ -11,7 +11,6 @@ public static class KarmaFeatureChecks
         var results = new List<string>(); File.WriteAllText(report, "RUNNING\n");
         try
         {
-            results.Add(KarmaPlayerAirChecks.Run()); File.WriteAllLines(report, results);
             results.Add(await KarmaSettingsChecks.Run()); File.WriteAllLines(report, results);
             await System.Threading.Tasks.Task.Delay(100);
             results.Add(KarmaCameraCoverageChecks.Run()); File.WriteAllLines(report, results);

@@ -144,7 +144,10 @@ K4RMA/
 │       │       │       │   │   │   └── Neutral.png
 │       │       │       │   │   └── ReferencePoses.png
 │       │       │       │   └── Player/
-│       │       │       │       └── Actions.png
+│       │       │       │       ├── Actions.png
+│       │       │       │       ├── Additional.png
+│       │       │       │       ├── Locomotion.png
+│       │       │       │       └── Poses.png
 │       │       │       ├── Effects/
 │       │       │       │   ├── Guardian.png
 │       │       │       │   ├── Hit.png
@@ -154,9 +157,11 @@ K4RMA/
 │       │       │       ├── Environments/
 │       │       │       │   ├── MountainDojo/
 │       │       │       │   │   ├── Background.png
+│       │       │       │   │   ├── Extended.png
 │       │       │       │   │   └── Panorama.png
 │       │       │       │   └── TrialHall/
 │       │       │       │       ├── Background.png
+│       │       │       │       ├── Extended.png
 │       │       │       │       └── Panorama.png
 │       │       │       ├── Props/
 │       │       │       │   └── Props.png
@@ -174,8 +179,31 @@ K4RMA/
 │       │   ├── KarmaTechniqueState.cs
 │       │   └── KarmaTypes.cs
 │       ├── Editor/
-│       │   └── KarmaBossPractice.cs
+│       │   ├── KarmaBossPractice.cs
+│       │   └── KarmaPlayerAnimationAssets.cs
 │       ├── Resources/
+│       │   ├── PlayerAnimation/
+│       │   │   ├── AirSlash.anim
+│       │   │   ├── Apex.anim
+│       │   │   ├── Attack.anim
+│       │   │   ├── Crouch.anim
+│       │   │   ├── Death.anim
+│       │   │   ├── Fall.anim
+│       │   │   ├── Frames.asset
+│       │   │   ├── Guard.anim
+│       │   │   ├── Hurt.anim
+│       │   │   ├── Idle.anim
+│       │   │   ├── Jump.anim
+│       │   │   ├── JumpStart.anim
+│       │   │   ├── Land.anim
+│       │   │   ├── Parry.anim
+│       │   │   ├── Pierce.anim
+│       │   │   ├── Recovery.anim
+│       │   │   ├── Riposte.anim
+│       │   │   ├── Rising.anim
+│       │   │   ├── Run.anim
+│       │   │   ├── SwordWave.anim
+│       │   │   └── Transition.anim
 │       │   ├── KarmaArtworkSettings.asset
 │       │   ├── KarmaCombatGlow.mat
 │       │   ├── KarmaSpriteLibrary.asset
@@ -323,6 +351,7 @@ K4RMA/
 │       │   │   ├── Animation/
 │       │   │   │   ├── KarmaCharacterAnimator.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Empowerment.cs
+│       │   │   │   ├── KarmaCharacterAnimator.Player.cs
 │       │   │   │   └── KarmaCharacterAnimator.Guardian.cs
 │       │   │   ├── Artwork/
 │       │   │   │   ├── KarmaArtwork.cs
@@ -400,7 +429,6 @@ K4RMA/
 │   │   │   ├── KarmaGuardPlayChecks.cs
 │   │   │   └── KarmaGuardSelectionChecks.cs
 │   │   ├── Player/
-│   │   │   └── KarmaPlayerAirChecks.cs
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
 │   │   │   ├── KarmaRisingPlayChecks.cs
@@ -428,7 +456,8 @@ K4RMA/
 │   │   ├── KarmaBossIsolationChecks.cs
 │   │   ├── KarmaBossPracticeChecks.cs
 │   │   ├── KarmaCameraCoverageChecks.cs
-│   │   ├── KarmaFeatureChecks.cs
+│   │   ├── KarmaTransitionBackgroundChecks.cs
+│   │   ├── KarmaPresentationChecks.cs
 │   │   └── KarmaSettingsChecks.cs
 │   ├── test_boss_boundaries.py
 │   └── test_optimize_images.py

@@ -1,0 +1,162 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9166e98874d22451090e210eb158e831, type: 3}
+  m_Name: Frames
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
+  sheets:
+  - id: Idle
+    source: 
+    sprites:
+    - {fileID: -7465188115540213459, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: -2170130393632843788, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: -5011001448204303682, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: 3182055069806621159, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: 4244078141960979615, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: -2179599784056014100, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    poses: []
+  - id: Run
+    source: 
+    sprites:
+    - {fileID: -5773412670511630076, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -4731017572189722939, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: 2609533960156518042, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -5023529409092930615, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    poses: []
+  - id: JumpStart
+    source: 
+    sprites:
+    - {fileID: 5347153333796165753, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Jump
+    source: 
+    sprites:
+    - {fileID: 5347153333796165753, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Apex
+    source: 
+    sprites:
+    - {fileID: 5347153333796165753, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Fall
+    source: 
+    sprites:
+    - {fileID: -2356193523792301532, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Land
+    source: 
+    sprites:
+    - {fileID: -4421983392292860274, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -4316885915349208089, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -7465188115540213459, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    poses: []
+  - id: Crouch
+    source: 
+    sprites:
+    - {fileID: -1045002780237292739, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -1045002780237292739, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -1045002780237292739, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -1045002780237292739, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    poses: []
+  - id: Attack
+    source: 
+    sprites:
+    - {fileID: 8685408783168630167, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -4186833484684271613, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Recovery
+    source: 
+    sprites:
+    - {fileID: 662760484831535209, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: 8066680389583083208, guid: ea68171c79b324600964a09503d79c26, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Rising
+    source: 
+    sprites:
+    - {fileID: 3353466619021299557, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -7905300747624816474, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Pierce
+    source: 
+    sprites:
+    - {fileID: 8299849550176322307, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -4186833484684271613, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: AirSlash
+    source: 
+    sprites:
+    - {fileID: 3403883915074660301, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -7905300747624816474, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 3403883915074660301, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: SwordWave
+    source: 
+    sprites:
+    - {fileID: -4186833484684271613, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 8299849550176322307, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Guard
+    source: 
+    sprites:
+    - {fileID: -7019812261367279227, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 5184663955158131182, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 5184663955158131182, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Parry
+    source: 
+    sprites:
+    - {fileID: -7019812261367279227, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 5184663955158131182, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -7019812261367279227, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Riposte
+    source: 
+    sprites:
+    - {fileID: -7905300747624816474, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -4186833484684271613, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 4094743974595036161, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Hurt
+    source: 
+    sprites:
+    - {fileID: -6678854413950835281, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Death
+    source: 
+    sprites:
+    - {fileID: -6678854413950835281, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -6678854413950835281, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -1045002780237292739, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: -1045002780237292739, guid: 5bddc1d6be4304bcfbbd6d41f067a8bf, type: 3}
+    - {fileID: 7517122749608746027, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 7517122749608746027, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 7517122749608746027, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 7517122749608746027, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []
+  - id: Transition
+    source: 
+    sprites:
+    - {fileID: 5184663955158131182, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 5184663955158131182, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -7019812261367279227, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -7019812261367279227, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 3353466619021299557, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 3353466619021299557, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: -8678721515451430985, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    - {fileID: 4094743974595036161, guid: 39e6f33fcbbd74148ad3f68165e14ea1, type: 3}
+    poses: []

@@ -17,9 +17,9 @@ namespace KarmaPrototype
         {
             Color stone = new Color(0.16f + stage * 0.014f, 0.17f, 0.23f);
             bool suppliedBackground = KarmaArtwork.Background(parent, stage, game);
-            BuildArtworkProps(parent, stage);
             if (!suppliedBackground)
             {
+            BuildArtworkProps(parent, stage);
             KarmaVisuals.Box(parent, "수련장 배경", new Vector2(20, 4), new Vector2(70, 26), new Color(0.09f, 0.07f, 0.10f), -20);
             for (int i = 0; i < 12; i++)
             {

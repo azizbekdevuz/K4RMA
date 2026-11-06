@@ -8,7 +8,7 @@ public static class KarmaCameraCoverageChecks
     const BindingFlags F = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
     public static void CheckView(KarmaGame game, string label)
     {
-        var bg = game.World.Find(game.StageIndex == 0 ? "Mountain dojo artwork" : "Trial hall artwork").GetComponent<SpriteRenderer>().bounds;
+        var bg = game.World.Find("Trial hall artwork").GetComponent<SpriteRenderer>().bounds;
         var cam = game.GameCamera; var p = cam.transform.position;
         float y = cam.orthographicSize, x = y * cam.aspect;
         if (p.x - x < bg.min.x - 0.01f || p.x + x > bg.max.x + 0.01f || p.y - y < bg.min.y - 0.01f || p.y + y > bg.max.y + 0.01f)
@@ -32,7 +32,8 @@ public static class KarmaCameraCoverageChecks
                     game.GameCamera.aspect = ratio;
                     game.Player.ResetForRoom(new Vector2(edge, KarmaSpace.PlayerHalfHeight), true);
                     game.Enemies[0].transform.position = new Vector3(edge, KarmaSpace.GuardianGroundY, 0);
-                    float combatSize = Mathf.Max(frame.extents.y, 25 / ratio);
+                    // LateUpdate letterboxes every display to the same gameplay aspect.
+                    float combatSize = Mathf.Max(frame.extents.y, 25 / (16f / 9));
                     foreach (bool inherited in new[] { false, true })
                     {
                         typeof(KarmaGame).GetField("guardianInheriting", F).SetValue(game, inherited);

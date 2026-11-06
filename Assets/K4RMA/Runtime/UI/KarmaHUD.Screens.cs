@@ -16,7 +16,7 @@ namespace KarmaPrototype
         }
         void TitleScreen()
         {
-            Fill(new Rect(0, 0, 1280, 720), new Color(0.02f, 0.03f, 0.07f, 0.25f));
+            FillScreen(new Color(0.02f, 0.03f, 0.07f, 0.25f));
             Label(330, 160, 620, 100, "K4RMA", title);
             Label(330, 270, 620, 35, "네 수호자 · 세 번의 고유화", centered);
             SpriteArt(new Rect(460, 320, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
@@ -27,7 +27,7 @@ namespace KarmaPrototype
         }
         void StoryScreen()
         {
-            Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.68f));
+            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.68f));
             Label(280, 40, 720, 60, "스승과 제자", title);
             SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             Label(280, 140, 720, 30, (storyPage + 1) + " / " + KarmaStory.Pages.Length, centered);
@@ -46,7 +46,7 @@ namespace KarmaPrototype
         }
         void ControlsScreen()
         {
-            Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.68f));
+            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.68f));
             Label(280, 40, 720, 60, "조작 안내", title);
             SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             string Key(KarmaAction action) => KarmaInput.BindingLabel(action);

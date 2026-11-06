@@ -58,6 +58,7 @@ namespace KarmaPrototype
             if (game == null) return;
             Styles();
             Matrix4x4 saved = GUI.matrix;
+            DrawViewportBorders();
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0),
                 Quaternion.identity, new Vector3(scale, scale, 1));
@@ -75,7 +76,7 @@ namespace KarmaPrototype
                 TopBar();
                 if (game.Paused || game.Phase == RunPhase.Choosing
                     || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory)
-                    Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.78f));
+                    FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
                 if (game.Paused) PauseScreen();
                 else switch (game.Phase)
                 {
@@ -138,6 +139,36 @@ namespace KarmaPrototype
         void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
         static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, 0.95f)); }
+        static void DrawViewportBorders()
+        {
+            Matrix4x4 saved = GUI.matrix;
+            try
+            {
+                GUI.matrix = Matrix4x4.identity;
+                Rect view = KarmaGame.ScreenViewport(Screen.width, Screen.height);
+                Fill(new Rect(0, 0, Screen.width, view.yMin), Color.black);
+                Fill(new Rect(0, view.yMax, Screen.width, Screen.height - view.yMax), Color.black);
+                Fill(new Rect(0, view.yMin, view.xMin, view.height), Color.black);
+                Fill(new Rect(view.xMax, view.yMin, Screen.width - view.xMax, view.height), Color.black);
+            }
+            finally
+            {
+                GUI.matrix = saved;
+            }
+        }
+        static void FillScreen(Color color)
+        {
+            Matrix4x4 saved = GUI.matrix;
+            try
+            {
+                GUI.matrix = Matrix4x4.identity;
+                Fill(new Rect(0, 0, Screen.width, Screen.height), color);
+            }
+            finally
+            {
+                GUI.matrix = saved;
+            }
+        }
         static void Fill(Rect rect, Color color)
         {
             Color old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = old;

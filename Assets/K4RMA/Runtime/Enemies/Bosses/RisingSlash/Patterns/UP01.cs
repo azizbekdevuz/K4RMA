@@ -6,8 +6,7 @@ namespace KarmaPrototype
     {
         sealed class UP01Pattern : RisingBossPattern
         {
-            readonly bool pursuit;
-            public UP01Pattern(KarmaEnemy owner, bool pursuit = false) : base(owner) { this.pursuit = pursuit; }
+            public UP01Pattern(KarmaEnemy owner) : base(owner) { }
             public override IEnumerator Execute()
             {
                 Vector2 start = owner.Position;
@@ -28,7 +27,7 @@ namespace KarmaPrototype
                 float fallTime = Mathf.Clamp(Mathf.Abs(start.y - landing.y) / KarmaSpace.Units(8f), 0.38f, 0.62f);
                 yield return owner.Motion(landing, fallTime, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
                 // The shards burst from the impact point when the downward strike lands.
-                if (empowered || pursuit) new UP04Pattern(owner).Burst(landing);
+                if (empowered) new UP04Pattern(owner).Burst(landing);
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 var blast = owner.Attack(impact, Vector2.zero, area, 0.18f, Settings.landingDamageMultiplier,
                     contact, 0f, visualPose: "GroundRing");

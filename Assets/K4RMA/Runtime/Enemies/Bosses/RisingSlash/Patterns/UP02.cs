@@ -35,7 +35,7 @@ namespace KarmaPrototype
                 if (path != null) Destroy(path.gameObject);
                 yield return owner.Motion(target, DashSeconds(target), bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
                 // The pursuit ends in the air: drop immediately rather than resetting on the floor.
-                yield return new UP01Pattern(owner, pursuit: true).Execute();
+                yield return new UP01Pattern(owner).Execute();
             }
         }
     }

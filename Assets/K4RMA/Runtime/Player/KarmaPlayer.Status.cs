@@ -16,7 +16,7 @@ namespace KarmaPrototype
             // A complete recovery interval before another hit is allowed.
             invulnerableUntil = Mathf.Max(invulnerableUntil, stunUntil + 0.25f);
             body.linearVelocity = Vector2.zero;
-            techniques.ClearDirectionTap();
+
         }
         public void ConfineArena(float left, float right)
         {

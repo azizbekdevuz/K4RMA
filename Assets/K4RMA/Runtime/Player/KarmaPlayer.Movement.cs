@@ -39,12 +39,18 @@ namespace KarmaPrototype
             }
             else
             {
-                body.gravityScale = game.Config.gravityScale;
+                if (airSlashHoverLeft > 0)
+                {
+                    airSlashHoverLeft = Mathf.Max(0, airSlashHoverLeft - Time.fixedDeltaTime);
+                    body.gravityScale = airSlashHoverLeft > 0 ? 0 : game.Config.gravityScale;
+                }
+                else body.gravityScale = game.Config.gravityScale;
                 float horizontal = move * game.Config.moveSpeed;
                 if (airRecoveryLeft > 0)
                 {
                     float weight = Mathf.Clamp01(airRecoveryLeft / Mathf.Max(0.02f, game.Config.Techniques.airSlashRecovery));
-                    horizontal = Mathf.Lerp(horizontal, airLaunchX, weight * weight);
+                    horizontal = Mathf.Lerp(horizontal, airSlashExitX, weight * weight
+                        * game.Config.Techniques.airSlashMomentumReturn);
                     airRecoveryLeft = Mathf.Max(0, airRecoveryLeft - Time.fixedDeltaTime);
                 }
                 body.linearVelocity = new Vector2(horizontal, body.linearVelocity.y);

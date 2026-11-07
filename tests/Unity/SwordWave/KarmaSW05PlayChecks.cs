@@ -248,7 +248,26 @@ public static class KarmaSW05PlayChecks
             Check(diagonal, "outer swords fall on strongly slanted trajectories");
             Check(leftTip <= KarmaStage.ArenaLeft + 0.3f && rightTip >= KarmaStage.ArenaRight - 0.3f,
                 "rain includes the entire arena width and both edges");
-            Check(attacks[0].Visual.sprite.name == "SW05JudgementSword", "released sword uses refined weapon art");
+            Check(attacks[0].Visual.sprite.name == "SW05JudgementSword_v2", "released sword uses refined weapon art");
+            // Exercise the real player counter/contact path without moving the
+            // falling blade or changing the physical escape fixture.
+            float beforeParryHealth = game.Player.Health;
+            int beforeParries = game.Player.ParryCount;
+            Set(game.Player, "invulnerableUntil", 0f); Set(game.Player, "guardUntil", 0f);
+            game.Player.BeginCounter();
+            Vector2 parryPoint = game.Player.GetComponent<Collider2D>().bounds.center;
+            enemy.TryAttackHit(parryPoint, parryPoint, Vector2.one, 1,
+                Get<KarmaAttackContact>(attacks[0], "contact"), 0, sourcePattern: EnemyAttack.SW05);
+            Check(game.Player.ParryCount == beforeParries + 1 && game.Player.Health == beforeParryHealth,
+                "ultimate parry blocks damage through the real counter path");
+            Check(Get<bool>(enemy, "running") && !enemy.Stunned && !Get<bool>(enemy, "pendingParry") && enemy.Invulnerable,
+                "ultimate parry neither queues stun nor interrupts the committed cast");
+            // An older ordinary projectile also cannot stun a casting ultimate.
+            Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
+            enemy.TryAttackHit(parryPoint, parryPoint, Vector2.one, 1,
+                new KarmaAttackContact(), 0, parryStun: true, sourcePattern: EnemyAttack.SW01);
+            Check(game.Player.ParryCount == beforeParries + 2 && !Get<bool>(enemy, "pendingParry"),
+                "parrying an older ordinary projectile during the ultimate cannot stun the boss");
             var flightTints = new List<Color>();
             foreach (var blade in attacks) flightTints.Add(blade.Visual.color);
             var firstShot = Get<KarmaAerialSwordPlanner.Shot>(attacks[0], "shot");
@@ -259,6 +278,8 @@ public static class KarmaSW05PlayChecks
             Check(Get<float>(attacks[0], "damage") >= ordinaryDamage * 2.5f - 0.0001f, "ultimate deals at least 2.5x ordinary damage");
             Check(attacks[0].GetComponentsInChildren<TrailRenderer>().Length > 0, "falling sword has tapered wake");
             await Seconds(0.035f); Capture("rain");
+            Check(!enemy.Stunned && Get<bool>(enemy, "running") && Forming().Length == 0,
+                "ultimate continues its existing rain after parry without spawning stun feedback");
             await Until(() => Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, 3);
             await Seconds(0.04f); Capture("impact");
             bool contactShadow = false;
@@ -274,7 +295,7 @@ public static class KarmaSW05PlayChecks
             foreach (var sr in Root.GetComponentsInChildren<SpriteRenderer>())
                 if (sr.name == "SW05 wood-embedded sword / no damage")
                 {
-                    Check(sr.sprite.name == "SW05JudgementSword", "wood contact keeps the airborne weapon picture");
+                    Check(sr.sprite.name == "SW05JudgementSword_v2", "wood contact keeps the airborne weapon picture");
                     Check(flightTints.Exists(tint => Mathf.Abs(tint.r - sr.color.r) + Mathf.Abs(tint.g - sr.color.g)
                         + Mathf.Abs(tint.b - sr.color.b) < 0.001f), "embedded sword retains its airborne depth tint");
                 }
@@ -299,7 +320,13 @@ public static class KarmaSW05PlayChecks
             Check(changed, "successive slams have different landing layouts");
             Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f, "boss lands");
             Check(!Get<bool>(enemy, "fullShield"), "landing releases shield");
-            Check(Root.childCount == 0, "completion cleans pattern objects");
+            await Seconds(0.04f);
+            foreach (Transform child in Root)
+                Check(child.name == "Sword persistent attacks" && child.childCount == 0,
+                    "completion leaves only the empty persistent attack container");
+            Check(Root.GetComponentsInChildren<KarmaBossAttack>(true).Length == 0
+                && Root.GetComponentsInChildren<KarmaSW05VFX>(true).Length == 0,
+                "completion cleans every live and inactive attack/VFX");
             Force(); await Until(() => Forming().Length > 0, 8);
             Call(enemy, "InterruptPattern"); await Seconds(0.1f);
             Check(Forming().Length == 0 && Root.GetComponentsInChildren<KarmaSW05VFX>().Length == 0, "interrupt cleans sky blades and VFX");

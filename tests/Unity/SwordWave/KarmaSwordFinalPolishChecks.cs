@@ -42,6 +42,10 @@ public static class KarmaSwordFinalPolishChecks
         SessionState.SetBool(Key + ".PresentationOnly", false);
         SessionState.SetBool(Key + ".LeftOnly", false);
         SessionState.SetBool(Key + ".ScarOnly", false);
+        SessionState.SetBool(Key + ".MovementOnly", false);
+        SessionState.SetBool(Key + ".ParryStunOnly", false);
+        SessionState.SetBool(Key + ".SkipCounterChecks", false);
+        SessionState.SetBool(Key + ".GroundedArtAndParry", false);
         typeof(KarmaSwordPlayChecks).GetMethod("CompilePlayerScripts", F).Invoke(null, null);
         SessionState.SetBool(Key, true); SessionState.SetString(Key + ".Id", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
@@ -50,6 +54,10 @@ public static class KarmaSwordFinalPolishChecks
     public static void RunPresentationOnly() { RunBatch(); SessionState.SetBool(Key + ".PresentationOnly", true); }
     public static void RunLeftPresentation() { RunPresentationOnly(); SessionState.SetBool(Key + ".LeftOnly", true); }
     public static void RunScarPresentation() { RunPresentationOnly(); SessionState.SetBool(Key + ".ScarOnly", true); }
+    public static void RunMovementOnly() { RunBatch(); SessionState.SetBool(Key + ".MovementOnly", true); }
+    public static void RunParryStunOnly() { RunBatch(); SessionState.SetBool(Key + ".ParryStunOnly", true); }
+    public static void RunStunStateOnly() { RunParryStunOnly(); SessionState.SetBool(Key + ".SkipCounterChecks", true); }
+    public static void RunGroundedArtAndParry() { RunBatch(); SessionState.SetBool(Key + ".GroundedArtAndParry", true); }
     static void Shot(string name)
     {
         var camera = Camera.main; Check(camera != null, "real game camera");
@@ -76,8 +84,11 @@ public static class KarmaSwordFinalPolishChecks
         string pose = pattern == EnemyAttack.SW03 ? "SW03_RisingBlade_v5" : KarmaWaveArtwork.Pose(pattern);
         var core = KarmaWaveArtwork.CorePixels(pose); var sr = shot.Visual;
         Check(sr.sprite == KarmaWaveArtwork.Sprite(pose), "released shot uses expected final sprite");
-        Check(Mathf.Abs(sr.transform.localScale.x * core.width / sr.sprite.pixelsPerUnit - size.x) < 0.002f
-            && Mathf.Abs(sr.transform.localScale.y * core.height / sr.sprite.pixelsPerUnit - size.y) < 0.002f, "cutting core maps to unchanged damage rectangle");
+        Check(Mathf.Abs(sr.transform.localScale.x * core.width / sr.sprite.pixelsPerUnit - size.x) < 0.002f,
+            "cutting width maps to unchanged damage rectangle");
+        if (pattern != EnemyAttack.SW03)
+            Check(Mathf.Abs(sr.transform.localScale.y * core.height / sr.sprite.pixelsPerUnit - size.y) < 0.002f,
+                "cutting height maps to unchanged damage rectangle");
         if (Mathf.Abs(velocity.y) < 0.0001f && velocity.sqrMagnitude > 0.01f && pattern != EnemyAttack.SW04)
             Check(sr.flipX == (velocity.x < 0) && !sr.flipY, "horizontal crescent mirrors without vertical inversion");
         if (pattern == EnemyAttack.SWBasic && velocity.sqrMagnitude < 0.01f)
@@ -85,6 +96,13 @@ public static class KarmaSwordFinalPolishChecks
         if (pattern == EnemyAttack.SW03)
         {
             Check(size == new Vector2(4.75f, 30), "SW03 physical 4.75 x 30 blade retained");
+            Vector2 basePixel = new Vector2(core.center.x, core.yMin);
+            Vector3 foot = sr.transform.TransformPoint((basePixel - sr.sprite.pivot) / sr.sprite.pixelsPerUnit);
+            Vector3 tip = sr.transform.TransformPoint((new Vector2(core.center.x, core.yMax) - sr.sprite.pivot) / sr.sprite.pixelsPerUnit);
+            Check(Mathf.Abs(foot.y) < 0.002f && Mathf.Abs(foot.x - shot.transform.position.x) < 0.002f,
+                "SW03 bright ground contact starts at the floor in the warned cell");
+            Check(tip.y <= Camera.main.transform.position.y + Camera.main.orthographicSize - 0.49f
+                && tip.y > foot.y + 5, "complete SW03 blade fits below the screen ceiling");
             Check(sr.transform.Find("SW03 upward inner echo / no damage") == null, "no duplicate full-height echo renderer");
             var light = sr.transform.Find("Attack radiance"); Check(light == null || !light.gameObject.activeInHierarchy, "no overlapping full-height glow columns");
         }
@@ -200,6 +218,111 @@ public static class KarmaSwordFinalPolishChecks
         finally { InputSystem.RemoveDevice(keyboard); }
         Log("SW04 real K parries 1/2/3/4, immediate later-contact suppression, pending cancellation, normal hit/guard survival and fresh reuse");
     }
+    static async Task ParryStunChecks()
+    {
+        foreach (int stage in new[] { 2, 3 })
+        foreach (var pattern in new[] { EnemyAttack.SWBasic, EnemyAttack.SW01, EnemyAttack.SW02,
+            EnemyAttack.SW03, EnemyAttack.SW04, EnemyAttack.SW05 })
+        {
+            if (stage != 3 && pattern == EnemyAttack.SW05) continue;
+            Reset(); typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, stage);
+            Place(35); await Seconds(0.1f); Force(pattern);
+            if (pattern == EnemyAttack.SW04)
+            {
+                await Until(() => (bool)Get(Counter, "Guarding")); Enemy.TakeDamage(1);
+            }
+            await Until(() => Root.GetComponentsInChildren<KarmaBossAttack>().Length > 0
+                || Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length > 0);
+            var attacks = Root.GetComponentsInChildren<KarmaBossAttack>();
+            object active = attacks.Length > 0 ? (object)attacks[0] : Root.GetComponentsInChildren<KarmaSW05RainBlade>()[0];
+            var contact = (KarmaAttackContact)Get(active, "contact");
+            Set(game.Player, "invulnerableUntil", 0f); Set(game.Player, "guardUntil", 0f);
+            game.Player.BeginCounter(); int parries = game.Player.ParryCount;
+            Vector2 at = game.Player.GetComponent<Collider2D>().bounds.center;
+            bool wasRunning = (bool)Get(Enemy, "running");
+            Enemy.TryAttackHit(at, at, Vector2.one, 1, contact, 0, sourcePattern: pattern);
+            if (stage == 3)
+            {
+                Check(game.Player.ParryCount == parries + 1 && !(bool)Get(Enemy, "pendingParry")
+                    && !Enemy.Stunned && (bool)Get(Enemy, "running") == wasRunning, pattern + " final inheritance accepts parry without stun or interruption");
+                // Also exercise the host's explicit stun and shield-break flags.
+                Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
+                Enemy.TryAttackHit(at, at, Vector2.one, 1, new KarmaAttackContact(true), 0,
+                    parryStun: true, shieldBreak: true, sourcePattern: pattern);
+                Check(game.Player.ParryCount == parries + 2 && !(bool)Get(Enemy, "pendingParry"),
+                    pattern + " final inheritance clears host-queued parry stun");
+                await Seconds(0.1f);
+                var finalOrbit = Enemy.transform.Find("Sword stunned orbit");
+                Check(!Enemy.Stunned && (finalOrbit == null || !finalOrbit.gameObject.activeInHierarchy),
+                    pattern + " final inheritance has no delayed stun or stun marker");
+                await Until(() => !(bool)Get(Enemy, "running") && !(bool)Get(Counter, "guardResponseRunning"));
+                Check(!Enemy.Stunned, pattern + " final inheritance completes normally after parry");
+                Log(pattern + ": final inheritance parry succeeds without stun; attack completes");
+                continue;
+            }
+            Check(game.Player.ParryCount == parries + 1 && (bool)Get(Enemy, "pendingParry"), pattern + " real successful contact queues boss stun");
+            Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0
+                && Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, pattern + " suppresses every live contact synchronously");
+            await Until(() => Enemy.Stunned);
+            float start = Enemy.FightSeconds, deadline = (float)Get(Enemy, "stunnedUntil");
+            Vector2 position = Enemy.Position;
+            Check(Mathf.Abs(deadline - start - 2) < 0.02f, pattern + " stun deadline is exactly two combat seconds");
+            Check(!Enemy.Armored && !Enemy.Invulnerable && !(bool)Get(Enemy, "running"), pattern + " releases armor/ultimate invulnerability and interrupts attack");
+            await Seconds(0.1f);
+            var orbit = Enemy.transform.Find("Sword stunned orbit");
+            var picture = ((Transform)Get(Enemy, "art")).Find("Guardian sprite").GetComponent<SpriteRenderer>();
+            var feedback = Enemy.GetComponent<KarmaSwordStunFeedback>();
+            Shot("parry-stun-" + pattern);
+            Check(orbit != null && orbit.gameObject.activeInHierarchy && orbit.GetComponentsInChildren<LineRenderer>().Length == 4,
+                pattern + " has a visible orbit and three stars; found=" + (orbit != null)
+                + ", visible=" + (orbit != null && orbit.gameObject.activeInHierarchy)
+                + ", lines=" + (orbit != null ? orbit.GetComponentsInChildren<LineRenderer>(true).Length : -1)
+                + ", component=" + (feedback != null && feedback.isActiveAndEnabled));
+            Check(picture.color.r < 0.7f && picture.color.b > picture.color.r && ((KarmaCharacterAnimator)Get(Enemy, "animator")).CurrentPose == "Hurt",
+                pattern + " distinct stunned body tint and hurt pose");
+            Check(Quaternion.Angle(picture.transform.localRotation, Quaternion.identity) > 5, "stunned body visibly leans");
+            Check(orbit.GetComponentsInChildren<Collider2D>().Length == 0 && orbit.GetComponentsInChildren<KarmaBossAttack>().Length == 0,
+                "stun marker is cosmetic and outside incoming damage artwork");
+            float health = Enemy.Health; Enemy.TakeDamage(1);
+            Check(Enemy.Health < health && (float)Get(Enemy, "stunnedUntil") == deadline, "damage during stun is accepted without extending its duration");
+            // A consumed contact cannot re-trigger or extend this stun.
+            Enemy.TryAttackHit(at, at, Vector2.one, 1, contact, 0, sourcePattern: pattern);
+            Check(!(bool)Get(Enemy, "pendingParry") && (float)Get(Enemy, "stunnedUntil") == deadline, "duplicate parry contact cannot extend stun");
+            if (pattern == EnemyAttack.SW04)
+            {
+                Shot("parry-stun-active");
+                Vector3 star = orbit.GetChild(1).localPosition;
+                Quaternion lean = picture.transform.localRotation;
+                typeof(KarmaGame).GetMethod("TogglePause", F).Invoke(game, null);
+                float clock = Enemy.FightSeconds;
+                try
+                {
+                    await Task.Delay(150);
+                    Check(Enemy.FightSeconds == clock && orbit.GetChild(1).localPosition == star
+                        && Quaternion.Angle(picture.transform.localRotation, lean) < 0.01f, "pause freezes stun timer, stars and body lean");
+                }
+                finally { typeof(KarmaGame).GetMethod("TogglePause", F).Invoke(game, null); }
+            }
+            await Until(() => Enemy.FightSeconds >= deadline - 0.1f);
+            Check(Enemy.Stunned && Vector2.Distance(position, Enemy.Position) < 0.001f
+                && Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, pattern + " cannot move or attack before two seconds");
+            await Until(() => !Enemy.Stunned);
+            Check(Enemy.FightSeconds >= deadline && Enemy.FightSeconds <= deadline + 0.04f, pattern + " recovers at the two-second boundary");
+            await Seconds(0.05f);
+            Check(!orbit.gameObject.activeInHierarchy && picture.color.r > 0.9f, "recovery removes the orbit and restores body tint");
+            Check(Enemy.GetComponentsInChildren<KarmaSwordStunFeedback>(true).Length == 1, "stun feedback is reused without accumulating components");
+            if (pattern == EnemyAttack.SW04) Shot("parry-stun-recovered");
+            Log(pattern + ": successful parry, two-second stun, tint/lean/orbit, damage and recovery verified");
+        }
+        // Cleanup while still stunned must not leave the marker alive.
+        Reset(); await Seconds(0.1f); Set(Enemy, "pendingParry", true); await Until(() => Enemy.Stunned); await Seconds(0.05f);
+        var canceled = Enemy.transform.Find("Sword stunned orbit"); Enemy.CancelCombat();
+        await Task.Delay(80); Check(canceled == null || !canceled.gameObject.activeInHierarchy, "combat cancellation hides stun marker");
+        Reset(); await Seconds(0.1f); Set(Enemy, "pendingParry", true); await Until(() => Enemy.Stunned); await Seconds(0.05f);
+        var dying = Enemy.transform.Find("Sword stunned orbit"); Enemy.TakeDamage(Enemy.MaxHealth * 2);
+        await Task.Delay(80); Check(dying == null || !dying.gameObject.activeInHierarchy, "death removes stun marker");
+        Log("stun pause, cancellation and death cleanup verified");
+    }
     static async Task CounterPresentation()
     {
         var keyboard = InputSystem.AddDevice<Keyboard>(); typeof(KarmaSwordRandomParryChecks).GetField("keyboard", F).SetValue(null, keyboard);
@@ -207,17 +330,33 @@ public static class KarmaSwordFinalPolishChecks
         var probe = new GameObject("SW04 actual flight presentation").AddComponent<KarmaSwordDashFrameProbe>();
         probe.After = () =>
         {
+            // A successful first parry can drain the whole volley this frame.
+            // Capture the world-owned success cue even after its root is gone.
+            if (!parry && game.Player.ParryCount > 0) { parry = true; Shot("SW04-real-parry-disintegration"); }
             var volley = Get(Counter, "activeVolley"); if (volley == null) return;
             var shots = (KarmaBossAttack[])Get(volley, "Shots");
             if (!ward && shots[0] == null) { ward = true; Shot("SW04-ward-deployed"); }
             if (!release && shots[0] != null) { release = true; releaseFrame = Time.frameCount; Shot("SW04-counter-release"); }
             if (release && flight < 3 && Time.frameCount >= releaseFrame + 4 * (flight + 1)) { Shot("SW04-flight-" + flight); flight++; }
-            if (!parry && game.Player.ParryCount > 0) { parry = true; Shot("SW04-real-parry-disintegration"); }
         };
-        try { await Invoke(typeof(KarmaSwordRandomParryChecks), "ParryScenario", "B-hit1-parry2", 1, false, false, false); }
+        try
+        {
+            await Invoke(typeof(KarmaSwordRandomParryChecks), "ParryScenario", "B-hit1-parry2", 1, false, false, false);
+            // The shortened volley may finish before this frame's LateUpdate.
+            // Let the observer render its world-owned success cue before teardown.
+            await Seconds(0.05f);
+        }
         finally { probe.After = null; UnityEngine.Object.Destroy(probe.gameObject); InputSystem.RemoveDevice(keyboard); }
         Check(ward && release && parry, "actual SW04 formation, live release and real-K disintegration captures");
         Log("SW04 formation / actual flight + 4-frame sequence / real-K parry and harmless disintegration captured");
+    }
+    static async Task MovementChecks()
+    {
+        await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Samples");
+        await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Safety");
+        await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Campaign");
+        foreach (int direction in new[] { -1, 1 })
+        { await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Render", direction, false); await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Render", direction, true); }
     }
     static async void Run()
     {
@@ -243,7 +382,17 @@ public static class KarmaSwordFinalPolishChecks
             Check(ReferenceEquals(KarmaWaveArtwork.Sprite("SW01_CrescentWave_v4"), KarmaWaveArtwork.Sprite("SW02_AimedSlash")), "SW01 and SW02 use the same complete Sprite object");
             typeof(KarmaSwordPlayChecks).GetMethod("CheckNewArtworkImports", F).Invoke(null, null);
             await AccentCancellation();
-            if (SessionState.GetBool(Key + ".PresentationOnly", false))
+            if (SessionState.GetBool(Key + ".GroundedArtAndParry", false))
+            {
+                incomingDamage = false;
+                await Pattern(EnemyAttack.SW03, 1); await Pattern(EnemyAttack.SW03, 1, true);
+                await ParryStunChecks();
+            }
+            else if (SessionState.GetBool(Key + ".ParryStunOnly", false))
+            { if (!SessionState.GetBool(Key + ".SkipCounterChecks", false)) await CounterChecks(); await ParryStunChecks(); }
+            else if (SessionState.GetBool(Key + ".MovementOnly", false))
+                await MovementChecks();
+            else if (SessionState.GetBool(Key + ".PresentationOnly", false))
             {
                 // Capture attack art without the stress test's constant damage overlay.
                 incomingDamage = false;
@@ -264,7 +413,7 @@ public static class KarmaSwordFinalPolishChecks
                 await Pattern(EnemyAttack.SW03, 1);
                 await CounterPresentation();
                 foreach (int direction in new[] { -1, 1 }) { await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Render", direction, false); await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Render", direction, true); }
-                Log("unchanged cyan movement afterimages rendered for both ordinary 16-unit and wall 24-unit directions");
+                Log("cyan movement afterimages rendered for both ordinary 32-unit and wall 48-unit directions");
                 }
                 }
             }
@@ -278,17 +427,20 @@ public static class KarmaSwordFinalPolishChecks
                 await Pattern(EnemyAttack.SW01, side); await Pattern(EnemyAttack.SW02, side);
             }
             await LockTest(); await Pattern(EnemyAttack.SW03, 1); await Pattern(EnemyAttack.SW03, 1, true);
-            await Impact(); await CounterChecks();
+            await Impact(); await CounterChecks(); await ParryStunChecks(); await CounterPresentation();
             await Invoke(typeof(KarmaSwordOverhaulPlayChecks), "CheckScarEscape");
             await Invoke(typeof(KarmaSwordPlayChecks), "CheckForcedInterruption");
-            await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Samples"); await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Safety"); await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Campaign");
+            await MovementChecks();
             // Current health-gated SW05 is covered by the separate sw05 suite.
             }
             foreach (var t in new[] { typeof(KarmaSwordSlideDistanceChecks), typeof(KarmaSwordWallCounterChecks), typeof(KarmaSwordOverhaulPlayChecks) })
                 results.AddRange((List<string>)t.GetField("results", F).GetValue(null));
             foreach (string folder in new[] { "output/random-parry2/" + id, "output/wall-counter/" + id }) foreach (var file in Directory.GetFiles(folder)) File.Copy(file, output + "/" + Path.GetFileName(file), true);
             File.Copy("output/validation/sword-player-compilation.txt", output + "/player-compilation.txt", true);
-            Check(error == null, "no game runtime error: " + error); results.Insert(0, "PASS: red sword final polish, real render and combat regressions");
+            Check(error == null, "no game runtime error: " + error);
+            results.Insert(0, SessionState.GetBool(Key + ".MovementOnly", false)
+                ? "PASS: sword avoidance, actual slide distances, pursuit and rendered afterimages"
+                : "PASS: red sword final polish, real render and combat regressions");
         }
         catch (Exception e) { results.Insert(0, "FAIL: " + e); Debug.LogException(e); exit = 1; }
         File.WriteAllLines(output + "/result.txt", results); Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(exit);

@@ -25,8 +25,9 @@ MonoBehaviour:
   neutralGuardian: {fileID: 180812220, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
   dojoBackground: {fileID: 21300000, guid: 105788dea150a46078f38ce8d5054b63, type: 3}
   mountainBackground: {fileID: 21300000, guid: f50e2414a6e4a472396c88342242ada4, type: 3}
-  mountainPanorama: {fileID: 21300000, guid: 925f5a6797694273bcb485ea98c3e612, type: 3}
-  dojoPanorama: {fileID: 21300000, guid: 73ea2f7754e4490ea6c1832b35ad28f2, type: 3}
+  mountainPanorama: {fileID: 21300000, guid: 743f9494aeae49d994242ccfc5a298e0, type: 3}
+  panoramaCoverage: 2
+  dojoPanorama: {fileID: 21300000, guid: ffa6793fdf054c498d28c174e39a59f1, type: 3}
   menuBackground: {fileID: 2800000, guid: c8f392333173940a496c0588b30e4551, type: 3}
   skillIcons:
   - {fileID: -765498871, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}

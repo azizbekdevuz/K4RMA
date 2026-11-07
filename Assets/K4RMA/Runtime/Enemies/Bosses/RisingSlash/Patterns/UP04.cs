@@ -10,57 +10,63 @@ namespace KarmaPrototype
             public UP04Pattern(KarmaEnemy owner) : base(owner) { }
             public override IEnumerator Execute()
             {
-                Vector2 start = owner.Position;
-                owner.fullShield = true;
-                owner.state = ActionState.Approach;
-                KarmaRisingPolish.ShieldPlant(owner.effectsRoot, start, KarmaSpace.Units(new Vector2(2.2f, 2.6f)));
-                KarmaRisingPolish.AegisBreak(owner.effectsRoot, start, RisingSlashRules.Up04AscentSeconds);
-                float rise = RisingSlashRules.PursuitRiseAboveGround(Settings.riseHeight, KarmaSpace.Units(2.4f), KarmaSpace.Units(5.2f));
-                float apexY = KarmaSpace.GuardianGroundY + rise;
-                Vector2 apex = new Vector2(Mathf.Clamp(start.x, KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), apexY);
-                owner.animator.HoldRisingPose("Rising", RisingSlashRules.Up04AscentSeconds);
-                yield return owner.Motion(apex, RisingSlashRules.Up04AscentSeconds, Vector2.zero);
-                Vector2 landing = new Vector2(Mathf.Clamp(start.x + owner.direction * KarmaSpace.Units(1.2f), KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.GuardianGroundY);
-                owner.animator.HoldRisingPose("Fall", RisingSlashRules.Up04DescentSeconds);
-                yield return owner.Motion(landing, RisingSlashRules.Up04DescentSeconds, bodyAttackSize);
-                owner.animator.HoldRisingPose("Slash", 0.4f);
-                Vector2 origin = new Vector2(landing.x, KarmaSpace.Units(2.35f));
-                float life = Settings.fragmentLifetime;
-                int count = RisingSlashRules.FragmentDegrees.Length;
-                var warnings = new SpriteRenderer[count];
-                var ends = new Vector2[count];
-                var velocities = new Vector2[count];
-                var launches = new Vector2[count];
-                Vector2 shard = KarmaSpace.Units(new Vector2(1.15f, 0.78f));
-                for (int i = 0; i < count; i++)
+                // Legacy practice ID previews the passive through the empowered landing attack.
+                yield return new UP01Pattern(owner).Execute();
+            }
+            public void Burst(Vector2 landing)
+            {
+                Vector2 origin = landing + Vector2.up * KarmaSpace.Units(0.35f);
+                float life = Mathf.Max(Settings.fragmentLifetime, 2f);
+                Transform root = ((RisingBossBehavior)owner.behavior).FragmentsRoot;
+                Vector2 shard = KarmaSpace.Units(new Vector2(1.05f, 0.675f));
+                KarmaRisingPolish.ShieldPlant(root, landing, KarmaSpace.Units(new Vector2(5.4f, 4.8f)));
+                const int lowerCount = 9, upperCount = 5;
+                for (int i = 0; i < lowerCount + upperCount && owner.Active; i++)
                 {
-                    float rad = RisingSlashRules.FragmentDegrees[i] * Mathf.Deg2Rad;
-                    var dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-                    launches[i] = origin + dir * KarmaSpace.Units(0.9f);
-                    var aim = RisingSlashRules.AimFragment(launches[i].x, launches[i].y, RisingSlashRules.FragmentDegrees[i], life,
-                        KarmaStage.ArenaLeft, KarmaStage.ArenaRight, 0.8f, KarmaSpace.Units(14f), KarmaSpace.Units(7.4f), KarmaSpace.Units(0.45f), KarmaSpace.Units(3.5f), 0.35f);
-                    ends[i] = new Vector2(aim.EndX, aim.EndY);
-                    velocities[i] = new Vector2(aim.VelocityX, aim.VelocityY);
-                    warnings[i] = owner.PathMark(launches[i], ends[i], shard);
-                }
-                owner.state = ActionState.Telegraph;
-
-                yield return owner.Wait(owner.Warning(0.48f));
-                for (int i = 0; i < warnings.Length; i++) if (warnings[i] != null) Destroy(warnings[i].gameObject);
-                owner.fullShield = false;
-                KarmaRisingPolish.ShieldPlant(owner.effectsRoot, landing, KarmaSpace.Units(new Vector2(2.4f, 2.4f)));
-                KarmaRisingPolish.AegisBreak(owner.effectsRoot, landing, 0.55f);
-                for (int i = 0; i < count && owner.Active; i++)
-                {
-                    var shot = owner.Attack(launches[i], velocities[i], shard, life, Settings.fragmentDamageMultiplier, new KarmaAttackContact(), 0f, visualPose: "Blade", parryStun: RisingSlashRules.FragmentParryStun);
+                    // More lower-half sectors, with a fresh direction inside each sector per burst.
+                    bool lower = i < lowerCount;
+                    int sector = lower ? i : i - lowerCount;
+                    float sectorWidth = 180f / (lower ? lowerCount : upperCount);
+                    float sectorStart = (lower ? 180f : 0f) + sector * sectorWidth;
+                    float degrees = sectorStart + Random.Range(sectorWidth * 0.15f, sectorWidth * 0.85f);
+                    float rad = degrees * Mathf.Deg2Rad;
+                    Vector2 launch = origin + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * KarmaSpace.Units(1.35f);
+                    AimFragment(landing, launch, degrees, life, out _, out var velocity);
+                    var shot = owner.Attack(launch, velocity, shard, life, Settings.fragmentDamageMultiplier,
+                        new KarmaAttackContact(), 0f, visualPose: "Blade", parryStun: true, parent: root);
                     if (shot == null) continue;
                     shot.name = "방패 파편";
                     shot.Repaint(KarmaRisingArt.Get("Fragment" + (i % 8)), false);
-                    if (shot.Visual != null) shot.Visual.color = Color.white;
+                    if (shot.Visual != null)
+                    {
+                        shot.Visual.color = new Color(0.65f, 1f, 1f, 1f);
+                        shot.Visual.sortingOrder = 35;
+                    }
                 }
-                yield return owner.Wait(life);
-                yield return owner.Recovery(1.15f);
             }
+            void AimFragment(Vector2 center, Vector2 origin, float degrees, float life, out Vector2 end, out Vector2 velocity)
+            {
+                var dir = new Vector2(Mathf.Cos(degrees * Mathf.Deg2Rad), Mathf.Sin(degrees * Mathf.Deg2Rad));
+                if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
+                dir.Normalize();
+                // Cap every ray at the same 35-world-unit radius from the impact center.
+                Vector2 offset = origin - center;
+                float projection = Vector2.Dot(offset, dir);
+                float radialTravel = Mathf.Max(0f, -projection + Mathf.Sqrt(Mathf.Max(0f,
+                    projection * projection + 35f * 35f - offset.sqrMagnitude)));
+                float limit = radialTravel;
+                if (Mathf.Abs(dir.x) > 0.02f)
+                {
+                    float wall = dir.x > 0 ? KarmaStage.ArenaRight - 0.8f : KarmaStage.ArenaLeft + 0.8f;
+                    limit = Mathf.Min(limit, (wall - origin.x) / dir.x);
+                }
+                if (dir.y > 0.02f) limit = Mathf.Min(limit, (KarmaSpace.Units(7.4f) - origin.y) / dir.y);
+                else if (dir.y < -0.02f) limit = Mathf.Min(limit, (KarmaSpace.Units(0.45f) - origin.y) / dir.y);
+                limit = Mathf.Clamp(limit, 0f, radialTravel);
+                end = origin + dir * limit;
+                velocity = dir * (limit / Mathf.Max(0.35f, life));
+            }
+
         }
     }
 }

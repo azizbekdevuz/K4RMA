@@ -21,7 +21,7 @@ class BossBoundaries(unittest.TestCase):
         for path in BOSSES.rglob('*.cs'):
             owned_types.update(re.findall(r'\b(?:class|struct|enum)\s+(\w+)', code(path)))
         owned_types -= SHARED_PARTIALS
-        for path in RUNTIME.rglob('*.cs'):
+        for path in [*RUNTIME.rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Core').rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Editor').rglob('*.cs')]:
             if BOSSES in path.parents:
                 continue
             text = code(path)
@@ -43,6 +43,11 @@ class BossBoundaries(unittest.TestCase):
                 with self.subTest(path=path.relative_to(ROOT)):
                     self.assertFalse(set(re.findall(r'\b\w+\b', code(path))) & foreign)
 
+    def test_shared_enemy_host_does_not_choose_a_boss_effect(self):
+        for path in (RUNTIME / 'Enemies').glob('*.cs'):
+            with self.subTest(path=path.relative_to(ROOT)):
+                self.assertNotRegex(code(path), r'\bEssence\.(?:Guard|SwordWave|RisingSlash)\b')
+
     def test_owned_state_and_presentation_stay_with_the_owner(self):
         members = {
             'SwordWave': {'waveSwingAt', 'wavePhase', 'wavePhaseSwingAt', 'waveReleasedUntil',
@@ -50,7 +55,7 @@ class BossBoundaries(unittest.TestCase):
                           'ShowSwordRetreat', 'ShowGuardianSpacing', 'ConfigureSwordPresentation',
                           'GuardianDamageSprite', 'GuardianDamageScale', 'GuardianPhaseOverridesPose'},
             'Guard': {'shieldUntil', 'nextShield', 'shieldWarningUntil', 'frontalGuard',
-                      'guardStagger', 'heavyStrike', 'EndHeavyStrike', 'ConfigureHeavyStrike',
+                      'TryGuardCircleHit', 'guardStagger', 'heavyStrike', 'EndHeavyStrike', 'ConfigureHeavyStrike',
                       'PrepareHeavyStrike', 'SwingHeavyStrike', 'HeavyHandPosition'},
             'RisingSlash': {'ConfigureRisingPresentation'},
         }
@@ -64,6 +69,27 @@ class BossBoundaries(unittest.TestCase):
     def test_boss_owned_tests_are_in_owner_folders(self):
         for path in (ROOT / 'tests/Unity').glob('*.cs'):
             self.assertNotRegex(path.name, r'Karma(?:Sword|SW05|Guard|Rising)')
+
+    def test_boss_art_and_tools_use_owned_paths(self):
+        self.assertFalse((ROOT / 'Assets/K4RMA/Art').exists())
+        self.assertFalse((ROOT / 'Assets/K4RMA/Art.meta').exists())
+        for path in (ROOT / 'tools').glob('*sword*'):
+            self.fail(f'SwordWave tools belong in tools/SwordWave: {path.name}')
+
+    def test_sprite_library_sources_exist_and_stay_with_the_owner(self):
+        libraries = [ROOT / 'Assets/K4RMA/Resources/KarmaSpriteLibrary.asset',
+                     *BOSSES.rglob('*BossSprites.asset')]
+        for library in libraries:
+            owner = next((name for name in OWNERS if BOSSES / name in library.parents), None)
+            for source in re.findall(r'^\s*source: (.+)$', library.read_text(), flags=re.M):
+                with self.subTest(library=library.relative_to(ROOT), source=source):
+                    self.assertTrue((ROOT / source).exists(), source)
+                    if owner is None:
+                        self.assertNotIn('Arts/Bosses/', source)
+                    else:
+                        for other in OWNERS:
+                            if other != owner:
+                                self.assertNotIn('Arts/Bosses/' + other + '/', source)
 
     def test_boss_registrations_are_local_and_preserved(self):
         for owner, name in [('SwordWave', 'Sword'), ('RisingSlash', 'Rising'), ('Guard', 'Guard')]:

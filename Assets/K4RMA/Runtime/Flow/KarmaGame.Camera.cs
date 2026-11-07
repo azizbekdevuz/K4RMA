@@ -15,10 +15,25 @@ namespace KarmaPrototype
         Vector3 lastShake;
         Bounds stageBackgroundBounds;
         bool hasStageBackground;
+        internal static Rect ScreenViewport(float width, float height)
+        {
+            float scale = Mathf.Min(width / 1280f, height / 720f);
+            float viewWidth = 1280 * scale, viewHeight = 720 * scale;
+            return new Rect((width - viewWidth) / 2, (height - viewHeight) / 2, viewWidth, viewHeight);
+        }
+        void UpdateCameraViewport()
+        {
+            if (GameCamera == null || Screen.width <= 0 || Screen.height <= 0) return;
+            Rect view = ScreenViewport(Screen.width, Screen.height);
+            GameCamera.rect = new Rect(view.x / Screen.width, view.y / Screen.height,
+                view.width / Screen.width, view.height / Screen.height);
+            GameCamera.aspect = 16f / 9;
+        }
         public void FrameStageBackground(Bounds bounds)
         {
             stageBackgroundBounds = bounds;
             hasStageBackground = true;
+            UpdateCameraViewport();
             FitStageBackground(true);
         }
         void FitStageBackground(bool snap = false)
@@ -66,6 +81,7 @@ namespace KarmaPrototype
         }
         void LateUpdate()
         {
+            UpdateCameraViewport();
             if (Player == null) return;
             if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
                 || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)
@@ -106,12 +122,12 @@ namespace KarmaPrototype
             lastShake = Vector3.zero;
             if (IsCombat && hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds) > 0)
             {
-                float strength = Config.Techniques.hitShakeStrength * hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds);
+                float strength = Config.Techniques.hitShakeStrength * KarmaPreferences.ScreenShake * hitFeedback.Shake(Time.unscaledTime, Config.Techniques.hitShakeSeconds);
                 lastShake = new Vector3(Mathf.Sin(Time.unscaledTime * 97) * strength, Mathf.Sin(Time.unscaledTime * 73) * strength * 0.55f, 0);
             }
             if (IsCombat && !Paused && Time.time < presentationShakeUntil)
                 lastShake += new Vector3(Mathf.Sin(Time.time * 83), Mathf.Sin(Time.time * 67) * 0.5f, 0)
-                    * Config.Techniques.hitShakeStrength * presentationShakeStrength;
+                    * Config.Techniques.hitShakeStrength * KarmaPreferences.ScreenShake * presentationShakeStrength;
             GameCamera.transform.position += lastShake;
         }
     }

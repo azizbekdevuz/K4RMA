@@ -444,7 +444,7 @@ public static class KarmaSwordPlayChecks
     }
     static void CheckNewArtworkImports()
     {
-        foreach (string pose in new[] { "Sword_Crescent_v6", "SW03_GroundScar_v6", "SW03_RisingBlade_v6",
+        foreach (string pose in new[] { "Sword_Crescent_v6", "SW03_GroundScar_v7", "SW03_RisingBlade_v7",
             "SW04_CounterBlade_v6", "Sword_GuardRing_v6", "Sword_Impact_v6", "Sword_Release_v6", "Sword_Shard_v6" })
         {
             string path = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/" + pose + ".png";
@@ -457,7 +457,10 @@ public static class KarmaSwordPlayChecks
                 "alpha/PPU/no-mipmap settings: " + pose);
             Check(importer.filterMode == FilterMode.Bilinear && importer.textureCompression == TextureImporterCompression.Uncompressed,
                 "bilinear uncompressed import: " + pose);
-            Check(Vector2.Distance(sprite.pivot, KarmaWaveArtwork.CorePixels(pose).center) < 0.02f,
+            if (pose == "SW03_RisingBlade_v7")
+                Check(Vector2.Distance(sprite.pivot, sprite.rect.size * 0.5f) < 0.02f,
+                    "SW03 v7 keeps its authored center pivot; ground placement is visual only");
+            else Check(Vector2.Distance(sprite.pivot, KarmaWaveArtwork.CorePixels(pose).center) < 0.02f,
                 "pivot centers the cutting core: " + pose);
         }
         results.Add("All eight sword sprites load from the boss library with preserved import settings and pivots.");

@@ -28,6 +28,8 @@ namespace KarmaPrototype
         [Header("좌우 스크롤용 파노라마")]
         [InspectorName("실외 파노라마")] public Sprite mountainPanorama;
         [InspectorName("도장 파노라마")] public Sprite dojoPanorama;
+        [Header("파노라마의 원본 대비 가로·세로 범위")]
+        [Min(1)] public int panoramaCoverage = 1;
 
         [Header("Production UI / VFX")]
         public Texture2D menuBackground;

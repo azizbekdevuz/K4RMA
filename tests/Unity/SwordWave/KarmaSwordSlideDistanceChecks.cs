@@ -8,7 +8,6 @@ using UnityEditor;
 using UnityEngine;
 using KarmaPrototype;
 
-// Executed in the disposable project by run-sword-slide-distance-checks.ps1.
 [InitializeOnLoad]
 public static class KarmaSwordSlideDistanceChecks
 {
@@ -59,9 +58,9 @@ public static class KarmaSwordSlideDistanceChecks
         UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
     }
     [Serializable] sealed class Row { public string scenario, kind, stop; public float direction, requested, planned, actual, seconds, peakSpeed; public int frames; }
-    [Serializable] sealed class Metrics { public int left, right, attacks, failures, reached, targetStops, collisionStops, timeoutStops, interruptedStops, inFlight; public List<Row> moves = new List<Row>(); }
+    [Serializable] sealed class Metrics { public int left, right, attacks, failures, consecutiveEvades, reached, targetStops, collisionStops, timeoutStops, interruptedStops, inFlight; public float maxIdleSeconds; public List<Row> moves = new List<Row>(); }
     static readonly List<Row> samples = new List<Row>();
-    static Row StartRow(string scenario, float from) => new Row { scenario = scenario, kind = Kind, direction = (float)Get(Movement, "swordRetreatDirection"), planned = Mathf.Abs((float)Get(Movement, "swordRetreatTarget") - from), requested = Kind == "WallEscape" ? (baseline ? 32 : 24) : baseline && Kind == "ShortReposition" ? Remaining : 16 };
+    static Row StartRow(string scenario, float from) => new Row { scenario = scenario, kind = Kind, direction = (float)Get(Movement, "swordRetreatDirection"), planned = Mathf.Abs((float)Get(Movement, "swordRetreatTarget") - from), requested = Kind == "WallEscape" ? (baseline ? 32 : 48) : baseline ? 16 : 32 };
     static string Stop(Row r) => Mathf.Abs(r.actual - r.planned) < 0.01f ? "TargetReached" : Enemy.FightSeconds >= (float)Get(Movement, "swordRetreatUntil") ? "Timeout" : (bool)Get(Enemy, "running") || Enemy.Stunned ? "Interrupted" : "CollisionOrGround";
     static Row Sample(string scenario, float from)
     {
@@ -85,13 +84,19 @@ public static class KarmaSwordSlideDistanceChecks
             Reset(); UnityEngine.Random.InitState(6104 + playerSide);
             for (int i = 0; i < 80; i++)
             {
-                Arrange(20, 20 + playerSide * 3.5f); Tick(); Check(Remaining > 0, "open-space choice must start");
+                Arrange(20, 20 + playerSide * 3.5f);
+                UnityEngine.Random.InitState(6104 + playerSide * 1000 + i);
+                var randomState = UnityEngine.Random.state;
+                Tick(); Check(Remaining > 0, "open-space choice must start");
+                if (!baseline) Check(UnityEngine.Random.state.Equals(randomState), "pressured direction selection consumes no random choice");
                 var r = Sample("open-player-" + playerSide, 20); if (r.direction < 0) left++; else right++;
-                if (!baseline) Check(Mathf.Abs(r.actual - 16) < 0.01f && r.stop == "TargetReached", "normal slide must actually reach sixteen: " + JsonUtility.ToJson(r));
+                if (!baseline) Check(r.direction == -playerSide && Kind == "LongRetreat",
+                    "open retreat always moves away from the player, independently of random state");
+                if (!baseline) Check(Mathf.Abs(r.actual - 32) < 0.01f && r.stop == "TargetReached", "normal slide must actually reach thirty-two: " + JsonUtility.ToJson(r));
             }
         }
         Check(left >= 30 && right >= 30, "at least thirty measured open slides each direction");
-        Log("open-space 160 random choices: left " + left + ", right " + right);
+        Log("open-space 160 player-relative retreats: left " + left + ", right " + right);
         foreach (int wall in new[] { -1, 1 })
         {
             Reset(); float x = wall < 0 ? KarmaStage.BossLeftWall + 0.6f : KarmaStage.BossRightWall - 0.6f;
@@ -99,12 +104,12 @@ public static class KarmaSwordSlideDistanceChecks
             {
                 Arrange(x, x - wall * 3.5f); float invul = (float)Get(game.Player, "invulnerableUntil"); Tick();
                 Check(Remaining > 0 && Kind == "WallEscape", "wall escape starts"); var r = Sample("wall-" + wall, x);
-                Check(r.direction == -wall && Mathf.Abs(r.actual - (baseline ? 32 : 24)) < 0.01f, "wall actual distance");
+                Check(r.direction == -wall && Mathf.Abs(r.actual - (baseline ? 32 : 48)) < 0.01f, "wall actual distance");
                 Check((float)Get(game.Player, "invulnerableUntil") == invul, "no new invulnerability");
                 Place(Enemy.Position.x - wall * 3.5f); Call(Behavior, "OnCompleted");
                 for (int j = 0; j < 120; j++) { float before = Enemy.Position.x; Tick(); Check((Enemy.Position.x - before) * wall <= 0.001f, "no immediate return toward same wall: wall=" + wall + ", frame=" + j + ", step=" + (Enemy.Position.x - before) + ", kind=" + Kind + ", remaining=" + Remaining); }
             }
-            Log("wall " + wall + ": thirty continuous " + (baseline ? 32 : 24) + "-unit escapes, no return loop");
+            Log("wall " + wall + ": thirty continuous " + (baseline ? 32 : 48) + "-unit escapes, no return loop");
         }
         var csv = new List<string> { "scenario,kind,direction,requested,planned,actual,seconds,peakSpeed,frames,stop" };
         foreach (var r in samples) csv.Add(string.Join(",", r.scenario, r.kind, r.direction, r.requested, r.planned, r.actual, r.seconds, r.peakSpeed, r.frames, r.stop));
@@ -114,6 +119,8 @@ public static class KarmaSwordSlideDistanceChecks
     {
         Reset(); Place(16.5f); UnityEngine.Random.InitState(6104); Set(Enemy, "running", false); Set(Enemy, "timer", 0f);
         var m = new Metrics(); float start = Enemy.FightSeconds, nextHit = start + 0.6f, from = 0, lastPattern = -1, began = 0, previous = 0; Row row = null;
+        int attacksAtPreviousEvade = -1;
+        float idleSince = start;
         var probe = new GameObject("slide distance pursuit 60Hz").AddComponent<KarmaSwordDashFrameProbe>();
         probe.Before = () =>
         {
@@ -126,7 +133,12 @@ public static class KarmaSwordSlideDistanceChecks
         };
         probe.After = () =>
         {
-            if (Remaining > 0 && row == null) { row = StartRow("pursuit60", from); began = Enemy.FightSeconds; }
+            if (Remaining > 0 && row == null)
+            {
+                if (m.attacks <= attacksAtPreviousEvade) m.consecutiveEvades++;
+                attacksAtPreviousEvade = m.attacks;
+                row = StartRow("pursuit60", from); began = Enemy.FightSeconds;
+            }
             if (row != null)
             {
                 row.frames++; row.peakSpeed = Mathf.Max(row.peakSpeed, Mathf.Abs(Enemy.Position.x - previous) * 60);
@@ -140,15 +152,24 @@ public static class KarmaSwordSlideDistanceChecks
                     m.moves.Add(row); row = null;
                 }
             }
+            // Weighted selection can choose longer skills. Guard pressure by measuring
+            // actual unengaged time rather than requiring the old rotation's exact throughput.
+            if ((bool)Get(Enemy, "running") || Remaining > 0) idleSince = Enemy.FightSeconds;
+            else m.maxIdleSeconds = Mathf.Max(m.maxIdleSeconds, Enemy.FightSeconds - idleSince);
             float p = (float)Get(Enemy, "patternStarted"); if ((bool)Get(Enemy, "running") && p != lastPattern) { m.attacks++; lastPattern = p; }
         };
         await Until(() => Enemy.FightSeconds - start >= 60); m.inFlight = row != null ? 1 : 0; probe.Before = probe.After = null; UnityEngine.Object.Destroy(probe.gameObject);
         File.WriteAllText(output + "/pursuit60.json", JsonUtility.ToJson(m, true));
-        Check(m.attacks >= 25 && m.left > 0 && m.right > 0 && m.failures == 0, "attacks and both directions continue without failed moves");
-        Log("60s seed6104: moves " + m.moves.Count + ", left/right " + m.left + "/" + m.right + ", attacks " + m.attacks + ", failures " + m.failures + ", nominal reached " + m.reached);
+        Check(m.attacks >= 12 && m.maxIdleSeconds < 3 && m.left > 0 && m.right > 0 && m.failures == 0 && m.consecutiveEvades == 0, "weighted skills sustain pressure with no three-second idle gap, failed moves or attack-free consecutive evades: attacks=" + m.attacks + ", maxIdle=" + m.maxIdleSeconds);
+        Log("60s seed6104: moves " + m.moves.Count + ", left/right " + m.left + "/" + m.right + ", attacks " + m.attacks + ", failures " + m.failures + ", consecutive evades " + m.consecutiveEvades + ", max idle " + m.maxIdleSeconds.ToString("F3") + ", nominal reached " + m.reached);
     }
     static void Safety()
     {
+        Reset(); Arrange(20, 16.5f);
+        Set(Movement, "wallReturnUntil", Enemy.FightSeconds + 3); Set(Movement, "wallReturnDirection", 1f);
+        Tick();
+        Check(Remaining <= 0 && Mathf.Abs(Enemy.Position.x - 20) < 0.001f && (bool)Get(Behavior, "basicAfterRetreat"),
+            "wall-return protection yields an attack instead of an unnecessary slide toward the player");
         foreach (int wall in new[] { -1, 1 })
         {
             Reset(); float x = wall < 0 ? KarmaStage.BossLeftWall + 0.6f : KarmaStage.BossRightWall - 0.6f;
@@ -172,13 +193,8 @@ public static class KarmaSwordSlideDistanceChecks
     {
         Reset(); float x = wall ? direction > 0 ? KarmaStage.BossLeftWall + 0.6f : KarmaStage.BossRightWall - 0.6f : 20;
         Arrange(x, x - direction * 3.5f); await Seconds(0.1f);
-        // Select through the real weighted planner. Retry a fresh eligible choice only for the requested screenshot direction.
-        for (int attempt = 0; attempt < 60; attempt++)
-        {
-            Arrange(x, x - direction * 3.5f); Tick();
-            if (Remaining > 0 && (float)Get(Movement, "swordRetreatDirection") == direction) break;
-            Call(Movement, "Interrupt", false);
-        }
+        // Player position determines the requested direction on the first choice.
+        Arrange(x, x - direction * 3.5f); Tick();
         Check(Remaining > 0 && (float)Get(Movement, "swordRetreatDirection") == direction, "requested render direction selected");
         Set(Enemy, "running", false); Set(Enemy, "timer", 100f);
         var images = ((Transform)Get(Enemy, "art")).GetComponent<KarmaSwordRetreatAfterimages>(); var pool = (Array)Get(images, "pool"); int peak = 0; bool captured = false; float previousEcho = float.NaN, maxSpacing = 0;
@@ -193,16 +209,16 @@ public static class KarmaSwordSlideDistanceChecks
             // the same slide so the body and trailing silhouettes are in view.
             if (active >= 4 && Mathf.Abs(Enemy.Position.x - x) >= (wall ? 18 : 6) && !captured)
             {
-                captured = true; string name = (wall ? "wall24-" : "normal16-") + direction; Shot(name);
+                captured = true; string name = (wall ? "wall48-" : "normal32-") + direction; Shot(name);
                 if (Array.IndexOf(Environment.GetCommandLineArgs(), "-slideUiReview") >= 0)
                 { reviewHold = true; EditorApplication.isPaused = true; File.WriteAllText(output + "/ui-ready.txt", name); }
             }
         };
         await Until(() => Remaining <= 0); probe.After = null; UnityEngine.Object.Destroy(probe.gameObject);
-        Check(captured && peak <= pool.Length && Mathf.Abs(Enemy.Position.x - x - direction * (wall ? 24 : 16)) < 0.01f, "rendered slide reaches actual endpoint with bounded echoes");
+        Check(captured && peak <= pool.Length && Mathf.Abs(Enemy.Position.x - x - direction * (wall ? 48 : 32)) < 0.01f, "rendered slide reaches actual endpoint with bounded echoes");
         Set(Enemy, "running", true); await Seconds(0.4f); foreach (var echo in pool) Check(!(bool)Get(echo, "active"), "echoes naturally expire after movement");
         Set(Enemy, "running", false); Set(Enemy, "timer", 0f); await Until(() => (bool)Get(Enemy, "running"));
-        Log("render " + (wall ? "wall24" : "normal16") + " direction " + direction + ": peak echoes " + peak + "/" + pool.Length + ", max spacing " + maxSpacing.ToString("F3") + ", naturally expires; attack resumes");
+        Log("render " + (wall ? "wall48" : "normal32") + " direction " + direction + ": peak echoes " + peak + "/" + pool.Length + ", max spacing " + maxSpacing.ToString("F3") + ", naturally expires; attack resumes");
     }
     static async Task CheckSW05()
     {

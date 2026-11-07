@@ -16,17 +16,18 @@ namespace KarmaPrototype
         }
         void TitleScreen()
         {
-            Fill(new Rect(0, 0, 1280, 720), new Color(0.02f, 0.03f, 0.07f, 0.25f));
+            FillScreen(new Color(0.02f, 0.03f, 0.07f, 0.25f));
             Label(330, 160, 620, 100, "K4RMA", title);
             Label(330, 270, 620, 35, "네 수호자 · 세 번의 고유화", centered);
             SpriteArt(new Rect(460, 320, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             if (GUI.Button(new Rect(480, 365, 320, 55), "시작 [Enter]", menuButton)) game.StartRun();
             if (GUI.Button(new Rect(480, 430, 320, 55), "게임 스토리 [S]", menuButton)) game.ShowPage(RunPhase.Story);
             if (GUI.Button(new Rect(480, 495, 320, 55), "조작 안내 [H]", menuButton)) game.ShowPage(RunPhase.Controls);
+            if (GUI.Button(new Rect(480, 560, 320, 55), "환경설정 [O]", menuButton)) game.OpenSettings();
         }
         void StoryScreen()
         {
-            Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.68f));
+            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.68f));
             Label(280, 40, 720, 60, "스승과 제자", title);
             SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             Label(280, 140, 720, 30, (storyPage + 1) + " / " + KarmaStory.Pages.Length, centered);
@@ -39,18 +40,19 @@ namespace KarmaPrototype
                 : KarmaArtwork.Sprite("Player", "Idle");
             SpriteArt(new Rect(845, 195, 315, 350), illustration);
             Label(845, 555, 315, 30, "수호자의 시험", centered);
-            if (GUI.Button(new Rect(155, 625, 280, 50), "이전 [←]", menuButton)) { storyPage = Mathf.Max(0, storyPage - 1); storyScroll = Vector2.zero; }
-            if (GUI.Button(new Rect(500, 625, 280, 50), "다음 [→]", menuButton)) { storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1); storyScroll = Vector2.zero; }
+            if (GUI.Button(new Rect(155, 625, 280, 50), "이전 [Left Arrow]", menuButton)) { storyPage = Mathf.Max(0, storyPage - 1); storyScroll = Vector2.zero; }
+            if (GUI.Button(new Rect(500, 625, 280, 50), "다음 [Right Arrow]", menuButton)) { storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1); storyScroll = Vector2.zero; }
             if (GUI.Button(new Rect(845, 625, 280, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();
         }
         void ControlsScreen()
         {
-            Fill(new Rect(0, 0, 1280, 720), new Color(0.015f, 0.025f, 0.07f, 0.68f));
+            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.68f));
             Label(280, 40, 720, 60, "조작 안내", title);
             SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+            string Key(KarmaAction action) => KarmaInput.BindingLabel(action);
             Label(115, 175, 750, 420,
-                "A/D · ←/→ : 이동    Space : 점프    J 유지 : 검 기본 공격\n\nQ : 검기 발사    왼쪽 Shift : 상승베기    E : 원형 방어\n고유화한 원형 키는 사용할 수 없습니다.\n\n관통베기 : 같은 방향키 / WASD 두 번 (0.25초 이내) · 해당 방향으로 관통\n도약베기 : 공중 방향키 / WASD + J 새로 누르기 · 베고 추가 점프 (착지 전 1회)\n↓ / S + J : 아래로 베고 점프 · 방향 입력이 없으면 바라보는 방향\n반격 : K로 짧은 받아내기 동작 · 공격 도착 순간에만 성공\n\n고유화 : 1/2/3 선택 → Enter 확정 · Esc 취소/재선택\nEsc : 일시정지    일시정지/결과에서 R : 처음부터    T : 타이틀\n\n사망하면 네 수호자의 시험을 Stage 1부터 다시 시작합니다.", text);
-            Label(115, 595, 750, 28, "↓ / S 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
+                $"{Key(KarmaAction.Left)} / {Key(KarmaAction.Right)} : 이동    {Key(KarmaAction.Jump)} : 점프\n{Key(KarmaAction.Attack)} : 검 공격\n\n{Key(KarmaAction.SwordWave)} : 검기    {Key(KarmaAction.RisingSlash)} : 상승베기    {Key(KarmaAction.Guard)} : 방어\n고유화 후 원형 기술은 고유화 동작으로 바뀝니다.\n\n{Key(KarmaAction.Pierce)} + 방향 : 관통베기 · 검기 고유화 후\n공중 방향 + {Key(KarmaAction.Attack)} : 도약베기 · 상승베기 고유화 후\n{Key(KarmaAction.Counter)} : 반격\n\n1 / 2 / 3 → Enter : 고유화 선택 / 확정    Esc : 취소\nEsc : 일시정지    O : 타이틀·일시정지에서 환경설정\nR : 처음부터    T : 타이틀 · 일시정지 또는 결과 화면\n\n사망하면 Stage 1부터 다시 시작합니다.", text);
+            Label(115, 595, 750, 28, $"{Key(KarmaAction.Down)} / Down Arrow 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
             SpriteArt(new Rect(915, 175, 250, 105), SkillIcon(Essence.SwordWave, false));
             Label(915, 280, 250, 28, "검기 · 관통베기", centered);
             SpriteArt(new Rect(915, 325, 250, 105), SkillIcon(Essence.RisingSlash, false));
@@ -95,6 +97,7 @@ namespace KarmaPrototype
             if (GUI.Button(new Rect(440, 350, 400, 55), "계속하기 [Esc]", menuButton)) game.TogglePause();
             if (GUI.Button(new Rect(440, 425, 400, 55), "처음부터 [R]", menuButton)) game.StartRun();
             if (GUI.Button(new Rect(440, 500, 400, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
+            if (GUI.Button(new Rect(440, 575, 400, 55), "환경설정 [O]", menuButton)) game.OpenSettings();
         }
         void StageTransitionScreen()
         {

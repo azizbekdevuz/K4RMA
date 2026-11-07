@@ -150,7 +150,7 @@ MonoBehaviour:
     - {fileID: -1881640205, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
     poses: []
   - id: GuardianVFX
-    source: Assets/K4RMA/Arts/Bosses/Guard/Effectsian.png
+    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Guardian.png
     sprites:
     - {fileID: -2089781138, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
     - {fileID: 1024197065, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}

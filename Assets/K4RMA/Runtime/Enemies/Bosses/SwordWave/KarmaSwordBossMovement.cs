@@ -13,8 +13,6 @@ namespace KarmaPrototype
             float nextSwordApproach, swordApproachUntil, swordRetreatTarget, swordPressureTarget;
             float retreatSpeed, approachSpeed;
             float swordRetreatMoveAt;
-            float lastRetreatDirection, lastRetreatAt = -1000;
-            int sameDirectionRetreats;
             bool swordWallEscaping;
             enum SlideKind { LongRetreat, Reposition, WallEscape }
             SlideKind slideKind;
@@ -40,9 +38,8 @@ namespace KarmaPrototype
             }
             float SwordRetreatDistance()
             {
-                // Every ordinary slide uses two actual player dashes, including
-                // relocation toward the player. No separate 4-8-unit budget.
-                return Mathf.Max(0, owner.game.Config.Techniques.pierceDistance) * 2;
+                return Mathf.Max(0, Settings.swordRetreatDistance,
+                    owner.game.Config.Techniques.pierceDistance * Settings.swordRetreatDashMultiplier);
             }
             float SwordRetreatClearance(float direction, float requested)
             {
@@ -97,22 +94,23 @@ namespace KarmaPrototype
             bool ChooseRetreat(float dx, out float direction, out float travel)
             {
                 float requested = SwordRetreatDistance();
-                float away = dx < 0 ? 1 : -1;
+                float away = Mathf.Abs(dx) > 0.001f ? (dx < 0 ? 1 : -1) : -owner.Facing;
                 float leftRoom = SwordRetreatClearance(-1, requested);
                 float rightRoom = SwordRetreatClearance(1, requested);
                 slideKind = SlideKind.LongRetreat;
                 // A wall escape is relocation, distinct from a player-facing
                 // backstep. It may cross the player under existing non-solid
                 // boss rules, but must pass the same terrain/floor sweep.
-                // Detect either approaching boundary, independently of which
-                // side the player occupies. Never offer the wallward candidate.
+                // Near a boundary, choose the inward route with actual room.
                 bool leftBlocked = leftRoom < Mathf.Min(6, requested * 0.45f);
                 bool rightBlocked = rightRoom < Mathf.Min(6, requested * 0.45f);
                 if (leftBlocked || rightBlocked)
                 {
-                    float escapeDirection = leftBlocked ? 1 : -1;
-                    float blockedRoom = leftBlocked ? leftRoom : rightRoom;
-                    float escapeBudget = owner.game.Config.Techniques.pierceDistance * 3;
+                    float escapeDirection = leftBlocked && rightBlocked
+                        ? (rightRoom > leftRoom ? 1 : rightRoom < leftRoom ? -1 : away)
+                        : leftBlocked ? 1 : -1;
+                    float blockedRoom = escapeDirection > 0 ? leftRoom : rightRoom;
+                    float escapeBudget = requested * 1.5f;
                     float escapeRoom = SwordRetreatClearance(escapeDirection, escapeBudget);
                     if (owner.FightSeconds >= nextWallEscape && escapeRoom >= Mathf.Max(4, blockedRoom + 2)
                         && !(owner.FightSeconds < wallReturnUntil && escapeDirection == wallReturnDirection))
@@ -122,8 +120,6 @@ namespace KarmaPrototype
                         slideKind = SlideKind.WallEscape;
                         wallReturnDirection = -direction;
                         nextWallEscape = owner.FightSeconds + 5;
-                        lastRetreatDirection = direction; lastRetreatAt = owner.FightSeconds;
-                        sameDirectionRetreats = 1;
                         return true;
                     }
                     direction = travel = 0;
@@ -133,59 +129,26 @@ namespace KarmaPrototype
                     return false;
                 }
                 direction = 0; travel = 0;
-                bool recent = owner.FightSeconds - lastRetreatAt < 8;
-                var candidates = new SlideCandidate[2]; int count = 0;
-                // Ordinary repositioning may change sides under the same existing
-                // non-solid boss rule as wall relocation. Solid-player sweeps
-                // still reject it. Never end a move on top of the player.
-                for (int side = -1; side <= 1; side += 2)
+                // Retreat directly away first. Only an unsafe/blocked route may
+                // select the other side; random rolls and direction streaks no
+                // longer override player-relative spacing.
+                for (int candidate = 0; candidate < 2; candidate++)
                 {
-                    if (owner.FightSeconds < wallReturnUntil && side == wallReturnDirection) continue;
+                    float side = candidate == 0 ? away : -away;
+                    // If retreat would undo a recent wall escape, give combat
+                    // its turn rather than substitute a player-facing slide.
+                    if (owner.FightSeconds < wallReturnUntil && side == wallReturnDirection) break;
                     float room = side < 0 ? leftRoom : rightRoom;
                     if (room < 4) continue;
                     float distance = Mathf.Min(room, requested);
                     if (Mathf.Abs(owner.Position.x + side * distance - owner.game.Player.Position.x) < 3)
                         continue;
-                    float gap = Mathf.Abs(owner.Position.x + side * distance - owner.game.Player.Position.x);
-                    float weight = SlideWeight(side, distance, recent) / (1 + Mathf.Abs(gap - 8) * 0.12f);
-                    if (Mathf.Abs(dx) < 3 && side == away) weight *= 1.5f;
-                    candidates[count++] = new SlideCandidate { direction = side, distance = distance, weight = weight,
-                        kind = side == away ? SlideKind.LongRetreat : SlideKind.Reposition };
+                    direction = side; travel = distance;
+                    slideKind = candidate == 0 ? SlideKind.LongRetreat : SlideKind.Reposition;
+                    return true;
                 }
-                // If both sides exist, a third consecutive same-side choice is
-                // disallowed. With only one safe side, yield to combat instead.
-                float total = 0;
-                for (int i = 0; i < count; i++)
-                {
-                    if (recent && sameDirectionRetreats >= 2 && candidates[i].direction == lastRetreatDirection)
-                        candidates[i].weight = 0;
-                    total += candidates[i].weight;
-                }
-                if (total <= 0)
-                {
-                    nextSwordRetreat = owner.FightSeconds + 0.65f; swordAttackedSinceRetreat = false;
-                    sameDirectionRetreats = 0; behavior.RequestBasic(); return false;
-                }
-                float pick = Random.value * total; var chosen = default(SlideCandidate);
-                for (int i = 0; i < count; i++)
-                {
-                    if (candidates[i].weight <= 0) continue;
-                    chosen = candidates[i]; pick -= chosen.weight;
-                    if (pick <= 0) break;
-                }
-                direction = chosen.direction; travel = chosen.distance; slideKind = chosen.kind;
-                sameDirectionRetreats = recent && direction == lastRetreatDirection ? sameDirectionRetreats + 1 : 1;
-                lastRetreatDirection = direction; lastRetreatAt = owner.FightSeconds;
-                return true;
-            }
-            struct SlideCandidate { public float direction, distance, weight; public SlideKind kind; }
-            float SlideWeight(float direction, float distance, bool recent)
-            {
-                float end = owner.Position.x + direction * distance;
-                float clearance = Mathf.Min(end - (KarmaStage.BossLeftWall + 0.5f), KarmaStage.BossRightWall - 0.5f - end);
-                float wallPressure = 1 - Mathf.Clamp01(clearance / 16);
-                return Mathf.Lerp(1, 0.08f, wallPressure * wallPressure)
-                    * (recent && direction == lastRetreatDirection ? 0.25f : 1);
+                nextSwordRetreat = owner.FightSeconds + 0.65f;
+                swordAttackedSinceRetreat = false; behavior.RequestBasic(); return false;
             }
             public void RememberSwordPressure()
             {
@@ -211,7 +174,9 @@ namespace KarmaPrototype
                     if ((!pressure && !nearMelee && !repositionOpportunity)
                     || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat)
                     return false;
-                    if (repositionOpportunity && Random.value > 0.35f)
+                    // Slightly favor another spacing step after an attack. This roll
+                    // only offers an action; ChooseRetreat always picks away.
+                    if (repositionOpportunity && Random.value > 0.45f)
                     { nextSwordRetreat = owner.FightSeconds + 0.6f; return false; }
                     if (!ChooseRetreat(dx, out var chosenDirection, out var chosenTravel)) return false;
                     swordApproaching = false; approachSpeed = 0; retreatSpeed = 0;
@@ -266,7 +231,8 @@ namespace KarmaPrototype
                 float travelled = MoveSwordOnGround(step);
                 if (travelled <= 0.0001f) { FinishSwordRetreat(); return false; }
                 swordRetreatRemaining = Mathf.Max(0, swordRetreatRemaining - travelled);
-                if (swordRetreatRemaining <= 0.001f) FinishSwordRetreat();
+                if (swordRetreatRemaining <= 0.001f)
+                { FinishSwordRetreat(); return false; }
 
                 return true;
             }
@@ -279,13 +245,14 @@ namespace KarmaPrototype
                 if (swordWallEscaping)
                 {
                     swordWallEscaping = false;
-                    wallReturnUntil = owner.FightSeconds + 3;
+                    // Keep the wall-return guard, with a slightly earlier pursuit response.
+                    wallReturnUntil = owner.FightSeconds + Mathf.Clamp(Settings.swordWallReturnCooldown, 2, 3);
                     nextWallEscape = Mathf.Max(nextWallEscape, owner.FightSeconds + 3);
                 }
                 // A new hit during this move remains queued behind the cooldown;
                 // starting the move already consumed the previous request.
-                behavior.RequestBasic();
-                owner.timer = Mathf.Clamp(owner.timer, 0.18f, 0.28f);
+                behavior.RequestSkillAfterRetreat();
+                owner.timer = 0;
                 float attackWindow = Mathf.Clamp(Settings.swordRetreatAttackWindow, 0.5f, 0.8f);
                 nextSwordRetreat = Mathf.Max(nextSwordRetreat, owner.FightSeconds + attackWindow);
                 nextSwordApproach = owner.FightSeconds + Mathf.Max(attackWindow, owner.timer + 0.05f);
@@ -372,8 +339,8 @@ namespace KarmaPrototype
                 bool wasRetreating = swordRetreatRemaining > 0;
                 if (RetreatSword(dt, dx))
                 { owner.animator.ShowSwordRetreat(); return true; }
-                // Finish on this frame before considering an approach on the next.
-                if (wasRetreating) return true;
+                // Hand the completed slide straight to BeginAttack this frame.
+                if (wasRetreating) return false;
                 if (!ApproachSword(dt, dx)) return false;
                 owner.animator.ShowGuardianSpacing(); return true;
             }

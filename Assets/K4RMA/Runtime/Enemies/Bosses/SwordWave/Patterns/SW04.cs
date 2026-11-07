@@ -23,10 +23,12 @@ namespace KarmaPrototype
                 public readonly KarmaAttackContact[] Contacts = new KarmaAttackContact[4];
                 public readonly KarmaBossAttack[] Shots = new KarmaBossAttack[4];
                 public readonly Transform[] Slots = new Transform[4];
+                public readonly SpriteRenderer[] Blades = new SpriteRenderer[4];
                 public readonly KarmaSwordCounterTrace.State[] Trace = new KarmaSwordCounterTrace.State[4];
                 public int LastAllowed = 3;
+                public bool Parried;
                 public CounterVolley(int id) { Id = id; for (int i = 0; i < 4; i++) Contacts[i] = new KarmaAttackContact(); }
-                public bool Allows(int index) { return index <= LastAllowed; }
+                public bool Allows(int index) { return !Parried && index <= LastAllowed; }
             }
             float GuardTrackingTime { get { return 0.35f; } }
             float GuardLockTime { get { return Mathf.Max(0.3f, Settings.counterWarning); } }
@@ -46,7 +48,7 @@ namespace KarmaPrototype
                 nextGuardResponse = owner.FightSeconds;
                 nextSwordGuard = owner.FightSeconds + Mathf.Max(8, Settings.swordGuardDuration + 4);
                 swordGuardRoot = new GameObject("Independent sword guard").transform;
-                swordGuardRoot.SetParent(owner.effectsRoot, false);
+                swordGuardRoot.SetParent(sword.PersistentRoot, false);
                 activeVolley = new CounterVolley(++nextVolleyId);
                 swordGuardAura = KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, owner.Position, Mathf.Max(0.6f, Settings.swordGuardDuration), true, false, true);
                 var blades = new SpriteRenderer[4];
@@ -55,6 +57,7 @@ namespace KarmaPrototype
                     var slot = new GameObject("SW04 volley " + activeVolley.Id + " / shot " + (i + 1)).transform;
                     slot.SetParent(swordGuardRoot, false); activeVolley.Slots[i] = slot;
                     blades[i] = KarmaVisuals.Box(slot, "회전 검막 · 접촉 피해 없음", owner.Position, Vector2.one, Color.white, 13);
+                    activeVolley.Blades[i] = blades[i];
                     KarmaWaveArtwork.Apply(blades[i], "SW04_CounterBlade_v2", sword.SwordSize(EnemyAttack.SW04), Vector2.right);
                 }
                 swordGuardRoutine = owner.StartCoroutine(MaintainSwordGuard(blades));
@@ -119,7 +122,7 @@ namespace KarmaPrototype
                             contact: volley.Contacts[i], pattern: EnemyAttack.SW04, parent: slot);
                             KarmaSwordAttackPolish.Projectile(owner.game, owner, shots[i], aim * Settings.swordSpeed, size);
                             KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Projectile=" + (i + 1) + ", Result=Released, Time=" + Time.time.ToString("F4"));
-                            KarmaSwordAttackPolish.Release(owner.game, owner, owner.art, origin, aim * Settings.swordSpeed, size, false);
+                            KarmaSwordAttackPolish.Release(owner.game, owner, owner.art, origin, aim * Settings.swordSpeed, size, false, slot);
                             if (i + 1 < blades.Length)
                             {
                                 float nextAt = owner.FightSeconds + GuardShotGap;
@@ -201,32 +204,44 @@ namespace KarmaPrototype
             public void OnParried(KarmaAttackContact contact)
             {
                 var volley = activeVolley;
-                if (volley == null || !guardResponseRunning) return;
+                if (volley == null || !guardResponseRunning || volley.Parried) return;
                 int index = System.Array.IndexOf(volley.Contacts, contact);
                 if (index < 0) return;
                 KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Projectile=" + (index + 1) + ", Result=ParryDelivered");
                 volley.LastAllowed = Mathf.Min(volley.LastAllowed, index);
+                volley.Parried = true;
                 Guarding = guardResponsePending = false;
-                var vanished = new Vector2[4]; int vanishCount = 0;
-                for (int later = index + 1; later < volley.Slots.Length; later++)
+                var pool = KarmaSwordVfxPool.For(owner.game);
+                var accent = owner.art.GetComponent<KarmaSwordAttackAccent>();
+                // Stop the contact blade too: a consumed projectile continuing
+                // across the player looked like another shot after success.
+                for (int later = index; later < volley.Slots.Length; later++)
                 {
-                    KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Cancelled=" + (later + 1) + ", State=" + (volley.Shots[later] != null ? "Flying" : "Queued"));
+                    if (later > index)
+                        KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Cancelled=" + (later + 1) + ", State=" + (volley.Shots[later] != null ? "Flying" : "Queued"));
                     // Contact suppression and deactivation are synchronous, even
                     // if another shot's Update is scheduled in this same frame.
                     volley.Contacts[later].TryConsume();
                     var slot = volley.Slots[later];
                     if (slot != null)
                     {
-                        var picture = slot.GetComponentInChildren<SpriteRenderer>();
-                        vanished[vanishCount++] = picture != null ? (Vector2)picture.transform.position : owner.Position;
-                        slot.gameObject.SetActive(false); Destroy(slot.gameObject);
+                        pool.Cancel(slot); accent?.Cancel(slot);
+                        slot.gameObject.SetActive(false);
                     }
                 }
                 // Cosmetics run only after every later contact/slot is suppressed.
-                if (swordGuardAura != null) { swordGuardAura.gameObject.SetActive(false); Destroy(swordGuardAura.gameObject); swordGuardAura = null; }
+                if (swordGuardAura != null)
+                { pool.Cancel(swordGuardAura.transform); swordGuardAura.gameObject.SetActive(false); Destroy(swordGuardAura.gameObject); swordGuardAura = null; }
                 var body = owner.game.Player.GetComponent<Collider2D>();
-                KarmaSwordAttackPolish.Hit(owner.game, owner, body != null ? (Vector2)body.bounds.center : owner.game.Player.Position, true);
-                for (int i = 0; i < vanishCount; i++) KarmaSwordAttackPolish.Disintegrate(owner.game, owner, vanished[i]);
+                KarmaSwordAttackPolish.ParrySuccess(owner.game, owner, body != null ? (Vector2)body.bounds.center : owner.game.Player.Position);
+                for (int later = index; later < volley.Slots.Length; later++)
+                {
+                    // Only the unspent successors dissolve. The parried blade
+                    // disappears into the single success cue at the player.
+                    if (later > index)
+                        pool.Dissolve(owner, volley.Shots[later] != null ? volley.Shots[later].Visual : volley.Blades[later]);
+                    if (volley.Slots[later] != null) Destroy(volley.Slots[later].gameObject);
+                }
                 int remaining = 0;
                 for (int i = 0; i < volley.Shots.Length; i++)
                     if (volley.Shots[i] != null && volley.Shots[i].gameObject.activeInHierarchy && !volley.Contacts[i].Consumed) remaining++;

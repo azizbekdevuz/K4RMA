@@ -24,6 +24,7 @@ namespace KarmaPrototype
     {
         float elapsed, duration;
         public bool Active { get { return duration > 0 && elapsed < duration; } }
+        public float Progress { get { return duration <= 0 ? 1 : Math.Min(1, elapsed / duration); } }
         public void Begin(float seconds) { elapsed = 0; duration = Math.Max(0.02f, seconds); }
         static float Distance(float t) { return (t - 0.25f * t * t) / 0.75f; }
         public float Advance(float seconds)
@@ -38,18 +39,8 @@ namespace KarmaPrototype
     // Runtime supplies scaled time; no physics, input or visuals here.
     public sealed class KarmaTechniqueState
     {
-        int lastDirection;
-        float lastTap = -100, counterUntil;
+        float counterUntil;
         bool counterArmed, airSlashUsed;
-        public bool DirectionTap(int direction, float now, float window)
-        {
-            if (direction < 1 || direction > 4) { ClearDirectionTap(); return false; }
-            bool ready = lastDirection == direction && now >= lastTap && now - lastTap <= Math.Max(0, window);
-            if (ready) ClearDirectionTap();
-            else { lastDirection = direction; lastTap = now; }
-            return ready;
-        }
-        public void ClearDirectionTap() { lastDirection = 0; lastTap = -100; }
         public bool TryAirSlash()
         {
             if (airSlashUsed) return false;
@@ -62,6 +53,6 @@ namespace KarmaPrototype
         {
             bool ready = CounterReady(now); counterArmed = false; return ready;
         }
-        public void Reset() { ClearDirectionTap(); Land(); counterArmed = false; counterUntil = 0; }
+        public void Reset() { Land(); counterArmed = false; counterUntil = 0; }
     }
 }

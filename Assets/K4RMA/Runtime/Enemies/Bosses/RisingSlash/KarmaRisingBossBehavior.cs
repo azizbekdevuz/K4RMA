@@ -10,12 +10,41 @@ namespace KarmaPrototype
         [UnityEngine.Scripting.Preserve]
         sealed class RisingBossBehavior : BossBehavior
         {
+#if UNITY_EDITOR
+            public bool PracticeHold;
+#endif
             new KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Rise") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
-            float nextStride;
-            int selectionCursor;
-
+            float nextStride, nextAirPursuit;
+            Transform fragmentsRoot;
+            public override Transform PersistentEffects => fragmentsRoot;
+            public Transform FragmentsRoot
+            {
+                get
+                {
+                    if (fragmentsRoot == null)
+                    {
+                        fragmentsRoot = new GameObject("Rising landing fragments").transform;
+                        fragmentsRoot.SetParent(owner.effectsRoot, false);
+                    }
+                    return fragmentsRoot;
+                }
+            }
+            void ClearFragments()
+            {
+                if (fragmentsRoot == null) return;
+                foreach (Transform child in fragmentsRoot)
+                { child.gameObject.SetActive(false); Destroy(child.gameObject); }
+            }
+            public override void Interrupt(bool preservePressure)
+            { base.Interrupt(preservePressure); ClearFragments(); }
+            int consecutiveSkills;
+            bool usedHalfHealthUltimate, usedQuarterHealthUltimate;
+            bool UltimateDue => (!usedHalfHealthUltimate && owner.Health <= owner.MaxHealth * 0.5f)
+                || (!usedQuarterHealthUltimate && owner.Health <= owner.MaxHealth * 0.25f);
+            public bool GuardEmpowered { get; private set; }
+            float knockbackLeft, knockbackDirection;
             [UnityEngine.Scripting.Preserve]
             public RisingBossBehavior(KarmaEnemy owner) : base(owner)
             {
@@ -32,67 +61,101 @@ namespace KarmaPrototype
                 var owned = new HashSet<Essence>(inherited);
                 var result = new List<EnemyAttack> { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02 };
                 if (owned.Contains(Essence.SwordWave)) result.Add(EnemyAttack.UP03);
-                if (owned.Contains(Essence.Guard)) result.Add(EnemyAttack.UP04);
+                GuardEmpowered = owned.Contains(Essence.Guard);
                 if (owned.Count == 3) result.Add(EnemyAttack.UP05);
                 return result;
+            }
+            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
+            {
+                if (owner.attacks.Contains(EnemyAttack.UP05) && UltimateDue)
+                { attack = EnemyAttack.UP05; return true; }
+                if (owner.game.Player.Airborne && owner.FightSeconds >= nextAirPursuit
+                    && owner.attacks.Contains(EnemyAttack.UP02) && owner.previous != EnemyAttack.UP02)
+                { attack = EnemyAttack.UP02; return true; }
+                if (consecutiveSkills >= 1 && Settings.Weights.basicWeight > 0
+                    && Eligible(EnemyAttack.GroundStrike, distance, sight, escape))
+                { attack = EnemyAttack.GroundStrike; return true; }
+                attack = default; float total = 0;
+                foreach (var candidate in owner.attacks)
+                {
+                    if (!Eligible(candidate, distance, sight, escape)) continue;
+                    float weight = candidate == EnemyAttack.GroundStrike ? Settings.Weights.basicWeight
+                        : candidate == EnemyAttack.UP01 ? Settings.Weights.up01Weight
+                        : candidate == EnemyAttack.UP02 ? Settings.Weights.up02Weight * (owner.game.Player.Airborne ? Settings.Weights.airborneUp02Multiplier : 1)
+                        : candidate == EnemyAttack.UP03 ? Settings.Weights.up03Weight
+                        : candidate == EnemyAttack.UP04 ? Settings.Weights.up04Weight : Settings.Weights.up05Weight;
+                    if (candidate == owner.previous)
+                        weight *= candidate == EnemyAttack.GroundStrike ? 0.75f : Settings.Weights.repeatWeightScale;
+                    weight = Mathf.Max(0, weight);
+                    if (weight <= 0) continue;
+                    total += weight;
+                    if (total <= weight || Random.value * total < weight) attack = candidate;
+                }
+                return total > 0;
+            }
+            public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
+            {
+                if (!GuardEmpowered || pattern != EnemyAttack.GroundStrike || !damaged || parried) return;
+                knockbackDirection = owner.game.Player.Position.x < owner.Position.x ? -1 : 1;
+                knockbackLeft = 0.16f;
+                owner.game.Player.Stun(0.16f);
+            }
+            public override void Tick()
+            {
+                if (knockbackLeft <= 0 || owner.game.Paused) return;
+                float dt = Mathf.Min(Time.deltaTime, knockbackLeft);
+                knockbackLeft -= dt;
+                var player = owner.game.Player;
+                var body = player.GetComponent<Rigidbody2D>();
+                float travel = KarmaSpace.Units(12f) * dt;
+                var axis = Vector2.right * knockbackDirection;
+                foreach (var hit in Physics2D.BoxCastAll(player.Position, KarmaSpace.PlayerSize, 0, axis, travel))
+                    if (!hit.collider.isTrigger && hit.collider.GetComponent<KarmaSurface>() != null && Vector2.Dot(hit.normal, axis) < -0.01f)
+                        travel = Mathf.Min(travel, Mathf.Max(0, hit.distance - 0.02f));
+                var target = player.Position + axis * travel;
+                target.x = Mathf.Clamp(target.x, KarmaStage.ArenaLeft + KarmaSpace.PlayerHalfWidth, KarmaStage.ArenaRight - KarmaSpace.PlayerHalfWidth);
+                body.position = target;
+                player.transform.position = target;
+            }
+            public override void StopCombat() { knockbackLeft = 0; ClearFragments(); }
+            public override void OnSelected()
+            {
+                if (owner.selected == EnemyAttack.UP02) nextAirPursuit = owner.FightSeconds + 1.8f;
+                if (owner.selected == EnemyAttack.GroundStrike) consecutiveSkills = 0;
+                else consecutiveSkills++;
+                if (owner.selected != EnemyAttack.UP05) return;
+                // Consume one threshold per cast, including when damage crosses both at once.
+                if (!usedHalfHealthUltimate) usedHalfHealthUltimate = true;
+                else usedQuarterHealthUltimate = true;
             }
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
             public override void OnAttackParried(bool stun)
             { if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position); }
-            public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
-            {
-                if (!parried && damaged) KarmaRisingPolish.ContactSpark(owner.effectsRoot, point, owner.direction);
-            }
-            public override KarmaBossAttack CreateAttackComponent(GameObject target)
-            { return target.AddComponent<RisingStrike>(); }
-            sealed class RisingStrike : KarmaBossAttack
-            {
-                protected override bool AttachTrail { get { return !KarmaRisingPolish.SuppressStockAttackVfx; } }
-                protected override bool AttachLaunch { get { return !KarmaRisingPolish.SuppressStockAttackVfx; } }
-            }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {
+#if UNITY_EDITOR
+                if (PracticeHold) return true;
+#endif
                 Face(dx);
-                float gap = Mathf.Abs(dx);
-                if (gap > Settings.preferredDistance)
+                if (Mathf.Abs(dx) > Settings.preferredDistance)
                 {
-                    bool burst = gap < Settings.meleeReach * 1.65f;
-                    float speed = Settings.approachSpeedMultiplier * (burst ? 2.35f : 1f);
-                    owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * speed * dt);
-                    float strideGap = burst ? 0.07f : 0.12f;
+                    owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * Settings.approachSpeedMultiplier * dt);
                     if (owner.FightSeconds >= nextStride)
-                    {
-                        nextStride = owner.FightSeconds + strideGap;
-                        if (burst) KarmaRisingPolish.Pursuit(owner.effectsRoot, owner.Position, Mathf.Sign(dx), Settings.trailStyle, owner.art.GetComponent<SpriteRenderer>());
-                        else KarmaRisingPolish.Stride(owner.effectsRoot, owner.Position, Mathf.Sign(dx));
-                    }
+                    { nextStride = owner.FightSeconds + 0.12f; KarmaRisingPolish.Stride(owner.effectsRoot, owner.Position, Mathf.Sign(dx)); }
                 }
                 return false;
             }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
+                if (attack == EnemyAttack.UP05) return UltimateDue;
                 if (!base.Eligible(attack, distance, sight, escape)) return false;
-                if (attack == EnemyAttack.GroundStrike) return distance <= Settings.meleeReach;
-                if (attack == EnemyAttack.UP02)
-                    return owner.previous != attack && (owner.game.Player.Airborne || distance <= KarmaSpace.Units(8));
+                if (attack == EnemyAttack.GroundStrike)
+                    return sight && !owner.game.Player.Airborne;
+                if (attack == EnemyAttack.UP01) return owner.Position.y > KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.5f);
+                if (attack == EnemyAttack.UP02) return owner.game.Player.Airborne && owner.previous != attack
+                    && owner.FightSeconds >= nextAirPursuit;
                 return attack != EnemyAttack.UP03 || escape;
-            }
-            public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
-            {
-                var body = owner.game.Player.GetComponent<Rigidbody2D>();
-                float velocityX = body != null ? body.linearVelocity.x : 0f;
-                float signed = owner.game.Player.Position.x - owner.Position.x;
-                bool retreating = Mathf.Abs(velocityX) > 1.2f && Mathf.Abs(signed) > 0.4f && Mathf.Sign(velocityX) == Mathf.Sign(signed);
-                float wall = Mathf.Min(owner.Position.x - KarmaStage.BossLeftWall, KarmaStage.BossRightWall - owner.Position.x);
-                bool nearWall = wall < KarmaSpace.Units(2.5f);
-                EnemyAttack preferred = RisingSlashRules.ContextualPreference(distance, Settings.meleeReach, owner.game.Player.Airborne, retreating, nearWall);
-                if (preferred != owner.previous && Eligible(preferred, distance, sight, escape))
-                {
-                    attack = preferred;
-                    return true;
-                }
-                return RisingSlashRules.TrySelect(owner.attacks, candidate => Eligible(candidate, distance, sight, escape), ref selectionCursor, out attack);
             }
             public override float DecisionDelay { get { return Mathf.Max(0.26f, base.DecisionDelay * Settings.attackDecisionMultiplier); } }
 

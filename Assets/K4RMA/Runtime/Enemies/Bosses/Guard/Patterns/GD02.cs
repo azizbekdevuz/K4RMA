@@ -9,53 +9,16 @@ namespace KarmaPrototype
             public GD02Pattern(KarmaEnemy owner) : base(owner) { }
             float heavyParryUntil;
             bool heavyParryQueued;
-            public bool ParryWindowOpen { get { return owner.Active && !owner.game.Paused && owner.running && owner.selected == EnemyAttack.GD02 && owner.state == ActionState.Telegraph && heavyParryUntil > 0; } }
+            public bool ParryWindowOpen { get { return owner.Active && !owner.game.Paused && owner.running
+                && (owner.selected == EnemyAttack.GD02 || owner.selected == EnemyAttack.GD05)
+                && owner.state == ActionState.Telegraph && heavyParryUntil > 0; } }
             public bool TryQueueParry() { if (!ParryWindowOpen) return false; heavyParryQueued = true; return true; }
             public bool ConsumeQueuedParry() { bool queued = heavyParryQueued; heavyParryQueued = false; return queued; }
             public override void Interrupt() { heavyParryUntil = 0; heavyParryQueued = false; owner.animator.EndHeavyStrike(); }
             public override IEnumerator Execute() { return ExecuteWithTerrain(null); }
             public IEnumerator ExecuteWithTerrain(Coroutine terrainWave)
             {
-                Vector2 center = new Vector2(owner.Position.x + owner.direction * (Settings.heavyStrikeReach / 2), KarmaSpace.Units(2.2f));
-                Vector2 size = new Vector2(Settings.heavyStrikeReach, KarmaSpace.Units(4.4f));
-                var mark = owner.Mark("GD02 강공격 · 패링 가능", center, size);
-                owner.state = ActionState.Telegraph; owner.animator.PrepareHeavyStrike();
-                float cueSeconds = Mathf.Max(0.1f, Settings.heavyParryCueSeconds);
-                yield return owner.Wait(Mathf.Max(0, owner.Warning(0.9f) - cueSeconds));
-                heavyParryQueued = false; heavyParryUntil = owner.FightSeconds + cueSeconds;
-
-                var cue = KarmaVisuals.Box(owner.effectsRoot, "GD02 parry cue", owner.animator.HeavyHandPosition,
-                    Vector2.one, Color.white, 50);
-                cue.sprite = KarmaArtwork.Sprite("GuardBossVFX", "ParryRed");
-                cue.sharedMaterial = KarmaVisuals.DefaultMaterial;
-                cue.transform.localScale = Vector3.one * KarmaSpace.Units(0.65f) / cue.sprite.bounds.size.x;
-                // An opaque core remains legible at normal Game-view size; the outer red glow adds light.
-                var glowObject = new GameObject("GD02 parry glow");
-                glowObject.transform.SetParent(cue.transform, false);
-                glowObject.transform.localScale = Vector3.one * 1.2f;
-                var glow = glowObject.AddComponent<SpriteRenderer>();
-                glow.sprite = cue.sprite; glow.sharedMaterial = KarmaCombatVFX.GlowMaterial;
-                glow.sortingOrder = 49;
-                // The light and acceptance window start/end together, including the final visible frame.
-                while (owner.FightSeconds < heavyParryUntil && owner.Active)
-                {
-                    if (owner.game.Paused) { yield return null; continue; }
-                    cue.transform.position = owner.animator.HeavyHandPosition;
-                    glow.color = new Color(3, 0.8f, 0.45f, 0.9f + 0.1f * Mathf.Sin(owner.FightSeconds * 24));
-                    yield return null;
-                }
-                cue.gameObject.SetActive(false); Destroy(cue.gameObject); heavyParryUntil = 0;
-                mark.gameObject.SetActive(false); Destroy(mark.gameObject);
-                owner.animator.SwingHeavyStrike(); owner.state = ActionState.Attack;
-
-                int parries = owner.game.Player.ParryCount;
-                var contact = new KarmaAttackContact(breaksShieldOnParry: true);
-                owner.Attack(center, Vector2.zero, size, 0.18f, Settings.heavyStrikeDamageMultiplier, contact, Settings.heavyHitStunSeconds);
-                owner.TryAttackHit(center, center, size, owner.Damage * Settings.heavyStrikeDamageMultiplier, contact, Settings.heavyHitStunSeconds);
-                if (owner.game.Player.ParryCount != parries) yield break;
-                // Include contacts made after the first frame of the active hit box.
-                yield return HeavySlashTrail();
-                heavyParryQueued = false;
+                yield return Strike(false);
                 if (!owner.Active || owner.pendingParry) yield break;
                 // Only the inherited sword-wave form gains this follow-up, at 50% HP or below.
                 if (owner.game.Player.Essences.HasRemnant(Essence.SwordWave) && owner.Health <= owner.MaxHealth * 0.5f)
@@ -71,6 +34,44 @@ namespace KarmaPrototype
                 // Do not remove steps while their child coroutines are still building colliders.
                 if (terrainWave != null) yield return terrainWave;
                 yield return owner.Recovery(1.4f);
+            }
+            float CueSeconds { get { return Mathf.Max(0.1f, Settings.heavyParryCueSeconds); } }
+            public float StrikeDuration { get { return Mathf.Max(CueSeconds, owner.Warning(0.9f)) + 0.24f; } }
+            public IEnumerator Strike(bool inDome)
+            {
+                Vector2 center = new Vector2(owner.Position.x + owner.direction * (Settings.heavyStrikeReach / 2), KarmaSpace.Units(2.2f));
+                Vector2 size = new Vector2(Settings.heavyStrikeReach, KarmaSpace.Units(4.4f));
+                var mark = owner.Mark("GD02 강공격 · 패링 가능", center, size);
+                owner.state = ActionState.Telegraph; owner.animator.PrepareHeavyStrike();
+                float cueSeconds = CueSeconds;
+                yield return owner.Wait(Mathf.Max(0, owner.Warning(0.9f) - cueSeconds));
+                heavyParryQueued = false; heavyParryUntil = owner.FightSeconds + cueSeconds;
+                owner.animator.HeatHeavyStrike();
+
+                while (owner.FightSeconds < heavyParryUntil && owner.Active)
+                    yield return null;
+                heavyParryUntil = 0;
+                mark.gameObject.SetActive(false); Destroy(mark.gameObject);
+                owner.animator.SwingHeavyStrike(); owner.state = ActionState.Attack;
+
+                int parries = owner.game.Player.ParryCount;
+                var contact = new KarmaAttackContact(breaksShieldOnParry: !inDome, parryWithoutRiposte: inDome);
+                var hitbox = inDome
+                    ? KarmaBossAttack.Spawn(owner.game, owner, owner.effectsRoot, center, Vector2.zero, size, 0.18f,
+                        owner.Damage * Settings.heavyStrikeDamageMultiplier, new Color(1, 0.7f, 0.12f),
+                        contact, Settings.heavyHitStunSeconds, "Bash", visualSheet: "GuardBossVFX",
+                        renderArtwork: false, sourcePattern: EnemyAttack.GD02)
+                    : owner.Attack(center, Vector2.zero, size, 0.18f, Settings.heavyStrikeDamageMultiplier,
+                        contact, Settings.heavyHitStunSeconds, pattern: EnemyAttack.GD02);
+                owner.TryAttackHit(center, center, size, owner.Damage * Settings.heavyStrikeDamageMultiplier, contact, Settings.heavyHitStunSeconds);
+                if (owner.game.Player.ParryCount != parries)
+                {
+                    if (inDome && hitbox != null) { hitbox.gameObject.SetActive(false); Destroy(hitbox.gameObject); }
+                    yield break;
+                }
+                // Include contacts made after the first frame of the active hit box.
+                yield return HeavySlashTrail();
+                heavyParryQueued = false;
             }
             IEnumerator HeavySlashTrail()
             {

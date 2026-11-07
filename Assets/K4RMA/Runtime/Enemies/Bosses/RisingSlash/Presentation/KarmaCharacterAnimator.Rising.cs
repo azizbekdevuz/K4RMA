@@ -3,13 +3,13 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaCharacterAnimator
     {
-        string risingHold;
-        float risingHoldUntil;
-        internal void ConfigureRisingPresentation() { guardianPose = RisingGuardianPose; }
-        public void HoldRisingPose(string pose, float seconds)
+        internal void ConfigureRisingPresentation()
         {
-            risingHold = pose;
-            risingHoldUntil = Time.time + Mathf.Max(0.05f, seconds);
+            // Base poses live in this boss's library; inherited bodies already supplied
+            // their own poses and must keep those images.
+            foreach (var sprite in KarmaArtwork.Sprites("Rise"))
+                if (sprite != null && !poses.ContainsKey(sprite.name)) poses[sprite.name] = sprite;
+            guardianPose = RisingGuardianPose;
         }
         void RisingGuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
         {
@@ -18,9 +18,6 @@ namespace KarmaPrototype
                 : action == "Recover" ? "Landing"
                 : action == "Attack" ? airborne ? "AirSlash" : attack == EnemyAttack.UP01 || attack == EnemyAttack.UP03 ? "Rising" : "Slash"
                 : DefaultGuardianPose(action, airborne, armored);
-            bool combatPose = action == "Attack" || action == "Telegraph";
-            if (!combatPose || Time.time < hurtUntil) risingHoldUntil = 0f;
-            else if (Time.time < risingHoldUntil && !string.IsNullOrEmpty(risingHold)) pose = risingHold;
             if (pose == "Move") pose = "Dash";
             ApplyGuardianPose(pose);
         }

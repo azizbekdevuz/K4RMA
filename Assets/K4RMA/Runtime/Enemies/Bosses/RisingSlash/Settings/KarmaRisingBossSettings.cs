@@ -6,6 +6,8 @@ namespace KarmaPrototype
     [Serializable]
     public sealed class KarmaRisingBossSettings : KarmaBossBalance
     {
+        [NonSerialized] KarmaRisingPatternWeights.RisingPatternWeightValues patternWeights;
+        public KarmaRisingPatternWeights.RisingPatternWeightValues Weights => patternWeights ?? (patternWeights = KarmaRisingPatternWeights.LoadCopy());
         [Header("상승베기형")]
         [Min(0.1f)] public float preferredDistance = 2.05f * KarmaSpace.Scale, meleeReach = 4.1f * KarmaSpace.Scale;
         [Min(0.1f)] public float approachSpeedMultiplier = 1.55f, attackDecisionMultiplier = 0.58f;
@@ -15,10 +17,5 @@ namespace KarmaPrototype
         [Min(1)] public float riseHeight = 4 * KarmaSpace.Scale;
         [Min(0.5f)] public float groundBladeWidth = 5 * KarmaSpace.Scale, groundBladeHeight = 6 * KarmaSpace.Scale;
         [Min(0.4f)] public float crossingWarning = 0.65f, crossingReset = 0.65f;
-
-        [Header("기본 베기 비교")]
-        public RisingBasicVariant basicVariant = RisingBasicVariant.AdvancingThreeHit;
-        public bool guardBasicAccent = true;
-        public RisingTrailStyle trailStyle = RisingTrailStyle.Ribbon;
     }
 }

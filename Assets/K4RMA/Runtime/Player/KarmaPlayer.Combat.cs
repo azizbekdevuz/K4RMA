@@ -20,18 +20,10 @@ namespace KarmaPrototype
             Vector2 direction = new Vector2(KarmaInput.Horizontal, vertical);
             return direction.sqrMagnitude > 0 ? direction.normalized : Vector2.right * Facing;
         }
-        void ReadUniqueDirectionTap()
+        void ReadUniqueSwordInput()
         {
-            if (!Essences.HasRemnant(Essence.SwordWave) || !CanSword()) { techniques.ClearDirectionTap(); return; }
-            int direction = 0, count = 0;
-            if (KarmaInput.DirectionPressed(1)) { direction = 1; count++; }
-            if (KarmaInput.DirectionPressed(2)) { direction = 2; count++; }
-            if (KarmaInput.DirectionPressed(3)) { direction = 3; count++; }
-            if (KarmaInput.DirectionPressed(4)) { direction = 4; count++; }
-            if (count > 1) { techniques.ClearDirectionTap(); return; }
-            if (count == 0 || !techniques.DirectionTap(direction, Time.time, game.Config.Techniques.doubleTapWindow)) return;
-            Vector2 aim = direction == 1 ? Vector2.left : direction == 2 ? Vector2.right : direction == 3 ? Vector2.up : Vector2.down;
-            BeginDirectionalSlash(aim, game.Config.Techniques.pierceDistance, Essence.SwordWave);
+            if (Essences.HasRemnant(Essence.SwordWave) && CanSword() && KarmaInput.Pressed(KarmaAction.Pierce))
+                BeginDirectionalSlash(AttackDirection(), game.Config.Techniques.pierceDistance, Essence.SwordWave);
         }
         void Attack()
         {
@@ -87,14 +79,15 @@ namespace KarmaPrototype
                 SwordHit(enemy, direction);
             }
         }
-        void SwordHit(KarmaEnemy enemy, Vector2 direction)
+        bool SwordHit(KarmaEnemy enemy, Vector2 direction)
         {
             float before = enemy.Health;
             Vector2 point = enemy.ClosestDamagePoint(Position);
             enemy.TakeDamage(game.Config.swordDamage);
-            if (enemy.Health >= before) return;
+            if (enemy.Health >= before) return false;
             KarmaRemnantVFX.SwordImpact(game, point, direction);
             game.SwordHitFeedback();
+            return true;
         }
         Vector2 MoveSlash(Vector2 direction, float distance)
         {

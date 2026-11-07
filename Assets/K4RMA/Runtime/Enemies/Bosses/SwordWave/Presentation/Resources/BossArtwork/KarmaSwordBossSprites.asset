@@ -55,6 +55,14 @@ MonoBehaviour:
     - {fileID: 21300000, guid: 91870bb787824b41b435995fbde29a88, type: 3}
     - {fileID: 21300000, guid: 151730b16b314dea9c2897c60219893b, type: 3}
     - {fileID: 21300000, guid: 7057fcc08d63407f957fd979eece9d52, type: 3}
+    - {fileID: 21300000, guid: f42c0e7ac9a6e854b8a9bf89d0d82e36, type: 3}
+    - {fileID: -1060258281, guid: 90bc44234b4f98d4280d9910a6d3e18e, type: 3}
+    - {fileID: 1470360423, guid: 90bc44234b4f98d4280d9910a6d3e18e, type: 3}
+    - {fileID: 38299503, guid: 90bc44234b4f98d4280d9910a6d3e18e, type: 3}
+    - {fileID: 358426128, guid: 90bc44234b4f98d4280d9910a6d3e18e, type: 3}
+    - {fileID: 21300000, guid: ef426482b6c27c542af3e1b2a10733f2, type: 3}
+    - {fileID: 21300000, guid: 039b7d04f68ceda4cbdcc72da7fee0dc, type: 3}
+    - {fileID: 21300000, guid: bcaacde0fddc7db4595806b06ff5e128, type: 3}
     poses:
     - SW01_StaggeredWave
     - SW02_AimedSlash
@@ -71,6 +79,14 @@ MonoBehaviour:
     - Sword_Impact_v6
     - Sword_Release_v6
     - Sword_Shard_v6
+    - SW05_JudgementSword_v2
+    - SW05_Impact_0
+    - SW05_Impact_1
+    - SW05_Impact_2
+    - SW05_Impact_3
+    - SW03_GroundScar_v7
+    - SW03_RisingBlade_v7
+    - SW03_HitCut_v7
   - id: BossAppearance
     source: Assets/K4RMA/Arts/Bosses/SwordWave/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png
     sprites:
@@ -83,3 +99,67 @@ MonoBehaviour:
     - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
     poses:
     - Wave
+  - id: WaveSW02
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Characters/SW02/Wave_SW02_Transitions.png
+    sprites:
+    - {fileID: 215936760, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+    - {fileID: -334866559, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+    - {fileID: -1200440430, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+    - {fileID: -1384519290, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+    - {fileID: -2015978983, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+    - {fileID: -1516553558, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+    poses:
+    - Prepare01
+    - Prepare02
+    - Swing01
+    - Swing02
+    - Recover01
+    - Recover02
+  - id: WaveRiseSW02
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Characters/SW02/WaveRise_SW02_Transitions.png
+    sprites:
+    - {fileID: 1512900319, guid: bfaba9b40f19bb148be59d2cc6408dfd, type: 3}
+    - {fileID: -2025278870, guid: bfaba9b40f19bb148be59d2cc6408dfd, type: 3}
+    - {fileID: 1557195163, guid: bfaba9b40f19bb148be59d2cc6408dfd, type: 3}
+    - {fileID: 934865882, guid: bfaba9b40f19bb148be59d2cc6408dfd, type: 3}
+    - {fileID: -262460218, guid: bfaba9b40f19bb148be59d2cc6408dfd, type: 3}
+    - {fileID: 1121304229, guid: bfaba9b40f19bb148be59d2cc6408dfd, type: 3}
+    poses:
+    - Prepare01
+    - Prepare02
+    - Swing01
+    - Swing02
+    - Recover01
+    - Recover02
+  - id: WaveWardSW02
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Characters/SW02/WaveWard_SW02_Transitions.png
+    sprites:
+    - {fileID: 1949127865, guid: bbd42dcd8106f1f4fbac7bcc12505043, type: 3}
+    - {fileID: -1280256526, guid: bbd42dcd8106f1f4fbac7bcc12505043, type: 3}
+    - {fileID: -569029611, guid: bbd42dcd8106f1f4fbac7bcc12505043, type: 3}
+    - {fileID: -2124401589, guid: bbd42dcd8106f1f4fbac7bcc12505043, type: 3}
+    - {fileID: -506565353, guid: bbd42dcd8106f1f4fbac7bcc12505043, type: 3}
+    - {fileID: -1599862223, guid: bbd42dcd8106f1f4fbac7bcc12505043, type: 3}
+    poses:
+    - Prepare01
+    - Prepare02
+    - Swing01
+    - Swing02
+    - Recover01
+    - Recover02
+  - id: WaveFinalSW02
+    source: Assets/K4RMA/Arts/Bosses/SwordWave/Characters/SW02/WaveFinal_SW02_Transitions.png
+    sprites:
+    - {fileID: 1150847955, guid: 40e8d080503c8c84ab6dbdeb15872b6c, type: 3}
+    - {fileID: -1520117279, guid: 40e8d080503c8c84ab6dbdeb15872b6c, type: 3}
+    - {fileID: 1718070417, guid: 40e8d080503c8c84ab6dbdeb15872b6c, type: 3}
+    - {fileID: -1040436017, guid: 40e8d080503c8c84ab6dbdeb15872b6c, type: 3}
+    - {fileID: 1835294030, guid: 40e8d080503c8c84ab6dbdeb15872b6c, type: 3}
+    - {fileID: -1326310171, guid: 40e8d080503c8c84ab6dbdeb15872b6c, type: 3}
+    poses:
+    - Prepare01
+    - Prepare02
+    - Swing01
+    - Swing02
+    - Recover01
+    - Recover02

@@ -80,12 +80,13 @@ namespace KarmaPrototype
             // Artwork survives briefly after its owner dies and is detached.
             // Reset before checking the owner so no last-frame lean is retained.
             if (animator == null || enemy == null || !enemy.PresentationActive ||
-                enemy.Stunned || animator.CurrentPose == "Death")
+                animator.CurrentPose == "Death")
             {
                 ResetVisualTransform();
                 return;
             }
             if (game != null && game.Paused) return;
+            if (enemy.Stunned) { ResetVisualTransform(); return; }
             if (dt <= 0) return;
 
             // The existing character animator selects sprites in Update().
@@ -107,11 +108,12 @@ namespace KarmaPrototype
             float travel = enemy.Position.x - previousRootPosition.x;
             previousRootPosition = enemy.Position;
             bool locomotionPose = pose == "Idle" || pose == "Move";
+            bool sliding = pose == "Backstep";
             bool grounded = enemy.Position.y <= KarmaSpace.GuardianGroundY + 0.1f;
             float nominalSpeed = game != null
                 ? Mathf.Max(0.1f, game.Config.enemyMoveSpeed * game.Config.BossTuning.moveMultiplier)
                 : KarmaSpace.Units(2.4f) * 1.7f;
-            float actualSpeed = locomotionPose && grounded ? travel / dt * facing : 0;
+            float actualSpeed = (locomotionPose || sliding) && grounded ? travel / dt * facing : 0;
             locomotionSpeed = Mathf.Lerp(locomotionSpeed, actualSpeed, 1 - Mathf.Exp(-dt / 0.07f));
             if (locomotionPose && grounded)
                 gaitPhase += Mathf.Abs(travel) * 11f / nominalSpeed;
@@ -130,16 +132,19 @@ namespace KarmaPrototype
             bool scars = current == (int)EnemyAttack.SW03;
             bool counter = current == (int)EnemyAttack.SW04;
             bool aerial = current == (int)EnemyAttack.SW05;
-            float relax = Mathf.Exp(-8f * elapsed);
+            float relax = Mathf.Exp(-(pose == "FollowThrough" ? 14f : 8f) * elapsed);
             Vector3 delta = Vector3.zero;
             float angle = 0f;
 
             switch (pose)
             {
                 case "Backstep":
-                    // Hold a planted guard silhouette; never cycle the walking gait.
-                    delta.x = -0.025f;
-                    angle = 4.5f;
+                    // Acceleration loads the torso; braking releases the lean.
+                    // Actual signed travel also handles a wall escape across the player.
+                    float dashSpeed = game != null ? game.Config.BossTuning.sword.swordRetreatSpeed : 48;
+                    float slide = Mathf.Clamp(locomotionSpeed / Mathf.Max(1, dashSpeed), -1, 1);
+                    delta.x = 0.045f * slide;
+                    angle = -7.5f * slide;
                     break;
 
                 case "Idle":
@@ -213,13 +218,14 @@ namespace KarmaPrototype
 
             // Carry the displayed offset and its velocity across sprite changes.
             // A new pose changes the target, never teleports to its first sample.
-            float blend = pose == "Slash" || pose == "Wave" || pose == "Hurt" ? 0.035f : 0.07f;
+            float blend = pose == "Slash" || pose == "Wave" || pose == "Hurt" ? 0.035f
+                : pose == "Backstep" || pose == "Windup" || pose == "FollowThrough" ? 0.045f : 0.07f;
             motionOffset = Vector3.SmoothDamp(motionOffset, delta, ref motionVelocity, blend, Mathf.Infinity, dt);
             motionAngle = Mathf.SmoothDampAngle(motionAngle, angle, ref angularVelocity, blend, Mathf.Infinity, dt);
             Quaternion rotation = Quaternion.Euler(0f, 0f, motionAngle);
             // The supplied pivots are just above the feet. Rotate around that
             // foot anchor, preserving its authored height through the lean.
-            Vector3 foot = spriteRenderer.sprite != null
+            Vector3 foot = spriteRenderer.sprite != null && !animator.SW02UsesIntermediateFrame
                 ? new Vector3(0, spriteRenderer.sprite.bounds.min.y * spriteTransform.localScale.y, 0) : Vector3.zero;
             Vector3 planted = spriteHomeRotation * (foot - rotation * foot);
             spriteTransform.localPosition = spriteHome + motionOffset + planted;

@@ -61,7 +61,7 @@ namespace KarmaPrototype
             public KarmaBossAttack ReleaseSW01(Vector2 origin, Vector2 velocity, Vector2 size, float life, bool upper)
             {
                 var visual = AttackVisual(EnemyAttack.SW01, velocity);
-                var shot = KarmaBossAttack.Spawn(owner.game, owner, owner.effectsRoot, origin, velocity, size, life,
+                var shot = KarmaBossAttack.Spawn(owner.game, owner, persistentRoot, origin, velocity, size, life,
                     owner.Damage, visual.Color, null, 0, visual.Pose, visual.Restrained, true,
                     "SW01_CrescentWave_v4",
                     visual.Sheet, sourcePattern: EnemyAttack.SW01);
@@ -111,31 +111,41 @@ namespace KarmaPrototype
                 // bypass ordinary cooldown/repeat rules after the current action.
                 if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed)
                 { next = EnemyAttack.SW05; return true; }
-                bool basic = owner.FightSeconds >= nextSwordBasic && sight && SwordAttackCanReach(EnemyAttack.SWBasic, owner.game.Player.Position);
-                // Broaden close-range basics without taking a ready SW05's inherited
-                // cycle turn. The original due-basic / <2.5-unit priority stays intact.
-                bool ultimateReady = owner.attacks.Contains(EnemyAttack.SW05)
-                    && SwordCandidateAvailable(EnemyAttack.SW05, owner.Position, distance, sight, escape);
-                if (basic && (consecutiveBasics < 2 || ultimateReady || basicAfterRetreat) && (swordBasicDue || distance < KarmaSpace.Units(2.5f)
-                    || !ultimateReady && (BasicMeleeCanReach(owner.Position, owner.game.Player.Position)
-                        || distance <= BasicWaveRange && consecutiveBasics == 0)))
+                bool basic = Settings.Weights.swBasicWeight > 0 && owner.FightSeconds >= nextSwordBasic && sight && SwordAttackCanReach(EnemyAttack.SWBasic, owner.game.Player.Position);
+                // Due basics and retreat follow-ups remain readable guaranteed responses.
+                // Other ready basics join the same weighted pool as the eligible skills.
+                if (!skillAfterRetreat && basic && consecutiveBasics < 2 && (swordBasicDue || basicAfterRetreat))
                 { next = EnemyAttack.SWBasic; return true; }
                 bool repeatAvailable = false;
-                for (int i = 0; i < owner.attacks.Count; i++)
+                var repeated = owner.previous;
+                float total = !skillAfterRetreat && basic && consecutiveBasics < 2
+                    ? Settings.Weights.swBasicWeight * (distance < KarmaSpace.Units(2.5f) ? Settings.Weights.closeBasicMultiplier : 1) : 0;
+                if (total > 0) next = EnemyAttack.SWBasic;
+                foreach (var candidate in owner.attacks)
                 {
-                    var candidate = owner.attacks[cycleIndex++ % owner.attacks.Count];
                     if (!SwordCandidateAvailable(candidate, owner.Position, distance, sight, escape)) continue;
-                    // Keep the inherited cycle; repeat only when all other unlocked skills are ineligible.
-                    if (candidate == owner.previous) { next = candidate; repeatAvailable = true; continue; }
-                    next = candidate;
-                    return true;
+                    // Keep immediate-repeat protection; use a repeat only if no other skill is available.
+                    if (candidate == owner.previous) { repeated = candidate; repeatAvailable = true; continue; }
+                    float weight = candidate == EnemyAttack.SW01 ? Settings.Weights.sw01Weight
+                        : candidate == EnemyAttack.SW02 ? Settings.Weights.sw02Weight
+                        : candidate == EnemyAttack.SW03 ? Settings.Weights.sw03Weight : Settings.Weights.sw04Weight;
+                    weight = Mathf.Max(0, weight);
+                    if (weight <= 0) continue;
+                    total += weight;
+                    if (total <= weight || Random.value * total < weight) next = candidate;
                 }
-                if (!repeatAvailable && basic) { next = EnemyAttack.SWBasic; return true; }
-                return repeatAvailable;
+                if (total > 0) return true;
+                if (basic) { next = EnemyAttack.SWBasic; return true; }
+                if (repeatAvailable && Settings.Weights.allowRepeatFallback) { next = repeated; return true; }
+                return false;
             }
             bool SwordCandidateAvailable(EnemyAttack candidate, Vector2 from, float distance, bool sight, bool escape)
             {
                 if (candidate == EnemyAttack.SW05) return ultimate.ThresholdPending && !counter.Formed;
+                if (candidate == EnemyAttack.SW01 && Settings.Weights.sw01Weight <= 0
+                    || candidate == EnemyAttack.SW02 && Settings.Weights.sw02Weight <= 0
+                    || candidate == EnemyAttack.SW03 && Settings.Weights.sw03Weight <= 0
+                    || candidate == EnemyAttack.SW04 && Settings.Weights.sw04Weight <= 0) return false;
                 if (candidate == EnemyAttack.SW04 && (counter.Formed || owner.FightSeconds < counter.NextReadyAt)) return false;
                 // Keep the defensive overlay readable: its four committed counters
                 // can accompany ordinary waves, while larger set pieces wait for it.
@@ -161,7 +171,12 @@ namespace KarmaPrototype
             int swordSkillsSinceBasic;
             int consecutiveBasics;
             float nextSwordBasic;
-            bool swordBasicDue = true, basicAfterRetreat;
+            bool swordBasicDue = true, basicAfterRetreat, skillAfterRetreat;
+            Transform persistentRoot;
+            public Transform PersistentRoot { get { return persistentRoot; } }
+#if UNITY_EDITOR
+            public bool PracticeHold;
+#endif
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
@@ -181,9 +196,27 @@ namespace KarmaPrototype
             KarmaWaveMotion damageMotion;
             public override void Initialize()
             {
+                persistentRoot = new GameObject("Sword persistent attacks").transform;
+                persistentRoot.SetParent(owner.effectsRoot, false);
                 owner.animator.ConfigureSwordPresentation();
                 damageMotion = owner.art.gameObject.AddComponent<KarmaWaveMotion>();
+                owner.gameObject.AddComponent<KarmaSwordStunFeedback>().Initialize(owner, owner.game, owner.art);
                 movement.Initialize();
+            }
+            public override float ParryStunSeconds { get { return 2; } }
+            public override void OnAttackParried(bool stun)
+            {
+                // Final inheritance resists parry stun, including contacts that
+                // already queued it in the host. The ultimate also stays committed.
+                if (owner.game.StageIndex == 3 || owner.running && owner.selected == EnemyAttack.SW05)
+                { owner.pendingParry = false; return; }
+                if (!owner.Active || owner.Stunned || owner.pendingParry) return;
+                // Use the host's stun transition next Update. Stop emissions and
+                // live contacts now, including a separately owned SW04 volley.
+                owner.pendingParry = true;
+                owner.StopAllCoroutines();
+                foreach (Transform effect in owner.effectsRoot)
+                    effect.gameObject.SetActive(false);
             }
             public override Bounds DamageBounds(SpriteRenderer renderer)
             { return damageMotion != null ? damageMotion.GetDamageBounds(renderer) : renderer.bounds; }
@@ -203,6 +236,8 @@ namespace KarmaPrototype
             }
             public override bool Armored { get { return counter.Guarding; } }
             public override bool ReduceDamage(Vector2 source) { return counter.Guarding; }
+            public override void ReducedDamageFeedback()
+            { KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard); }
             public override Color ShieldColor { get { return owner.fullShield ? Color.white
                 : counter.Guarding ? new Color(0.42f, 0.68f, 1) : base.ShieldColor; } }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
@@ -245,15 +280,21 @@ namespace KarmaPrototype
                 basicAfterRetreat = true;
                 nextSwordBasic = Mathf.Min(nextSwordBasic, owner.FightSeconds + 0.12f);
             }
+            public void RequestSkillAfterRetreat()
+            { skillAfterRetreat = true; basicAfterRetreat = false; }
             public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
             { return TrySelectSwordAttack(distance, sight, escape, out attack); }
             public override bool TickMovement(float dt, float dx)
             {
+#if UNITY_EDITOR
+                if (PracticeHold) return true;
+#endif
                 if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed) return false;
                 return movement.Tick(dt, dx);
             }
             public override void OnSelected()
             {
+                skillAfterRetreat = false;
                 movement.OnSelected();
                 if (owner.selected == EnemyAttack.SWBasic)
                 {
@@ -286,12 +327,19 @@ namespace KarmaPrototype
                     flash.Queue(owner);
                 }
             }
-            public override Transform PersistentEffects { get { return counter.EffectsRoot; } }
+            public override Transform PersistentEffects { get { return persistentRoot; } }
             public void CounterParried(KarmaAttackContact contact) { counter.OnParried(contact); }
             public void CounterContactStarting(KarmaAttackContact contact) { counter.TraceStarting(contact); }
             public void CounterContactResolved(KarmaAttackContact contact) { counter.TraceResolved(contact); }
             public override void Interrupt(bool preservePressure)
-            { base.Interrupt(preservePressure); movement.Interrupt(preservePressure); }
+            {
+                base.Interrupt(preservePressure); movement.Interrupt(preservePressure);
+                skillAfterRetreat = false;
+                if (persistentRoot == null) return;
+                foreach (Transform child in persistentRoot)
+                { child.gameObject.SetActive(false); Destroy(child.gameObject); }
+                persistentRoot.gameObject.SetActive(true);
+            }
 
         }
     }

@@ -5,7 +5,9 @@ namespace KarmaPrototype
     public sealed class KarmaAttackContact
     {
         public bool BreaksShieldOnParry { get; private set; }
-        public KarmaAttackContact(bool breaksShieldOnParry = false) { BreaksShieldOnParry = breaksShieldOnParry; }
+        public bool ParryWithoutRiposte { get; }
+        public KarmaAttackContact(bool breaksShieldOnParry = false, bool parryWithoutRiposte = false)
+        { BreaksShieldOnParry = breaksShieldOnParry; ParryWithoutRiposte = parryWithoutRiposte; }
         public bool Consumed { get; private set; }
         public bool DealtDamage { get; private set; }
         public void RecordDamage() { DealtDamage = true; }

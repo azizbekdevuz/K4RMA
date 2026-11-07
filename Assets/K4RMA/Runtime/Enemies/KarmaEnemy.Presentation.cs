@@ -86,20 +86,26 @@ namespace KarmaPrototype
                 ? KarmaBossGeometry.SweptOrientedBox(from.x, from.y, to.x, to.y, p.x, p.y, attackAxis.Value.x, attackAxis.Value.y,
                     size.x, size.y, body.extents.x, body.extents.y)
                 : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y);
-            if (!hit) return;
-            if (!contact.TryConsume()) return;
-            if (contact.BreaksShieldOnParry && state == ActionState.Attack && behavior.ConsumeQueuedParry())
+            if (hit) ResolveAttackHit(body.center, amount, contact, stun, parryStun, shieldBreak, sourcePattern);
+        }
+        // Geometry belongs to the attack owner; damage and contact lifecycle stay in the host.
+        void ResolveAttackHit(Vector2 point, float amount, KarmaAttackContact contact, float stun,
+            bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
+        {
+            if (!Active || game.Paused || !contact.TryConsume()) return;
+            var player = game.Player;
+            if ((contact.BreaksShieldOnParry || contact.ParryWithoutRiposte) && state == ActionState.Attack && behavior.ConsumeQueuedParry())
                 player.BeginCounter();
             int parries = player.ParryCount;
             float before = player.Health;
             var hitPattern = sourcePattern ?? selected;
             behavior.ContactStarting(hitPattern, contact);
-            player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern));
-            behavior.ContactResolved(hitPattern, contact, body.center, player.ParryCount != parries, player.Health < before);
+            player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern), !contact.ParryWithoutRiposte);
+            behavior.ContactResolved(hitPattern, contact, point, player.ParryCount != parries, player.Health < before);
             if (player.ParryCount != parries)
             {
                 // Projectile parries remain local; GD02 is the shield-breaking parry.
-                if (contact.BreaksShieldOnParry || shieldBreak || parryStun) pendingParry = true;
+                if (!contact.ParryWithoutRiposte && (contact.BreaksShieldOnParry || shieldBreak || parryStun)) pendingParry = true;
                 behavior.OnAttackParried(parryStun);
                 return;
             }

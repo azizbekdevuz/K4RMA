@@ -10,10 +10,8 @@ namespace KarmaPrototype
             public UP03Pattern(KarmaEnemy owner) : base(owner) { }
             public override IEnumerator Execute()
             {
-                float face = owner.direction < 0f ? -1f : 1f;
-                Vector2 spaced = new Vector2(Mathf.Clamp(owner.Position.x + face * KarmaSpace.Units(1.1f), KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
-                yield return owner.Motion(spaced, 0.16f, Vector2.zero);
                 Vector2 start = new Vector2(owner.Position.x, KarmaSpace.GuardianGroundY);
+                yield return owner.Motion(start, DashSeconds(start), Vector2.zero);
                 float room = owner.direction > 0 ? KarmaStage.ArenaRight - 1.2f - start.x : start.x - (KarmaStage.ArenaLeft + 1.2f);
                 float height = Mathf.Clamp(Settings.groundBladeHeight, KarmaSpace.Units(4.4f), KarmaSpace.Units(6.4f));
                 float gap = KarmaSpace.Units(0.45f);
@@ -22,7 +20,6 @@ namespace KarmaPrototype
                 Vector2 center = new Vector2(start.x + owner.direction * (gap + size.x * 0.5f), height * 0.5f);
                 var mark = owner.Mark("전방 대검기 · 등 뒤로", center, size);
                 owner.state = ActionState.Telegraph;
-                owner.animator.HoldRisingPose("Windup", 0.72f);
 
                 var preview = KarmaRisingArt.Get("WaveEcho");
                 if (preview != null)
@@ -33,8 +30,6 @@ namespace KarmaPrototype
                 }
                 yield return owner.Wait(owner.Warning(0.72f));
                 if (mark != null) Destroy(mark.gameObject);
-                owner.animator.HoldRisingPose("Slash", 0.48f);
-                KarmaRisingPolish.BasicArc(owner.effectsRoot, new Vector2(start.x + owner.direction * KarmaSpace.Units(1.35f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(1.2f)), KarmaSpace.Units(new Vector2(2.8f, 1.8f)), owner.direction, "SlashHigh");
                 var wave = owner.Attack(center, Vector2.zero, size, 0.42f, Settings.waveDamageMultiplier, null, 0f, visualPose: "Wave");
                 if (wave != null)
                 {

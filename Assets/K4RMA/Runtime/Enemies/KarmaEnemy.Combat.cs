@@ -50,7 +50,7 @@ namespace KarmaPrototype
             if (reduced)
             {
                 amount *= Mathf.Clamp01(behavior.Balance.shieldDamageMultiplier);
-                KarmaRemnantVFX.Impact(game, Position, Essence.Guard);
+                behavior.ReducedDamageFeedback();
             }
             ReceiveDamage(amount, source);
         }

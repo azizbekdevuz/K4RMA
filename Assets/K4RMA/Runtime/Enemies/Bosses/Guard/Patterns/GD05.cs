@@ -6,187 +6,139 @@ namespace KarmaPrototype
     {
         sealed class GD05Pattern : GuardBossPattern
         {
-            public GD05Pattern(KarmaEnemy owner) : base(owner) { }
-
             public const float TrialCenter = 20;
             public const float TrialRadius = 10 * KarmaSpace.Scale;
-            const float TrialAttackScale = 1.3f;
-            const float TrialWaveSpacing = 2.6f * KarmaSpace.Scale;
+            readonly GD02Pattern heavy;
+
+            public GD05Pattern(KarmaEnemy owner, GD02Pattern heavy) : base(owner) { this.heavy = heavy; }
+            public bool Active { get; private set; }
+            public override void Interrupt() { Active = false; }
+
+            public void StunFromParry()
+            {
+                owner.state = ActionState.Stunned;
+                owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialParryStunSeconds);
+                owner.ShowStunCue();
+            }
 
             public override IEnumerator Execute()
             {
-                owner.fullShield = true; owner.state = ActionState.Telegraph;
+                owner.fullShield = true;
+                BreakShield();
+                owner.state = ActionState.Telegraph;
+                yield return owner.Wait(0.55f);
+                if (!owner.Active) yield break;
 
-                yield return owner.Wait(1);
                 float limit = TrialRadius - KarmaSpace.Units(0.6f);
                 owner.game.Player.ConfineArena(TrialCenter - limit, TrialCenter + limit);
                 yield return owner.Motion(new Vector2(TrialCenter, KarmaSpace.GuardianGroundY), 0.5f, Vector2.zero);
-                var dome = KarmaGuardDome.Create(owner.game, owner.effectsRoot, new Vector2(TrialCenter, 0), TrialRadius);
-                GuardDecoration("GuardBossVFX", "Seal", new Vector2(TrialCenter, KarmaSpace.Units(0.25f)),
+                if (!owner.Active) yield break;
+
+                Vector2 center = new Vector2(TrialCenter, 0);
+                var dome = KarmaGuardDome.Create(owner.game, owner.effectsRoot, center, TrialRadius);
+                GuardDecoration("GuardBossVFX", "Seal", center + Vector2.up * KarmaSpace.Units(0.25f),
                     new Vector2(TrialRadius * 2, KarmaSpace.Units(2)), new Color(1, 1, 1, 0.5f), 3);
-                owner.trial.Begin(Mathf.Clamp(Settings.trialAttackCount, 3, 8), Settings.trialAllowedHits);
-                for (int i = 0; i < owner.trial.Total; i++)
+                Active = true;
+                owner.fullShield = false;
+                owner.state = ActionState.Approach;
+
+                var sprite = KarmaArtwork.Sprite("GuardDomeShield", "Ricochet") ?? KarmaArtwork.Sprite("GuardBossVFX", "Shield");
+                float radius = KarmaSpace.Units(0.9f);
+                float heading = owner.game.Player.Position.x < TrialCenter ? -1 : 1;
+                var start = center + KarmaSpace.Units(new Vector2(heading * 1.55f, 1.65f));
+                var shield = KarmaVisuals.Box(owner.effectsRoot, "GD05 튕기는 방패", start, Vector2.one, Color.white, 26);
+                shield.sprite = sprite;
+                // The transparent margin and aura are outside the round shield's physical rim.
+                shield.transform.localScale = Vector3.one * (2 * radius / (sprite.rect.width / sprite.pixelsPerUnit * 0.77f));
+                yield return owner.Wait(0.4f);
+                if (!owner.Active) yield break;
+
+                float endsAt = owner.FightSeconds + Mathf.Clamp(Settings.trialDuration, 2, 25);
+                owner.StartCoroutine(Ricochet(shield, center, start - center, new Vector2(heading, 0.3f).normalized, radius));
+                float nextStrike = owner.FightSeconds + 0.25f;
+                while (owner.Active && owner.FightSeconds < endsAt)
                 {
-                    var contact = new KarmaAttackContact(); // Simultaneous hazards share one contact per beat.
-                    owner.state = ActionState.Telegraph;
-                    bool left = i % 2 == 0;
-                    switch (i % 5)
+                    if (owner.game.Paused || owner.Stunned) { yield return null; continue; }
+                    float dx = owner.game.Player.Position.x - owner.Position.x;
+                    if (Mathf.Abs(dx) > 0.03f)
                     {
-                        case 0: yield return TrialHorizontal(left, contact); break;
-                        case 1: yield return TrialRain(contact); break;
-                        case 2: yield return TrialPincer(contact); break;
-                        case 3: yield return TrialPillars(contact); break;
-                        default: yield return TrialWeave(left, contact); break;
+                        owner.direction = Mathf.Sign(dx);
+                        owner.art.localScale = new Vector3(owner.direction * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
                     }
-                    owner.trial.CompleteAttack();
-                    yield return owner.Wait(Mathf.Max(0.4f, Settings.trialAttackGap * owner.Tempo));
-                }
-                bool passed = owner.trial.Passed;
-                owner.trial.Clear();
-                if (!passed)
-                {
-                    // Keep the room intact while cracks and light announce its own detonation.
 
-                    dome.Charge(0.95f);
-                    yield return owner.Wait(0.95f);
-                    dome.Explode();
-
-                    var contact = new KarmaAttackContact();
-                    float active = 0;
-                    while (active < 0.18f && owner.Active)
+                    float distance = Mathf.Abs(dx);
+                    if (distance > KarmaSpace.Units(2.1f))
                     {
-                        if (!owner.game.Paused)
-                        {
-                            var player = owner.game.Player;
-                            if (dome.Overlaps(player.Position, new Vector2(KarmaSpace.PlayerHalfWidth, KarmaSpace.PlayerHalfHeight)))
-                                owner.TryAttackHit(player.Position, player.Position, Vector2.zero, owner.Damage * Settings.trialExplosionMultiplier, contact, 0);
-                            active += Time.deltaTime;
-                        }
-                        yield return null;
+                        float step = Mathf.Min(distance - KarmaSpace.Units(2.1f), KarmaSpace.Units(Mathf.Max(1, Settings.trialChaseSpeed)) * Time.deltaTime);
+                        float x = Mathf.Clamp(owner.Position.x + owner.direction * step, TrialCenter - limit, TrialCenter + limit);
+                        owner.Move(x - owner.Position.x);
                     }
-                    yield return owner.Wait(0.57f);
-                    owner.ClearPatternObjects(); owner.game.Player.ReleaseArena();
-                    yield return owner.Recovery(1.5f);
-                }
-                else
-                {
-                    BreakShield();
-                    owner.game.Player.ReleaseArena(); dome.Dissolve();
-                    yield return owner.Wait(0.4f);
-
-                    yield return owner.Recovery(Mathf.Max(1, Settings.trialStunSeconds),
-                        scaleDuration: false);
-                }
-            }
-            Vector2 TrialWaveSize { get { return WaveSize * TrialAttackScale; } }
-            Vector2 TrialSide(bool left, float y)
-            {
-                // Keep the enlarged projectile's outer top corner below the curved roof.
-                float top = y + TrialWaveSize.y / 2 + KarmaSpace.Units(0.1f);
-                float edge = Mathf.Sqrt(Mathf.Max(0, TrialRadius * TrialRadius - top * top))
-                    - TrialWaveSize.x / 2 - KarmaSpace.Units(0.1f);
-                return new Vector2(TrialCenter + (left ? -edge : edge), y);
-            }
-            Vector2 TrialWaveStart(bool left, float y, int leading)
-            { return TrialSide(left, y) + Vector2.right * (left ? 1 : -1) * leading * TrialWaveSpacing; }
-            float TrialWaveLife(float y, int leading = 0)
-            { return (Vector2.Distance(TrialSide(true, y), TrialSide(false, y)) - leading * TrialWaveSpacing) / KarmaSpace.Units(10); }
-            Vector2 TrialVelocity(bool left) { return Vector2.right * KarmaSpace.Units(left ? 10 : -10); }
-            KarmaBossAttack TrialShot(Vector2 at, Vector2 velocity, Vector2 size, float life, KarmaAttackContact contact, string pose = "Wave")
-            {
-                string sheet = "GuardBossVFX";
-                if (pose == "Ward") pose = "Shard";
-                return KarmaBossAttack.Spawn(owner.game, owner, owner.effectsRoot, at, velocity, size, life, owner.Damage * Settings.trialDamageMultiplier,
-                    new Color(1, 0.75f, 0.15f), contact, 0, pose, visualSheet: sheet);
-            }
-            SpriteRenderer[] TrialWaveMarks(bool left, float y)
-            {
-                var marks = new SpriteRenderer[2];
-                for (int i = 0; i < marks.Length; i++)
-                    marks[i] = owner.PathMark(TrialWaveStart(left, y, i), TrialSide(!left, y), TrialWaveSize);
-                return marks;
-            }
-            void LaunchTrialWaves(bool left, float y, SpriteRenderer[] marks, KarmaAttackContact contact)
-            {
-                for (int i = 0; i < marks.Length; i++)
-                {
-                    marks[i].gameObject.SetActive(false); Destroy(marks[i].gameObject);
-                    TrialShot(TrialWaveStart(left, y, i), TrialVelocity(left), TrialWaveSize, TrialWaveLife(y, i), contact);
-                }
-            }
-            IEnumerator TrialHorizontal(bool left, KarmaAttackContact contact)
-            {
-                float y = KarmaSpace.Units(0.9f);
-                var marks = TrialWaveMarks(left, y);
-
-                yield return owner.Wait(owner.Warning(0.75f)); owner.state = ActionState.Attack;
-                LaunchTrialWaves(left, y, marks, contact);
-                yield return owner.Wait(TrialWaveLife(y) + 0.05f);
-            }
-            IEnumerator TrialRain(KarmaAttackContact contact)
-            {
-                var starts = new Vector2[5]; var lives = new float[5]; var marks = new SpriteRenderer[5];
-                Vector2 size = KarmaSpace.Units(new Vector2(0.65f, 0.85f)) * TrialAttackScale;
-                float aim = Mathf.Clamp(owner.game.Player.Position.x, TrialCenter - KarmaSpace.Units(3.4f), TrialCenter + KarmaSpace.Units(3.4f));
-                float longest = 0;
-                for (int i = 0; i < starts.Length; i++)
-                {
-                    float x = aim + KarmaSpace.Units((i - 2) * 2.6f);
-                    float dx = Mathf.Abs(x - TrialCenter) + size.x / 2;
-                    float roof = Mathf.Sqrt(TrialRadius * TrialRadius - dx * dx);
-                    starts[i] = new Vector2(x, roof - size.y / 2 - KarmaSpace.Units(0.25f));
-                    lives[i] = (starts[i].y - size.y / 2 - KarmaSpace.Units(0.1f)) / KarmaSpace.Units(12);
-                    longest = Mathf.Max(longest, lives[i]);
-                    marks[i] = owner.PathMark(starts[i], starts[i] + Vector2.down * KarmaSpace.Units(12) * lives[i], size);
+                    if (distance <= (Settings.heavyStrikeReach - KarmaSpace.Units(0.3f))
+                        && owner.FightSeconds >= nextStrike && owner.FightSeconds + heavy.StrikeDuration < endsAt)
+                    {
+                        yield return heavy.Strike(true);
+                        heavy.Interrupt();
+                        if (!owner.Stunned) owner.state = ActionState.Approach;
+                        nextStrike = owner.FightSeconds + 0.65f;
+                    }
+                    yield return null;
                 }
 
-                yield return owner.Wait(owner.Warning(0.9f)); owner.state = ActionState.Attack;
-                for (int i = 0; i < starts.Length; i++)
-                {
-                    Destroy(marks[i].gameObject);
-                    TrialShot(starts[i], Vector2.down * KarmaSpace.Units(12), size, lives[i], contact, "Ward");
-                }
-                yield return owner.Wait(longest + 0.05f);
+                if (!owner.Active) yield break;
+                Active = false;
+                shield.gameObject.SetActive(false);
+                owner.HideStunCue();
+                owner.game.Player.ReleaseArena();
+                dome.Dissolve();
+                owner.state = ActionState.Recover;
+                yield return owner.Wait(0.4f);
+                yield return owner.Recovery(0.65f);
             }
-            IEnumerator TrialPincer(KarmaAttackContact contact)
-            {
-                float y = KarmaSpace.Units(0.9f);
-                var left = TrialWaveMarks(true, y); var right = TrialWaveMarks(false, y);
 
-                yield return owner.Wait(owner.Warning(0.85f));
-                owner.state = ActionState.Attack;
-                LaunchTrialWaves(true, y, left, contact);
-                LaunchTrialWaves(false, y, right, contact);
-                yield return owner.Wait(TrialWaveLife(y) + 0.05f);
-            }
-            IEnumerator TrialPillars(KarmaAttackContact contact)
+            IEnumerator Ricochet(SpriteRenderer shield, Vector2 center, Vector2 position, Vector2 velocity, float radius)
             {
-                Vector2 size = KarmaSpace.Units(new Vector2(0.9f, 3.8f)) * TrialAttackScale;
-                var centers = new Vector2[5]; var marks = new SpriteRenderer[5];
-                for (int i = 0; i < centers.Length; i++)
+                var trail = shield.gameObject.AddComponent<TrailRenderer>();
+                trail.sharedMaterial = KarmaCombatVFX.GlowMaterial;
+                trail.sortingOrder = 25;
+                trail.time = 0.11f;
+                trail.startWidth = radius * 0.7f;
+                trail.endWidth = 0;
+                trail.startColor = new Color(1, 0.81f, 0.12f, 0.55f);
+                trail.endColor = new Color(1, 0.7f, 0.08f, 0);
+                trail.minVertexDistance = 0.05f;
+
+                float speed = KarmaSpace.Units(Mathf.Max(1, Settings.trialShieldSpeed));
+                float arcRadius = TrialRadius - radius;
+                var contact = new KarmaAttackContact();
+                while (Active && owner.Active)
                 {
-                    centers[i] = new Vector2(TrialCenter + KarmaSpace.Units((i - 2) * 3.4f), size.y / 2);
-                    marks[i] = owner.Mark("바닥 봉인 · 기둥 사이가 안전", centers[i], size);
+                    if (owner.game.Paused) { yield return null; continue; }
+                    float remaining = speed * Time.deltaTime;
+                    // Split the frame at each impact. Hit tests follow the actual path around corners.
+                    for (int i = 0; i < 6 && remaining > 0.0001f && owner.Active; i++)
+                    {
+                        float projected = Vector2.Dot(position, velocity);
+                        float arc = Mathf.Max(0, -projected + Mathf.Sqrt(Mathf.Max(0,
+                            projected * projected + arcRadius * arcRadius - position.sqrMagnitude)));
+                        float floor = velocity.y < 0 ? Mathf.Max(0, (radius - position.y) / velocity.y) : float.PositiveInfinity;
+                        float boundary = Mathf.Min(arc, floor);
+                        float travel = Mathf.Min(remaining, boundary);
+                        Vector2 next = position + velocity * travel;
+                        owner.TryGuardCircleHit(center + position, center + next, radius,
+                            owner.Damage * Settings.trialDamageMultiplier, contact);
+                        position = next;
+                        if (boundary > remaining) break;
+                        Vector2 normal = floor <= arc ? Vector2.up : -position.normalized;
+                        velocity = Vector2.Reflect(velocity, normal).normalized;
+                        position += normal * 0.001f;
+                        contact = new KarmaAttackContact();
+                        remaining -= travel;
+                    }
+                    if (!owner.Active) yield break;
+                    shield.transform.position = center + position;
+                    shield.transform.Rotate(0, 0, -330 * Time.deltaTime);
+                    yield return null;
                 }
-
-                yield return owner.Wait(owner.Warning(0.85f)); owner.state = ActionState.Attack;
-                for (int i = 0; i < centers.Length; i++)
-                {
-                    Destroy(marks[i].gameObject);
-                    TrialShot(centers[i], Vector2.zero, size, 0.3f, contact, "Pillar");
-                }
-                yield return owner.Wait(0.35f);
-            }
-            IEnumerator TrialWeave(bool left, KarmaAttackContact contact)
-            {
-                float high = KarmaSpace.Units(2.7f), low = KarmaSpace.Units(0.9f);
-                var highMarks = TrialWaveMarks(left, high); var lowMarks = TrialWaveMarks(!left, low);
-
-                yield return owner.Wait(owner.Warning(0.85f)); owner.state = ActionState.Attack;
-                LaunchTrialWaves(left, high, highMarks, contact);
-                yield return owner.Wait(0.85f);
-                LaunchTrialWaves(!left, low, lowMarks, contact);
-                yield return owner.Wait(TrialWaveLife(low) + 0.05f);
             }
         }
     }

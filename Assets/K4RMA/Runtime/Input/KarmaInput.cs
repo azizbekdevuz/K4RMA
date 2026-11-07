@@ -42,9 +42,9 @@ namespace KarmaPrototype
             Bind(KarmaAction.Jump, "space");
             Bind(KarmaAction.Attack, "j");
             Bind(KarmaAction.Counter, "k");
-            Bind(KarmaAction.SwordWave, "q");
+            Bind(KarmaAction.SwordWave, "l");
             Bind(KarmaAction.RisingSlash, "leftShift");
-            Bind(KarmaAction.Guard, "e");
+            Bind(KarmaAction.Guard, "k");
             Bind(KarmaAction.Interact, "f");
             Bind(KarmaAction.Pause, "escape");
             Bind(KarmaAction.Confirm, "enter");

@@ -75,7 +75,7 @@ namespace KarmaPrototype
             { message = "Esc·O·P는 메뉴·테스트 조작에 사용합니다."; return false; }
             foreach (var other in ConfigurableActions)
             {
-                if (other == id) continue;
+                if (other == id || SharesTechnique(id, other)) continue;
                 foreach (var binding in actions[(int)other].bindings)
                 {
                     string used = binding.effectivePath;
@@ -86,6 +86,14 @@ namespace KarmaPrototype
             actions[(int)id].ApplyBindingOverride(0, path);
             PlayerPrefs.SetString(BindingsKey, map.SaveBindingOverridesAsJson());
             message = "변경한 키를 저장했습니다."; return true;
+        }
+        static bool SharesTechnique(KarmaAction first, KarmaAction second)
+        {
+            // Original and personalized forms share defaults but remain independently rebindable.
+            return first == KarmaAction.SwordWave && second == KarmaAction.Pierce
+                || first == KarmaAction.Pierce && second == KarmaAction.SwordWave
+                || first == KarmaAction.Guard && second == KarmaAction.Counter
+                || first == KarmaAction.Counter && second == KarmaAction.Guard;
         }
         static void RestoreBinding(InputAction action, string previous)
         { if (previous == null) action.RemoveBindingOverride(0); else action.ApplyBindingOverride(0, previous); }

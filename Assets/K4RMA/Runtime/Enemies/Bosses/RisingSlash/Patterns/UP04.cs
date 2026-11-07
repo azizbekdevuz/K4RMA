@@ -18,9 +18,12 @@ namespace KarmaPrototype
                 float rise = RisingSlashRules.PursuitRiseAboveGround(Settings.riseHeight, KarmaSpace.Units(2.4f), KarmaSpace.Units(5.2f));
                 float apexY = KarmaSpace.GuardianGroundY + rise;
                 Vector2 apex = new Vector2(Mathf.Clamp(start.x, KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), apexY);
+                owner.animator.HoldRisingPose("Rising", RisingSlashRules.Up04AscentSeconds);
                 yield return owner.Motion(apex, RisingSlashRules.Up04AscentSeconds, Vector2.zero);
                 Vector2 landing = new Vector2(Mathf.Clamp(start.x + owner.direction * KarmaSpace.Units(1.2f), KarmaStage.ArenaLeft + 3, KarmaStage.ArenaRight - 3), KarmaSpace.GuardianGroundY);
+                owner.animator.HoldRisingPose("Fall", RisingSlashRules.Up04DescentSeconds);
                 yield return owner.Motion(landing, RisingSlashRules.Up04DescentSeconds, bodyAttackSize);
+                owner.animator.HoldRisingPose("Slash", 0.4f);
                 Vector2 origin = new Vector2(landing.x, KarmaSpace.Units(2.35f));
                 float life = Settings.fragmentLifetime;
                 int count = RisingSlashRules.FragmentDegrees.Length;

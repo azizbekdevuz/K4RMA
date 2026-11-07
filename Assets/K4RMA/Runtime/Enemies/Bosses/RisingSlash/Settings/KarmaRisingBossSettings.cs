@@ -15,5 +15,10 @@ namespace KarmaPrototype
         [Min(1)] public float riseHeight = 4 * KarmaSpace.Scale;
         [Min(0.5f)] public float groundBladeWidth = 5 * KarmaSpace.Scale, groundBladeHeight = 6 * KarmaSpace.Scale;
         [Min(0.4f)] public float crossingWarning = 0.65f, crossingReset = 0.65f;
+
+        [Header("기본 베기 비교")]
+        public RisingBasicVariant basicVariant = RisingBasicVariant.AdvancingThreeHit;
+        public bool guardBasicAccent = true;
+        public RisingTrailStyle trailStyle = RisingTrailStyle.Ribbon;
     }
 }

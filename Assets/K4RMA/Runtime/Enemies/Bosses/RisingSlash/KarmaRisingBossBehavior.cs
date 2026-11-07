@@ -39,6 +39,17 @@ namespace KarmaPrototype
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
             public override void OnAttackParried(bool stun)
             { if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position); }
+            public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
+            {
+                if (!parried && damaged) KarmaRisingPolish.ContactSpark(owner.effectsRoot, point, owner.direction);
+            }
+            public override KarmaBossAttack CreateAttackComponent(GameObject target)
+            { return target.AddComponent<RisingStrike>(); }
+            sealed class RisingStrike : KarmaBossAttack
+            {
+                protected override bool AttachTrail { get { return !KarmaRisingPolish.SuppressStockAttackVfx; } }
+                protected override bool AttachLaunch { get { return !KarmaRisingPolish.SuppressStockAttackVfx; } }
+            }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {
@@ -53,7 +64,7 @@ namespace KarmaPrototype
                     if (owner.FightSeconds >= nextStride)
                     {
                         nextStride = owner.FightSeconds + strideGap;
-                        if (burst) KarmaRisingPolish.PursuitStreak(owner.effectsRoot, owner.Position, Mathf.Sign(dx));
+                        if (burst) KarmaRisingPolish.Pursuit(owner.effectsRoot, owner.Position, Mathf.Sign(dx), Settings.trailStyle, owner.art.GetComponent<SpriteRenderer>());
                         else KarmaRisingPolish.Stride(owner.effectsRoot, owner.Position, Mathf.Sign(dx));
                     }
                 }

@@ -22,6 +22,7 @@ namespace KarmaPrototype
                 Vector2 center = new Vector2(start.x + owner.direction * (gap + size.x * 0.5f), height * 0.5f);
                 var mark = owner.Mark("전방 대검기 · 등 뒤로", center, size);
                 owner.state = ActionState.Telegraph;
+                owner.animator.HoldRisingPose("Windup", 0.72f);
 
                 var preview = KarmaRisingArt.Get("WaveEcho");
                 if (preview != null)
@@ -32,6 +33,8 @@ namespace KarmaPrototype
                 }
                 yield return owner.Wait(owner.Warning(0.72f));
                 if (mark != null) Destroy(mark.gameObject);
+                owner.animator.HoldRisingPose("Slash", 0.48f);
+                KarmaRisingPolish.BasicArc(owner.effectsRoot, new Vector2(start.x + owner.direction * KarmaSpace.Units(1.35f), KarmaSpace.GuardianGroundY + KarmaSpace.Units(1.2f)), KarmaSpace.Units(new Vector2(2.8f, 1.8f)), owner.direction, "SlashHigh");
                 var wave = owner.Attack(center, Vector2.zero, size, 0.42f, Settings.waveDamageMultiplier, null, 0f, visualPose: "Wave");
                 if (wave != null)
                 {

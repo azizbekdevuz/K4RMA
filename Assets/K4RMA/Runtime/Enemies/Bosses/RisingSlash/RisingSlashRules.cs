@@ -16,6 +16,19 @@ namespace KarmaPrototype
         public string SpritePose;
     }
 
+    // 0 stays the approved advancing trio. 1 is the dash-first candidate kept for comparison.
+    public enum RisingBasicVariant
+    {
+        AdvancingThreeHit,
+        DashTwoCut
+    }
+
+    public enum RisingTrailStyle
+    {
+        Ribbon,
+        Silhouette
+    }
+
     public static class RisingSlashRules
     {
         public const int BasicStrikeCount = 3;
@@ -30,6 +43,28 @@ namespace KarmaPrototype
         {
             if (index <= 0) return 0.42f;
             return index == 1 ? 0.55f : 0.72f;
+        }
+
+        public const float DashTwoCutGapSeconds = 0.08f;
+        // Second cut only, and only after Guard is inherited. 0.48 + 0.62 * 1.06 stays under +10%.
+        public const float GuardSecondCutAccent = 1.06f;
+
+        public static int ComboCount(RisingBasicVariant variant)
+        { return variant == RisingBasicVariant.DashTwoCut ? 2 : BasicStrikeCount; }
+
+        public static float ComboAdvance(RisingBasicVariant variant, int index)
+        {
+            if (variant != RisingBasicVariant.DashTwoCut) return BasicAdvance(index);
+            return index <= 0 ? 0.28f : 0.46f;
+        }
+
+        public static RisingBasicStrike ComboStrike(RisingBasicVariant variant, int index)
+        { return variant == RisingBasicVariant.DashTwoCut ? DashCut(index) : BasicStrike(index); }
+
+        static RisingBasicStrike DashCut(int index)
+        {
+            if (index <= 0) return Strike(0, 0.11f, 0.48f, 1.25f, 0.55f, 2.40f, 1.15f, "SlashLow");
+            return Strike(1, 0.14f, 0.62f, 1.55f, 1.05f, 2.90f, 1.85f, "SlashFinish");
         }
 
         public static EnemyAttack ContextualPreference(float distance, float meleeReach, bool airborne, bool retreating, bool nearWall)

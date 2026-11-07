@@ -13,6 +13,11 @@ namespace KarmaPrototype
                 Vector2 origin = owner.Position, target = origin;
                 SpriteRenderer path = null;
                 owner.state = ActionState.Telegraph;
+                owner.animator.HoldRisingPose("Windup", 0.2f);
+                Vector2 perch = new Vector2(Mathf.Clamp(origin.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), Mathf.Min(KarmaSpace.Units(4.4f), origin.y + KarmaSpace.Units(1.7f)));
+                yield return Glide(perch, 0.16f);
+                origin = owner.Position;
+                owner.animator.HoldRisingPose("Rising", 0.72f);
                 var charge = BeginRisingCharge(KarmaRisingCue.Tracking);
                 float elapsed = 0;
                 while (elapsed < 0.36f && owner.Active)
@@ -36,7 +41,10 @@ namespace KarmaPrototype
                 yield return owner.Wait(owner.Warning(0.36f));
                 EndRisingCharge(charge);
                 if (path != null) Destroy(path.gameObject);
+                owner.animator.HoldRisingPose("AirSlash", 0.28f);
                 yield return owner.Motion(target, 0.28f, bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
+                KarmaRisingPolish.BasicArc(owner.effectsRoot, target, KarmaSpace.Units(new Vector2(2.4f, 1.5f)), target.x < origin.x ? -1f : 1f, "SlashHigh");
+                owner.animator.HoldRisingPose("Fall", 0.32f);
                 yield return owner.Motion(new Vector2(target.x, KarmaSpace.GuardianGroundY), 0.32f, Vector2.zero);
                 if (recover && owner.Enraged)
                 {

@@ -15,18 +15,23 @@ namespace KarmaPrototype
                 float apexY = KarmaSpace.GuardianGroundY + rise;
                 Vector2 apex = new Vector2(Mathf.Clamp(start.x + owner.direction * KarmaSpace.Units(1.4f), KarmaStage.ArenaLeft + 3f, KarmaStage.ArenaRight - 3f), apexY);
                 owner.state = ActionState.Telegraph;
-                var risePath = RisingPath(start, apex, bodyAttackSize, KarmaRisingCue.Charging);
+                owner.animator.HoldRisingPose("Windup", 0.46f);
+                Vector2 gather = new Vector2(Mathf.Clamp(start.x - owner.direction * KarmaSpace.Units(0.62f), KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
+                var risePath = RisingPath(gather, apex, bodyAttackSize, KarmaRisingCue.Charging);
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
-
-                yield return owner.Wait(owner.Warning(RisingSlashRules.Up01WindupSeconds));
+                yield return Glide(gather, 0.16f);
+                float windup = owner.Warning(RisingSlashRules.Up01WindupSeconds);
+                if (windup > 0.16f) yield return owner.Wait(windup - 0.16f);
                 EndRisingCharge(charge);
                 if (risePath != null) Destroy(risePath.gameObject);
                 charge = BeginRisingCharge(KarmaRisingCue.Tracking);
                 SpriteRenderer path = null;
                 KarmaRisingClip beacon = null;
                 float elapsed = 0f;
+                Vector2 launch = owner.Position;
                 Vector2 tracked = SampleLanding(apex.x);
                 owner.state = ActionState.Attack;
+                owner.animator.HoldRisingPose("Rising", RisingSlashRules.Up01TrackingSeconds);
                 owner.animator.Attack(Vector2.up);
                 while (elapsed < RisingSlashRules.Up01TrackingSeconds && owner.Active)
                 {
@@ -34,7 +39,7 @@ namespace KarmaPrototype
                     if (!paused)
                     {
                         float along = RisingSlashRules.AscentBlend(elapsed, RisingSlashRules.Up01AscentSeconds);
-                        Vector2 at = Vector2.Lerp(start, apex, along);
+                        Vector2 at = Vector2.Lerp(launch, apex, along);
                         owner.transform.position = at;
                         tracked = SampleLanding(apex.x);
                         if (beacon == null) beacon = KarmaRisingPolish.SkyBeacon(owner.effectsRoot, tracked);
@@ -65,7 +70,10 @@ namespace KarmaPrototype
                 if (drop != null) Destroy(drop.gameObject);
                 if (zone != null) Destroy(zone.gameObject);
                 var contact = new KarmaAttackContact();
+                owner.animator.HoldRisingPose("Fall", RisingSlashRules.Up01DropSeconds);
                 yield return owner.Motion(landing, RisingSlashRules.Up01DropSeconds, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
+                owner.animator.HoldRisingPose("Slash", 0.24f);
+                KarmaRisingPolish.BasicArc(owner.effectsRoot, impact + Vector2.up * KarmaSpace.Units(0.7f), new Vector2(area.x * 0.72f, KarmaSpace.Units(1.6f)), owner.direction, "SlashFinish");
                 KarmaRisingPolish.SkyImpact(owner.effectsRoot, impact);
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 var blast = owner.Attack(impact, Vector2.zero, area, 0.22f, Settings.landingDamageMultiplier, contact, 0f, visualPose: "GroundRing");

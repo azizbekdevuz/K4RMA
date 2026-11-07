@@ -12,9 +12,39 @@ namespace KarmaPrototype
     // Presentation only. These objects never apply damage or change attack timing.
     public static class KarmaRisingPolish
     {
+        // Basic melee draws its own arc. Other Rising attacks keep the shared launch and trail.
+        public static bool SuppressStockAttackVfx;
         public static void PursuitStreak(Transform parent, Vector2 at, float direction)
         {
-            KarmaRisingClip.Play(parent, at + Vector2.up * KarmaSpace.Units(1.05f), KarmaSpace.Units(new Vector2(4.8f, 1.7f)), direction, KarmaRisingClip.Rush, 0.48f);
+            // Wake sits behind the legs. The old chest-height anchor put the tip on the mouth.
+            float face = direction < 0f ? -1f : 1f;
+            Vector2 anchor = at + new Vector2(-face * KarmaSpace.Units(1.15f), KarmaSpace.Units(0.46f));
+            KarmaRisingClip.Play(parent, anchor, KarmaSpace.Units(new Vector2(2.7f, 0.78f)), direction, KarmaRisingClip.Rush, 0.32f, 3);
+        }
+        public static void Pursuit(Transform parent, Vector2 at, float direction, RisingTrailStyle style, SpriteRenderer body)
+        {
+            if (style == RisingTrailStyle.Silhouette) Afterimage(parent, body);
+            else PursuitStreak(parent, at, direction);
+        }
+        public static void Afterimage(Transform parent, SpriteRenderer body)
+        {
+            if (parent == null || body == null || body.sprite == null) return;
+            var go = new GameObject("상승 잔상");
+            go.transform.SetParent(parent, false);
+            go.transform.position = body.transform.position;
+            go.transform.rotation = body.transform.rotation;
+            Vector3 world = body.transform.lossyScale;
+            Vector3 root = parent.lossyScale;
+            float sign = body.transform.localScale.x < 0f ? -1f : 1f;
+            float px = Mathf.Abs(root.x) < 0.001f ? 1f : root.x;
+            float py = Mathf.Abs(root.y) < 0.001f ? 1f : root.y;
+            go.transform.localScale = new Vector3(sign * world.x / px, world.y / py, 1f);
+            var sprite = go.AddComponent<SpriteRenderer>();
+            sprite.sprite = body.sprite;
+            sprite.sortingOrder = 4;
+            sprite.color = new Color(0.45f, 0.78f, 0.92f, 0.42f);
+            KarmaVisuals.ApplyMaterial(sprite);
+            go.AddComponent<KarmaEffect>().Initialize(0.26f);
         }
         public static void MeleeTell(Transform parent, Vector2 at, float direction)
         {
@@ -38,8 +68,10 @@ namespace KarmaPrototype
             string[] frames = pose == "SlashLow" ? KarmaRisingClip.Low : pose == "SlashFinish" ? KarmaRisingClip.Fin : KarmaRisingClip.High;
             float life = pose == "SlashFinish" ? 0.42f : 0.32f;
             KarmaRisingClip.Play(parent, at, size, direction, frames, life, 48);
-            if (pose == "SlashFinish")
-                KarmaRisingClip.Play(parent, at, KarmaSpace.Units(new Vector2(2.4f, 2.4f)), direction, KarmaRisingClip.Hit, 0.4f, 49);
+        }
+        public static void ContactSpark(Transform parent, Vector2 at, float direction)
+        {
+            KarmaRisingClip.Play(parent, at, KarmaSpace.Units(new Vector2(1.8f, 1.8f)), direction, KarmaRisingClip.Hit, 0.28f, 52);
         }
         public static void LockPop(Transform parent, Vector2 at)
         {

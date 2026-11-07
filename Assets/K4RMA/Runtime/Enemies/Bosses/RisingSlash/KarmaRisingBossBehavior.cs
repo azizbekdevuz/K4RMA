@@ -38,13 +38,37 @@ namespace KarmaPrototype
                 { child.gameObject.SetActive(false); Destroy(child.gameObject); }
             }
             public override void Interrupt(bool preservePressure)
-            { base.Interrupt(preservePressure); ClearFragments(); }
+            {
+                base.Interrupt(preservePressure);
+                ClearFragments();
+                motionContact = null;
+                KarmaRisingAudio.StopPattern();
+            }
             int consecutiveSkills;
             bool usedHalfHealthUltimate, usedQuarterHealthUltimate;
             bool UltimateDue => (!usedHalfHealthUltimate && owner.Health <= owner.MaxHealth * 0.5f)
                 || (!usedQuarterHealthUltimate && owner.Health <= owner.MaxHealth * 0.25f);
             public bool GuardEmpowered { get; private set; }
+            KarmaAttackContact motionContact;
+            KarmaSfxId motionImpact, resolvingImpact;
+            bool knockbackSoundPending;
             float knockbackLeft, knockbackDirection;
+
+            public IEnumerator MotionWithImpact(Vector2 target, float seconds, Vector2 size, Sprite trail, KarmaSfxId impact)
+            {
+                var contact = new KarmaAttackContact();
+                motionContact = contact;
+                motionImpact = impact;
+                try
+                {
+                    var motion = owner.Motion(target, seconds, size, contact, trail);
+                    while (motion.MoveNext()) yield return motion.Current;
+                }
+                finally
+                {
+                    if (motionContact == contact) motionContact = null;
+                }
+            }
             [UnityEngine.Scripting.Preserve]
             public RisingBossBehavior(KarmaEnemy owner) : base(owner)
             {
@@ -93,13 +117,25 @@ namespace KarmaPrototype
                 }
                 return total > 0;
             }
+            public override void ContactStarting(EnemyAttack pattern, KarmaAttackContact contact)
+            {
+                // Lethal damage can cancel the pattern before ContactResolved runs.
+                resolvingImpact = contact == motionContact ? motionImpact : KarmaSfxId.CombatBladeHit;
+            }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
-                if (!GuardEmpowered || pattern != EnemyAttack.GroundStrike || !damaged || parried) return;
-                knockbackDirection = owner.game.Player.Position.x < owner.Position.x ? -1 : 1;
-                knockbackLeft = 0.16f;
-                owner.game.Player.Stun(0.16f);
+                bool knockback = GuardEmpowered && pattern == EnemyAttack.GroundStrike && damaged && !parried;
+                if (knockback)
+                {
+                    knockbackDirection = owner.game.Player.Position.x < owner.Position.x ? -1 : 1;
+                    knockbackLeft = 0.16f;
+                    owner.game.Player.Stun(0.16f);
+                    knockbackSoundPending = owner.Active;
+                }
+                if (parried || !damaged) return;
+                KarmaAudio.Play(resolvingImpact);
             }
+            public override void OnPlayerDamaged() { KarmaRisingAudio.PlayerHurt(); }
             public override void Tick()
             {
                 if (knockbackLeft <= 0 || owner.game.Paused) return;
@@ -114,10 +150,22 @@ namespace KarmaPrototype
                         travel = Mathf.Min(travel, Mathf.Max(0, hit.distance - 0.02f));
                 var target = player.Position + axis * travel;
                 target.x = Mathf.Clamp(target.x, KarmaStage.ArenaLeft + KarmaSpace.PlayerHalfWidth, KarmaStage.ArenaRight - KarmaSpace.PlayerHalfWidth);
+                if (knockbackSoundPending && !Mathf.Approximately(target.x, player.Position.x))
+                {
+                    knockbackSoundPending = false;
+                    KarmaRisingAudio.Knockback();
+                }
                 body.position = target;
                 player.transform.position = target;
             }
-            public override void StopCombat() { knockbackLeft = 0; ClearFragments(); }
+            public override void StopCombat()
+            {
+                knockbackLeft = 0;
+                knockbackSoundPending = false;
+                ClearFragments();
+                motionContact = null;
+                KarmaRisingAudio.StopPattern();
+            }
             public override void OnSelected()
             {
                 if (owner.selected == EnemyAttack.UP02) nextAirPursuit = owner.FightSeconds + 1.8f;
@@ -130,7 +178,11 @@ namespace KarmaPrototype
             }
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
             public override void OnAttackParried(bool stun)
-            { if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position); }
+            {
+                if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position);
+                KarmaRisingAudio.Parry();
+            }
+            public override void OnParried() { KarmaRisingAudio.Stagger(); }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {

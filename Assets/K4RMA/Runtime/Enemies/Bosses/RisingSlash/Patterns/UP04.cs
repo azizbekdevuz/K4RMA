@@ -20,6 +20,7 @@ namespace KarmaPrototype
                 Transform root = ((RisingBossBehavior)owner.behavior).FragmentsRoot;
                 Vector2 shard = KarmaSpace.Units(new Vector2(1.05f, 0.675f));
                 KarmaRisingPolish.ShieldPlant(root, landing, KarmaSpace.Units(new Vector2(5.4f, 4.8f)));
+                if (owner.Active) KarmaRisingAudio.ShieldBurst();
                 const int lowerCount = 9, upperCount = 5;
                 for (int i = 0; i < lowerCount + upperCount && owner.Active; i++)
                 {

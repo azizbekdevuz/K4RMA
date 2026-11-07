@@ -40,6 +40,17 @@ K4RMA/
 │       │   │   │                       └── Ward.png
 │       │   │   ├── RisingSlash/
 │       │   │   │   ├── Effects/
+│       │   │   │   │   ├── Aegis0.png
+│       │   │   │   │   ├── Aegis1.png
+│       │   │   │   │   ├── Aegis2.png
+│       │   │   │   │   ├── Aegis3.png
+│       │   │   │   │   ├── Aegis4.png
+│       │   │   │   │   ├── Aegis5.png
+│       │   │   │   │   ├── Fin0.png
+│       │   │   │   │   ├── Fin1.png
+│       │   │   │   │   ├── Fin2.png
+│       │   │   │   │   ├── Fin3.png
+│       │   │   │   │   ├── Fin4.png
 │       │   │   │   │   ├── Fragment0.png
 │       │   │   │   │   ├── Fragment1.png
 │       │   │   │   │   ├── Fragment2.png
@@ -48,10 +59,39 @@ K4RMA/
 │       │   │   │   │   ├── Fragment5.png
 │       │   │   │   │   ├── Fragment6.png
 │       │   │   │   │   ├── Fragment7.png
+│       │   │   │   │   ├── High0.png
+│       │   │   │   │   ├── High1.png
+│       │   │   │   │   ├── High2.png
+│       │   │   │   │   ├── High3.png
+│       │   │   │   │   ├── Hit0.png
+│       │   │   │   │   ├── Hit1.png
+│       │   │   │   │   ├── Hit2.png
+│       │   │   │   │   ├── Hit3.png
+│       │   │   │   │   ├── Hit4.png
 │       │   │   │   │   ├── Impact.png
+│       │   │   │   │   ├── Low0.png
+│       │   │   │   │   ├── Low1.png
+│       │   │   │   │   ├── Low2.png
+│       │   │   │   │   ├── Low3.png
+│       │   │   │   │   ├── Rush0.png
+│       │   │   │   │   ├── Rush1.png
+│       │   │   │   │   ├── Rush2.png
+│       │   │   │   │   ├── Rush3.png
+│       │   │   │   │   ├── Rush4.png
+│       │   │   │   │   ├── Rush5.png
 │       │   │   │   │   ├── Shield.png
+│       │   │   │   │   ├── Sky0.png
+│       │   │   │   │   ├── Sky1.png
+│       │   │   │   │   ├── Sky2.png
+│       │   │   │   │   ├── Sky3.png
+│       │   │   │   │   ├── Sky4.png
+│       │   │   │   │   ├── Sky5.png
 │       │   │   │   │   ├── Slash.png
 │       │   │   │   │   ├── SlashEcho.png
+│       │   │   │   │   ├── Warn0.png
+│       │   │   │   │   ├── Warn1.png
+│       │   │   │   │   ├── Warn2.png
+│       │   │   │   │   ├── Warn3.png
 │       │   │   │   │   ├── Wave.png
 │       │   │   │   │   └── WaveEcho.png
 │       │   │   │   └── Resources/
@@ -209,6 +249,7 @@ K4RMA/
 │       │   │   │   │   │   ├── KarmaCharacterAnimator.Rising.cs
 │       │   │   │   │   │   ├── KarmaRisingArt.cs
 │       │   │   │   │   │   ├── KarmaRisingCharge.cs
+│       │   │   │   │   │   ├── KarmaRisingClip.cs
 │       │   │   │   │   │   └── KarmaRisingPolish.cs
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
@@ -350,6 +391,8 @@ K4RMA/
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
 │   │   │   └── KarmaGuardPlayChecks.cs
 │   │   ├── RisingSlash/
+│   │   │   ├── KarmaRisingCombatReview.cs
+│   │   │   ├── KarmaRisingMeleeChecks.cs
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
 │   │   │   └── KarmaRisingPlayChecks.cs
 │   │   ├── SwordWave/
@@ -367,6 +410,9 @@ K4RMA/
 │   ├── test_boss_boundaries.py
 │   └── test_optimize_images.py
 ├── tools/
+│   ├── RisingSlash/
+│   │   ├── draw-combat-effects.py
+│   │   └── run-review.ps1
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
 ├── .gitignore

@@ -17,31 +17,27 @@ MonoBehaviour:
     heavyStrikeReach: 8
     heavyStrikeDamageMultiplier: 1.5
     shieldThrowDamageMultiplier: 0.8
-    shieldFragmentDamageMultiplier: 0.8
     trialDamageMultiplier: 0.65
     autoShieldPeriod: 8
     autoShieldWarning: 0.8
     parryStunSeconds: 2
-    fragmentStunSeconds: 1
-    shieldFragments: 4
     heavyParryCueSeconds: 0.5
     heavyHitStunSeconds: 1
-    fragmentLaunchGap: 0.3
-    fragmentChaseSpeed: 30
-    fragmentReturnSeconds: 0.4
-    barrierSteps: 6
-    barrierStepGap: 0.22
-    fragmentAimWarning: 0.5
-    barrierRecovery: 1.2
+    shieldThrowSpeed: 30
     shieldDamageMultiplier: 0.3
     damageScale: 1
     movementScale: 1
     decisionScale: 1
     recoveryScale: 1
-    barrierHeatDamageMultiplier: 0.25
-    barrierHeatGrace: 0.3
-    barrierHeatInterval: 0.5
     trialDuration: 9
-    trialShieldSpeed: 10
+    trialShieldSpeed: 15
     trialChaseSpeed: 7.5
     trialParryStunSeconds: 1.1
+    trialFailureHits: 3
+    trialExplosionDamageMultiplier: 1
+    trialSuccessStunSeconds: 4
+    slamRange: 20
+    slamHeight: 2.4
+    slamDamageMultiplier: 1
+    slamKnockUpSpeed: 18
+    slamStunSeconds: 0.8

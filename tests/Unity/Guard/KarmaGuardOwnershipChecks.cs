@@ -22,10 +22,10 @@ public sealed class KarmaGuardOwnershipChecks : KarmaBossOwnershipFixture
         var profile = Resources.Load<KarmaGuardBossProfile>("KarmaGuardBossProfile");
         check(profile != null, "Guard profile imports");
         var first = new KarmaBossTuning(); var second = new KarmaBossTuning();
-        check(Mathf.Approximately(first.guard.fragmentChaseSpeed, 30), "Guard saved settings load");
-        first.guard.fragmentChaseSpeed = 123;
-        check(Mathf.Approximately(second.guard.fragmentChaseSpeed, 30), "Guard runtime settings are isolated");
-        check(Mathf.Approximately(profile.settings.fragmentChaseSpeed, 30), "Guard profile remains unchanged");
+        check(Mathf.Approximately(first.guard.shieldThrowSpeed, 30), "Guard saved settings load");
+        first.guard.shieldThrowSpeed = 123;
+        check(Mathf.Approximately(second.guard.shieldThrowSpeed, 30), "Guard runtime settings are isolated");
+        check(Mathf.Approximately(profile.settings.shieldThrowSpeed, 30), "Guard profile remains unchanged");
             var config = ScriptableObject.CreateInstance<KarmaConfig>();
             var clone = UnityEngine.Object.Instantiate(config);
             config.BossTuning.guard.autoShieldPeriod = 123;

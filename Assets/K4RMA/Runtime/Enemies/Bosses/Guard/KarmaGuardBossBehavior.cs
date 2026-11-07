@@ -124,9 +124,12 @@ namespace KarmaPrototype
             }
             public override void OnSelected() { if (owner.selected == EnemyAttack.GD05) domeUses++; }
             public override void OnCompleted() { Heavy.Interrupt(); }
+            public override float DecisionDelay { get { return owner.selected == EnemyAttack.GD03 || owner.selected == EnemyAttack.GD04
+                ? 0.22f : base.DecisionDelay; } }
             public override Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.GuardDamageBounds(renderer); }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
+                if (damaged && Dome.Active) Dome.RecordHit();
                 if (parried && contact.ParryWithoutRiposte && Dome.Active) Dome.StunFromParry();
             }
             public override BossAttackVisual AttackVisual(EnemyAttack attack, Vector2 velocity)

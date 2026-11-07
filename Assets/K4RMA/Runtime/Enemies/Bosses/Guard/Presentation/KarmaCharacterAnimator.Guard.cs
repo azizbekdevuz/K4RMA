@@ -9,7 +9,7 @@ namespace KarmaPrototype
         Vector3 staggerScale;
         Sprite guardDamageSprite;
         Vector3 guardDamageScale;
-        bool guardMoving;
+        bool guardDamageOverride;
         Sprite[] groundSlam;
         int groundSlamFrame = -1;
         public void ConfigureHeavyStrike(IReadOnlyList<Essence> order)
@@ -20,7 +20,7 @@ namespace KarmaPrototype
                 if (sprite != null && !poses.ContainsKey(sprite.name)) poses[sprite.name] = sprite;
             guardianPose = GuardGuardianPose;
             onActionEnded = EndHeavyStrike;
-            heavyStrike = new KarmaHeavyStrikeMotion(picture, pictureHome, pictureScale, order);
+            heavyStrike = new KarmaHeavyStrikeMotion(picture, pictureHome, pictureScale, poses["Idle"], order);
             Sprite reference = null;
             foreach (var sprite in KarmaArtwork.Sprites("GuardStagger" + heavyStrike.FormKey))
             {
@@ -38,7 +38,7 @@ namespace KarmaPrototype
         }
         void GuardGuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
         {
-            guardMoving = false;
+            guardDamageOverride = false;
             picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
             transform.localRotation = Quaternion.identity;
             if (action == "Stunned" && guardStagger != null)
@@ -60,13 +60,21 @@ namespace KarmaPrototype
                 : action == "Recover" ? "Recover"
                 : action == "Attack" ? attack == EnemyAttack.GD02 ? "ShieldBash" : (attack == EnemyAttack.GroundStrike || attack == EnemyAttack.GD03) ? "Thrust" : "Windup"
                 : DefaultGuardianPose(action, airborne, armored);
+            if (action == "Recover" && Time.time >= hurtUntil)
+            {
+                // Attack recovery is not a hit reaction. Keep the original recovery damage silhouette.
+                guardDamageSprite = poses["Recover"];
+                guardDamageScale = pictureScale;
+                guardDamageOverride = true;
+                pose = armored ? "Guard" : "Idle";
+            }
             if (action == "Approach" && Time.time >= hurtUntil
                 && (transform.position - guardianPreviousPosition).sqrMagnitude > 0f
                 && poses.ContainsKey("Move"))
             {
                 guardDamageSprite = guardianAppearance != null && pose == "Guard" ? guardianAppearance : poses[pose];
                 guardDamageScale = pictureScale * (guardDamageSprite == guardianAppearance ? appearanceScale : 1);
-                guardMoving = true;
+                guardDamageOverride = true;
                 pose = "Move";
             }
             ApplyGuardianPose(pose);
@@ -77,9 +85,9 @@ namespace KarmaPrototype
         public void EndHeavyStrike() { if (heavyStrike != null) heavyStrike.Stop(); }
         internal Bounds GuardDamageBounds(SpriteRenderer renderer)
         {
-            if (renderer != picture || sheet != "Ward" || !guardMoving || guardDamageSprite == null)
+            if (renderer != picture || sheet != "Ward" || !guardDamageOverride || guardDamageSprite == null)
                 return renderer.bounds;
-            // Approach only mirrors the unrotated guard artwork about its foot pivot.
+            // Both movement and attack recovery preserve the original unrotated damage silhouette.
             var local = guardDamageSprite.bounds;
             var root = picture.transform.parent;
             var scale = Vector3.Scale(root.lossyScale, guardDamageScale);

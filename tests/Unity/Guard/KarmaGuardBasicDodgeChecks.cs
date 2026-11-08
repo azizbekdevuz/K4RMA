@@ -12,14 +12,47 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 
 // Run in Play Mode against the authored scene. Does not save scene or configuration changes.
+[InitializeOnLoad]
 public static class KarmaGuardBasicDodgeChecks
 {
+    const string BatchKey = "K4RMA.GuardBasicDodgeChecks.Batch";
+    static bool started;
+    static KarmaGuardBasicDodgeChecks() { EditorApplication.update += Pump; }
+    static void Pump()
+    {
+        if (!SessionState.GetBool(BatchKey, false)) return;
+        EditorApplication.QueuePlayerLoopUpdate();
+        if (!started && EditorApplication.isPlaying)
+        { Application.runInBackground = true; EditorApplication.isPaused = false; }
+        if (!started && EditorApplication.isPlaying && Time.frameCount > 1)
+        { started = true; RunBatchChecks(); }
+    }
+    public static void RunBatch()
+    {
+        SessionState.SetBool(BatchKey, true);
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        EditorApplication.EnterPlaymode();
+    }
+    static async void RunBatchChecks()
+    {
+        int exitCode = 0;
+        try { Debug.Log(await Run(focused: true)); }
+        catch (Exception error)
+        {
+            Directory.CreateDirectory("output/validation");
+            File.WriteAllText("output/validation/guard-basic-dodge-validation.txt", "FAIL: " + error + "\n");
+            Debug.LogException(error);
+            exitCode = 1;
+        }
+        SessionState.SetBool(BatchKey, false);
+        EditorApplication.Exit(exitCode);
+    }
     const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
     static object Get(object target, string name) => target.GetType().GetField(name, Private).GetValue(target);
     static void Set(object target, string name, object value) => target.GetType().GetField(name, Private).SetValue(target, value);
     static object Call(object target, string name, params object[] args) => target.GetType().GetMethod(name, Private).Invoke(target, args);
     static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
-    public static async Task<string> Run(bool baseline = false)
+    public static async Task<string> Run(bool baseline = false, bool focused = false)
     {
         Check(Application.isPlaying, "Play Mode required");
         var game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
@@ -45,7 +78,7 @@ public static class KarmaGuardBasicDodgeChecks
             foreach (bool jump in new[] { false, true })
             foreach (bool shielded in new[] { true, false })
             {
-                if (baseline && (order.Length != 1 || side != 1)) continue;
+                if ((baseline || focused) && (order.Length != 1 || side != 1)) continue;
                 game.StartRun();
                 foreach (var essence in order) { game.Player.Essences.Preview(essence); game.Player.Essences.Confirm(out _); }
                 typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, order.Length);
@@ -67,11 +100,33 @@ public static class KarmaGuardBasicDodgeChecks
                 Set(enemy, "selected", EnemyAttack.GroundStrike); Set(enemy, "direction", (float)side);
                 Set(enemy, "running", true); Set(enemy, "patternStarted", enemy.FightSeconds);
                 float health = game.Player.Health;
-                var animator = ((Transform)Get(enemy, "art")).GetComponent<KarmaCharacterAnimator>();
+                var art = (Transform)Get(enemy, "art");
+                art.localScale = new Vector3(side * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale);
+                var animator = art.GetComponent<KarmaCharacterAnimator>();
+                if (focused)
+                {
+                    float bossHealth = enemy.Health;
+                    enemy.TakeDamage(1);
+                    animator.GuardianPose("Recover", EnemyAttack.GroundStrike, false, shielded);
+                    Check(enemy.Health < bossHealth && animator.CurrentPose == "Hurt",
+                        "Actual damage must retain Hurt feedback with or without GD01");
+                    Set(animator, "hurtUntil", 0f);
+                    animator.GuardianPose("Stunned", EnemyAttack.GroundStrike, false, shielded);
+                    Check(animator.CurrentPose.StartsWith("Stagger/"), "Actual stun must retain its stagger pose");
+                    animator.GuardianPose("Approach", EnemyAttack.GroundStrike, false, shielded);
+                }
+                // Read the preserved recovery damage silhouette before starting the basic attack.
+                animator.GuardianPose("Recover", EnemyAttack.GD03, false, shielded);
+                Check(animator.CurrentPose == (shielded ? "Guard" : "Idle"), "Guard recovery without actual damage has no false recoil");
+                Bounds recoveryDamageBounds = enemy.DamageBounds;
+                recoveryDamageBounds.center -= enemy.transform.position;
+                animator.GuardianPose("Approach", EnemyAttack.GroundStrike, false, shielded);
+                float bossHealthAfterHit = enemy.Health;
                 enemy.StartCoroutine((IEnumerator)Call(enemy, "RunPattern"));
                 float started = enemy.FightSeconds;
                 bool dodged = false, sawSwing = false, sawRecovery = false;
-                bool bufferedSecondJump = false;
+                bool bufferedSecondJump = false, sawRecoveryPose = false;
+                int recoveryFrame = -1;
                 float recoverFrom = 0;
                 string scenario = string.Join(">", order) + " / " + side + " / " + (jump ? "jump" : "range")
                     + " / shield=" + shielded + (liveControls ? " / player physics" : "");
@@ -106,13 +161,29 @@ public static class KarmaGuardBasicDodgeChecks
                         sawSwing = true;
                         Check(animator.CurrentPose == "Thrust", "Active guard basic attack must show Thrust, not a frozen windup: " + animator.CurrentPose);
                     }
-                    if (!sawRecovery && state == "Recover") { sawRecovery = true; recoverFrom = enemy.FightSeconds; }
+                    if (!sawRecovery && state == "Recover")
+                    { sawRecovery = true; recoverFrom = enemy.FightSeconds; recoveryFrame = Time.frameCount; }
+                    if (!baseline && state == "Recover" && Time.frameCount > recoveryFrame)
+                    {
+                        string expected = shielded ? "Guard" : "Idle";
+                        Check(animator.CurrentPose == expected,
+                            "Missed basic recovery must show " + expected + ", not recoil: " + animator.CurrentPose);
+                        Bounds actual = enemy.DamageBounds;
+                        Check(((Vector2)(actual.size - recoveryDamageBounds.size)).sqrMagnitude < 0.0001f
+                            && ((Vector2)(actual.center - enemy.transform.position - recoveryDamageBounds.center)).sqrMagnitude < 0.0001f,
+                            "Changing the basic recovery artwork must preserve the original 2D damage silhouette: actual=" + actual
+                            + ", expected local=" + recoveryDamageBounds + ", boss=" + enemy.transform.position);
+                        sawRecoveryPose = true;
+                    }
+                    Check(enemy.Health == bossHealthAfterHit && (float)Get(animator, "hurtUntil") <= Time.time,
+                        "Evasion alone must not damage the boss or trigger Hurt");
                     Check(!enemy.Stunned && !game.Player.Stunned, "Dodging basic attacks must not create a stun: " + scenario);
                     Check(game.Player.Health == health, "Basic attack contacted player during " + scenario
                         + " at t=" + (enemy.FightSeconds - started).ToString("F3") + ", player=" + game.Player.Position + ", boss=" + enemy.Position);
                     await Task.Delay(10);
                 }
                 Check(sawSwing && sawRecovery, "Basic attack must show its swing and normal recovery");
+                if (!baseline) Check(sawRecoveryPose, "Basic recovery pose must be observed after the animation update");
                 Check(enemy.AutoShieldActive == shielded, "Missing a basic attack preserves the initial GD01 state");
                 if (keyboard != null) InputSystem.QueueStateEvent(keyboard, new KeyboardState());
                 float recovered = enemy.FightSeconds;
@@ -148,7 +219,7 @@ public static class KarmaGuardBasicDodgeChecks
             }
             string result = "PASS: " + results.Count + " guard basic attack evasion cases\n" + string.Join("\n", results);
             Directory.CreateDirectory("output/validation");
-            File.WriteAllText("output/validation/" + (baseline ? "guard-basic-shield-before.txt" : "week11-basic-dodge-validation.txt"), result);
+            File.WriteAllText("output/validation/" + (baseline ? "guard-basic-shield-before.txt" : focused ? "guard-basic-dodge-validation.txt" : "week11-basic-dodge-validation.txt"), result);
             return result;
         }
         finally

@@ -9,10 +9,12 @@ namespace KarmaPrototype
             public const float TrialCenter = 20;
             public const float TrialRadius = 10 * KarmaSpace.Scale;
             readonly GD02Pattern heavy;
+            readonly KarmaTrialState trial = new KarmaTrialState();
 
             public GD05Pattern(KarmaEnemy owner, GD02Pattern heavy) : base(owner) { this.heavy = heavy; }
             public bool Active { get; private set; }
-            public override void Interrupt() { Active = false; }
+            public override void Interrupt() { Active = false; trial.Clear(); }
+            public void RecordHit() { if (Active) trial.Hit(); }
 
             public void StunFromParry()
             {
@@ -23,6 +25,7 @@ namespace KarmaPrototype
 
             public override IEnumerator Execute()
             {
+                trial.Clear();
                 owner.fullShield = true;
                 BreakShield();
                 owner.state = ActionState.Telegraph;
@@ -38,11 +41,12 @@ namespace KarmaPrototype
                 var dome = KarmaGuardDome.Create(owner.game, owner.effectsRoot, center, TrialRadius);
                 GuardDecoration("GuardBossVFX", "Seal", center + Vector2.up * KarmaSpace.Units(0.25f),
                     new Vector2(TrialRadius * 2, KarmaSpace.Units(2)), new Color(1, 1, 1, 0.5f), 3);
+                trial.Begin(1, Mathf.Max(1, Settings.trialFailureHits) - 1);
                 Active = true;
-                owner.fullShield = false;
+                // The survival trial stays invulnerable, including its parry stun and dome dissolution.
                 owner.state = ActionState.Approach;
 
-                var sprite = KarmaArtwork.Sprite("GuardDomeShield", "Ricochet") ?? KarmaArtwork.Sprite("GuardBossVFX", "Shield");
+                var sprite = KarmaArtwork.Sprite("GuardDomeShield", "Ricochet");
                 float radius = KarmaSpace.Units(0.9f);
                 float heading = owner.game.Player.Position.x < TrialCenter ? -1 : 1;
                 var start = center + KarmaSpace.Units(new Vector2(heading * 1.55f, 1.65f));
@@ -86,13 +90,43 @@ namespace KarmaPrototype
 
                 if (!owner.Active) yield break;
                 Active = false;
+                trial.CompleteAttack();
                 shield.gameObject.SetActive(false);
+                heavy.Interrupt();
                 owner.HideStunCue();
-                owner.game.Player.ReleaseArena();
-                dome.Dissolve();
                 owner.state = ActionState.Recover;
+                if (!trial.Passed)
+                {
+                    // Stop all room attacks before the blast tell, so the last ordinary hit's
+                    // invulnerability expires naturally. Do not alter player invulnerability.
+                    owner.state = ActionState.Telegraph;
+                    dome.WarnFailure();
+                    yield return owner.Wait(Mathf.Max(0.55f, owner.game.Config.hitInvulnerability + 0.05f));
+                    if (!owner.Active) yield break;
+                    dome.Explode();
+                    owner.game.PresentationShake(0.3f, 1.7f);
+                    var player = owner.game.Player;
+                    if (player.TakeTerrainDamage(owner.Damage * Settings.trialExplosionDamageMultiplier))
+                        KarmaCombatVFX.SpawnSprite(owner.effectsRoot, player.Position, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one * 1.8f), 0.25f);
+                    if (!owner.Active) yield break;
+                }
+                else dome.Dissolve();
+                owner.game.Player.ReleaseArena();
                 yield return owner.Wait(0.4f);
-                yield return owner.Recovery(0.65f);
+                if (!owner.Active) yield break;
+                if (trial.Passed)
+                {
+                    owner.ClearPatternObjects();
+                    owner.fullShield = false;
+                    owner.state = ActionState.Stunned;
+                    owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialSuccessStunSeconds);
+                    owner.ShowStunCue();
+                    yield return owner.Wait(Mathf.Max(0.1f, Settings.trialSuccessStunSeconds));
+                    if (!owner.Active) yield break;
+                    owner.HideStunCue();
+                    owner.state = ActionState.Approach;
+                }
+                else yield return owner.Recovery(0.65f);
             }
 
             IEnumerator Ricochet(SpriteRenderer shield, Vector2 center, Vector2 position, Vector2 velocity, float radius)

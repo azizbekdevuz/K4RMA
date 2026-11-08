@@ -6,7 +6,7 @@ namespace KarmaPrototype
     public sealed class KarmaGuardDome : MonoBehaviour
     {
         const int Sections = 18;
-        readonly Color gold = new Color(1, 0.78f, 0.08f);
+        Color gold = new Color(1, 0.78f, 0.08f);
         KarmaGame game;
         Sprite fillShape;
         SpriteRenderer fill;
@@ -14,7 +14,7 @@ namespace KarmaPrototype
         LineRenderer[] shell;
         EdgeCollider2D roof;
         float age, dissolveAge;
-        bool dissolving;
+        bool dissolving, warning, exploding;
         public float Radius { get; private set; }
 
         public static KarmaGuardDome Create(KarmaGame game, Transform parent, Vector2 center, float radius)
@@ -73,6 +73,8 @@ namespace KarmaPrototype
             floor = Line("결계 바닥선", transform, new[] { Vector2.left * Radius, Vector2.right * Radius }, KarmaSpace.Units(0.04f), 4);
             Paint();
         }
+        public void WarnFailure() { warning = true; gold = new Color(1, 0.22f, 0.05f); }
+        public void Explode() { exploding = true; Dissolve(); }
         public void Dissolve() { dissolving = true; dissolveAge = 0; roof.enabled = false; }
         void Update()
         {
@@ -84,11 +86,18 @@ namespace KarmaPrototype
         void Paint()
         {
             float fade = 1 - Mathf.Clamp01(dissolveAge / 0.4f);
-            float pulse = 0.5f + 0.5f * Mathf.Sin(age * 3);
-            fill.color = new Color(1, 0.8f, 0.12f, (0.035f + pulse * 0.015f) * fade);
+            float pulse = 0.5f + 0.5f * Mathf.Sin(age * (warning ? 18 : 3));
+            float opacity = exploding ? 0.45f : warning ? 0.09f + pulse * 0.08f : 0.035f + pulse * 0.015f;
+            fill.color = new Color(gold.r, gold.g, gold.b, opacity * fade);
             Tint(inner, 0.4f * fade);
             Tint(floor, 0.5f * fade);
-            foreach (var section in shell) Tint(section, (0.75f + pulse * 0.2f) * fade);
+            for (int i = 0; i < shell.Length; i++)
+            {
+                var section = shell[i];
+                if (exploding)
+                    section.transform.localPosition = Arc(Mathf.PI * (i + 0.5f) / Sections, Radius * dissolveAge * 1.5f);
+                Tint(section, (0.75f + pulse * 0.2f) * fade);
+            }
         }
         void OnDestroy() { if (fillShape != null) Destroy(fillShape); }
     }

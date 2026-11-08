@@ -34,10 +34,11 @@ namespace KarmaPrototype
             }
             public override void Initialize()
             {
-                if (KarmaCombatVFX.ApplySprite(owner.shieldHalo, "GuardBossVFX", "Shield",
-                    KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
-                    owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
                 owner.nextShield = Settings.autoShieldPeriod;
+                if (!KarmaCombatVFX.ApplySprite(owner.shieldHalo, "GuardBossVFX", "Shield",
+                    KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
+                    throw new System.InvalidOperationException("GD01 이전 방어막 이미지가 없습니다.");
+                owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
             }
@@ -127,9 +128,12 @@ namespace KarmaPrototype
             }
             public override void OnSelected() { if (owner.selected == EnemyAttack.GD05) domeUses++; }
             public override void OnCompleted() { Heavy.Interrupt(); }
+            public override float DecisionDelay { get { return owner.selected == EnemyAttack.GD03 || owner.selected == EnemyAttack.GD04
+                ? 0.22f : base.DecisionDelay; } }
             public override Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.GuardDamageBounds(renderer); }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
+                if (damaged && Dome.Active) Dome.RecordHit();
                 if (parried && contact.ParryWithoutRiposte && Dome.Active) Dome.StunFromParry();
             }
             public override BossAttackVisual AttackVisual(EnemyAttack attack, Vector2 velocity)

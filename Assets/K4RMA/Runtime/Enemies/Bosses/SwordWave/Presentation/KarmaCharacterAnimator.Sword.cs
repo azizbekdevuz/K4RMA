@@ -14,6 +14,25 @@ namespace KarmaPrototype
         Dictionary<string, Sprite> swordDamagePoses;
         Sprite swordDamageFallback;
         bool swordPresentationConfigured;
+        internal const float BasicSwingSeconds = 0.10f;
+        float basicReleasedAt = float.NegativeInfinity;
+        bool basicPresentationActive, basicReleaseStarted;
+        public void PrepareBasicAttack(float warningSeconds)
+        {
+            // Keep the original damage-pose policy and warning clock. Only the
+            // Basic display below holds the loaded sword until the real event.
+            PrepareWaveAttack(warningSeconds, false);
+            basicPresentationActive = true; basicReleaseStarted = false;
+        }
+        public void BeginBasicRelease()
+        {
+            basicReleasedAt = Time.time; basicReleaseStarted = basicPresentationActive = true;
+            WaveMotionRevision++;
+            // Coroutines can release after GuardianPose's Update. Show this
+            // event now, preserving the damage silhouette already saved there.
+            if (sheet == "Wave" && deathAt < 0 && Time.time >= hurtUntil && poses.ContainsKey("Slash"))
+            { ShowPose("Slash"); GuardianPhaseOverridesPose = true; }
+        }
         internal void ConfigureSwordPresentation()
         {
             if (sheet != "Wave" || swordPresentationConfigured) return;
@@ -127,6 +146,20 @@ namespace KarmaPrototype
             {
                 phaseOverridesPose |= pose != "Move";
                 pose = "Move";
+            }
+            // Basic owns one display sequence: loaded windup -> event-aligned
+            // slash -> follow-through. Latch through recovery instead of
+            // expiring into the common Slash/Guard pose for one extra swing.
+            // The original incoming-damage policy was saved above, unchanged.
+            bool basicAction = attack == EnemyAttack.SWBasic
+                && (action == "Telegraph" || action == "Attack" || action == "Recover");
+            if (!basicAction) basicPresentationActive = basicReleaseStarted = false;
+            if (basicAction && basicPresentationActive && Time.time >= hurtUntil)
+            {
+                string basicPose = action == "Telegraph" ? "Windup"
+                    : action == "Attack" && basicReleaseStarted && Time.time - basicReleasedAt < BasicSwingSeconds
+                        ? "Slash" : "FollowThrough";
+                if (poses.ContainsKey(basicPose)) { phaseOverridesPose |= pose != basicPose; pose = basicPose; }
             }
             ShowPose(pose);
             // Inherited idle artwork remains intact. During a Wave attack its

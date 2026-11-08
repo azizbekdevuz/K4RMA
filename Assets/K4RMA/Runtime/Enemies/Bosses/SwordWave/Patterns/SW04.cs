@@ -13,7 +13,7 @@ namespace KarmaPrototype
             bool guardResponsePending, guardResponseRunning;
             Transform swordGuardRoot;
             Coroutine swordGuardRoutine;
-            KarmaSwordChargePolish swordGuardAura;
+            KarmaSwordWardVfx wardVfx;
             float nextSwordGuard;
             int nextVolleyId;
             CounterVolley activeVolley;
@@ -38,10 +38,12 @@ namespace KarmaPrototype
                 if (swordGuardRoot != null) yield break;
                 owner.state = ActionState.Telegraph;
                 owner.animator.PlayWavePhase("Windup");
-                var formation = owner.Mark("검막 형성", owner.Position, KarmaSpace.Units(new Vector2(3, 3)));
-                KarmaSwordAttackPolish.Warning(formation);
-                KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, owner.Position, owner.Warning(0.7f), true);
-                yield return owner.Wait(owner.Warning(0.7f)); Destroy(formation.gameObject);
+                // A non-damaging formation uses the native charge circle. It
+                // needs no swept hit-area sprite or duplicate square warning.
+                var formation = KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art,
+                    owner.Position, owner.Warning(0.7f), true);
+                yield return owner.Wait(owner.Warning(0.7f));
+                if (formation != null) Destroy(formation.gameObject);
                 owner.state = ActionState.Attack; Guarding = true; guardResponsePending = guardResponseRunning = false;
                 owner.animator.PlayWavePhase("Guard");
                 swordGuardUntil = owner.FightSeconds + Mathf.Max(0.6f, Settings.swordGuardDuration);
@@ -50,7 +52,6 @@ namespace KarmaPrototype
                 swordGuardRoot = new GameObject("Independent sword guard").transform;
                 swordGuardRoot.SetParent(sword.PersistentRoot, false);
                 activeVolley = new CounterVolley(++nextVolleyId);
-                swordGuardAura = KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, owner.Position, Mathf.Max(0.6f, Settings.swordGuardDuration), true, false, true);
                 var blades = new SpriteRenderer[4];
                 for (int i = 0; i < blades.Length; i++)
                 {
@@ -60,6 +61,7 @@ namespace KarmaPrototype
                     activeVolley.Blades[i] = blades[i];
                     KarmaWaveArtwork.Apply(blades[i], "SW04_CounterBlade_v2", sword.SwordSize(EnemyAttack.SW04), Vector2.right);
                 }
+                wardVfx = KarmaSwordWardVfx.Create(swordGuardRoot,owner.game,owner,blades);
                 swordGuardRoutine = owner.StartCoroutine(MaintainSwordGuard(blades));
                 // Only formation occupies the action slot. The buff, aim warnings
                 // and counter projectiles own a separate lifetime and object root.
@@ -91,7 +93,8 @@ namespace KarmaPrototype
                                 aim = ((Vector2)sword.SwordPlayerBounds.center - origin).normalized;
                                 if (aim.sqrMagnitude < 0.01f) aim = Vector2.right * owner.direction;
                                 blades[i].transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg);
-                                blades[i].color = new Color(1, 0.65f, 0.55f, 1);
+                                blades[i].color = new Color(0.42f, 0.86f, 1, 1);
+                                wardVfx?.Aim(i,origin,aim,size,false);
                                 mark.GetComponent<KarmaAttackWarning>().SetPath(mark, origin,
                                 origin + aim * Settings.swordSpeed * KarmaBossProjectileGeometry.SwordShotLife(origin, aim * Settings.swordSpeed, sword.WaveLife), size, false, true);
                                 yield return null;
@@ -110,7 +113,8 @@ namespace KarmaPrototype
                                 {
                                     UpdateSwordGuardBlades(blades, i);
                                     float pulse = 0.85f + 0.15f * Mathf.Sin(owner.FightSeconds * 32);
-                                    blades[i].color = new Color(1, pulse * 0.75f, pulse * 0.65f, 1);
+                                    blades[i].color = new Color(pulse, 0.95f, 1, 1);
+                                    wardVfx?.Aim(i,origin,aim,size,true);
                                 }
                                 yield return null;
                             }
@@ -120,9 +124,9 @@ namespace KarmaPrototype
                             blades[i].gameObject.SetActive(false); Destroy(blades[i].gameObject); blades[i] = null;
                             shots[i] = owner.Attack(origin, aim * Settings.swordSpeed, size, sword.WaveLife,
                             contact: volley.Contacts[i], pattern: EnemyAttack.SW04, parent: slot);
-                            KarmaSwordAttackPolish.Projectile(owner.game, owner, shots[i], aim * Settings.swordSpeed, size);
+                            KarmaSwordWardVfx.CounterProjectile(owner.game, owner, shots[i], aim * Settings.swordSpeed, size);
+                            wardVfx?.Released(origin,aim);
                             KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Projectile=" + (i + 1) + ", Result=Released, Time=" + Time.time.ToString("F4"));
-                            KarmaSwordAttackPolish.Release(owner.game, owner, owner.art, origin, aim * Settings.swordSpeed, size, false, slot);
                             if (i + 1 < blades.Length)
                             {
                                 float nextAt = owner.FightSeconds + GuardShotGap;
@@ -154,7 +158,7 @@ namespace KarmaPrototype
             SpriteRenderer SwordGuardPathMark(Transform slot, Vector2 from, Vector2 to, Vector2 size, bool locked = true)
             {
                 var mark = KarmaVisuals.Box(slot, locked ? "고정 공격 경로" : "추적 중인 경로",
-                Vector2.zero, Vector2.one, locked ? new Color(1, 0.55f, 0.2f, 0.3f) : new Color(0.3f, 0.85f, 1, 0.22f), 8);
+                Vector2.zero, Vector2.one, locked ? new Color(0.65f, 0.94f, 1, 0.42f) : new Color(0.3f, 0.85f, 1, 0.22f), 8);
                 to = from + (to - from) * KarmaBossProjectileGeometry.SwordShotLife(from, to - from, 1);
                 mark.gameObject.AddComponent<KarmaAttackWarning>().SetPath(mark, from, to, size, true, true);
                 KarmaSwordAttackPolish.Warning(mark);
@@ -165,7 +169,7 @@ namespace KarmaPrototype
             {
                 if (stopRoutine && swordGuardRoutine != null) owner.StopCoroutine(swordGuardRoutine);
                 swordGuardRoutine = null;
-                if (swordGuardAura != null) { Destroy(swordGuardAura.gameObject); swordGuardAura = null; }
+                wardVfx = null;
                 if (swordGuardRoot != null)
                 { swordGuardRoot.gameObject.SetActive(false); Destroy(swordGuardRoot.gameObject); swordGuardRoot = null; }
                 Guarding = guardResponsePending = guardResponseRunning = false;
@@ -180,6 +184,7 @@ namespace KarmaPrototype
                 for (int i = 0; i < blades.Length; i++)
                 {
                     if (blades[i] == null || i == aiming) continue;
+                    blades[i].enabled = wardVfx == null || wardVfx.Countering;
                     float angle = owner.FightSeconds * 3 + i * Mathf.PI / 2;
                     Vector2 at = owner.Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * KarmaSpace.Units(1.6f);
                     float margin = sword.SwordSize(EnemyAttack.SW04).magnitude / 2 + 0.05f;
@@ -187,6 +192,8 @@ namespace KarmaPrototype
                     at.y = Mathf.Clamp(at.y, margin, KarmaSpace.Units(12) - margin);
                     blades[i].transform.position = at;
                     blades[i].transform.rotation = Quaternion.Euler(0, 0, angle * Mathf.Rad2Deg);
+                    // Quiet orbiting blades leave the tracking/locked blade readable.
+                    blades[i].color = new Color(0.62f, 0.84f, 1, 0.88f);
                 }
             }
             public Transform EffectsRoot { get { return swordGuardRoot; } }
@@ -198,7 +205,7 @@ namespace KarmaPrototype
                 if (Guarding && owner.FightSeconds < swordGuardUntil && owner.FightSeconds >= nextGuardResponse && !guardResponsePending && !guardResponseRunning)
                 {
                     guardResponsePending = true; nextGuardResponse = owner.FightSeconds + Mathf.Max(0.5f, Settings.swordGuardResponseCooldown);
-                    KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_GuardRing_v6", owner.Position, Vector2.one * 5.5f, 0.13f);
+                    wardVfx?.Absorb();
                 }
             }
             public void OnParried(KarmaAttackContact contact)
@@ -230,10 +237,12 @@ namespace KarmaPrototype
                     }
                 }
                 // Cosmetics run only after every later contact/slot is suppressed.
-                if (swordGuardAura != null)
-                { pool.Cancel(swordGuardAura.transform); swordGuardAura.gameObject.SetActive(false); Destroy(swordGuardAura.gameObject); swordGuardAura = null; }
+                if (wardVfx != null)
+                { wardVfx.Collapse(); wardVfx.gameObject.SetActive(false); Destroy(wardVfx.gameObject); wardVfx = null; }
                 var body = owner.game.Player.GetComponent<Collider2D>();
-                KarmaSwordAttackPolish.ParrySuccess(owner.game, owner, body != null ? (Vector2)body.bounds.center : owner.game.Player.Position);
+                Vector2 parryAt = body != null ? (Vector2)body.bounds.center : owner.game.Player.Position;
+                KarmaSwordAttackPolish.ParrySuccess(owner.game, owner, parryAt);
+                pool.Flash(owner, "Sword_GuardRing_v6", parryAt, Vector2.one * 2.8f, 0.22f);
                 for (int later = index; later < volley.Slots.Length; later++)
                 {
                     // Only the unspent successors dissolve. The parried blade

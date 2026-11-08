@@ -201,7 +201,7 @@ namespace KarmaPrototype
                     swordRetreatUntil = owner.FightSeconds + Mathf.Max(Settings.pressureRetreatDuration, requiredTime);
                     swordRetreatMoveAt = owner.FightSeconds + Mathf.Clamp(Settings.swordBackstepPreparation, 0, 0.08f);
                     nextSwordRetreat = owner.FightSeconds + Mathf.Clamp(
-                        Mathf.Min(Settings.swordRetreatCooldown, Settings.pressureRetreatCooldown), 1.1f, 1.5f);
+                        Mathf.Min(Settings.swordRetreatCooldown, Settings.pressureRetreatCooldown), 2.1f, 3.5f);
                     // Even a blocked attempt yields to an attack before retrying.
                     swordAttackedSinceRetreat = false;
                     if (swordRetreatRemaining < 0.12f)

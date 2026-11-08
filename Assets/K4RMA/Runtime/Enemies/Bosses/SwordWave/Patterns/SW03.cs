@@ -7,10 +7,10 @@ namespace KarmaPrototype
         sealed class SW03Pattern : SwordBossPattern
         {
             public SW03Pattern(KarmaEnemy owner, SwordBossBehavior sword) : base(owner, sword) { }
-            // Ten chosen cells carry twenty blades, leaving a verified body-wide escape.
-            Vector2 ScarSize { get { return new Vector2(Mathf.Min(KarmaSpace.Units(4.75f),
-                KarmaStage.ArenaWidth / KarmaSwordScarPlanner.CellCount * 2.2f),
-                Mathf.Max(KarmaSpace.Units(15), sword.SwordSize(EnemyAttack.SW02).y)); } }
+            // Thirteen full-width cells cover 81.25% of the arena. Three narrow
+            // body-wide channels remain; the planner guarantees a reachable one.
+            Vector2 ScarSize { get { return new Vector2(KarmaStage.ArenaWidth / KarmaSwordScarPlanner.CellCount,
+                sword.SwordSize(EnemyAttack.SW02).y * 0.92f); } }
 
             bool ClearEscapePath(float targetX)
             {
@@ -28,6 +28,12 @@ namespace KarmaPrototype
                 return true;
             }
             public override IEnumerator Execute()
+            {
+                owner.fullShield = true;
+                try { yield return ExecuteSequence(); }
+                finally { owner.fullShield = false; }
+            }
+            IEnumerator ExecuteSequence()
             {
                 const int rounds = 5;
                 var random = new System.Random(Random.Range(0, int.MaxValue));
@@ -47,15 +53,15 @@ namespace KarmaPrototype
                     owner.state = ActionState.Telegraph;
                     owner.animator.PlayWavePhase("Windup", warning);
                     KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, owner.Position, warning, true);
-                    var marks = new SpriteRenderer[cells.Length];
+                    var marks = new KarmaSwordScarRise[cells.Length];
                     for (int i = 0; i < cells.Length; i++)
                     {
                         float x = KarmaSwordScarPlanner.DangerCenter(KarmaStage.ArenaLeft, KarmaStage.ArenaRight, cells[i], size.x);
-                        marks[i] = KarmaVisuals.Box(owner.effectsRoot, "SW03 sword-cut warning / cell " + cells[i],
-                            new Vector2(x, 0.26f), Vector2.one, Color.white, 9);
-                        KarmaWaveArtwork.Apply(marks[i], "SW03_GroundScar_v5", new Vector2(size.x, 1.4f), Vector2.zero);
+                        marks[i] = KarmaSwordScarRise.Warning(owner.game, owner, owner.effectsRoot, x, size.x, warning,
+                            "SW03 sword-cut warning / cell " + cells[i]);
                     }
                     float elapsed = 0;
+                    bool slammed = false;
                     while (elapsed < warning && owner.Active)
                     {
                         yield return null;
@@ -63,13 +69,22 @@ namespace KarmaPrototype
                         if (owner.game.Player.Stunned) { elapsed = 0; continue; }
                         elapsed += Time.deltaTime;
                         float charge = Mathf.Clamp01(elapsed / warning);
-                        foreach (var mark in marks)
-                            mark.color = Color.Lerp(new Color(1, 0.40f, 0.30f, 0.8f), Color.white, charge);
+                        if (!slammed && elapsed >= warning - 0.18f)
+                        {
+                            slammed = true;
+                            owner.animator.PlayWavePhase("Slash");
+                            var swing = new GameObject("SW03 overhead ground slam / no damage");
+                            swing.transform.SetParent(owner.effectsRoot, false);
+                            swing.AddComponent<KarmaSwordGroundSlam>().Initialize(owner.game, owner);
+                        }
+                        foreach (var mark in marks) mark.SetWarningProgress(charge);
                     }
                     if (!owner.Active) yield break;
                     owner.ClearPatternObjects();
                     owner.state = ActionState.Attack;
-                    owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("Rising");
+                    owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("FollowThrough");
+                    KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_Release_v6",
+                        owner.Position + new Vector2(owner.direction * 1.1f, -0.8f), new Vector2(0.55f, 4.5f), 0.12f);
                     var contacts = new KarmaAttackContact[cells.Length];
                     var feedbackShown = new bool[cells.Length];
                     int group = 0;
@@ -85,10 +100,9 @@ namespace KarmaPrototype
                             var shot = owner.Attack(new Vector2(bladeX, size.y / 2), Vector2.zero, bladeSize, active, contact: contact);
                             KarmaSwordAttackPolish.Core(shot);
                             shot.Visual.gameObject.name = "SW03 rising blade / cell " + cell + " / " + blade;
-                            shot.Visual.gameObject.AddComponent<KarmaSwordScarRise>().Initialize(active, size.y);
+                            shot.Visual.gameObject.AddComponent<KarmaSwordScarRise>().Initialize(owner.game, owner, shot, bladeSize, active, blade != 0);
                         }
                         var pool = KarmaSwordVfxPool.For(owner.game);
-                        pool.Flash(owner, "SW03_GroundScar_v6", new Vector2(x, 0.18f), new Vector2(size.x, 1.3f), 0.20f);
                         pool.Sparks(owner, new Vector2(x, 0.35f), Vector2.up, 3, 18);
                     }
                     if (round == rounds - 1) KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_GuardRing_v6", owner.Position, Vector2.one * 3.5f, 0.16f);
@@ -112,6 +126,9 @@ namespace KarmaPrototype
                 }
                 yield return owner.Recovery(1);
             }
+            // Unity can stop a nested coroutine without disposing its iterator.
+            // The host calls Interrupt for cancellation, death and disable too.
+            public override void Interrupt() { owner.fullShield = false; }
             public override bool CanReach(Vector2 from, Vector2 target)
             { return target.x >= KarmaStage.ArenaLeft && target.x <= KarmaStage.ArenaRight
                 && sword.SwordPlayerBounds.min.y <= ScarSize.y; }

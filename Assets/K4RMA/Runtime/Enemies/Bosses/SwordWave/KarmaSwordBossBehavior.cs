@@ -214,6 +214,7 @@ namespace KarmaPrototype
                 // Use the host's stun transition next Update. Stop emissions and
                 // live contacts now, including a separately owned SW04 volley.
                 owner.pendingParry = true;
+                if (owner.selected == EnemyAttack.SW03) owner.fullShield = false;
                 owner.StopAllCoroutines();
                 foreach (Transform effect in owner.effectsRoot)
                     effect.gameObject.SetActive(false);
@@ -229,10 +230,16 @@ namespace KarmaPrototype
                 if (pattern == EnemyAttack.SW04)
                 {
                     counter.TraceResolved(contact);
+                    if (damaged) KarmaSW05Energy.WardBurst(owner.effectsRoot,owner.game,point,Vector2.up,2.5f,1);
                     if (parried) counter.OnParried(contact);
                 }
                 if (damaged && CustomHitVisual(pattern) && pattern != EnemyAttack.SW03)
-                    KarmaSwordHitFeedback.Show(owner.game.World, point, false);
+                {
+                    if (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
+                        KarmaSwordWaveAnimation.Impact(owner.game, owner, point, pattern == EnemyAttack.SW02);
+                    else if (pattern == EnemyAttack.SWBasic) KarmaSwordBasicPresentation.Impact(owner.game, owner, point);
+                    else KarmaSwordHitFeedback.Show(owner.game.World, point, false);
+                }
             }
             public override bool Armored { get { return counter.Guarding; } }
             public override bool ReduceDamage(Vector2 source) { return counter.Guarding; }
@@ -268,9 +275,9 @@ namespace KarmaPrototype
             {
                 if (attack == EnemyAttack.SWBasic && BasicMeleeSelected && velocity.sqrMagnitude < 0.01f)
                     return new BossAttackVisual { Sheet = "GuardianVFX", Pose = "Cleave", Restrained = true,
-                        ExtraPose = "SWBasic_CrescentWave_v3", SeparateLaunch = true, Color = KarmaSwordAttackPolish.Red };
+                        ExtraPose = "SWBasic_CrescentWave_v3", SeparateLaunch = true, Color = KarmaSwordAttackPolish.Blue };
                 bool revised = attack == EnemyAttack.SWBasic || attack == EnemyAttack.SW01 || attack == EnemyAttack.SW03 || attack == EnemyAttack.SW04;
-                return new BossAttackVisual { Sheet = "GuardianVFX", Color = attack == EnemyAttack.SW05 ? new Color(1, 0.38f, 0.12f) : KarmaSwordAttackPolish.Red,
+                return new BossAttackVisual { Sheet = "GuardianVFX", Color = KarmaSwordAttackPolish.Blue,
                     Restrained = true, SeparateLaunch = revised || attack == EnemyAttack.SWBasic || attack == EnemyAttack.SW02,
                     ExtraPose = KarmaWaveArtwork.Pose(attack, velocity.sqrMagnitude <= 0.01f) };
             }

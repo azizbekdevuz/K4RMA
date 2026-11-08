@@ -15,7 +15,8 @@ namespace KarmaPrototype
                 get { return thresholdsUsed < 2 && owner.Health <= owner.MaxHealth * (thresholdsUsed == 0 ? 0.5f : 0.25f); }
             }
             Vector2 RainSize { get { return sword.SwordSize(EnemyAttack.SW05) * new Vector2(2.45f, 1.6f); } }
-            const float FormationTime = 1.8f;
+            const float FormationTime = 1.25f;
+            const float DetonationWarning = 0.60f;
             IEnumerator FlyBoss(Vector2 target, float seconds)
             {
                 owner.state = ActionState.Attack;
@@ -96,6 +97,7 @@ namespace KarmaPrototype
                 int seed = KarmaAerialSwordPlanner.ResolveSeed(Settings.aerialSwordSeed);
                 var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed);
                 int groups = KarmaAerialSwordPlanner.VolleyCount;
+                var planted = new System.Collections.Generic.List<KarmaSW05RainBlade>();
                 Vector2 size = RainSize;
                 float warning = Mathf.Max(FormationTime, owner.Warning(FormationTime));
                 for (int group = 0; group < groups && owner.Active; group++)
@@ -143,6 +145,7 @@ namespace KarmaPrototype
 
                     yield return FormAerialSword(blades, plan, warning);
                     if (!owner.Active) yield break;
+                    KarmaSW05VFX.RainRelease(owner.effectsRoot, owner.game, owner.Position);
                     for (int member = 0; member < plan.shots.Length; member++)
                     {
                         blades[member].gameObject.SetActive(false); Destroy(blades[member].gameObject);
@@ -150,13 +153,24 @@ namespace KarmaPrototype
                         var attack = KarmaSW05RainBlade.Spawn(owner.game, owner, owner.effectsRoot,
                             shot, owner.Damage * Settings.aerialSwordDamageMultiplier, marks[member]);
                         planner.RegisterLaunch(attack.transform);
+                        planted.Add(attack);
                     }
                     owner.animator.ReleaseWavePhase();
                     while (owner.Active && planner.HasLiveShots) yield return null;
                     if (!owner.Active) yield break;
-                    // Three distinct heavy impacts, with a readable breath and
-                    // harmless planted swords before the next summon.
-                    yield return owner.Wait(0.7f);
+                    // Only the final landing starts the common countdown. Rain
+                    // warnings never compete with an earlier explosion warning.
+                    if (group == groups - 1)
+                    {
+                        foreach (var blade in planted) if (blade != null) blade.ArmExplosion(DetonationWarning);
+                        var ignition = KarmaSW05Energy.Prepare(owner.effectsRoot, owner.game, planted, DetonationWarning);
+                        yield return owner.Wait(DetonationWarning);
+                        if (!owner.Active) yield break;
+                        ignition.Ignite();
+                        var contact = new KarmaAttackContact();
+                        foreach (var blade in planted) if (blade != null) blade.Explode(contact);
+                    }
+                    yield return owner.Wait(0.25f);
                 }
                 if (!owner.Active) yield break;
                 owner.fullShield = false;
@@ -171,8 +185,8 @@ namespace KarmaPrototype
                 // This set piece relocates to center and covers the arena. Its
                 // eligibility is the two health gates, not a ranged attack ray.
                 return target.x >= KarmaStage.ArenaLeft && target.x <= KarmaStage.ArenaRight
-                    && 0.8f + 1.4f + KarmaAerialSwordPlanner.VolleyCount * (Mathf.Max(FormationTime, owner.Warning(FormationTime)) + 1 + 0.7f)
-                        + 2 < Mathf.Max(5, owner.Tuning.patternTimeout);
+                    && 0.8f + 1.4f + KarmaAerialSwordPlanner.VolleyCount * (Mathf.Max(FormationTime, owner.Warning(FormationTime)) + 1 + 0.25f)
+                        + DetonationWarning + 2 < Mathf.Max(5, owner.Tuning.patternTimeout);
             }
 
         }

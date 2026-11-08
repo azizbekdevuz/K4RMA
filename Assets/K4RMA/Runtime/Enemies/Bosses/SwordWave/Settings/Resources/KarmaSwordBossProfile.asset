@@ -21,7 +21,7 @@ MonoBehaviour:
     swordRetreatCooldown: 5
     swordRetreatStartDistance: 6.25
     swordRetreatStopDistance: 11.75
-    swordRetreatDistance: 32
+    swordRetreatDistance: 12
     swordRetreatDuration: 0.6
     swordRetreatSpeed: 48
     swordMeleeSpacingMargin: 0.65
@@ -51,12 +51,12 @@ MonoBehaviour:
     swordRetreatAcceleration: 56
     swordRetreatDeceleration: 72
     pressureRetreatStartDistance: 9.2
-    pressureRetreatCooldown: 1.1
+    pressureRetreatCooldown: 2.4
     pressureRetreatDuration: 1.05
     swordBackstepPreparation: 0.045
     swordBackstepAcceleration: 420
     swordBackstepDeceleration: 360
-    swordRetreatDashMultiplier: 4
+    swordRetreatDashMultiplier: 1.75
     swordRetreatAttackWindow: 0.65
     swordWallReturnCooldown: 2.5
     swordAfterimageInterval: 0.03

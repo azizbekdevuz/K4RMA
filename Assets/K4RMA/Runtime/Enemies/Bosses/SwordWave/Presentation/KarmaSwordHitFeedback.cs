@@ -13,9 +13,9 @@ namespace KarmaPrototype
             var flash = KarmaCombatVFX.Burst(root, at, sprite,
                 boss ? "Sword boss confirmed hit" : "Sword player confirmed hit",
                 Vector2.one * (boss ? 2.3f : 2.7f), boss ? 0.14f : 0.17f,
-                0, KarmaSwordAttackPolish.Red, true);
+                0, KarmaSwordAttackPolish.Blue, true);
             foreach (var renderer in flash.transform.parent.GetComponentsInChildren<SpriteRenderer>())
-                renderer.sortingOrder += 18;
+                { renderer.sortingOrder += 18; KarmaSwordSkillSurface.Apply(renderer, 4); }
         }
     }
 
@@ -95,7 +95,7 @@ namespace KarmaPrototype
                 float a = i * Mathf.PI * 2 / ring.positionCount;
                 ring.SetPosition(i, new Vector3(Mathf.Cos(a) * 1.45f, Mathf.Sin(a) * 0.38f, 0));
             }
-            ring.startColor = ring.endColor = new Color(1, 0.83f, 0.27f, 0.75f);
+            ring.startColor = ring.endColor = new Color(0.35f, 0.8f, 1, 0.75f);
             for (int i = 0; i < stars.Length; i++)
             {
                 stars[i] = Line("Stun star " + i, 8, 0.065f);
@@ -105,7 +105,7 @@ namespace KarmaPrototype
                     float radius = j % 2 == 0 ? 0.28f : 0.09f;
                     stars[i].SetPosition(j, new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0) * radius);
                 }
-                stars[i].startColor = stars[i].endColor = new Color(1, 0.94f, 0.5f);
+                stars[i].startColor = stars[i].endColor = new Color(0.82f, 0.96f, 1);
             }
             orbit.gameObject.SetActive(false);
         }

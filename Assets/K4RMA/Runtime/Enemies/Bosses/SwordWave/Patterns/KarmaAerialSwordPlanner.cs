@@ -48,7 +48,8 @@ namespace KarmaPrototype
             get
             {
                 foreach (var shot in live)
-                    if (shot != null && shot.gameObject.activeInHierarchy) return true;
+                    if (shot != null && shot.gameObject.activeInHierarchy
+                        && !(shot.GetComponent<KarmaSW05RainBlade>()?.Landed ?? false)) return true;
                 return false;
             }
         }

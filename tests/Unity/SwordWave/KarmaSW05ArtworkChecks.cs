@@ -73,6 +73,102 @@ public static class KarmaSW05ArtworkChecks
     }
     public static void RunBaseline() => Begin(true);
     public static void RunUpdated() => Begin(false);
+    // Import only the six additional sheets. Existing GUIDs, sprites and
+    // logical names are retained, including on a repeated import.
+    public static void ImportSuppliedPack()
+    {
+        try
+        {
+            var names = new[] { "SW03_GroundCharge_6f", "SW03_BladeSurge_6f", "SW05_FallingSwordAura_6f",
+                "SW05_LandingShock_6f", "SW05_FinalOvercharge_6f", "SW05_FinalDetonation_8f" };
+            var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Library);
+            var sheet = library.sheets.Single(s => s.id == "SwordBossVFX");
+            var sprites = sheet.sprites.ToList(); var poses = sheet.poses.ToList();
+            while (poses.Count < sprites.Count) poses.Add(sprites[poses.Count].name);
+            foreach (var name in names)
+            {
+                string path = Artwork + name + ".png";
+                AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Multiple;
+                importer.spritePixelsPerUnit = 100; importer.mipmapEnabled = false; importer.alphaIsTransparency = true;
+                importer.filterMode = FilterMode.Bilinear; importer.wrapMode = TextureWrapMode.Clamp;
+                importer.npotScale = TextureImporterNPOTScale.None; importer.maxTextureSize = 4096;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
+                settings.spriteMeshType = SpriteMeshType.FullRect; importer.SetTextureSettings(settings);
+                var factories = new SpriteDataProviderFactories(); factories.Init();
+                var provider = factories.GetSpriteEditorDataProviderFromObject(importer); provider.InitSpriteEditorDataProvider();
+                var old = provider.GetSpriteRects().ToDictionary(r => r.name,r => r.spriteID);
+                int count = name.EndsWith("8f") ? 8 : 6;
+                var rects = Enumerable.Range(0,count).Select(i => new SpriteRect {
+                    name = name + "_" + i, rect = new Rect(i*512,0,512,512), alignment = SpriteAlignment.Custom,
+                    pivot = name.Contains("Aura") ? new Vector2(0.5f,0.5f) : new Vector2(0.5f,96f/512),
+                    spriteID = old.TryGetValue(name+"_"+i,out var id) ? id : GUID.Generate()
+                }).ToArray();
+                provider.SetSpriteRects(rects);
+                provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name,r.spriteID)));
+                provider.Apply(); importer.SaveAndReimport();
+                foreach (var sprite in AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s => s.name))
+                {
+                    int index = poses.IndexOf(sprite.name);
+                    if (index >= 0) sprites[index] = sprite;
+                    else { sprites.Add(sprite); poses.Add(sprite.name); }
+                }
+                Check(sprites.Count(s => s != null && s.name.StartsWith(name+"_")) == count,"supplied frame count: " + name);
+            }
+            sheet.sprites = sprites.ToArray(); sheet.poses = poses.ToArray();
+            EditorUtility.SetDirty(library); AssetDatabase.SaveAssets();
+            Debug.Log("PACK PASS: six native horizontal sheets / 38 PPU100 frames imported; existing sprite entries preserved");
+            EditorApplication.Exit(0);
+        }
+        catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
+    }
+    public static void ImportGrandPack()
+    {
+        try
+        {
+            var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Library);
+            var sheet = library.sheets.Single(s => s.id == "SwordBossVFX");
+            var sprites = sheet.sprites.ToList(); var poses = sheet.poses.ToList();
+            foreach (string name in new[] { "SW04_OrbitingSwordGuard_16f", "SW04_OrbitingSwordGuard_Base", "SW05_HeavyJudgementSword_optional" })
+            {
+                string path = Artwork+name+".png"; AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.textureType = TextureImporterType.Sprite; importer.spritePixelsPerUnit = 100;
+                importer.mipmapEnabled = false; importer.alphaIsTransparency = true; importer.filterMode = FilterMode.Bilinear;
+                importer.wrapMode = TextureWrapMode.Clamp; importer.npotScale = TextureImporterNPOTScale.None;
+                importer.maxTextureSize = 8192; importer.textureCompression = TextureImporterCompression.Uncompressed;
+                var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
+                settings.spriteMeshType = SpriteMeshType.FullRect; settings.spriteAlignment = (int)SpriteAlignment.Custom;
+                settings.spritePivot = name.Contains("Heavy") ? new Vector2(255f/512,509f/1024) : new Vector2(193f/384,193f/384);
+                importer.SetTextureSettings(settings);
+                bool animated = name.EndsWith("16f"); importer.spriteImportMode = animated ? SpriteImportMode.Multiple : SpriteImportMode.Single;
+                if (animated)
+                {
+                    var factories = new SpriteDataProviderFactories(); factories.Init();
+                    var provider = factories.GetSpriteEditorDataProviderFromObject(importer); provider.InitSpriteEditorDataProvider();
+                    var existing = provider.GetSpriteRects().ToDictionary(r => r.name,r => r.spriteID);
+                    var rects = Enumerable.Range(0,16).Select(i => new SpriteRect { name=name+"_"+i, rect=new Rect(i*384,0,384,384),
+                        alignment=SpriteAlignment.Custom,pivot=new Vector2(193f/384,193f/384),
+                        spriteID=existing.TryGetValue(name+"_"+i,out var id)?id:GUID.Generate() }).ToArray();
+                    provider.SetSpriteRects(rects);
+                    provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(rects.Select(r=>new SpriteNameFileIdPair(r.name,r.spriteID)));
+                    provider.Apply();
+                }
+                importer.SaveAndReimport();
+                foreach (var sprite in AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s=>s.name))
+                {
+                    int index=poses.IndexOf(sprite.name);
+                    if(index<0){poses.Add(sprite.name);sprites.Add(sprite);}else sprites[index]=sprite;
+                }
+            }
+            sheet.sprites=sprites.ToArray();sheet.poses=poses.ToArray();EditorUtility.SetDirty(library);AssetDatabase.SaveAssets();
+            Debug.Log("GRAND IMPORT PASS: one baked four-sword formation, its ring base, and one heavy sword; existing GUIDs preserved");
+            EditorApplication.Exit(0);
+        }
+        catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
+    }
     static void Begin(bool before)
     {
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Before", before);

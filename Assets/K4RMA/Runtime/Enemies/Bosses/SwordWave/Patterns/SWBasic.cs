@@ -17,17 +17,25 @@ namespace KarmaPrototype
                 owner.state = ActionState.Telegraph;
                 Vector2 origin = owner.Position;
                 Vector2 aim = SwordBossBehavior.SwordAim(origin, sword.SwordPlayerBounds.center, owner.direction);
+                Vector2 velocity = aim * sword.BasicSwordSpeed;
+                float flightLife = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
                 float warning = owner.Warning(0.4f);
-                var mark = owner.PathMark(origin, origin + aim * sword.BasicSwordSpeed * sword.BasicSwordLife, sword.BasicSwordSize);
+                var mark = owner.PathMark(origin, origin + velocity * flightLife, sword.BasicSwordSize);
                 KarmaSwordAttackPolish.Warning(mark);
-                KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, origin, warning, false);
-                owner.animator.PrepareWaveAttack(warning, false);
+                KarmaSwordBasicPresentation.Charge(owner.game, owner, mark.transform, warning);
+                owner.animator.PrepareBasicAttack(warning);
                 yield return owner.Wait(warning);
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack(aim);
-                var shot = owner.Attack(origin, aim * sword.BasicSwordSpeed, sword.BasicSwordSize, sword.BasicSwordLife, Settings.basicDamageMultiplier);
-                KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, aim * sword.BasicSwordSpeed, sword.BasicSwordSize);
-                sword.WaveLaunchVFX(origin, aim * sword.BasicSwordSpeed, sword.BasicSwordSize, false);
+                owner.animator.BeginBasicRelease();
+                // Recovery clears ordinary pattern objects. Let this released
+                // wave finish at the real boundary under existing sword ownership.
+                var shot = owner.Attack(origin, velocity, sword.BasicSwordSize, flightLife,
+                    Settings.basicDamageMultiplier, parent: sword.PersistentRoot);
+                KarmaSwordBasicPresentation.Ranged(owner.game, owner, shot, velocity,
+                    sword.BasicSwordSize, sword.SwordSize(EnemyAttack.SW01));
+                // Keep the previous casting/recovery/selection cadence. The old
+                // ten-unit lifetime remains only the existing release wait here.
                 yield return owner.Wait(sword.BasicSwordLife);
                 yield return owner.Recovery(0.5f);
             }
@@ -39,15 +47,15 @@ namespace KarmaPrototype
                 owner.state = ActionState.Telegraph;
                 var mark = owner.Mark("SWBasic 근거리 칼질", center, size);
                 KarmaSwordAttackPolish.Warning(mark);
-                KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, center, warning, false);
-                owner.animator.PrepareWaveAttack(warning, false);
+                KarmaSwordBasicPresentation.Charge(owner.game, owner, mark.transform, warning);
+                owner.animator.PrepareBasicAttack(warning);
                 yield return owner.Wait(warning);
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.state = ActionState.Attack; owner.animator.PlayPose("Slash", 0.3f);
+                owner.animator.BeginBasicRelease();
                 var shot = owner.Attack(center, Vector2.zero, size, 0.26f, Settings.basicDamageMultiplier);
                 KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, Vector2.zero, size);
                 shot.Visual.flipX = owner.direction < 0;
-                KarmaSwordAttackPolish.Release(owner.game, owner, owner.art, center, Vector2.right * owner.direction, size, false);
                 yield return owner.Wait(0.3f);
                 yield return owner.Recovery(0.5f);
             }

@@ -4,18 +4,24 @@ namespace KarmaPrototype
     // Sword-only artwork and flight limits; common damage/contact handling stays in KarmaBossAttack.
     public sealed class KarmaSwordBossAttack : KarmaBossAttack
     {
-        bool oriented, aimedSlash, aerialSword;
+        bool oriented, aimedSlash, aerialSword, scar;
         protected override bool Oriented { get { return oriented; } }
-        protected override bool AttachTrail { get { return !aerialSword && !aimedSlash; } }
+        protected override bool AttachTrail { get { return !aerialSword && !aimedSlash && !scar; } }
         protected override bool AttachLaunch { get { return !aerialSword && !aimedSlash; } }
         protected override bool ApplyPatternVisual(SpriteRenderer renderer, string extraPose, Vector2 size, Vector2 velocity)
         {
             aerialSword = extraPose == "SW05_AerialSword";
             aimedSlash = extraPose == "SW02_AimedSlash";
+            scar = extraPose == "SW03_RisingBlade_v5";
             oriented = extraPose != null && velocity.sqrMagnitude > 0.01f;
             if (extraPose == null) return false;
             KarmaWaveArtwork.Apply(renderer, extraPose, size, velocity);
             return true;
+        }
+        public void SetSW03Frame(Vector2 center, Vector2 footprint)
+        {
+            if (!scar) return;
+            transform.position = center; size = footprint;
         }
         protected override Color AttackColor(Color color, bool restrained)
         { return aerialSword ? Color.white : base.AttackColor(color, restrained); }

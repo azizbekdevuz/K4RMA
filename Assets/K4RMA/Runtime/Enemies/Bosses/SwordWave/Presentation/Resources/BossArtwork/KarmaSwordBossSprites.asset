@@ -63,6 +63,97 @@ MonoBehaviour:
     - {fileID: 21300000, guid: ef426482b6c27c542af3e1b2a10733f2, type: 3}
     - {fileID: 21300000, guid: 039b7d04f68ceda4cbdcc72da7fee0dc, type: 3}
     - {fileID: 21300000, guid: bcaacde0fddc7db4595806b06ff5e128, type: 3}
+    - {fileID: 21310000, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310001, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310002, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310003, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310004, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310100, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310101, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310102, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310103, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310104, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310200, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310201, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310202, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310203, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310204, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310300, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310301, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310302, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310303, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21310304, guid: 622a2ee3f2b047ea91b66c3c5b0b5743, type: 3}
+    - {fileID: 21320000, guid: a771ac587c104b719a2b96ce10005426, type: 3}
+    - {fileID: 21320001, guid: a771ac587c104b719a2b96ce10005426, type: 3}
+    - {fileID: 21320002, guid: a771ac587c104b719a2b96ce10005426, type: 3}
+    - {fileID: 21320003, guid: a771ac587c104b719a2b96ce10005426, type: 3}
+    - {fileID: 21320004, guid: a771ac587c104b719a2b96ce10005426, type: 3}
+    - {fileID: 21320100, guid: 50e12c65c12b4965a54a57ce180319ac, type: 3}
+    - {fileID: 21320101, guid: 50e12c65c12b4965a54a57ce180319ac, type: 3}
+    - {fileID: 21320102, guid: 50e12c65c12b4965a54a57ce180319ac, type: 3}
+    - {fileID: 21320103, guid: 50e12c65c12b4965a54a57ce180319ac, type: 3}
+    - {fileID: 21320104, guid: 50e12c65c12b4965a54a57ce180319ac, type: 3}
+    - {fileID: 21320200, guid: cbd1f46b6f0f44d19e54202de6cd0283, type: 3}
+    - {fileID: 21320201, guid: cbd1f46b6f0f44d19e54202de6cd0283, type: 3}
+    - {fileID: 21320202, guid: cbd1f46b6f0f44d19e54202de6cd0283, type: 3}
+    - {fileID: 21320203, guid: cbd1f46b6f0f44d19e54202de6cd0283, type: 3}
+    - {fileID: 21320204, guid: cbd1f46b6f0f44d19e54202de6cd0283, type: 3}
+    - {fileID: -1612747778, guid: d84e02cb0c2315a459536c6315cc9699, type: 3}
+    - {fileID: -1057970515, guid: d84e02cb0c2315a459536c6315cc9699, type: 3}
+    - {fileID: 205211543, guid: d84e02cb0c2315a459536c6315cc9699, type: 3}
+    - {fileID: 861928907, guid: d84e02cb0c2315a459536c6315cc9699, type: 3}
+    - {fileID: -1686020418, guid: d84e02cb0c2315a459536c6315cc9699, type: 3}
+    - {fileID: 759203654, guid: d84e02cb0c2315a459536c6315cc9699, type: 3}
+    - {fileID: 1310278794, guid: 06304508bc6fd2247aaac7e030f06d75, type: 3}
+    - {fileID: 1150923054, guid: 06304508bc6fd2247aaac7e030f06d75, type: 3}
+    - {fileID: -2057514045, guid: 06304508bc6fd2247aaac7e030f06d75, type: 3}
+    - {fileID: 1665866212, guid: 06304508bc6fd2247aaac7e030f06d75, type: 3}
+    - {fileID: 997499875, guid: 06304508bc6fd2247aaac7e030f06d75, type: 3}
+    - {fileID: 502826527, guid: 06304508bc6fd2247aaac7e030f06d75, type: 3}
+    - {fileID: 394919011, guid: 8673da0387b2adb4ca2dda41c43f26c0, type: 3}
+    - {fileID: -278775155, guid: 8673da0387b2adb4ca2dda41c43f26c0, type: 3}
+    - {fileID: 144168320, guid: 8673da0387b2adb4ca2dda41c43f26c0, type: 3}
+    - {fileID: -407447438, guid: 8673da0387b2adb4ca2dda41c43f26c0, type: 3}
+    - {fileID: -1946962890, guid: 8673da0387b2adb4ca2dda41c43f26c0, type: 3}
+    - {fileID: 511961106, guid: 8673da0387b2adb4ca2dda41c43f26c0, type: 3}
+    - {fileID: -1900466095, guid: 9a872847af75e954eb4e1303563bcf16, type: 3}
+    - {fileID: -1384972464, guid: 9a872847af75e954eb4e1303563bcf16, type: 3}
+    - {fileID: 1852756673, guid: 9a872847af75e954eb4e1303563bcf16, type: 3}
+    - {fileID: 1513630485, guid: 9a872847af75e954eb4e1303563bcf16, type: 3}
+    - {fileID: -254403601, guid: 9a872847af75e954eb4e1303563bcf16, type: 3}
+    - {fileID: -863422880, guid: 9a872847af75e954eb4e1303563bcf16, type: 3}
+    - {fileID: -2144650761, guid: 4561f2774ecca4d42bdb34c93675c3a8, type: 3}
+    - {fileID: 312959550, guid: 4561f2774ecca4d42bdb34c93675c3a8, type: 3}
+    - {fileID: 1171267411, guid: 4561f2774ecca4d42bdb34c93675c3a8, type: 3}
+    - {fileID: -1576288132, guid: 4561f2774ecca4d42bdb34c93675c3a8, type: 3}
+    - {fileID: 424623661, guid: 4561f2774ecca4d42bdb34c93675c3a8, type: 3}
+    - {fileID: -959689283, guid: 4561f2774ecca4d42bdb34c93675c3a8, type: 3}
+    - {fileID: 1613922190, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: 1268216857, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: -129928291, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: 446734021, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: 1743710050, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: 890572386, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: -1454031083, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: -178124988, guid: 7337fd239fcab414ca2fccefa00aa903, type: 3}
+    - {fileID: 439023687, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 2041885723, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -70495851, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -426135809, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -1224264621, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -2041064563, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -1122137604, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 973347410, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -2092092422, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 86481393, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -1488812215, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 1059544548, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -1200754205, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 1849468810, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: -790395115, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 700059769, guid: b20e4b11cf253da4da37bebfeab5fb30, type: 3}
+    - {fileID: 21300000, guid: 7e28a05024afa9f4d95d1ca06fdcb172, type: 3}
+    - {fileID: 21300000, guid: bc41549f2f9e88a4c837cfbb0401e41e, type: 3}
     poses:
     - SW01_StaggeredWave
     - SW02_AimedSlash
@@ -87,6 +178,97 @@ MonoBehaviour:
     - SW03_GroundScar_v7
     - SW03_RisingBlade_v7
     - SW03_HitCut_v7
+    - SwordEnergy_Charge_0
+    - SwordEnergy_Charge_1
+    - SwordEnergy_Charge_2
+    - SwordEnergy_Charge_3
+    - SwordEnergy_Charge_4
+    - SwordEnergy_SW01Flight_0
+    - SwordEnergy_SW01Flight_1
+    - SwordEnergy_SW01Flight_2
+    - SwordEnergy_SW01Flight_3
+    - SwordEnergy_SW01Flight_4
+    - SwordEnergy_SW02Flight_0
+    - SwordEnergy_SW02Flight_1
+    - SwordEnergy_SW02Flight_2
+    - SwordEnergy_SW02Flight_3
+    - SwordEnergy_SW02Flight_4
+    - SwordEnergy_Impact_0
+    - SwordEnergy_Impact_1
+    - SwordEnergy_Impact_2
+    - SwordEnergy_Impact_3
+    - SwordEnergy_Impact_4
+    - SW03_GroundScar_5f_0
+    - SW03_GroundScar_5f_1
+    - SW03_GroundScar_5f_2
+    - SW03_GroundScar_5f_3
+    - SW03_GroundScar_5f_4
+    - SW03_RisingBlade_Tall_5f_0
+    - SW03_RisingBlade_Tall_5f_1
+    - SW03_RisingBlade_Tall_5f_2
+    - SW03_RisingBlade_Tall_5f_3
+    - SW03_RisingBlade_Tall_5f_4
+    - SW03_HitCut_5f_0
+    - SW03_HitCut_5f_1
+    - SW03_HitCut_5f_2
+    - SW03_HitCut_5f_3
+    - SW03_HitCut_5f_4
+    - SW03_GroundCharge_6f_0
+    - SW03_GroundCharge_6f_1
+    - SW03_GroundCharge_6f_2
+    - SW03_GroundCharge_6f_3
+    - SW03_GroundCharge_6f_4
+    - SW03_GroundCharge_6f_5
+    - SW03_BladeSurge_6f_0
+    - SW03_BladeSurge_6f_1
+    - SW03_BladeSurge_6f_2
+    - SW03_BladeSurge_6f_3
+    - SW03_BladeSurge_6f_4
+    - SW03_BladeSurge_6f_5
+    - SW05_FallingSwordAura_6f_0
+    - SW05_FallingSwordAura_6f_1
+    - SW05_FallingSwordAura_6f_2
+    - SW05_FallingSwordAura_6f_3
+    - SW05_FallingSwordAura_6f_4
+    - SW05_FallingSwordAura_6f_5
+    - SW05_LandingShock_6f_0
+    - SW05_LandingShock_6f_1
+    - SW05_LandingShock_6f_2
+    - SW05_LandingShock_6f_3
+    - SW05_LandingShock_6f_4
+    - SW05_LandingShock_6f_5
+    - SW05_FinalOvercharge_6f_0
+    - SW05_FinalOvercharge_6f_1
+    - SW05_FinalOvercharge_6f_2
+    - SW05_FinalOvercharge_6f_3
+    - SW05_FinalOvercharge_6f_4
+    - SW05_FinalOvercharge_6f_5
+    - SW05_FinalDetonation_8f_0
+    - SW05_FinalDetonation_8f_1
+    - SW05_FinalDetonation_8f_2
+    - SW05_FinalDetonation_8f_3
+    - SW05_FinalDetonation_8f_4
+    - SW05_FinalDetonation_8f_5
+    - SW05_FinalDetonation_8f_6
+    - SW05_FinalDetonation_8f_7
+    - SW04_OrbitingSwordGuard_16f_0
+    - SW04_OrbitingSwordGuard_16f_1
+    - SW04_OrbitingSwordGuard_16f_10
+    - SW04_OrbitingSwordGuard_16f_11
+    - SW04_OrbitingSwordGuard_16f_12
+    - SW04_OrbitingSwordGuard_16f_13
+    - SW04_OrbitingSwordGuard_16f_14
+    - SW04_OrbitingSwordGuard_16f_15
+    - SW04_OrbitingSwordGuard_16f_2
+    - SW04_OrbitingSwordGuard_16f_3
+    - SW04_OrbitingSwordGuard_16f_4
+    - SW04_OrbitingSwordGuard_16f_5
+    - SW04_OrbitingSwordGuard_16f_6
+    - SW04_OrbitingSwordGuard_16f_7
+    - SW04_OrbitingSwordGuard_16f_8
+    - SW04_OrbitingSwordGuard_16f_9
+    - SW04_OrbitingSwordGuard_Base
+    - SW05_HeavyJudgementSword_optional
   - id: BossAppearance
     source: Assets/K4RMA/Arts/Bosses/SwordWave/Resources/K4RMAArtwork/Characters/Guardians/Base/Wave.png
     sprites:

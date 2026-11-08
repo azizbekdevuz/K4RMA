@@ -5,8 +5,8 @@ namespace KarmaPrototype
     // SW03 only. World-space intervals include the whole player body, not just its pivot.
     internal static class KarmaSwordScarPlanner
     {
-        public const int CellCount = 16, ScarCount = 10;
-        public const float Clearance = 0.2f, ReactionSeconds = 0.28f;
+        public const int CellCount = 16, ScarCount = 13;
+        public const float Clearance = 0.55f, ReactionSeconds = 0.28f;
 
         public static float Center(float left, float right, int cell)
         { return left + (cell + 0.5f) * (right - left) / CellCount; }
@@ -18,47 +18,30 @@ namespace KarmaPrototype
             Func<float, bool> clearPath, out int[] cells, out float safeX, out float seconds)
         {
             cells = null; safeX = playerX; seconds = warning;
-            if (right <= left || scarWidth <= 0 || scarWidth > (right - left) / CellCount * 2.2f) return false;
+            if (right <= left || scarWidth <= 0 || scarWidth > (right - left) / CellCount + 0.001f) return false;
             var order = new int[CellCount];
-            for (int attempt = 0; attempt < 32; attempt++)
+            for (int i = 0; i < CellCount; i++) order[i] = i;
+            for (int i = 0; i < CellCount; i++)
             {
-                for (int i = 0; i < CellCount; i++) order[i] = i;
-                for (int i = 0; i < ScarCount; i++)
-                {
-                    int pick = random.Next(i, CellCount), temp = order[i];
-                    order[i] = order[pick]; order[pick] = temp;
-                }
-                var candidate = new int[ScarCount];
-                Array.Copy(order, candidate, ScarCount); Array.Sort(candidate);
-                if (TrySafePoint(candidate, left, right, scarWidth, playerX, playerHalfWidth, clearPath, out float target)
-                    && RequiredWarning(playerX, target, speed) <= warning
-                    && (speed <= 0.001f || Math.Abs(target - playerX) > 0.5f))
-                { cells = candidate; safeX = target; return true; }
+                int pick = random.Next(i, CellCount), temp = order[i];
+                order[i] = order[pick]; order[pick] = temp;
             }
-            // Construct layouts around every safe-interval boundary instead of
-            // scanning 65,536 masks. All selected cells protect the whole body
-            // at this anchor; the same route/time validator still gates release.
+            // Three single-cell channels spaced five/five/six cells apart.
+            // Rotate and reflect that readable formation, rather than scattering
+            // random holes or accidentally joining them into a large safe zone.
             float best = float.PositiveInfinity;
-            float inset = Math.Max(0, playerHalfWidth) + Clearance;
-            for (int anchor = -1; anchor < CellCount * 2; anchor++)
+            for (int attempt = 0; attempt < CellCount * 2; attempt++)
             {
-                float x = anchor < 0 ? playerX : DangerCenter(left, right, anchor / 2, scarWidth)
-                    + (anchor % 2 == 0 ? -1 : 1) * (scarWidth / 2 + inset + 0.001f);
-                x = Math.Max(left + inset, Math.Min(right - inset, x));
+                int anchor = order[attempt / 2];
+                int gap2 = (anchor + 5) % CellCount, gap3 = (anchor + (attempt % 2 == 0 ? 10 : 11)) % CellCount;
+                var candidate = new int[ScarCount];
                 int count = 0;
                 for (int cell = 0; cell < CellCount; cell++)
-                    if (Math.Abs(x - DangerCenter(left, right, cell, scarWidth)) >= scarWidth / 2 + inset)
-                        order[count++] = cell;
-                if (count < ScarCount) continue;
-                for (int i = 0; i < ScarCount; i++)
-                {
-                    int pick = random.Next(i, count), temp = order[i];
-                    order[i] = order[pick]; order[pick] = temp;
-                }
-                var candidate = new int[ScarCount];
-                Array.Copy(order, candidate, ScarCount); Array.Sort(candidate);
+                    if (cell != anchor && cell != gap2 && cell != gap3) candidate[count++] = cell;
                 if (!TrySafePoint(candidate, left, right, scarWidth, playerX, playerHalfWidth, clearPath, out float target)) continue;
                 float needed = RequiredWarning(playerX, target, speed);
+                if (needed <= warning && (speed <= 0.001f || Math.Abs(target - playerX) > 0.5f))
+                { cells = candidate; safeX = target; return true; }
                 if (needed >= best) continue;
                 best = needed; cells = candidate; safeX = target;
             }

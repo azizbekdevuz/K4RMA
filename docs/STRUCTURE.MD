@@ -170,6 +170,62 @@ K4RMA/
 │       │       │           └── MenuBackground.png
 │       │       └── Shaders/
 │       │           └── KarmaCombatGlow.shader
+│       ├── Audio/
+│       │   └── SFX/
+│       │       ├── Ambience/
+│       │       │   └── Amb_Arena_Loop.wav
+│       │       ├── Combat/
+│       │       │   ├── Combat_Blade_Hit.wav
+│       │       │   ├── Combat_Boss_Defeat.wav
+│       │       │   ├── Combat_Boss_Stagger.wav
+│       │       │   ├── Combat_Guard_Block.wav
+│       │       │   └── Combat_Perfect_Parry.wav
+│       │       ├── Guard/
+│       │       │   ├── GD_Counter.wav
+│       │       │   ├── GD_Heavy_Slam.wav
+│       │       │   ├── GD_Protection_Pulse.wav
+│       │       │   ├── GD_Shield_Activate.wav
+│       │       │   ├── GD_Shield_Break.wav
+│       │       │   ├── GD_Shield_Hit.wav
+│       │       │   └── GD_Ultimate.wav
+│       │       ├── Player/
+│       │       │   ├── PL_Damage.wav
+│       │       │   ├── PL_Dash.wav
+│       │       │   ├── PL_Land.wav
+│       │       │   ├── PL_Rising_Slash.wav
+│       │       │   └── PL_Sword_Swing.wav
+│       │       ├── Progression/
+│       │       │   ├── Game_Ability_Inherit.wav
+│       │       │   └── Game_Boss_Intro.wav
+│       │       ├── RisingSlash/
+│       │       │   ├── RS_Dash_Impact.wav
+│       │       │   ├── RS_Dash_Start.wav
+│       │       │   ├── RS_Shards_Release.wav
+│       │       │   ├── RS_Slash_01.wav
+│       │       │   ├── RS_Slash_02.wav
+│       │       │   ├── RS_Telegraph.wav
+│       │       │   ├── RS_UP01_Ascend.wav
+│       │       │   ├── RS_UP01_Descent.wav
+│       │       │   ├── RS_UP01_Landing.wav
+│       │       │   ├── RS_UP02_Pursuit.wav
+│       │       │   ├── RS_UP03_Wave.wav
+│       │       │   ├── RS_UP04_Knockback.wav
+│       │       │   ├── RS_UP04_ShieldBurst.wav
+│       │       │   ├── RS_UP05_Charge_Short.wav
+│       │       │   ├── RS_UP05_Crossing.wav
+│       │       │   └── RS_UP05_Final.wav
+│       │       ├── SwordWave/
+│       │       │   ├── SW_Crossing_Blades.wav
+│       │       │   ├── SW_Energy_Charge.wav
+│       │       │   ├── SW_Scar_Rise.wav
+│       │       │   ├── SW_Ultimate_Rain.wav
+│       │       │   ├── SW_Wave_Impact.wav
+│       │       │   ├── SW_Wave_Launch.wav
+│       │       │   └── SW_Wave_Travel.wav
+│       │       └── UI/
+│       │           ├── UI_Cancel.wav
+│       │           ├── UI_Confirm.wav
+│       │           └── UI_Move.wav
 │       ├── Core/
 │       │   ├── K4RMA.Core.asmdef
 │       │   ├── KarmaBossRules.cs
@@ -209,6 +265,12 @@ K4RMA/
 │       │   ├── KarmaSpriteLibrary.asset
 │       │   └── KarmaSpriteUnlit.mat
 │       ├── Runtime/
+│       │   ├── Audio/
+│       │   │   ├── KarmaAudio.cs
+│       │   │   ├── KarmaAudioHost.cs
+│       │   │   ├── KarmaSfxLibrary.cs
+│       │   │   └── Resources/
+│       │   │       └── KarmaSfxLibrary.asset
 │       │   ├── Abilities/
 │       │   │   └── KarmaEssences.cs
 │       │   ├── Combat/
@@ -268,6 +330,7 @@ K4RMA/
 │       │   │   │   │   │   │       └── KarmaRisingBossSprites.asset
 │       │   │   │   │   │   ├── KarmaCharacterAnimator.Rising.cs
 │       │   │   │   │   │   ├── KarmaRisingArt.cs
+│       │   │   │   │   │   ├── KarmaRisingAudio.cs
 │       │   │   │   │   │   ├── KarmaRisingCharge.cs
 │       │   │   │   │   │   └── KarmaRisingPolish.cs
 │       │   │   │   │   ├── Settings/

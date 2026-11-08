@@ -12,6 +12,7 @@ namespace KarmaPrototype
                 Vector2 start = owner.Position;
                 Vector2 target = start;
                 owner.state = ActionState.Telegraph;
+                KarmaRisingAudio.Warn(0.18f);
                 var charge = BeginRisingCharge(KarmaRisingCue.Tracking);
                 SpriteRenderer path = null;
                 float elapsed = 0;
@@ -33,7 +34,10 @@ namespace KarmaPrototype
                 yield return owner.Wait(0.08f);
                 EndRisingCharge(charge);
                 if (path != null) Destroy(path.gameObject);
-                yield return owner.Motion(target, DashSeconds(target), bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
+                float pursuit = DashSeconds(target);
+                KarmaRisingAudio.EndWarning();
+                if (owner.Active) KarmaRisingAudio.Pursuit();
+                yield return owner.Motion(target, pursuit, bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
                 // The pursuit ends in the air: drop immediately rather than resetting on the floor.
                 yield return new UP01Pattern(owner).Execute();
             }

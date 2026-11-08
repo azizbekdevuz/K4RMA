@@ -18,10 +18,15 @@ namespace KarmaPrototype
                 // A ground dash sweeps a rectangle; no generated polygon is needed.
                 var mark = KarmaVisuals.Box(owner.effectsRoot, "기본 돌진 경로", (owner.Position + target) * 0.5f,
                     bodyAttackSize + Vector2.right * Mathf.Abs(target.x - owner.Position.x), new Color(1f, 0.48f, 0.15f, 0.4f), 9);
-                yield return owner.Wait(owner.Warning(0.24f));
+                float warning = owner.Warning(0.24f);
+                KarmaRisingAudio.Warn(warning);
+                yield return owner.Wait(warning);
                 if (mark != null) Destroy(mark.gameObject);
-                yield return owner.Motion(target, DashSeconds(target),
-                    bodyAttackSize, new KarmaAttackContact(), KarmaRisingArt.Get("Slash"));
+                var rising = (RisingBossBehavior)owner.behavior;
+                KarmaRisingAudio.EndWarning();
+                if (owner.Active) KarmaRisingAudio.Dash();
+                yield return rising.MotionWithImpact(target, DashSeconds(target),
+                    bodyAttackSize, KarmaRisingArt.Get("Slash"), KarmaSfxId.RsDashImpact);
                 Vector2 size = KarmaSpace.Units(new Vector2(3.05f, 1.55f));
                 for (int i = 0; i < 2 && owner.Active; i++)
                 {
@@ -31,6 +36,7 @@ namespace KarmaPrototype
                         Mathf.Abs(player.y - center.y) > size.y / 2 + KarmaSpace.PlayerHalfHeight) break;
                     owner.state = ActionState.Attack;
                     owner.animator.Attack(Vector2.right * owner.direction);
+                    KarmaRisingAudio.Slash(i);
                     var slash = owner.Attack(center, Vector2.zero, size, 0.09f, Settings.meleeDamageMultiplier, null, 0f, visualPose: "Cleave");
                     if (slash != null) slash.Repaint(KarmaRisingArt.Get("Slash"), true);
                     yield return owner.Wait(0.12f);

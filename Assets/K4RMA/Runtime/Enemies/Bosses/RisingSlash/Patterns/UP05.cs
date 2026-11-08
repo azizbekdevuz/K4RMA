@@ -12,8 +12,10 @@ namespace KarmaPrototype
             {
                 owner.state = ActionState.Telegraph;
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
-
-                yield return owner.Wait(owner.Warning(0.62f));
+                float warning = owner.Warning(0.62f);
+                KarmaRisingAudio.Charge(warning);
+                yield return owner.Wait(warning);
+                KarmaRisingAudio.EndWarning();
                 EndRisingCharge(charge);
                 float left = KarmaStage.ArenaLeft + 4f, right = KarmaStage.ArenaRight - 4f;
                 float ground = KarmaSpace.GuardianGroundY, mid = KarmaSpace.Units(3.15f), high = KarmaSpace.Units(5.35f);
@@ -52,7 +54,11 @@ namespace KarmaPrototype
                     yield return owner.Wait(0.08f);
                     if (mark != null) Destroy(mark.gameObject);
                     float duration = DashSeconds(target, ultimate: true);
-                    yield return owner.Motion(target, duration, slash, null, trail);
+                    if (owner.Active) KarmaRisingAudio.Crossing();
+                    if (i == points.Length - 2)
+                        yield return ((RisingBossBehavior)owner.behavior).MotionWithImpact(target, duration, slash, trail, KarmaSfxId.RsUp05Final);
+                    else
+                        yield return owner.Motion(target, duration, slash, null, trail);
                 }
                 var returnPoint = new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground);
                 yield return owner.Motion(returnPoint, DashSeconds(returnPoint, ultimate: true), Vector2.zero);

@@ -17,10 +17,13 @@ namespace KarmaPrototype
             node.transform.SetParent(art, false);
             var cue = node.AddComponent<KarmaSwordChargePolish>();
             cue.Initialize(game, owner, at, seconds, heavy, locked, followOwner);
+            if (!followOwner && game.IsCombat && owner.Alive)
+                KarmaAudio.Play(KarmaSfxId.SwEnergyCharge, seconds, cue);
             return cue;
         }
         public static void Release(KarmaGame game, KarmaEnemy owner, Transform art, Vector2 at, Vector2 velocity, Vector2 size, bool heavy, Transform scope = null)
         {
+            if (scope == null) KarmaAudio.StopSlot("sw-bed");
             var pool = KarmaSwordVfxPool.For(game);
             float angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg;
             bool animated = owner.CurrentPattern == (int)EnemyAttack.SW01 || owner.CurrentPattern == (int)EnemyAttack.SW02;
@@ -51,6 +54,8 @@ namespace KarmaPrototype
             }
             KarmaSwordSkillSurface.Apply(shot.Visual, KarmaSwordSkillSurface.ProjectileStyle(owner.CurrentPattern));
             shot.gameObject.AddComponent<KarmaSwordProjectilePolish>().Initialize(game, owner, shot.Visual, velocity, size);
+            if (game.IsCombat && owner.Alive && velocity.sqrMagnitude > 0.01f)
+                KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shot);
         }
         public static void Core(KarmaBossAttack shot)
         {

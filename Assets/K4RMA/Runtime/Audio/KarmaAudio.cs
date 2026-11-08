@@ -76,6 +76,7 @@ namespace KarmaPrototype
         sealed class Voice
         {
             public AudioSource Source;
+            public Behaviour LifetimeOwner;
             public KarmaSfxBus Bus;
             public string Slot;
             public float Gain, Life;
@@ -112,6 +113,7 @@ namespace KarmaPrototype
 
         static void SceneChanged(Scene previous, Scene current)
         {
+            StopBus(KarmaSfxBus.Ui);
             ResetRun();
             game = null;
             nextGameSearch = 0f;
@@ -133,9 +135,10 @@ namespace KarmaPrototype
             music = KarmaPreferences.MusicVolume;
         }
 
-        public static void Play(KarmaSfxId id, float window = 0f)
+        public static void Play(KarmaSfxId id, float window = 0f, Behaviour lifetimeOwner = null)
         {
             if (!Application.isPlaying || id < 0 || id >= KarmaSfxId.Count) return;
+            if (LifetimeEnded(lifetimeOwner)) return;
             var cue = cues[(int)id];
             float now = cue.Bus == KarmaSfxBus.Ui ? Time.unscaledTime : Time.time;
             if (now < readyAt[(int)id]) return;
@@ -145,6 +148,8 @@ namespace KarmaPrototype
             Ensure();
             var voice = Claim(cue);
             if (voice == null) return;
+            if (cue.Bus == KarmaSfxBus.Ui) StopSlot(cue.Slot);
+            if (voice.Live) Release(voice);
             float pitch = 1f;
             if (window > 0f)
             {
@@ -156,6 +161,7 @@ namespace KarmaPrototype
 
             readyAt[(int)id] = now + cue.Cooldown;
             voice.Bus = cue.Bus;
+            voice.LifetimeOwner = lifetimeOwner;
             voice.Slot = cue.Slot;
             voice.Gain = cue.Gain;
             voice.Life = window > 0f ? window : -1f;
@@ -308,10 +314,14 @@ namespace KarmaPrototype
                 var voice = voices[i];
                 if (voice == null) continue;
                 if (voice.Source == null) voices[i] = null;
-                else if (voice.Live && !voice.Held && voice.StartedFrame != Time.frameCount && !voice.Source.isPlaying)
+                else if (voice.Live && (LifetimeEnded(voice.LifetimeOwner) ||
+                    (!voice.Held && voice.StartedFrame != Time.frameCount && !voice.Source.isPlaying)))
                     Release(voice);
             }
         }
+
+        static bool LifetimeEnded(Behaviour owner)
+        { return !ReferenceEquals(owner, null) && (owner == null || !owner.isActiveAndEnabled); }
 
         static Voice Claim(Cue cue)
         {
@@ -328,6 +338,7 @@ namespace KarmaPrototype
                     continue;
                 }
                 if (voice.Bus != cue.Bus) continue;
+                if (cue.Bus == KarmaSfxBus.Ui && voice.Slot == cue.Slot) return voice;
                 live++;
                 if (victim == null || voice.Priority < victim.Priority ||
                     (voice.Priority == victim.Priority && Remaining(voice) < Remaining(victim)))
@@ -335,7 +346,6 @@ namespace KarmaPrototype
             }
             if (live < cap) return free ?? Create();
             if (victim == null || victim.Priority > cue.Priority) return null;
-            Release(victim);
             return victim;
         }
 
@@ -366,6 +376,7 @@ namespace KarmaPrototype
         static void Release(Voice voice)
         {
             voice.Live = voice.Held = false;
+            voice.LifetimeOwner = null;
             voice.Slot = null;
             if (voice.Source == null) return;
             voice.Source.Stop();
@@ -404,52 +415,57 @@ namespace KarmaPrototype
             var table = new Cue[(int)KarmaSfxId.Count];
             void Add(KarmaSfxId id, string file, float gain, float cooldown, float tail, int priority, KarmaSfxBus bus, string slot = null)
             { table[(int)id] = new Cue { File = file, Gain = gain, Cooldown = cooldown, Tail = tail, Priority = priority, Bus = bus, Slot = slot }; }
-            Add(KarmaSfxId.RsDashStart, "RisingSlash/RS_Dash_Start.wav", 0.72f, 0.08f, 0.49f, 40, KarmaSfxBus.Gameplay, "rs-action");
-            Add(KarmaSfxId.RsDashImpact, "RisingSlash/RS_Dash_Impact.wav", 0.58f, 0f, 0.41f, 84, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.RsSlash01, "RisingSlash/RS_Slash_01.wav", 0.6f, 0.05f, 0.35f, 62, KarmaSfxBus.Gameplay, "rs-action");
-            Add(KarmaSfxId.RsSlash02, "RisingSlash/RS_Slash_02.wav", 0.58f, 0.05f, 0.19f, 64, KarmaSfxBus.Gameplay, "rs-action");
-            Add(KarmaSfxId.RsTelegraph, "RisingSlash/RS_Telegraph.wav", 0.48f, 0.05f, 0.57f, 36, KarmaSfxBus.Gameplay, "rs-warn");
-            Add(KarmaSfxId.RsUp01Ascend, "RisingSlash/RS_UP01_Ascend.wav", 0.58f, 0.05f, 0.9f, 44, KarmaSfxBus.Gameplay, "rs-motion");
-            Add(KarmaSfxId.RsUp01Descent, "RisingSlash/RS_UP01_Descent.wav", 0.46f, 0.05f, 0.25f, 70, KarmaSfxBus.Gameplay, "rs-motion");
-            Add(KarmaSfxId.RsUp01Landing, "RisingSlash/RS_UP01_Landing.wav", 0.56f, 0.08f, 0.72f, 86, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.RsUp02Pursuit, "RisingSlash/RS_UP02_Pursuit.wav", 0.6f, 0.05f, 0.59f, 48, KarmaSfxBus.Gameplay, "rs-action");
-            Add(KarmaSfxId.RsUp03Wave, "RisingSlash/RS_UP03_Wave.wav", 0.58f, 0.08f, 0.52f, 72, KarmaSfxBus.Gameplay, "rs-action");
-            Add(KarmaSfxId.RsShardsRelease, "RisingSlash/RS_Shards_Release.wav", 0.34f, 0.08f, 0.37f, 60, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.RsUp04ShieldBurst, "RisingSlash/RS_UP04_ShieldBurst.wav", 0.46f, 0.08f, 0.52f, 82, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.RsUp04Knockback, "RisingSlash/RS_UP04_Knockback.wav", 0.42f, 0f, 0.29f, 66, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.RsUp05Charge, "RisingSlash/RS_UP05_Charge_Short.wav", 0.5f, 0.05f, 0f, 52, KarmaSfxBus.Gameplay, "rs-warn");
-            Add(KarmaSfxId.RsUp05Crossing, "RisingSlash/RS_UP05_Crossing.wav", 0.4f, 0.03f, 0.21f, 68, KarmaSfxBus.Gameplay, "rs-action");
-            Add(KarmaSfxId.RsUp05Final, "RisingSlash/RS_UP05_Final.wav", 0.6f, 0f, 0.62f, 88, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.SwEnergyCharge, "SwordWave/SW_Energy_Charge.wav", 0.55f, 0.08f, 0.18f, 50, KarmaSfxBus.Gameplay, "sw-bed");
-            Add(KarmaSfxId.SwWaveLaunch, "SwordWave/SW_Wave_Launch.wav", 0.5f, 0.06f, 0.49f, 64, KarmaSfxBus.Gameplay, "sw-wave");
-            Add(KarmaSfxId.SwWaveTravel, "SwordWave/SW_Wave_Travel.wav", 0.42f, 0.08f, 0.6f, 46, KarmaSfxBus.Gameplay, "sw-wave");
-            Add(KarmaSfxId.SwWaveImpact, "SwordWave/SW_Wave_Impact.wav", 0.52f, 0.08f, 0.54f, 80, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.SwCrossingBlades, "SwordWave/SW_Crossing_Blades.wav", 0.48f, 0.06f, 0.23f, 70, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.SwScarRise, "SwordWave/SW_Scar_Rise.wav", 0.55f, 0.1f, 0.44f, 74, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.SwUltimateRain, "SwordWave/SW_Ultimate_Rain.wav", 0.42f, 0.2f, 1.08f, 86, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.GdShieldActivate, "Guard/GD_Shield_Activate.wav", 0.4f, 0.1f, 0.32f, 58, KarmaSfxBus.Gameplay);
+            // Keep primary warnings about 1 dB above the general boss reduction.
+            void AddBoss(KarmaSfxId id, string file, float gain, float cooldown, float tail, int priority,
+                string slot = null, bool warning = false)
+                => Add(id, file, gain * (warning ? 0.71f : 0.63f), cooldown, tail, priority, KarmaSfxBus.Gameplay, slot);
+
+            AddBoss(KarmaSfxId.RsDashStart, "RisingSlash/RS_Dash_Start.wav", 0.72f, 0.08f, 0.49f, 40, "rs-action");
+            AddBoss(KarmaSfxId.RsDashImpact, "RisingSlash/RS_Dash_Impact.wav", 0.58f, 0f, 0.41f, 84);
+            AddBoss(KarmaSfxId.RsSlash01, "RisingSlash/RS_Slash_01.wav", 0.6f, 0.05f, 0.35f, 62, "rs-action");
+            AddBoss(KarmaSfxId.RsSlash02, "RisingSlash/RS_Slash_02.wav", 0.58f, 0.05f, 0.19f, 64, "rs-action");
+            AddBoss(KarmaSfxId.RsTelegraph, "RisingSlash/RS_Telegraph.wav", 0.48f, 0.05f, 0.57f, 36, "rs-warn", warning: true);
+            AddBoss(KarmaSfxId.RsUp01Ascend, "RisingSlash/RS_UP01_Ascend.wav", 0.58f, 0.05f, 0.9f, 44, "rs-motion");
+            AddBoss(KarmaSfxId.RsUp01Descent, "RisingSlash/RS_UP01_Descent.wav", 0.46f, 0.05f, 0.25f, 70, "rs-motion");
+            AddBoss(KarmaSfxId.RsUp01Landing, "RisingSlash/RS_UP01_Landing.wav", 0.56f, 0.08f, 0.72f, 86);
+            AddBoss(KarmaSfxId.RsUp02Pursuit, "RisingSlash/RS_UP02_Pursuit.wav", 0.6f, 0.05f, 0.59f, 48, "rs-action");
+            AddBoss(KarmaSfxId.RsUp03Wave, "RisingSlash/RS_UP03_Wave.wav", 0.58f, 0.08f, 0.52f, 72, "rs-action");
+            AddBoss(KarmaSfxId.RsShardsRelease, "RisingSlash/RS_Shards_Release.wav", 0.34f, 0.08f, 0.37f, 60);
+            AddBoss(KarmaSfxId.RsUp04ShieldBurst, "RisingSlash/RS_UP04_ShieldBurst.wav", 0.46f, 0.08f, 0.52f, 82);
+            AddBoss(KarmaSfxId.RsUp04Knockback, "RisingSlash/RS_UP04_Knockback.wav", 0.42f, 0f, 0.29f, 66);
+            AddBoss(KarmaSfxId.RsUp05Charge, "RisingSlash/RS_UP05_Charge_Short.wav", 0.5f, 0.05f, 0f, 52, "rs-warn", warning: true);
+            AddBoss(KarmaSfxId.RsUp05Crossing, "RisingSlash/RS_UP05_Crossing.wav", 0.4f, 0.03f, 0.21f, 68, "rs-action");
+            AddBoss(KarmaSfxId.RsUp05Final, "RisingSlash/RS_UP05_Final.wav", 0.6f, 0f, 0.62f, 88);
+            AddBoss(KarmaSfxId.SwEnergyCharge, "SwordWave/SW_Energy_Charge.wav", 0.55f, 0.08f, 0.18f, 50, "sw-bed", warning: true);
+            AddBoss(KarmaSfxId.SwWaveLaunch, "SwordWave/SW_Wave_Launch.wav", 0.5f, 0.06f, 0.49f, 64, "sw-wave");
+            AddBoss(KarmaSfxId.SwWaveTravel, "SwordWave/SW_Wave_Travel.wav", 0.42f, 0.08f, 0.6f, 46, "sw-wave");
+            AddBoss(KarmaSfxId.SwWaveImpact, "SwordWave/SW_Wave_Impact.wav", 0.52f, 0.08f, 0.54f, 80);
+            AddBoss(KarmaSfxId.SwCrossingBlades, "SwordWave/SW_Crossing_Blades.wav", 0.48f, 0.06f, 0.23f, 70, "sw-pattern");
+            AddBoss(KarmaSfxId.SwScarRise, "SwordWave/SW_Scar_Rise.wav", 0.55f, 0.1f, 0.44f, 74, "sw-pattern");
+            AddBoss(KarmaSfxId.SwUltimateRain, "SwordWave/SW_Ultimate_Rain.wav", 0.42f, 0.2f, 1.08f, 86, "sw-rain", warning: true);
+            AddBoss(KarmaSfxId.GdShieldActivate, "Guard/GD_Shield_Activate.wav", 0.4f, 0.1f, 0.32f, 58);
             Add(KarmaSfxId.GdShieldHit, "Guard/GD_Shield_Hit.wav", 0.42f, 0.08f, 0.49f, 64, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.GdShieldBreak, "Guard/GD_Shield_Break.wav", 0.5f, 0.12f, 0.28f, 84, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.GdHeavySlam, "Guard/GD_Heavy_Slam.wav", 0.5f, 0.1f, 0.6f, 78, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.GdCounter, "Guard/GD_Counter.wav", 0.48f, 0.1f, 0.29f, 80, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.GdProtectionPulse, "Guard/GD_Protection_Pulse.wav", 0.34f, 0.2f, 0.22f, 76, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.GdUltimate, "Guard/GD_Ultimate.wav", 0.36f, 0.25f, 0.38f, 90, KarmaSfxBus.Gameplay);
+            AddBoss(KarmaSfxId.GdHeavySlam, "Guard/GD_Heavy_Slam.wav", 0.5f, 0.1f, 0.6f, 78, "gd-pattern");
+            AddBoss(KarmaSfxId.GdCounter, "Guard/GD_Counter.wav", 0.48f, 0.1f, 0.29f, 80, "gd-pattern");
+            AddBoss(KarmaSfxId.GdProtectionPulse, "Guard/GD_Protection_Pulse.wav", 0.34f, 0.2f, 0.22f, 76, "gd-pattern", warning: true);
+            AddBoss(KarmaSfxId.GdUltimate, "Guard/GD_Ultimate.wav", 0.36f, 0.25f, 0.38f, 90, "gd-pattern", warning: true);
             Add(KarmaSfxId.PlSwordSwing, "Player/PL_Sword_Swing.wav", 0.5f, 0.06f, 0.53f, 58, KarmaSfxBus.Gameplay, "pl-swing");
             Add(KarmaSfxId.PlRisingSlash, "Player/PL_Rising_Slash.wav", 0.52f, 0.08f, 0.53f, 66, KarmaSfxBus.Gameplay, "pl-swing");
             Add(KarmaSfxId.PlDash, "Player/PL_Dash.wav", 0.4f, 0.08f, 0.45f, 60, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.PlLand, "Player/PL_Land.wav", 0.55f, 0.08f, 0.47f, 40, KarmaSfxBus.Gameplay);
+            Add(KarmaSfxId.PlLand, "Player/PL_Land.wav", 0.55f, 0.08f, 0f, 40, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.PlDamage, "Player/PL_Damage.wav", 0.32f, 0f, 0.27f, 74, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatBladeHit, "Combat/Combat_Blade_Hit.wav", 0.48f, 0f, 0.39f, 78, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatPerfectParry, "Combat/Combat_Perfect_Parry.wav", 0.5f, 0f, 0.84f, 92, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatGuardBlock, "Combat/Combat_Guard_Block.wav", 0.5f, 0.08f, 0.49f, 70, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatBossStagger, "Combat/Combat_Boss_Stagger.wav", 0.4f, 0f, 0.36f, 86, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatBossDefeat, "Combat/Combat_Boss_Defeat.wav", 0.66f, 0.4f, 1.12f, 96, KarmaSfxBus.Stinger);
-            Add(KarmaSfxId.UiMove, "UI/UI_Move.wav", 0.7f, 0.05f, 0.33f, 20, KarmaSfxBus.Ui);
-            Add(KarmaSfxId.UiConfirm, "UI/UI_Confirm.wav", 0.42f, 0.05f, 0.25f, 24, KarmaSfxBus.Ui);
-            Add(KarmaSfxId.UiCancel, "UI/UI_Cancel.wav", 0.42f, 0.05f, 0.53f, 24, KarmaSfxBus.Ui);
+            Add(KarmaSfxId.UiMove, "UI/UI_Move.wav", 0.7f, 0.05f, 0.33f, 20, KarmaSfxBus.Ui, "ui-input");
+            Add(KarmaSfxId.UiConfirm, "UI/UI_Confirm.wav", 0.42f, 0.05f, 0.25f, 24, KarmaSfxBus.Ui, "ui-input");
+            Add(KarmaSfxId.UiCancel, "UI/UI_Cancel.wav", 0.42f, 0.05f, 0.53f, 24, KarmaSfxBus.Ui, "ui-input");
             Add(KarmaSfxId.GameBossIntro, "Progression/Game_Boss_Intro.wav", 0.72f, 0.4f, 2.16f, 30, KarmaSfxBus.Stinger);
             Add(KarmaSfxId.GameAbilityInherit, "Progression/Game_Ability_Inherit.wav", 0.58f, 0.4f, 1.46f, 34, KarmaSfxBus.Stinger);
-            Add(KarmaSfxId.AmbArenaLoop, "Ambience/Amb_Arena_Loop.wav", 0.55f, 0.2f, 0f, 1, KarmaSfxBus.Ambience);
+            Add(KarmaSfxId.AmbArenaLoop, "Ambience/Amb_Arena_Loop.wav", 0.28f, 0.2f, 0f, 1, KarmaSfxBus.Ambience);
             return table;
         }
     }

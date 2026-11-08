@@ -240,11 +240,18 @@ namespace KarmaPrototype
                     else if (pattern == EnemyAttack.SWBasic) KarmaSwordBasicPresentation.Impact(owner.game, owner, point);
                     else KarmaSwordHitFeedback.Show(owner.game.World, point, false);
                 }
+                if (damaged && !parried && (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02
+                    || pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SWBasic && !BasicMeleeSelected))
+                    KarmaAudio.Play(KarmaSfxId.SwWaveImpact);
             }
             public override bool Armored { get { return counter.Guarding; } }
             public override bool ReduceDamage(Vector2 source) { return counter.Guarding; }
             public override void ReducedDamageFeedback()
-            { KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard); }
+            {
+                KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
+                KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
+            }
+            public override void OnParried() { KarmaAudio.Play(KarmaSfxId.CombatBossStagger); }
             public override Color ShieldColor { get { return owner.fullShield ? Color.white
                 : counter.Guarding ? new Color(0.42f, 0.68f, 1) : base.ShieldColor; } }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
@@ -341,6 +348,9 @@ namespace KarmaPrototype
             public override void Interrupt(bool preservePressure)
             {
                 base.Interrupt(preservePressure); movement.Interrupt(preservePressure);
+                KarmaAudio.StopSlot("sw-bed");
+                KarmaAudio.StopSlot("sw-pattern");
+                KarmaAudio.StopSlot("sw-rain");
                 skillAfterRetreat = false;
                 if (persistentRoot == null) return;
                 foreach (Transform child in persistentRoot)

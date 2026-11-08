@@ -5,6 +5,7 @@ namespace KarmaPrototype
     public sealed class KarmaSwordBossAttack : KarmaBossAttack
     {
         bool oriented, aimedSlash, aerialSword, scar;
+        float aimedTravel;
         protected override bool Oriented { get { return oriented; } }
         protected override bool AttachTrail { get { return !aerialSword && !aimedSlash && !scar; } }
         protected override bool AttachLaunch { get { return !aerialSword && !aimedSlash; } }
@@ -30,6 +31,12 @@ namespace KarmaPrototype
             if (!oriented) return dt;
             dt = KarmaBossProjectileGeometry.SwordShotLife(from, velocity, dt);
             if (aimedSlash) dt = KarmaBossProjectileGeometry.AimedSlashBoundaryLife(from, velocity, size, dt);
+            if (aimedSlash && aimedTravel < 0.18f)
+            {
+                aimedTravel += dt;
+                if (aimedTravel >= 0.18f)
+                    KarmaAudio.Play(KarmaSfxId.SwWaveTravel, 0.4f, this);
+            }
             if (aerialSword && velocity.y < 0)
                 dt = Mathf.Min(dt, Mathf.Max(0, (from.y - (0.05f + size.x * 0.5f)) / -velocity.y));
             return dt;

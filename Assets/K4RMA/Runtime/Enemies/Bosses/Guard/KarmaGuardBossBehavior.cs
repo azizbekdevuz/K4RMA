@@ -79,7 +79,10 @@ namespace KarmaPrototype
             public override bool ReduceDamage(Vector2 source)
             { return owner.frontalGuard && (source.x - owner.Position.x) * owner.direction >= 0 || AutoShieldActive; }
             public override void ReducedDamageFeedback()
-            { KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard); }
+            {
+                KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
+                KarmaAudio.Play(AutoShieldActive ? KarmaSfxId.GdShieldHit : KarmaSfxId.CombatGuardBlock);
+            }
             public override Color ShieldColor { get { return BlocksSelection
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
@@ -94,11 +97,14 @@ namespace KarmaPrototype
             public override bool ConsumeQueuedParry() { return Heavy.ConsumeQueuedParry(); }
             public override void OnInterrupted()
             {
+                KarmaAudio.StopSlot("gd-pattern");
                 owner.frontalGuard = false; owner.shieldWarningUntil = 0;
                 if (owner.game.Player != null) owner.game.Player.ReleaseArena();
             }
             public override void OnParried()
             {
+                if (AutoShieldActive) KarmaAudio.Play(KarmaSfxId.GdShieldBreak);
+                else KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
                 owner.shieldUntil = 0;
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }

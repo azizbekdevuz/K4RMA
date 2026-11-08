@@ -141,9 +141,11 @@ namespace KarmaPrototype
             }
             SelectActiveDisplay();
             pausedBeforeSettings = Paused; SettingsOpen = true; Paused = true;
+            KarmaAudio.Play(KarmaSfxId.UiConfirm);
         }
         public void CloseSettings()
         {
+            if (SettingsOpen) KarmaAudio.Play(KarmaSfxId.UiCancel);
             RevertDisplaySettings();
             KarmaInput.CancelRebinding(); KarmaPreferences.Save();
             SettingsOpen = false; Paused = pausedBeforeSettings;

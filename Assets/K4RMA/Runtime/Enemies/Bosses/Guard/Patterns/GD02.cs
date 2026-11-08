@@ -18,7 +18,7 @@ namespace KarmaPrototype
             public override IEnumerator Execute() { return ExecuteWithTerrain(null); }
             public IEnumerator ExecuteWithTerrain(Coroutine terrainWave)
             {
-                yield return Strike(false);
+                yield return Strike(false, rearCounter: terrainWave != null);
                 if (!owner.Active || owner.pendingParry) yield break;
                 // Only the inherited sword-wave form gains this follow-up, at 50% HP or below.
                 if (owner.game.Player.Essences.HasRemnant(Essence.SwordWave) && owner.Health <= owner.MaxHealth * 0.5f)
@@ -37,7 +37,7 @@ namespace KarmaPrototype
             }
             float CueSeconds { get { return Mathf.Max(0.1f, Settings.heavyParryCueSeconds); } }
             public float StrikeDuration { get { return Mathf.Max(CueSeconds, owner.Warning(0.9f)) + 0.24f; } }
-            public IEnumerator Strike(bool inDome)
+            public IEnumerator Strike(bool inDome, bool rearCounter = false)
             {
                 Vector2 center = new Vector2(owner.Position.x + owner.direction * (Settings.heavyStrikeReach / 2), KarmaSpace.Units(2.2f));
                 Vector2 size = new Vector2(Settings.heavyStrikeReach, KarmaSpace.Units(4.4f));
@@ -53,6 +53,7 @@ namespace KarmaPrototype
                 heavyParryUntil = 0;
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.animator.SwingHeavyStrike(); owner.state = ActionState.Attack;
+                if (rearCounter && owner.Active) KarmaAudio.Play(KarmaSfxId.GdCounter);
 
                 int parries = owner.game.Player.ParryCount;
                 var contact = new KarmaAttackContact(breaksShieldOnParry: !inDome, parryWithoutRiposte: inDome);

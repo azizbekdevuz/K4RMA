@@ -38,6 +38,7 @@ MonoBehaviour:
     trialSuccessStunSeconds: 4
     slamRange: 20
     slamHeight: 2.4
+    slamFinalHeight: 7.2
     slamDamageMultiplier: 1
     slamKnockUpSpeed: 18
     slamStunSeconds: 0.8

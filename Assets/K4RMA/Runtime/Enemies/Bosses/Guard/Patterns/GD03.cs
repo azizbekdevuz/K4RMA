@@ -74,6 +74,8 @@ namespace KarmaPrototype
                         if (!owner.Active) yield break;
                         if (owner.game.Player.ParryCount != parries)
                         {
+                            BreakShield();
+                            owner.shieldHalo.enabled = false;
                             returning = reflected = true;
                             speed *= 1.5f;
                             KarmaCombatVFX.SpawnSprite(owner.effectsRoot, to, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one * 1.5f), 0.18f);

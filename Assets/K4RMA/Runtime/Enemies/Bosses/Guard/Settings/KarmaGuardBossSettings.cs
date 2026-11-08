@@ -20,6 +20,7 @@ namespace KarmaPrototype
         [Min(1)] public float shieldThrowSpeed = 15 * KarmaSpace.Scale;
         [Header("GD04 전방 지면강타")]
         [Min(0.1f)] public float slamRange = 10 * KarmaSpace.Scale, slamHeight = 1.2f * KarmaSpace.Scale;
+        [Min(0.1f)] public float slamFinalHeight = 3.6f * KarmaSpace.Scale;
         [Min(0.1f)] public float slamDamageMultiplier = 1, slamKnockUpSpeed = 9 * KarmaSpace.Scale;
         [Min(0.1f)] public float slamStunSeconds = 0.8f;
         [Header("GD05 결계")]

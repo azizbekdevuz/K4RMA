@@ -35,6 +35,10 @@ namespace KarmaPrototype
             public override void Initialize()
             {
                 owner.nextShield = Settings.autoShieldPeriod;
+                if (!KarmaCombatVFX.ApplySprite(owner.shieldHalo, "GuardBossVFX", "Shield",
+                    KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
+                    throw new System.InvalidOperationException("GD01 이전 방어막 이미지가 없습니다.");
+                owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
             }

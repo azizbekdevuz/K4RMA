@@ -280,7 +280,7 @@ namespace KarmaPrototype
             phase = nextPhase;
             inheriting = nextInheriting;
 
-            bool wantBed = game.SettingsOpen || (phase != RunPhase.Title && phase != RunPhase.Story && phase != RunPhase.Controls);
+            bool wantBed = game.SettingsOpen || phase != RunPhase.Title;
             bool bedLive = HasVoice(KarmaSfxBus.Ambience);
             if (wantBed && !bedLive) Play(KarmaSfxId.AmbArenaLoop);
             if (!wantBed && bedLive) StopBus(KarmaSfxBus.Ambience);

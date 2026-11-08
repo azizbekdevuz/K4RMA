@@ -16,7 +16,10 @@ namespace KarmaPrototype
         public int StageIndex { get; private set; }
         public bool Paused { get; private set; }
         public bool IsCombat { get { return Phase == RunPhase.Combat && !Paused; } }
-        public bool CanMove { get { return !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate); } }
+        public bool CanMove { get { return !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
+        public KarmaTutorial Tutorial { get; private set; }
+        public bool GameplayFrozen => Paused || Tutorial != null && Tutorial.Frozen;
+        public bool AllowsPlayerActions => IsCombat || !Paused && Tutorial != null && Tutorial.CanAct;
         public float Elapsed { get; private set; }
         public float DamageTaken { get; set; }
         public int Retries { get; private set; }
@@ -58,6 +61,7 @@ namespace KarmaPrototype
         void Update()
         {
             UpdateDisplaySettings();
+            OpeningArrivalFade = Mathf.Max(0, OpeningArrivalFade - Time.unscaledDeltaTime * 1.5f);
             UpdateHitFeedback();
             if (SettingsOpen)
             {
@@ -71,14 +75,7 @@ namespace KarmaPrototype
             { OpenSettings(); return; }
             if (Phase == RunPhase.Title)
             {
-                if (KarmaInput.Pressed(KarmaAction.Confirm)) StartRun();
-                else if (KarmaInput.Pressed(KarmaAction.Story)) ShowPage(RunPhase.Story);
-                else if (KarmaInput.Pressed(KarmaAction.Controls)) ShowPage(RunPhase.Controls);
-                return;
-            }
-            if (Phase == RunPhase.Story || Phase == RunPhase.Controls)
-            {
-                if (KarmaInput.Pressed(KarmaAction.Pause)) ReturnToTitle();
+                if (KarmaInput.Pressed(KarmaAction.Confirm)) StartOpening();
                 return;
             }
             if (KarmaInput.Pressed(KarmaAction.Pause))
@@ -86,8 +83,9 @@ namespace KarmaPrototype
                 if (Phase == RunPhase.Choosing && !Paused) CancelChoice(); else TogglePause();
             }
             if (KarmaInput.Pressed(KarmaAction.Title) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { ReturnToTitle(); return; }
-            if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { StartRun(); return; }
+            if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { RestartSession(); return; }
             if (Paused) return;
+            if (Phase == RunPhase.Tutorial) { Tutorial.Tick(); return; }
             if (Phase == RunPhase.PlayerFallen)
             {
                 UpdatePlayerFall();

@@ -16,6 +16,7 @@ namespace KarmaPrototype
         public bool GuardianInheriting => Phase == RunPhase.Transition && guardianInheriting;
         public void StartRun()
         {
+            Tutorial = null; OpeningArrivalFade = 0;
             guardianInheriting = false;
             fallenGuardian = null;
             ResetHitFeedback();
@@ -28,7 +29,7 @@ namespace KarmaPrototype
             Player = p.AddComponent<KarmaPlayer>(); Player.Initialize(this);
             Player.Essences.Cancel(); LastPersonalizedEssence = Essence.SwordWave; StageIndex = 0; Elapsed = 0; DamageTaken = 0; Retries = 0;
             for (int i = 0; i < BossSplits.Length; i++) BossSplits[i] = 0;
-            LoadRoom(true);
+            if (openingRequested) BeginOpening(); else LoadRoom(true);
         }
         void LoadRoom(bool fullHealth)
         {
@@ -170,12 +171,9 @@ namespace KarmaPrototype
             if (Phase != RunPhase.Defeat) return;
             StartRun();
         }
-        public void ShowPage(RunPhase page)
-        {
-            if (Phase == RunPhase.Title && (page == RunPhase.Story || page == RunPhase.Controls)) Phase = page;
-        }
         public void ReturnToTitle()
         {
+            Tutorial = null; OpeningArrivalFade = 0;
             ResetHitFeedback();
             Paused = false; Time.timeScale = 1; ClearProjectiles();
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
@@ -185,8 +183,8 @@ namespace KarmaPrototype
         }
         public void TogglePause()
         {
-            if (Phase != RunPhase.Combat && Phase != RunPhase.Gate && Phase != RunPhase.Choosing) return;
-            Paused = !Paused; Time.timeScale = Paused ? 0 : 1;
+            if (Phase != RunPhase.Combat && Phase != RunPhase.Gate && Phase != RunPhase.Choosing && Phase != RunPhase.Tutorial) return;
+            Paused = !Paused; Time.timeScale = GameplayFrozen ? 0 : 1;
         }
     }
 }

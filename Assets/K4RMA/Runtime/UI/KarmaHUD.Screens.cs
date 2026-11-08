@@ -1,65 +1,16 @@
-using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaHUD
     {
-        int storyPage;
-        Vector2 storyScroll;
-        void Update()
-        {
-            if (game == null || game.Phase != RunPhase.Story) return;
-            int previousPage = storyPage;
-            if (KarmaInput.Pressed(KarmaAction.NextPage)) storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1);
-            if (KarmaInput.Pressed(KarmaAction.PreviousPage)) storyPage = Mathf.Max(0, storyPage - 1);
-            if (previousPage != storyPage) storyScroll = Vector2.zero;
-        }
         void TitleScreen()
         {
             FillScreen(new Color(0.02f, 0.03f, 0.07f, 0.25f));
             Label(330, 160, 620, 100, "K4RMA", title);
             Label(330, 270, 620, 35, "네 수호자 · 세 번의 고유화", centered);
             SpriteArt(new Rect(460, 320, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            if (GUI.Button(new Rect(480, 365, 320, 55), "시작 [Enter]", menuButton)) game.StartRun();
-            if (GUI.Button(new Rect(480, 430, 320, 55), "게임 스토리 [S]", menuButton)) game.ShowPage(RunPhase.Story);
-            if (GUI.Button(new Rect(480, 495, 320, 55), "조작 안내 [H]", menuButton)) game.ShowPage(RunPhase.Controls);
-            if (GUI.Button(new Rect(480, 560, 320, 55), "환경설정 [O]", menuButton)) game.OpenSettings();
-        }
-        void StoryScreen()
-        {
-            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.68f));
-            Label(280, 40, 720, 60, "스승과 제자", title);
-            SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            Label(280, 140, 720, 30, (storyPage + 1) + " / " + KarmaStory.Pages.Length, centered);
-            float contentHeight = Mathf.Max(410, text.CalcHeight(new GUIContent(KarmaStory.Pages[storyPage]), 620));
-            storyScroll = GUI.BeginScrollView(new Rect(155, 180, 640, 410), storyScroll, new Rect(0, 0, 620, contentHeight));
-            GUI.Label(new Rect(0, 0, 620, contentHeight), KarmaStory.Pages[storyPage], text);
-            GUI.EndScrollView();
-            var illustration = storyPage == 3 ? KarmaArtwork.Sprite("Player", "Rising")
-                : storyPage >= 5 && storyPage != 7 ? KarmaArtwork.GuardianPreview(new[] { Essence.SwordWave })
-                : KarmaArtwork.Sprite("Player", "Idle");
-            SpriteArt(new Rect(845, 195, 315, 350), illustration);
-            Label(845, 555, 315, 30, "수호자의 시험", centered);
-            if (GUI.Button(new Rect(155, 625, 280, 50), "이전 [Left Arrow]", menuButton)) { storyPage = Mathf.Max(0, storyPage - 1); storyScroll = Vector2.zero; }
-            if (GUI.Button(new Rect(500, 625, 280, 50), "다음 [Right Arrow]", menuButton)) { storyPage = Mathf.Min(KarmaStory.Pages.Length - 1, storyPage + 1); storyScroll = Vector2.zero; }
-            if (GUI.Button(new Rect(845, 625, 280, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();
-        }
-        void ControlsScreen()
-        {
-            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.68f));
-            Label(280, 40, 720, 60, "조작 안내", title);
-            SpriteArt(new Rect(460, 115, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            string Key(KarmaAction action) => KarmaInput.BindingLabel(action);
-            Label(115, 175, 750, 420,
-                $"{Key(KarmaAction.Left)} / {Key(KarmaAction.Right)} : 이동    {Key(KarmaAction.Jump)} : 점프\n{Key(KarmaAction.Attack)} : 검 공격\n\n{Key(KarmaAction.SwordWave)} : 검기    {Key(KarmaAction.RisingSlash)} : 상승베기    {Key(KarmaAction.Guard)} : 방어\n고유화 후 원형 기술은 고유화 동작으로 바뀝니다.\n\n{Key(KarmaAction.Pierce)} + 방향 : 관통베기 · 검기 고유화 후\n공중 방향 + {Key(KarmaAction.Attack)} : 도약베기 · 상승베기 고유화 후\n{Key(KarmaAction.Counter)} : 반격\n\n1 / 2 / 3 → Enter : 고유화 선택 / 확정    Esc : 취소\nEsc : 일시정지    O : 타이틀·일시정지에서 환경설정\nR : 처음부터    T : 타이틀 · 일시정지 또는 결과 화면\n\n사망하면 Stage 1부터 다시 시작합니다.", text);
-            Label(115, 595, 750, 28, $"{Key(KarmaAction.Down)} / Down Arrow 유지 : 앉기    P : 테스트 무적 켜기/끄기", small);
-            SpriteArt(new Rect(915, 175, 250, 105), SkillIcon(Essence.SwordWave, false));
-            Label(915, 280, 250, 28, "검기 · 관통베기", centered);
-            SpriteArt(new Rect(915, 325, 250, 105), SkillIcon(Essence.RisingSlash, false));
-            Label(915, 430, 250, 28, "상승베기 · 도약베기", centered);
-            SpriteArt(new Rect(915, 475, 250, 105), SkillIcon(Essence.Guard, false));
-            Label(915, 580, 250, 28, "방어 · 반격", centered);
-            if (GUI.Button(new Rect(440, 635, 400, 50), "타이틀 [Esc]", menuButton)) game.ReturnToTitle();
+            if (GUI.Button(new Rect(480, 365, 320, 55), "시작 [Enter]", menuButton)) game.StartOpening();
+            if (GUI.Button(new Rect(480, 430, 320, 55), "환경설정 [O]", menuButton)) game.OpenSettings();
         }
         void ChoiceScreen()
         {
@@ -95,7 +46,7 @@ namespace KarmaPrototype
             Label(280, 245, 720, 55, "일시정지", title);
             SpriteArt(new Rect(460, 315, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             if (GUI.Button(new Rect(440, 350, 400, 55), "계속하기 [Esc]", menuButton)) game.TogglePause();
-            if (GUI.Button(new Rect(440, 425, 400, 55), "처음부터 [R]", menuButton)) game.StartRun();
+            if (GUI.Button(new Rect(440, 425, 400, 55), "처음부터 [R]", menuButton)) game.RestartSession();
             if (GUI.Button(new Rect(440, 500, 400, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
             if (GUI.Button(new Rect(440, 575, 400, 55), "환경설정 [O]", menuButton)) game.OpenSettings();
         }
@@ -121,7 +72,7 @@ namespace KarmaPrototype
                 Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
                 Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
                 Label(180, 395, 920, 80, "스승: 이제 그 기술들은 누구의 것이냐?\n제자: 배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", centered);
-                if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.StartRun();
+                if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.RestartSession();
                 if (GUI.Button(new Rect(420, 585, 440, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
                 return;
             }
@@ -130,7 +81,7 @@ namespace KarmaPrototype
             Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
             Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
             Label(180, 405, 920, 55, "원형과 고유화 순서를 초기화하고\n첫 번째 시련부터 다시 도전합니다.", centered);
-            if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.StartRun();
+            if (GUI.Button(new Rect(420, 510, 440, 55), "처음부터 다시 도전 [R]", menuButton)) game.RestartSession();
             if (GUI.Button(new Rect(420, 585, 440, 55), "타이틀 [T]", menuButton)) game.ReturnToTitle();
         }
     }

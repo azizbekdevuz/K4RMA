@@ -66,7 +66,7 @@ namespace KarmaPrototype
             if (move != 0) Facing = move > 0 ? 1 : -1;
             art.localScale = new Vector3(Facing, 1, 1);
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;
-            if (game.IsCombat)
+            if (game.AllowsPlayerActions)
             {
                 ReadUniqueSwordInput();
                 if (KarmaInput.Pressed(KarmaAction.Attack)) airSlashBufferedUntil = Time.time + game.Config.Techniques.airSlashInputBuffer;

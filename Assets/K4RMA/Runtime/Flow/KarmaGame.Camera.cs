@@ -71,7 +71,7 @@ namespace KarmaPrototype
         }
         void UpdateHitFeedback()
         {
-            Time.timeScale = hitFeedback.TimeScale(Time.unscaledTime, IsCombat, Paused);
+            Time.timeScale = GameplayFrozen ? 0 : hitFeedback.TimeScale(Time.unscaledTime, IsCombat, Paused);
         }
         void ResetHitFeedback()
         {
@@ -83,6 +83,7 @@ namespace KarmaPrototype
         {
             UpdateCameraViewport();
             if (Player == null) return;
+            if (Tutorial != null) { Tutorial.FrameCamera(); return; }
             if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
                 || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)
             {

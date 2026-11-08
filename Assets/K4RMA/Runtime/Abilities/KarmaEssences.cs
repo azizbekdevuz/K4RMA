@@ -48,7 +48,7 @@ namespace KarmaPrototype
 
         public void TryUse(Essence e)
         {
-            if (!game.IsCombat || player.Stunned || !HasActive(e) || Cooldown(e) > 0) return;
+            if (!game.AllowsPlayerActions || game.Tutorial != null && !game.Tutorial.Learned(e) || player.Stunned || !HasActive(e) || Cooldown(e) > 0) return;
             var c = game.Config;
             switch (e)
             {

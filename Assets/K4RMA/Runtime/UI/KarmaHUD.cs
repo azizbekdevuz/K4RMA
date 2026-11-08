@@ -62,18 +62,16 @@ namespace KarmaPrototype
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0),
                 Quaternion.identity, new Vector3(scale, scale, 1));
-            if (game.Phase == RunPhase.Title || game.Phase == RunPhase.Story || game.Phase == RunPhase.Controls)
+            if (game.Phase == RunPhase.Title)
                 Art(new Rect(0, 0, 1280, 720), "MenuBackground");
             if (game.SettingsOpen)
             {
                 SettingsScreen(); GUI.matrix = saved; return;
             }
             if (game.Phase == RunPhase.Title) TitleScreen();
-            else if (game.Phase == RunPhase.Story) StoryScreen();
-            else if (game.Phase == RunPhase.Controls) ControlsScreen();
             else
             {
-                TopBar();
+                if (game.Tutorial != null) TutorialScreen(); else TopBar();
                 if (game.Paused || game.Phase == RunPhase.Choosing
                     || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory)
                     FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
@@ -91,6 +89,7 @@ namespace KarmaPrototype
                         break;
                 }
             }
+            if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
             GUI.matrix = saved;
         }
 

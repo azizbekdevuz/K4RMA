@@ -6,6 +6,8 @@ namespace KarmaPrototype
     // Projectiles intentionally pass through the small arena platforms.
     public sealed class KarmaProjectile : MonoBehaviour
     {
+        static int nextTrainingId;
+        int trainingId;
         KarmaGame game;
         Vector2 velocity;
         float damage, radius, expiresAt;
@@ -15,6 +17,7 @@ namespace KarmaPrototype
             var sr = KarmaVisuals.Box(game.World, "Player projectile",
                 position, Vector2.one * radius * 2, color, 7);
             var shot = sr.gameObject.AddComponent<KarmaProjectile>();
+            shot.trainingId = ++nextTrainingId;
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
             shot.radius = radius; shot.expiresAt = Time.time + 3;
             KarmaRemnantVFX.ProjectileLook(sr, velocity);
@@ -24,12 +27,14 @@ namespace KarmaPrototype
         void Update()
         {
             if (game == null) { Destroy(gameObject); return; }
-            if (game.Paused) return;
-            if (!game.IsCombat || Time.time > expiresAt) { Destroy(gameObject); return; }
+            if (game.GameplayFrozen) return;
+            if (!game.AllowsPlayerActions || Time.time > expiresAt) { Destroy(gameObject); return; }
             Vector2 from = transform.position;
             Vector2 to = from + velocity * Time.deltaTime;
             transform.position = to;
-            if (to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12)) { Destroy(gameObject); return; }
+            if (to.x < KarmaStage.ArenaLeft || to.x > (game.Tutorial != null ? KarmaTutorialStage.Right : KarmaStage.ArenaRight) || to.y < 0 || to.y > KarmaSpace.Units(12)) { Destroy(gameObject); return; }
+            if (game.Tutorial != null && game.Tutorial.HitProjectile(trainingId, from, to, radius))
+            { enabled = false; Destroy(gameObject); return; }
             // Damage can remove the hit enemy; this path returns immediately afterward.
             for (int i = 0; i < game.Enemies.Count; i++)
             {

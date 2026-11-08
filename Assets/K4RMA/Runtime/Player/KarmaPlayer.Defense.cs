@@ -18,7 +18,7 @@ namespace KarmaPrototype
         // Preserve the public damage API and all other sources' feedback.
         internal void TakeDamage(float damage, bool customHitVisual, bool counterDamage = true)
         {
-            if (!game.IsCombat || Health <= 0 || damage <= 0) return;
+            if (!game.AllowsPlayerActions || Health <= 0 || damage <= 0) return;
             bool invulnerable = Time.time < invulnerableUntil;
             if ((!invulnerable || !counterDamage) && techniques.ConsumeCounter(Time.time))
             {
@@ -43,10 +43,11 @@ namespace KarmaPrototype
             if (invulnerable) return;
             if (Shielded)
             {
+                game.Tutorial?.GuardBlocked();
                 KarmaCombatVFX.SpawnSprite(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
                 return;
             }
-            if (TestInvincible) return;
+            if (game.Tutorial != null || TestInvincible) return;
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
             animator.Hurt();

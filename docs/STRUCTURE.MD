@@ -134,6 +134,13 @@ K4RMA/
 │       │   │           ├── KarmaSwordRisePolish.shader
 │       │   │           └── KarmaSwordSkillPolish.shader
 │       │   └── Common/
+│       │       ├── Tutorial/
+│       │       │   └── Resources/
+│       │       │       └── KarmaTutorial/
+│       │       │           ├── TrainingPanorama.png
+│       │       │           ├── CheckpointFrame.png
+│       │       │           ├── CheckpointDoor.png
+│       │       │           └── Backdrop.shader
 │       │       ├── Resources/
 │       │       │   └── K4RMAArtwork/
 │       │       │       ├── Characters/
@@ -231,7 +238,6 @@ K4RMA/
 │       │   ├── KarmaBossRules.cs
 │       │   ├── KarmaPatternCatalog.cs
 │       │   ├── KarmaProgressionState.cs
-│       │   ├── KarmaStory.cs
 │       │   ├── KarmaTechniqueState.cs
 │       │   └── KarmaTypes.cs
 │       ├── Editor/
@@ -427,6 +433,13 @@ K4RMA/
 │       │   │   │   ├── KarmaPersonalizationVFX.cs
 │       │   │   │   └── KarmaRemnantVFX.cs
 │       │   │   └── KarmaVisuals.cs
+│       │   ├── Tutorial/
+│       │   │   ├── KarmaGame.Opening.cs
+│       │   │   ├── KarmaTutorial.cs
+│       │   │   ├── KarmaTutorialStage.cs
+│       │   │   ├── KarmaTutorialGate.cs
+│       │   │   ├── KarmaTrainingTarget.cs
+│       │   │   └── KarmaHUD.Tutorial.cs
 │       │   ├── UI/
 │       │   │   ├── KarmaHUD.Combat.cs
 │       │   │   ├── KarmaHUD.cs
@@ -491,6 +504,8 @@ K4RMA/
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
 │   │   │   ├── KarmaGuardPlayChecks.cs
 │   │   │   └── KarmaGuardSelectionChecks.cs
+│   │   ├── Tutorial/
+│   │   │   └── KarmaTutorialChecks.cs
 │   │   ├── Player/
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingOwnershipChecks.cs

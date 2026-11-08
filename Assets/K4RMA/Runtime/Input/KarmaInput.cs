@@ -7,8 +7,8 @@ namespace KarmaPrototype
     public enum KarmaAction
     {
         Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Guard,
-        Interact, Pause, Confirm, Restart, Title, Story, Controls, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
-        PreviousPage, NextPage, ToggleInvincibility, Pierce, Settings
+        Interact, Pause, Confirm, Restart, Title, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
+        ToggleInvincibility, Pierce, Settings, DialogueConfirm
     }
 
     // Shared actions stay enabled in menus and while Time.timeScale is zero.
@@ -50,16 +50,13 @@ namespace KarmaPrototype
             Bind(KarmaAction.Confirm, "enter");
             Bind(KarmaAction.Restart, "r");
             Bind(KarmaAction.Title, "t");
-            Bind(KarmaAction.Story, "s");
-            Bind(KarmaAction.Controls, "h");
             Bind(KarmaAction.ChooseSwordWave, "1");
             Bind(KarmaAction.ChooseRisingSlash, "2");
             Bind(KarmaAction.ChooseGuard, "3");
-            Bind(KarmaAction.PreviousPage, "leftArrow", "upArrow");
-            Bind(KarmaAction.NextPage, "rightArrow", "downArrow");
             Bind(KarmaAction.ToggleInvincibility, "p");
             Bind(KarmaAction.Pierce, "l");
             Bind(KarmaAction.Settings, "o");
+            Bind(KarmaAction.DialogueConfirm, "space");
             if (PlayerPrefs.HasKey(BindingsKey))
             {
                 try { map.LoadBindingOverridesFromJson(PlayerPrefs.GetString(BindingsKey)); }

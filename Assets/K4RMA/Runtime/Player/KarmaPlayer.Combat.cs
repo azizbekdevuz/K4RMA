@@ -11,9 +11,10 @@ namespace KarmaPrototype
             return enemy.OverlapsDamageArea(center, new Vector2(width, tuning.longSlashHeight));
         }
 
+        int trainingExecution;
         float normalSwordPressureUntil;
         internal bool SwordPressureActive { get { return !airSlashRunning && Time.time < normalSwordPressureUntil && Time.time < nextSword; } }
-        bool CanSword() { return game.IsCombat && Health > 0 && Time.time >= nextSword && !airSlashRunning && !Stunned && !Shielded && !techniques.CounterReady(Time.time); }
+        bool CanSword() { return game.AllowsPlayerActions && Health > 0 && Time.time >= nextSword && !airSlashRunning && !Stunned && !Shielded && !techniques.CounterReady(Time.time); }
         Vector2 AttackDirection()
         {
             float vertical = KarmaInput.Vertical;
@@ -37,9 +38,11 @@ namespace KarmaPrototype
                 return;
             }
             animator.Attack();
+            int trainingAttack = ++trainingExecution;
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
             normalSwordPressureUntil = Time.time + swordTuning.slashLife;
+            game.Tutorial?.HitArea(KarmaTrainingAttack.Sword, trainingAttack, Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f, new Vector2(swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth, swordTuning.longSlashHeight));
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
                 swordTuning.longSlashReach, swordTuning.longSlashHeight, swordTuning.slashLife);
             foreach (var enemy in game.Enemies.ToArray())
@@ -113,6 +116,7 @@ namespace KarmaPrototype
         }
         public void BeginRisingSlash()
         {
+            game.Tutorial?.HitArea(KarmaTrainingAttack.Rising, ++trainingExecution, Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4)));
             CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
             KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
                 KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);

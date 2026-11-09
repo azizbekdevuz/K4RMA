@@ -38,6 +38,7 @@ namespace KarmaPrototype
                 return;
             }
             animator.Attack();
+            KarmaAudio.Play(KarmaSfxId.PlSwordSwing);
             int trainingAttack = ++trainingExecution;
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
@@ -51,7 +52,7 @@ namespace KarmaPrototype
                 float width = swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
                 Vector2 center = Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
                 if (enemy.OverlapsDamageArea(center, new Vector2(width, swordTuning.longSlashHeight)))
-                    SwordHit(enemy, Vector2.right * Facing);
+                    SwordHit(enemy, Vector2.right * Facing, normalSwing: true);
             }
         }
         void BeginDirectionalSlash(Vector2 direction, float distance, Essence essence)
@@ -64,8 +65,11 @@ namespace KarmaPrototype
             // Pierce travel is atomic. Cover the execution frame and a brief arrival window;
             // blocked attempts grant nothing, and existing hit protection is never shortened.
             if (essence == Essence.SwordWave && (to - from).sqrMagnitude > 0.0001f)
+            {
                 invulnerableUntil = Mathf.Max(invulnerableUntil,
                     Time.time + Mathf.Clamp(game.Config.Techniques.pierceInvulnerabilitySeconds, 0, 0.2f));
+                KarmaAudio.Play(KarmaSfxId.PlDash);
+            }
             Color color = game.Config.ColorOf(essence);
             var flash = KarmaVisuals.Box(game.World, "Directional slash", (from + to) * 0.5f,
                 new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f)), color, 10);
@@ -82,12 +86,13 @@ namespace KarmaPrototype
                 SwordHit(enemy, direction);
             }
         }
-        bool SwordHit(KarmaEnemy enemy, Vector2 direction)
+        bool SwordHit(KarmaEnemy enemy, Vector2 direction, bool normalSwing = false)
         {
             float before = enemy.Health;
             Vector2 point = enemy.ClosestDamagePoint(Position);
-            enemy.TakeDamage(game.Config.swordDamage);
+            enemy.TakeDamage(game.Config.swordDamage, out bool reduced);
             if (enemy.Health >= before) return false;
+            if (normalSwing && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
             KarmaRemnantVFX.SwordImpact(game, point, direction);
             game.SwordHitFeedback();
             return true;
@@ -112,12 +117,14 @@ namespace KarmaPrototype
             }
             to = from + direction * travel;
             body.position = to; transform.position = to;
+            if (to != from) SuppressLandingAudioIfGrounded();
             return to;
         }
         public void BeginRisingSlash()
         {
             game.Tutorial?.HitArea(KarmaTrainingAttack.Rising, ++trainingExecution, Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4)));
             CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
+            KarmaAudio.Play(KarmaSfxId.PlRisingSlash);
             KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
                 KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);
             foreach (var enemy in game.Enemies.ToArray())

@@ -44,6 +44,7 @@ namespace KarmaPrototype
                     owner.Position, owner.Warning(0.7f), true);
                 yield return owner.Wait(owner.Warning(0.7f));
                 if (formation != null) Destroy(formation.gameObject);
+                KarmaAudio.StopSlot("sw-bed");
                 owner.state = ActionState.Attack; Guarding = true; guardResponsePending = guardResponseRunning = false;
                 owner.animator.PlayWavePhase("Guard");
                 swordGuardUntil = owner.FightSeconds + Mathf.Max(0.6f, Settings.swordGuardDuration);
@@ -62,6 +63,7 @@ namespace KarmaPrototype
                     KarmaWaveArtwork.Apply(blades[i], "SW04_CounterBlade_v2", sword.SwordSize(EnemyAttack.SW04), Vector2.right);
                 }
                 wardVfx = KarmaSwordWardVfx.Create(swordGuardRoot,owner.game,owner,blades);
+                if (owner.Active) KarmaAudio.Play(KarmaSfxId.SwCrossingBlades);
                 swordGuardRoutine = owner.StartCoroutine(MaintainSwordGuard(blades));
                 // Only formation occupies the action slot. The buff, aim warnings
                 // and counter projectiles own a separate lifetime and object root.

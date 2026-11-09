@@ -17,6 +17,7 @@ namespace KarmaPrototype
         public void StartRun()
         {
             Tutorial = null; OpeningArrivalFade = 0;
+            KarmaAudio.Play(KarmaSfxId.UiConfirm);
             guardianInheriting = false;
             fallenGuardian = null;
             ResetHitFeedback();
@@ -86,14 +87,22 @@ namespace KarmaPrototype
         public void Choose(Essence essence)
         {
             if (Phase != RunPhase.Choosing || Paused || !Player.Essences.HasActive(essence)) return;
+            var previous = PendingChoice;
             Player.Essences.Preview(essence);
+            if (PendingChoice != previous) KarmaAudio.Play(KarmaSfxId.UiMove);
         }
-        public void CancelChoice() { if (Phase == RunPhase.Choosing) Player.Essences.Cancel(); }
+        public void CancelChoice()
+        {
+            if (Phase != RunPhase.Choosing) return;
+            if (PendingChoice.HasValue) KarmaAudio.Play(KarmaSfxId.UiCancel);
+            Player.Essences.Cancel();
+        }
         public void ConfirmChoice()
         {
             if (Phase != RunPhase.Choosing || Paused || !PendingChoice.HasValue) return;
             Essence essence;
             if (!Player.Essences.Confirm(out essence)) return;
+            KarmaAudio.Play(KarmaSfxId.UiConfirm);
             Player.Essences.Cancel();
             LastPersonalizedEssence = essence;
             Player.Heal(config.healAfterPersonalization);
@@ -173,6 +182,7 @@ namespace KarmaPrototype
         }
         public void ReturnToTitle()
         {
+            if (Phase != RunPhase.Title) KarmaAudio.Play(KarmaSfxId.UiCancel);
             Tutorial = null; OpeningArrivalFade = 0;
             ResetHitFeedback();
             Paused = false; Time.timeScale = 1; ClearProjectiles();

@@ -47,6 +47,7 @@ namespace KarmaPrototype
                 foreach (var mark in marks) { mark.gameObject.SetActive(false); Destroy(mark.gameObject); }
                 owner.state = ActionState.Attack; owner.animator.Attack(Vector2.down);
                 owner.animator.SetGroundSlamFrame(2);
+                if (owner.Active) KarmaAudio.Play(KarmaSfxId.GdHeavySlam);
                 Vector2 impact = owner.animator.GroundSlamContact;
                 impact.y = 0.08f;
                 KarmaCombatVFX.Burst(owner.effectsRoot, impact, KarmaArtwork.Sprite("GuardBasaltDebris", "Burst"),

@@ -23,6 +23,7 @@ namespace KarmaPrototype
             if ((!invulnerable || !counterDamage) && techniques.ConsumeCounter(Time.time))
             {
                 ParryCount++;
+                KarmaAudio.Play(KarmaSfxId.CombatPerfectParry);
                 animator.PlayPose("Riposte", 0.3f);
                 invulnerableUntil = Time.time + 0.12f;
                 Essences.NotifyUnique(Essence.Guard);
@@ -43,6 +44,7 @@ namespace KarmaPrototype
             if (invulnerable) return;
             if (Shielded)
             {
+                KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
                 game.Tutorial?.GuardBlocked();
                 KarmaCombatVFX.SpawnSprite(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
                 return;
@@ -52,6 +54,7 @@ namespace KarmaPrototype
             CancelAirSlash();
             animator.Hurt();
             Health -= actual; game.DamageTaken += actual;
+            KarmaAudio.Play(KarmaSfxId.PlDamage);
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
             if (!customHitVisual)
                 KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));
@@ -64,6 +67,7 @@ namespace KarmaPrototype
             float actual = Mathf.Min(Health, damage);
             Health -= actual;
             game.DamageTaken += actual;
+            KarmaAudio.Play(KarmaSfxId.PlDamage);
             if (Health <= 0) game.PlayerDied();
             return true;
         }

@@ -85,6 +85,7 @@ namespace KarmaPrototype
                     owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("FollowThrough");
                     KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_Release_v6",
                         owner.Position + new Vector2(owner.direction * 1.1f, -0.8f), new Vector2(0.55f, 4.5f), 0.12f);
+                    KarmaAudio.StopSlot("sw-bed");
                     var contacts = new KarmaAttackContact[cells.Length];
                     var feedbackShown = new bool[cells.Length];
                     int group = 0;
@@ -105,6 +106,7 @@ namespace KarmaPrototype
                         var pool = KarmaSwordVfxPool.For(owner.game);
                         pool.Sparks(owner, new Vector2(x, 0.35f), Vector2.up, 3, 18);
                     }
+                    KarmaAudio.Play(KarmaSfxId.SwScarRise);
                     if (round == rounds - 1) KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_GuardRing_v6", owner.Position, Vector2.one * 3.5f, 0.16f);
                     // Contacts expire at active; allow their final hit flash to finish
                     // during the inter-round recovery before the next clear/warning.

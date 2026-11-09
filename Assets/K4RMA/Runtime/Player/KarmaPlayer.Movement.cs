@@ -4,11 +4,14 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaPlayer
     {
+        bool hasGroundedForLanding, airborneSinceGrounded;
+
         void FixedUpdate()
         {
             if (game == null || game.Paused) return;
             if (!game.CanMove)
             {
+                ResetLandingAudio();
                 CancelAirSlash();
                 if ((game.Phase == RunPhase.GuardianFallen && !ReadyForPersonalization)
                     || (game.Phase == RunPhase.PlayerFallen && !ReadyForDefeat))
@@ -24,7 +27,19 @@ namespace KarmaPrototype
                 body.gravityScale = 0;
                 return;
             }
-            if (!airSlashRunning && Grounded() && body.linearVelocity.y <= 0.1f) { lastGrounded = Time.time; techniques.Land(); }
+            bool grounded = Grounded();
+            if (grounded && body.linearVelocity.y <= 0.1f)
+            {
+                if (!airSlashRunning)
+                {
+                    lastGrounded = Time.time;
+                    techniques.Land();
+                }
+                if (airborneSinceGrounded) KarmaAudio.Play(KarmaSfxId.PlLand);
+                hasGroundedForLanding = true;
+                airborneSinceGrounded = false;
+            }
+            else if (!grounded && hasGroundedForLanding) airborneSinceGrounded = true;
             if (Stunned)
             {
                 body.gravityScale = game.Config.gravityScale;
@@ -83,11 +98,23 @@ namespace KarmaPrototype
                 if (groundHits[i].GetComponent<KarmaSurface>() != null) return true;
             return false;
         }
+        void SuppressLandingAudioIfGrounded()
+        {
+            if (airborneSinceGrounded && Grounded()) ResetLandingAudio();
+        }
+
+        void ResetLandingAudio()
+        {
+            hasGroundedForLanding = false;
+            airborneSinceGrounded = false;
+        }
+
         public void ResetForRoom(Vector2 position, bool restoreHealth)
         {
             transform.position = position;
             body.position = position;
             body.linearVelocity = Vector2.zero;
+            ResetLandingAudio();
             move = 0; jumpBufferedUntil = 0; lastGrounded = -10; nextSword = 0;
             Crouching = false;
             separatingForCeremony = false; ceremonyMove = 0;

@@ -155,6 +155,8 @@ namespace KarmaPrototype
                         planner.RegisterLaunch(attack.transform);
                         planted.Add(attack);
                     }
+                    KarmaAudio.StopSlot("sw-rain");
+                    KarmaAudio.Play(KarmaSfxId.SwUltimateRain);
                     owner.animator.ReleaseWavePhase();
                     while (owner.Active && planner.HasLiveShots) yield return null;
                     if (!owner.Active) yield break;

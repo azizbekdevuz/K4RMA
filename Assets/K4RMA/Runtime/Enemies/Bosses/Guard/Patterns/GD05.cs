@@ -18,9 +18,11 @@ namespace KarmaPrototype
 
             public void StunFromParry()
             {
+                bool enteredStun = !owner.Stunned;
                 owner.state = ActionState.Stunned;
                 owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialParryStunSeconds);
                 owner.ShowStunCue();
+                if (enteredStun) KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
             }
 
             public override IEnumerator Execute()
@@ -44,6 +46,7 @@ namespace KarmaPrototype
                 trial.Begin(1, Mathf.Max(1, Settings.trialFailureHits) - 1);
                 Active = true;
                 // The survival trial stays invulnerable, including its parry stun and dome dissolution.
+                KarmaAudio.Play(KarmaSfxId.GdUltimate);
                 owner.state = ActionState.Approach;
 
                 var sprite = KarmaArtwork.Sprite("GuardDomeShield", "Ricochet");

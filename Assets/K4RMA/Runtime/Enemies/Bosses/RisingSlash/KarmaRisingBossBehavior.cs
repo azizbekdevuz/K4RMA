@@ -135,7 +135,6 @@ namespace KarmaPrototype
                 if (parried || !damaged) return;
                 KarmaAudio.Play(resolvingImpact);
             }
-            public override void OnPlayerDamaged() { KarmaRisingAudio.PlayerHurt(); }
             public override void Tick()
             {
                 if (knockbackLeft <= 0 || owner.game.Paused) return;
@@ -180,7 +179,6 @@ namespace KarmaPrototype
             public override void OnAttackParried(bool stun)
             {
                 if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position);
-                KarmaRisingAudio.Parry();
             }
             public override void OnParried() { KarmaRisingAudio.Stagger(); }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }

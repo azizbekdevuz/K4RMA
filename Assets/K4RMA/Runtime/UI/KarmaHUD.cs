@@ -89,6 +89,12 @@ namespace KarmaPrototype
                         break;
                 }
             }
+            if (!string.IsNullOrEmpty(game.OpeningArrivalSpeech) && game.OpeningArrivalFade < 0.45f)
+            {
+                Panel(new Rect(230, 550, 820, 140));
+                Label(255, 565, 770, 75, game.OpeningArrivalSpeech, text);
+                Label(255, 655, 770, 25, "[ " + KarmaInput.BindingLabel(KarmaAction.DialogueConfirm) + " ] 계속", small);
+            }
             if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
             GUI.matrix = saved;
         }

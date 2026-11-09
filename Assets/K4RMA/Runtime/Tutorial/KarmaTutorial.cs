@@ -15,20 +15,24 @@ namespace KarmaPrototype
         bool released, strikePaused;
         float completeUntil, attackAt, attackProgress, fade, blockedUntil;
         Vector2 strikeStart, strikeEnd;
-        SpriteRenderer strike;
+        SpriteRenderer strike, strikeCharge;
+        Vector3 chargeScale;
+        float strikeFlightTime;
+        bool strikeLaunched;
         GameObject[] barriers;
         KarmaTrainingTarget[] targets;
         public bool CanAct => preparingGuard || !Frozen && !inputReleaseRequired && inputFrame != Time.frameCount && Step != KarmaTutorialStep.Fade;
         public float Fade => fade;
-        public static readonly float[] Stations = { 8, 58, 108, 158 };
+        public static readonly float[] Stations = { 8, 8, 8, 8 };
         public string BlockedMessage => Time.unscaledTime < blockedUntil ? "먼저 훈련을 마쳐라. 허수아비 앞에서 수련을 끝내고 이동하거라." : "";
         public void WarnUnfinished()
         {
             if (Step == KarmaTutorialStep.Practice) blockedUntil = Time.unscaledTime + 2;
         }
         static readonly string[] Lessons = { "먼저 검을 휘둘러 보아라. 나무의 중심을 정확히 노려라.", "검에 담은 기운을 앞으로 보내 보아라.", "아래에서 위로. 검을 올리는 힘에 몸을 실어라.", "이번에는 막아 보아라. 공격이 닿기 전에 보호의 힘을 펼쳐라." };
-        static readonly string[] Ending = { "내가 가르친 기술은 모두 익혔구나.", "하지만 배운 것을 그대로 쓰는 것만으로는 수련이 끝나지 않는다.", "이제 그 기술들을 너만의 것으로 만들어라.", "문 너머의 수호자들이 네 답을 기다리고 있다." };
-        public string Speech => Step == KarmaTutorialStep.FinalDialogue ? Ending[dialogue] : Step == KarmaTutorialStep.Lesson ? Lessons[Lesson] : Step == KarmaTutorialStep.Complete ? "훈련을 마쳤다. 오른쪽으로 쭉 이동하세요 →" : "";
+        static readonly string[] Ending = { "내가 가르친 기술은 모두 익혔구나.", "하지만 배운 것을 그대로 쓰는 것만으로는 수련이 끝나지 않는다.", "이제 그 기술들을 너만의 것으로 만들어라." };
+        public string Speech => Step == KarmaTutorialStep.FinalDialogue ? Ending[dialogue] : Step == KarmaTutorialStep.Lesson ? Lessons[Lesson] : "";
+        public string SpeechTitle => "스승";
         public void Initialize(KarmaGame game)
         {
             Game = game; Step = KarmaTutorialStep.Travel;
@@ -48,7 +52,9 @@ namespace KarmaPrototype
             Vector2 delta = to - from;
             bool contact = bounds.Contains(from) || delta.sqrMagnitude > 0 && bounds.IntersectRay(new Ray(from, delta.normalized), out float distance) && distance <= delta.magnitude;
             if (!contact) return false;
-            if (Mathf.Abs(Game.Player.Position.x - target.transform.position.x) >= 7) target.Hit(KarmaTrainingAttack.Wave, id);
+            // Count any real swept hit, including point-blank shots and shots
+            // fired back toward the target from its far side.
+            target.Hit(KarmaTrainingAttack.Wave, id);
             return true;
         }
         public void Success()
@@ -77,6 +83,7 @@ namespace KarmaPrototype
                 else
                 {
                     Step = KarmaTutorialStep.Practice;
+                    if (Lesson == 3) attackAt = Time.time + Game.Player.Essences.Cooldown(Essence.Guard) + 0.5f;
                     KarmaCombatVFX.SpawnSprite(transform, Game.Player.Position, "PlayerVFX", "Barrier", Vector2.one * 3, 0.35f);
                 }
                 Time.timeScale = Frozen ? 0 : 1;
@@ -105,38 +112,65 @@ namespace KarmaPrototype
             if (Step == KarmaTutorialStep.Travel)
             {
                 int next = Lesson + 1;
-                if (next < 4 && Game.Player.Position.x >= Stations[next] - 14)
+                if (next < 4 && Game.Player.Position.x >= Stations[next] - (next == 0 ? 10 : 14))
                 {
-                    Lesson = next; Successes = 0; Step = next == 0 ? KarmaTutorialStep.Practice : KarmaTutorialStep.Lesson;
+                    Lesson = next; Successes = 0; Step = KarmaTutorialStep.Lesson;
+                    for (int i = 0; i < targets.Length; i++) targets[i].enabled = i == next;
                     Game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
                     Game.Player.Essences.ResetTemporaryState();
                     attackAt = Time.time + 1.4f; Time.timeScale = Frozen ? 0 : 1;
                 }
-                else if (next == 4 && Game.Player.Position.x > KarmaTutorialStage.FinalGate - 6) { Step = KarmaTutorialStep.FinalDialogue; Time.timeScale = 0; }
             }
             if (Step == KarmaTutorialStep.Complete && Time.time >= completeUntil)
-            { Step = KarmaTutorialStep.Travel; }
+            {
+                Step = Lesson == 3 ? KarmaTutorialStep.FinalDialogue : KarmaTutorialStep.Travel;
+                if (Lesson == 3) { dialogue = 0; Game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero; Time.timeScale = 0; }
+            }
             if (Step == KarmaTutorialStep.Practice && Lesson == 3) TickTrainingStrike();
-            if (Step == KarmaTutorialStep.Gate && Game.Player.Position.x > KarmaTutorialStage.FinalGate - 1 && KarmaInput.Pressed(KarmaAction.Interact))
+            if (Step == KarmaTutorialStep.Gate && Mathf.Abs(Game.Player.Position.x - KarmaTutorialStage.FinalGate) <= 5 && KarmaInput.Pressed(KarmaAction.Interact))
             { Step = KarmaTutorialStep.Fade; inputFrame = Time.frameCount; Time.timeScale = 0; }
         }
         void TickTrainingStrike()
         {
             if (strike == null)
             {
+                float cooldown = Game.Player.Essences.Cooldown(Essence.Guard);
+                if (cooldown > 0) attackAt = Mathf.Max(attackAt, Time.time + cooldown + 0.5f);
                 if (Time.time < attackAt) return;
                 strikeId++;
-                float side = Game.Player.Position.x < Stations[3] ? -1 : 1;
-                strikeStart = new Vector2(Stations[3] + side * 1.5f, Game.Player.Position.y);
+                Vector2 dummy = targets[3].HitBounds.center;
+                float side = Game.Player.Position.x < dummy.x ? -1 : 1;
+                strikeStart = dummy + Vector2.right * side * 0.8f;
                 strikeEnd = Game.Player.Position;
-                strike = KarmaVisuals.Box(transform, "훈련 장치 예고", strikeStart, new Vector2(0.7f, 2), new Color(1, 0.55f, 0.15f), 6);
-                KarmaCombatVFX.ApplySprite(strike, "PlayerVFX", "Wave", new Vector2(0.7f, 2), true);
-                strike.color = new Color(1, 0.65f, 0.3f);
-                attackProgress = -0.8f; strikePaused = false;
+                strike = KarmaVisuals.Box(transform, "허수아비 검기", strikeStart, Vector2.one, Color.white, 14);
+                KarmaRemnantVFX.ProjectileLook(strike, strikeEnd - strikeStart);
+                strike.enabled = false;
+                strikeCharge = KarmaVisuals.Box(transform, "허수아비 검기 충전", strikeStart, Vector2.one, new Color(0.35f, 0.75f, 1, 0.3f), 15);
+                KarmaCombatVFX.ApplySprite(strikeCharge, "PlayerVFX", "Barrier", Vector2.one * 2.4f, true);
+                if (KarmaCombatVFX.GlowMaterial != null) strikeCharge.sharedMaterial = KarmaCombatVFX.GlowMaterial;
+                chargeScale = strikeCharge.transform.localScale;
+                attackProgress = -0.85f; strikePaused = false; strikeLaunched = false;
             }
             attackProgress += Time.deltaTime;
-            if (attackProgress < 0) return;
-            Vector2 position = Vector2.Lerp(strikeStart, strikeEnd, Mathf.Clamp01(attackProgress / 0.65f));
+            if (attackProgress < 0)
+            {
+                float gathered = Mathf.Clamp01(1 + attackProgress / 0.85f);
+                strikeCharge.transform.localScale = chargeScale * Mathf.Lerp(1, 0.25f, gathered);
+                strikeCharge.color = new Color(0.35f, 0.75f, 1, Mathf.Lerp(0.25f, 1, gathered));
+                return;
+            }
+            if (!strikeLaunched)
+            {
+                strikeLaunched = true;
+                strikeCharge.enabled = false; Destroy(strikeCharge.gameObject); strikeCharge = null;
+                strikeEnd = Game.Player.Position;
+                strikeFlightTime = Mathf.Max(0.45f, Vector2.Distance(strikeStart, strikeEnd) / 12);
+                Vector2 velocity = (strikeEnd - strikeStart) / strikeFlightTime;
+                KarmaRemnantVFX.ProjectileLook(strike, velocity);
+                KarmaCombatVFX.AttachAttack(strike, velocity, new Color(0.35f, 0.75f, 1));
+                strike.enabled = true;
+            }
+            Vector2 position = Vector2.Lerp(strikeStart, strikeEnd, Mathf.Clamp01(attackProgress / strikeFlightTime));
             var playerBounds = Game.Player.GetComponent<BoxCollider2D>().bounds;
             var warningBounds = playerBounds; warningBounds.Expand(new Vector3(3, 2, 0));
             if (!strikePaused && warningBounds.Contains(position))
@@ -152,20 +186,22 @@ namespace KarmaPrototype
             bool contact = playerBounds.Contains(from) || playerBounds.Contains(position)
                 || travel.sqrMagnitude > 0 && playerBounds.IntersectRay(new Ray(from, travel.normalized), out float distance) && distance <= travel.magnitude;
             strike.transform.position = position;
-            if (!contact && attackProgress < 0.65f) return;
+            if (!contact && attackProgress < strikeFlightTime) return;
             contactId = strikeId;
             if (contact) Game.Player.TakeDamage(1);
             contactId = 0;
-            Destroy(strike.gameObject); strike = null; attackAt = Time.time + 1.1f;
+            Destroy(strike.gameObject); strike = null; attackAt = Time.time + Game.Player.Essences.Cooldown(Essence.Guard) + 0.5f;
         }
         public void FrameCamera()
         {
             var camera = Game.GameCamera;
             // Each supplied 16:9 image is a complete screen. Change screens only
             // when the player walks out of a courtyard; never crop or pan the art.
-            int room = Mathf.Clamp(Mathf.FloorToInt((Game.Player.Position.x + 25) / KarmaTutorialStage.RoomWidth), 0, 3);
+            float centerX = Game.Player.Position.x < KarmaTutorialStage.RoomWidth / 2 ? 0
+                : Mathf.Clamp(Game.Player.Position.x, KarmaTutorialStage.RoomWidth,
+                    KarmaTutorialStage.Right - KarmaTutorialStage.RoomWidth / 2);
             camera.orthographicSize = KarmaTutorialStage.RoomWidth * 9 / 32;
-            camera.transform.position = new Vector3(room * KarmaTutorialStage.RoomWidth, 9, -10);
+            camera.transform.position = new Vector3(centerX, 9, -10);
         }
     }
 }

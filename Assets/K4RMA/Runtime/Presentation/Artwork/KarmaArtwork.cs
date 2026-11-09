@@ -56,18 +56,23 @@ namespace KarmaPrototype
         }
         public static Sprite Sprite(string sheet, string pose)
         {
+            var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
+            if (common != null) return common;
             foreach (var library in BossLibraries)
             {
                 var sprite = library.Get(sheet, pose);
                 if (sprite != null) return sprite;
             }
-            return Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
+            return null;
         }
         public static Sprite[] Sprites(string sheet)
         {
+            var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.All(sheet) : Array.Empty<Sprite>();
+            // These character sheets are wholly owned by the shared library.
+            if (sheet == "Player" || sheet == "Neutral") return common;
             var sprites = new List<Sprite>();
             foreach (var library in BossLibraries) sprites.AddRange(library.All(sheet));
-            if (Settings.spriteLibrary != null) sprites.AddRange(Settings.spriteLibrary.All(sheet));
+            sprites.AddRange(common);
             return sprites.ToArray();
         }
         public static Sprite[] InheritedPoses(string form)

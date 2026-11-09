@@ -16,7 +16,7 @@ namespace KarmaPrototype
         public int StageIndex { get; private set; }
         public bool Paused { get; private set; }
         public bool IsCombat { get { return Phase == RunPhase.Combat && !Paused; } }
-        public bool CanMove { get { return !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
+        public bool CanMove { get { return Time.frameCount != openingSpeechDismissFrame && !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
         public KarmaTutorial Tutorial { get; private set; }
         public bool GameplayFrozen => Paused || Tutorial != null && Tutorial.Frozen;
         public bool AllowsPlayerActions => IsCombat || !Paused && Tutorial != null && Tutorial.CanAct;
@@ -56,12 +56,14 @@ namespace KarmaPrototype
             gameObject.AddComponent<KarmaHUD>().Initialize(this);
             KarmaPreferences.ApplyAudio();
             InitializeDisplaySettings();
+            StartCoroutine(KarmaTutorialStage.PreloadArtwork());
             Time.timeScale = 1;
         }
         void Update()
         {
             UpdateDisplaySettings();
             OpeningArrivalFade = Mathf.Max(0, OpeningArrivalFade - Time.unscaledDeltaTime * 1.5f);
+            UpdateOpeningArrivalSpeech();
             UpdateHitFeedback();
             if (SettingsOpen)
             {

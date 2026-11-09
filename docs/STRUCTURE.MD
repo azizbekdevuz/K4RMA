@@ -137,10 +137,12 @@ K4RMA/
 │       │       ├── Tutorial/
 │       │       │   └── Resources/
 │       │       │       └── KarmaTutorial/
-│       │       │           ├── TrainingPanorama.png
-│       │       │           ├── CheckpointFrame.png
-│       │       │           ├── CheckpointDoor.png
-│       │       │           └── Backdrop.shader
+│       │       │           ├── 01_Dojo_NoMaster.png
+│       │       │           ├── 02_Wall_Sunset1.png
+│       │       │           ├── 03_Wall_Sunset2.png
+│       │       │           ├── 04_Boss_Gate.png
+│       │       │           ├── Master.png
+│       │       │           └── TrainingDummy.png
 │       │       ├── Resources/
 │       │       │   └── K4RMAArtwork/
 │       │       │       ├── Characters/

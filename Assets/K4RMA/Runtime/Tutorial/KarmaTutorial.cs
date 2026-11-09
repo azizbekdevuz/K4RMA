@@ -13,17 +13,22 @@ namespace KarmaPrototype
         bool preparingGuard, inputReleaseRequired;
         int inputFrame = -1, freezeFrame, dialogue, strikeId, contactId, countedStrike;
         bool released, strikePaused;
-        float completeUntil, attackAt, attackProgress, fade;
+        float completeUntil, attackAt, attackProgress, fade, blockedUntil;
         Vector2 strikeStart, strikeEnd;
         SpriteRenderer strike;
         GameObject[] barriers;
         KarmaTrainingTarget[] targets;
         public bool CanAct => preparingGuard || !Frozen && !inputReleaseRequired && inputFrame != Time.frameCount && Step != KarmaTutorialStep.Fade;
         public float Fade => fade;
-        public static readonly float[] Stations = { 14, 42, 70, 98 };
+        public static readonly float[] Stations = { 8, 58, 108, 158 };
+        public string BlockedMessage => Time.unscaledTime < blockedUntil ? "먼저 훈련을 마쳐라. 허수아비 앞에서 수련을 끝내고 이동하거라." : "";
+        public void WarnUnfinished()
+        {
+            if (Step == KarmaTutorialStep.Practice) blockedUntil = Time.unscaledTime + 2;
+        }
         static readonly string[] Lessons = { "먼저 검을 휘둘러 보아라. 나무의 중심을 정확히 노려라.", "검에 담은 기운을 앞으로 보내 보아라.", "아래에서 위로. 검을 올리는 힘에 몸을 실어라.", "이번에는 막아 보아라. 공격이 닿기 전에 보호의 힘을 펼쳐라." };
         static readonly string[] Ending = { "내가 가르친 기술은 모두 익혔구나.", "하지만 배운 것을 그대로 쓰는 것만으로는 수련이 끝나지 않는다.", "이제 그 기술들을 너만의 것으로 만들어라.", "문 너머의 수호자들이 네 답을 기다리고 있다." };
-        public string Speech => Step == KarmaTutorialStep.FinalDialogue ? Ending[dialogue] : Step == KarmaTutorialStep.Lesson ? Lessons[Lesson] : Step == KarmaTutorialStep.Complete ? (Lesson == 0 ? "기본 공격 수련 완료 · 이제 스승의 가르침을 받으러 가세요." : "좋다. 힘과 타이밍을 기억하거라. 다음 마당으로 가자.") : "";
+        public string Speech => Step == KarmaTutorialStep.FinalDialogue ? Ending[dialogue] : Step == KarmaTutorialStep.Lesson ? Lessons[Lesson] : Step == KarmaTutorialStep.Complete ? "훈련을 마쳤다. 오른쪽으로 쭉 이동하세요 →" : "";
         public void Initialize(KarmaGame game)
         {
             Game = game; Step = KarmaTutorialStep.Travel;
@@ -52,6 +57,7 @@ namespace KarmaPrototype
             Successes++;
             if (Successes != 3) return;
             Step = KarmaTutorialStep.Complete; completeUntil = Time.time + 1;
+            blockedUntil = 0;
             barriers[Lesson].GetComponent<KarmaTutorialGate>().Open();
             KarmaCombatVFX.SpawnSprite(transform, Game.Player.Position, "PlayerVFX", "Barrier", Vector2.one * 3, 0.3f);
         }
@@ -120,7 +126,8 @@ namespace KarmaPrototype
             {
                 if (Time.time < attackAt) return;
                 strikeId++;
-                strikeStart = new Vector2(Game.Player.Position.x + 10, Game.Player.Position.y);
+                float side = Game.Player.Position.x < Stations[3] ? -1 : 1;
+                strikeStart = new Vector2(Stations[3] + side * 1.5f, Game.Player.Position.y);
                 strikeEnd = Game.Player.Position;
                 strike = KarmaVisuals.Box(transform, "훈련 장치 예고", strikeStart, new Vector2(0.7f, 2), new Color(1, 0.55f, 0.15f), 6);
                 KarmaCombatVFX.ApplySprite(strike, "PlayerVFX", "Wave", new Vector2(0.7f, 2), true);
@@ -154,12 +161,11 @@ namespace KarmaPrototype
         public void FrameCamera()
         {
             var camera = Game.GameCamera;
-            var original = KarmaArtwork.Settings.mountainBackground;
-            camera.orthographicSize = Mathf.Max(25 / camera.aspect, 25 * original.rect.height / original.rect.width);
-            float halfWidth = camera.orthographicSize * camera.aspect;
-            float x = Mathf.Clamp(Game.Player.Position.x + 4, -25 + halfWidth, 155 - halfWidth);
-            camera.transform.position = new Vector3(x, camera.orthographicSize * 0.48f, -10);
-            GetComponent<KarmaTutorialBackdrop>().Frame(camera);
+            // Each supplied 16:9 image is a complete screen. Change screens only
+            // when the player walks out of a courtyard; never crop or pan the art.
+            int room = Mathf.Clamp(Mathf.FloorToInt((Game.Player.Position.x + 25) / KarmaTutorialStage.RoomWidth), 0, 3);
+            camera.orthographicSize = KarmaTutorialStage.RoomWidth * 9 / 32;
+            camera.transform.position = new Vector3(room * KarmaTutorialStage.RoomWidth, 9, -10);
         }
     }
 }

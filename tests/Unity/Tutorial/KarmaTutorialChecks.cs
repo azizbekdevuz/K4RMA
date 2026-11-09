@@ -21,7 +21,23 @@ public static class KarmaTutorialChecks
     static bool previousBackground;
     static float tutorialCameraSize;
     static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-    static KarmaTutorialChecks() { EditorApplication.playModeStateChanged += Changed; }
+    static KarmaTutorialChecks()
+    {
+        EditorApplication.playModeStateChanged += Changed;
+        EditorApplication.update += () =>
+        {
+            if (!SessionState.GetBool("K4RMA.TutorialBatch", false) || !EditorApplication.isPlaying) return;
+            EditorApplication.isPaused = false;
+            EditorApplication.QueuePlayerLoopUpdate();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        };
+    }
+    public static void RunBatch()
+    {
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        SessionState.SetBool("K4RMA.TutorialBatch", true); Run();
+    }
+    public static void RunExitBatch() { SessionState.SetBool("K4RMA.TutorialExit", true); RunBatch(); }
     [MenuItem("K4RMA/검증/플레이 가능한 오프닝")]
     public static void Run() { SessionState.SetBool(Pending, true); if (EditorApplication.isPlaying) Changed(PlayModeStateChange.EnteredPlayMode); else EditorApplication.EnterPlaymode(); }
     [MenuItem("K4RMA/검증/오프닝 시작·재시작·대화")]
@@ -31,10 +47,23 @@ public static class KarmaTutorialChecks
         if (state != PlayModeStateChange.EnteredPlayMode || !SessionState.GetBool(Pending, false)) return;
         SessionState.SetBool(Pending, false);
         string report;
-        try { bool entry = SessionState.GetBool(Entry, false); SessionState.SetBool(Entry, false); if (entry) await CheckEntry(); else await CheckRun(); report = "PASS: " + assertions + " tutorial flow, hits, guard freeze, pause, cleanup and combat-entry assertions"; }
+        try
+        {
+            bool entry = SessionState.GetBool(Entry, false), exit = SessionState.GetBool("K4RMA.TutorialExit", false);
+            SessionState.SetBool(Entry, false); SessionState.SetBool("K4RMA.TutorialExit", false);
+            if (exit)
+            {
+                previousBackground = Application.runInBackground; Application.runInBackground = true;
+                await Wait(500); game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>(); keyboard = InputSystem.AddDevice<Keyboard>();
+                await CheckGuardExit();
+            }
+            else if (entry) await CheckEntry(); else await CheckRun();
+            report = "PASS: " + assertions + " tutorial " + (exit ? "guard hold and title exit" : "flow, hits, guard freeze, pause, cleanup and combat-entry") + " assertions";
+        }
         catch (Exception e) { report = "FAIL: " + e; Debug.LogException(e); }
         finally { if (keyboard != null) InputSystem.RemoveDevice(keyboard); Application.runInBackground = previousBackground; }
         Directory.CreateDirectory("output/validation"); File.WriteAllText("output/validation/tutorial.txt", report); Debug.Log(report);
+        if (SessionState.GetBool("K4RMA.TutorialBatch", false)) EditorApplication.Exit(report.StartsWith("PASS:") ? 0 : 1);
     }
     static void Check(bool ok, string message) { assertions++; if (!ok) throw new Exception(message); }
     static async Task Wait(int ms = 120) { await Task.Delay(ms); }
@@ -46,8 +75,13 @@ public static class KarmaTutorialChecks
     }
     static async Task Press(KarmaAction action)
     {
-        InputSystem.QueueStateEvent(keyboard, new KeyboardState(KeyFor(action))); await Wait();
-        InputSystem.QueueStateEvent(keyboard, new KeyboardState()); await Wait();
+        async Task InputFrame()
+        {
+            int frame = Time.frameCount; await Wait();
+            await WaitFor(() => Time.frameCount > frame + 1, "Input reaches the player loop", 5000);
+        }
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState(KeyFor(action))); await InputFrame();
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState()); await InputFrame();
     }
     static void Place(float x, float y = KarmaSpace.PlayerHalfHeight)
     {
@@ -57,10 +91,21 @@ public static class KarmaTutorialChecks
     {
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Focus();
         previousBackground = Application.runInBackground; Application.runInBackground = true;
+        int frame = Time.frameCount;
+        await WaitFor(() => Time.frameCount > frame + 3, "Play loop advances before testing: frame=" + frame + ", paused=" + EditorApplication.isPaused, 5000);
         await Wait(300); game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
         keyboard = InputSystem.AddDevice<Keyboard>(); game.ReturnToTitle(); game.StartOpening(); tutorial = game.Tutorial;
         Check(tutorial != null && game.StageIndex == 0 && game.Enemies.Count == 0, "Opening starts without guardian");
+        var targets = game.World.GetComponentsInChildren<KarmaTrainingTarget>();
+        Check(targets.Length == 4, "Each of the four pictures has a training dummy");
+        Check(game.World.Find("Master") != null && game.World.Find("Master").position.x < 31, "Master only appears in the first courtyard");
+        foreach (var name in new[] { "01_Dojo_NoMaster", "02_Wall_Sunset1", "03_Wall_Sunset2", "04_Boss_Gate" })
+            Check(game.World.Find(name) != null, "Supplied background loaded: " + name);
+        foreach (var target in targets)
+            Check(Mathf.Abs(target.GetComponent<SpriteRenderer>().bounds.min.y) < 0.01f, "Dummy stands on the ground");
         await Wait(); Check(Time.timeScale == 1 && tutorial.Step == KarmaTutorialStep.Travel, "Opening starts with movement and jump guidance");
+        Check(UnityEngine.Object.FindObjectsByType<KarmaGame>(FindObjectsSortMode.None).Length == 1, "Canonical tutorial scene has one director");
+        Check(Mathf.Abs(game.GameCamera.orthographicSize - 50f * 9 / 32) < 0.01f && Mathf.Abs(game.GameCamera.transform.position.x) < 0.01f, "First supplied image fills the complete viewport: " + game.GameCamera.orthographicSize + " / " + game.GameCamera.transform.position);
         foreach (var size in new[] { new Vector2(1280, 720), new Vector2(1280, 800), new Vector2(1024, 768) })
         {
             var viewport = (Rect)typeof(KarmaGame).GetMethod("ScreenViewport", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { size.x, size.y });
@@ -78,8 +123,16 @@ public static class KarmaTutorialChecks
         for (int lesson = 0; lesson < 4; lesson++)
         {
             Place(KarmaTutorial.Stations[lesson] - 12); await Wait();
+            Check(Mathf.Abs(game.GameCamera.transform.position.x - lesson * KarmaTutorialStage.RoomWidth) < 0.01f, "Each courtyard keeps its full image on screen " + lesson);
             Check(tutorial.Step == (lesson == 0 ? KarmaTutorialStep.Practice : KarmaTutorialStep.Lesson) && tutorial.Lesson == lesson, "Spatial lesson trigger " + lesson);
             if (lesson > 0) await Press(KarmaAction.DialogueConfirm);
+            Place(KarmaTutorial.Stations[lesson] + 4);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(KeyFor(KarmaAction.Right)));
+            await Wait(550);
+            Check(game.Player.Position.x < KarmaTutorial.Stations[lesson] + 7, "Unfinished training blocks rightward travel " + lesson);
+            Check(tutorial.BlockedMessage.Contains("먼저 훈련"), "Blocked travel explains required training " + lesson);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            Place(KarmaTutorial.Stations[lesson] - 12); await Wait();
             Capture("lesson-" + lesson);
             if (lesson < 3)
             {
@@ -128,12 +181,17 @@ public static class KarmaTutorialChecks
                 }
             }
             await Wait(1200); Check(tutorial.Step == KarmaTutorialStep.Travel, "Completed lesson opens path");
+            Check(!game.World.GetComponentsInChildren<KarmaTutorialGate>()[lesson].GetComponent<BoxCollider2D>().enabled, "Completed training opens its barrier " + lesson);
+            Check(string.IsNullOrEmpty(tutorial.BlockedMessage), "Completion clears blocked warning " + lesson);
         }
         Check(game.Player.Essences.PersonalizationOrder.Count == 0 && game.Elapsed == 0 && game.DamageTaken == 0, "Tutorial excluded from progression and records");
         Place(KarmaTutorialStage.FinalGate - 4); await Wait(); Check(tutorial.Step == KarmaTutorialStep.FinalDialogue, "Final master dialogue");
         for (int i = 0; i < 4; i++) await Press(KarmaAction.DialogueConfirm);
         Check(tutorial.Step == KarmaTutorialStep.Gate, "Four dialogue lines enable gate");
-        Capture("gate"); Place(KarmaTutorialStage.FinalGate); await Press(KarmaAction.Interact); await Wait(1000);
+        Check(KarmaInput.BindingLabel(KarmaAction.Interact) == "W", "Final gate displays the W interaction key");
+        Capture("gate"); Place(KarmaTutorialStage.FinalGate - 2); await Press(KarmaAction.Interact);
+        Check(tutorial.Step == KarmaTutorialStep.Gate && game.Tutorial != null, "F outside the gate does not skip the interaction");
+        Place(KarmaTutorialStage.FinalGate); await Press(KarmaAction.Interact); await Wait(1000);
         Check(game.Tutorial == null && game.IsCombat && game.StageIndex == 0 && game.Enemies.Count == 1, "Gate enters original first guardian");
         Capture("combat"); await Wait(150); Check(Mathf.Abs(game.GameCamera.orthographicSize - tutorialCameraSize) < 0.01f, "Tutorial and first combat have identical character screen size");
         Check(game.Enemies[0].PrimaryType == null, "First guardian has no inherited technique");
@@ -143,11 +201,15 @@ public static class KarmaTutorialChecks
         game.StartOpening(); Check(game.Tutorial != null && game.Phase == RunPhase.Tutorial, "Title start enters opening");
         game.RestartSession(); Check(game.Tutorial == null && game.IsCombat, "Restart skips opening");
         game.StartRun(); Check(game.IsCombat && game.Tutorial == null, "Practice and test direct entry preserved");
+        await CheckGuardExit();
+    }
+    static async Task CheckGuardExit()
+    {
         game.ReturnToTitle(); game.StartOpening(); tutorial = game.Tutorial;
         typeof(KarmaTutorial).GetProperty("Lesson").SetValue(tutorial, 3);
         typeof(KarmaTutorial).GetProperty("Step").SetValue(tutorial, KarmaTutorialStep.Practice);
         Place(KarmaTutorial.Stations[3] - 5); await WaitFor(() => tutorial.WaitingForGuard, "Title branch defense hold", 4000);
-        await Press(KarmaAction.Pause); await Press(KarmaAction.Title);
+        await Press(KarmaAction.Pause); Check(game.Paused, "Pause opens before title exit"); await Press(KarmaAction.Title);
         Check(game.Phase == RunPhase.Title && game.Tutorial == null && Time.timeScale == 1 && game.Projectiles.Count == 0, "Title exit cleans hold and restores time");
     }
     static async Task CheckEntry()

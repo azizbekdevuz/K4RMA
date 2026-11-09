@@ -124,9 +124,3 @@
 | `rising` | 상승형 기본·UP01~UP05 실행·자세·정리 회귀 |
 
 상승형의 모든 피격·패링 조합과 수동 플레이 전체를 보장하지 않는다. 결과는 `output/validation/`에 생성하며 보존·삭제는 6절을 따른다.
-
-### 커밋과 병합
-
-- 자기 작업 파일만 선택해 커밋한다. PR에는 변경 내용·검증 결과·공통 변경 여부를 적는다.
-- 최신 `feat/2d-prototype`에서 개인 브랜치를 만들어 push하고 PR 대상도 `feat/2d-prototype`으로 지정한다. 통합 브랜치에 직접 push하지 않는다. 정민 확인 후 **Create a merge commit**으로 병합한다.
-- 병합 후 자신의 작업을 먼저 커밋하고 최신 `origin/feat/2d-prototype`을 작업 브랜치에 merge한다.

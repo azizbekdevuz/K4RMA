@@ -21,6 +21,15 @@ public static class KarmaSfxCompletionChecks
     static int assertions;
     static string runtimeError;
     static readonly HashSet<string> observed = new HashSet<string>();
+    static readonly HashSet<(AudioSource source, int frame, KarmaSfxId cue)> starts = new HashSet<(AudioSource, int, KarmaSfxId)>();
+    static readonly Dictionary<KarmaSfxId, int> playCounts = new Dictionary<KarmaSfxId, int>();
+    static readonly HashSet<KarmaSW05RainBlade> rainSeen = new HashSet<KarmaSW05RainBlade>();
+    static readonly HashSet<KarmaSW05RainBlade> rainLanded = new HashSet<KarmaSW05RainBlade>();
+    static readonly Dictionary<int, int> landingsByFrame = new Dictionary<int, int>();
+    static bool watchRain;
+    static int peakThunderVoices;
+    static readonly BindingFlags AudioFields = BindingFlags.Static | BindingFlags.NonPublic;
+    static Component AudioHost => typeof(KarmaAudio).GetField("host", AudioFields).GetValue(null) as Component;
 
     static KarmaSfxCompletionChecks() { EditorApplication.update += Pump; }
     static void Pump()
@@ -51,7 +60,7 @@ public static class KarmaSfxCompletionChecks
     { return value.GetType().GetMethod(method, Fields).Invoke(value, args); }
     static AudioSource[] Sources()
     {
-        var host = GameObject.Find("K4RMA Audio");
+        var host = AudioHost;
         return host != null ? host.GetComponents<AudioSource>() : Array.Empty<AudioSource>();
     }
     static bool Playing(string clip)
@@ -64,7 +73,28 @@ public static class KarmaSfxCompletionChecks
     {
         foreach (var source in Sources())
             if (source.isPlaying && source.clip != null) observed.Add(source.clip.name);
+        int thunderVoices = 0;
+        foreach (var voice in (Array)typeof(KarmaAudio).GetField("voices", AudioFields).GetValue(null))
+        {
+            if (voice == null || !(bool)Get(voice, "Live")) continue;
+            var source = (AudioSource)Get(voice, "Source");
+            if (source == null || !source.isPlaying) continue;
+            var id = (KarmaSfxId)Get(voice, "Id");
+            if (id == KarmaSfxId.SwPerSwordThunder) thunderVoices++;
+            if (starts.Add((source, (int)Get(voice, "StartedFrame"), id)))
+                playCounts[id] = Count(id) + 1;
+        }
+        peakThunderVoices = Mathf.Max(peakThunderVoices, thunderVoices);
+        if (!watchRain || enemy == null) return;
+        foreach (var blade in ((Transform)Get(enemy, "effectsRoot")).GetComponentsInChildren<KarmaSW05RainBlade>())
+        {
+            rainSeen.Add(blade);
+            if (!blade.Landed || !rainLanded.Add(blade)) continue;
+            landingsByFrame.TryGetValue(Time.frameCount, out int count);
+            landingsByFrame[Time.frameCount] = count + 1;
+        }
     }
+    static int Count(KarmaSfxId id) => playCounts.TryGetValue(id, out int count) ? count : 0;
     static async Task Wait(float seconds)
     {
         double until = EditorApplication.timeSinceStartup + seconds;
@@ -75,12 +105,18 @@ public static class KarmaSfxCompletionChecks
             await Task.Delay(20);
         }
         Sample();
-        Check(runtimeError == null, "No runtime exception: " + runtimeError);
+        if (runtimeError != null) throw new Exception("Runtime exception: " + runtimeError);
     }
     static void Clear()
     {
         KarmaAudio.StopBus(KarmaSfxBus.Gameplay);
         observed.Clear();
+        starts.Clear();
+        playCounts.Clear();
+        rainSeen.Clear();
+        rainLanded.Clear();
+        landingsByFrame.Clear();
+        peakThunderVoices = 0;
     }
     static async Task Prepare(Essence kind)
     {
@@ -96,6 +132,7 @@ public static class KarmaSfxCompletionChecks
         Set(enemy, "engaged", true);
         Set(enemy, "timer", float.MaxValue);
         Set(enemy, "nextUltimate", float.MaxValue);
+        Set(Get(enemy, "behavior"), "PracticeHold", true);
         enemy.transform.position = new Vector3(20, KarmaSpace.GuardianGroundY, 0);
         typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, true);
         await Wait(0.25f);
@@ -120,6 +157,123 @@ public static class KarmaSfxCompletionChecks
         SessionState.SetBool(Key + ".Followup", true);
         RunBatch();
     }
+    public static void RunReleaseBatch()
+    {
+        SessionState.SetBool(Key + ".Release", true);
+        RunBatch();
+    }
+    static void PlacePlayer(Vector2 position)
+    {
+        var body = game.Player.GetComponent<Rigidbody2D>();
+        body.position = position;
+        body.linearVelocity = Vector2.zero;
+        game.Player.transform.position = position;
+        Physics2D.SyncTransforms();
+    }
+    static async Task Until(Func<bool> condition, float timeout, string eventName)
+    {
+        double deadline = EditorApplication.timeSinceStartup + timeout;
+        while (!condition() && EditorApplication.timeSinceStartup < deadline) await Wait(0.02f);
+        Check(condition(), "Observed " + eventName);
+    }
+    static async Task CheckReleases()
+    {
+        await Wait(1.1f);
+        foreach (var attack in new[] { EnemyAttack.SW01, EnemyAttack.SW02 })
+        {
+            await Prepare(Essence.SwordWave);
+            typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+            PlacePlayer(new Vector2(10, KarmaSpace.PlayerHalfHeight));
+            Clear();
+            Pattern(attack);
+            await Until(() => !(bool)Get(enemy, "running"), 25, attack + " completion");
+            await Wait(1.2f);
+            int releases = attack == EnemyAttack.SW01 ? 2 : 1;
+            Check(Count(KarmaSfxId.SwElectricDischarge) == releases, attack + " one electrical cue per released shot");
+            Check(Count(KarmaSfxId.SwWaveLaunch) == 0, attack + " no stacked generic launch");
+            Check(Count(KarmaSfxId.PlDamage) > 0 && Count(KarmaSfxId.SwWaveImpact) == Count(KarmaSfxId.PlDamage),
+                attack + " actual projectile damage has one impact accent");
+        }
+        await Prepare(Essence.SwordWave);
+        Pattern(EnemyAttack.SW03);
+        await Until(() => !(bool)Get(enemy, "running"), 30, "SW03 completion");
+        Check(Count(KarmaSfxId.SwElectricDischarge) == 5, "SW03 one electrical cue for each actual round");
+        Check(Count(KarmaSfxId.SwScarRise) == 0 && Count(KarmaSfxId.SwWaveLaunch) == 0, "SW03 no redundant release cues");
+
+        await Prepare(Essence.SwordWave);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+        Pattern(EnemyAttack.SW04);
+        await Until(() => enemy.Armored, 5, "SW04 formation");
+        Call(game.Player, "Attack");
+        Sample();
+        Check(Count(KarmaSfxId.CombatGuardBlock) == 1 && Count(KarmaSfxId.CombatBladeHit) == 0,
+            "Real player swing into SW04 guard has guard feedback only");
+        await Until(() => Count(KarmaSfxId.SwWaveLaunch) == 4, 15, "All four SW04 counter projectiles");
+        await Wait(1.2f);
+        Check(Count(KarmaSfxId.SwWaveLaunch) == 4 && Count(KarmaSfxId.SwElectricDischarge) == 0, "SW04 one launch cue per shot");
+        Check(Count(KarmaSfxId.PlDamage) > 0 && Count(KarmaSfxId.PlDamage) == Count(KarmaSfxId.SwWaveImpact),
+            "SW04 real projectile contacts have one damage accent");
+
+        await Prepare(Essence.SwordWave);
+        watchRain = true;
+        Pattern(EnemyAttack.SW05);
+        var root = (Transform)Get(enemy, "effectsRoot");
+        await Until(() => root.GetComponentInChildren<KarmaAerialSwordPlanner>() != null, 10, "SW05 planner");
+        int expected = 0;
+        foreach (int size in root.GetComponentInChildren<KarmaAerialSwordPlanner>().GroupSizes) expected += size;
+        await Until(() => !(bool)Get(enemy, "running"), 90, "Full SW05 encounter pattern");
+        watchRain = false;
+        Check(rainSeen.Count == expected && rainLanded.Count == expected, "Every planned sword reaches its real landing");
+        Check(peakThunderVoices > 0 && peakThunderVoices <= 3, "Full rain respects three thunder voices");
+        Check(Count(KarmaSfxId.SwUltimateRain) == 3, "One separate volley cue for each rain group");
+        int simultaneous = 0;
+        foreach (int count in landingsByFrame.Values) simultaneous = Mathf.Max(simultaneous, count);
+        Debug.Log("SW05 runtime audit. Swords=" + expected + ", landings=" + rainLanded.Count
+            + ", retained thunder starts=" + Count(KarmaSfxId.SwPerSwordThunder)
+            + ", max landings in one sampled frame=" + simultaneous + ", peak thunder voices=" + peakThunderVoices
+            + ". Same-frame replacement can discard an earlier start. Audible quality requires human review.");
+
+        foreach (var attack in new[] { EnemyAttack.GroundStrike, EnemyAttack.GD02 })
+        {
+            await Prepare(Essence.Guard);
+            typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+            PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+            Pattern(attack);
+            await Until(() => !(bool)Get(enemy, "running"), 15, attack + " completion");
+            var hit = attack == EnemyAttack.GD02 ? KarmaSfxId.GdHeavyHit : KarmaSfxId.GdBasicHit;
+            var swing = attack == EnemyAttack.GD02 ? KarmaSfxId.GdHeavySwing : KarmaSfxId.GdBasicSwing;
+            Check(Count(swing) == (attack == EnemyAttack.GD02 ? 1 : 2), "Guard actual releases counted once");
+            Check(Count(KarmaSfxId.PlDamage) > 0 && Count(hit) == Count(KarmaSfxId.PlDamage), "Guard actual contacts counted once");
+            Check(Count(KarmaSfxId.GdHeavySlam) == 0, "GD02/basic do not stack the GD04 ground slam");
+        }
+        await CheckReflection();
+        await Prepare(Essence.Guard);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        PlacePlayer(new Vector2(17, 30));
+        Set(enemy, "shieldUntil", enemy.FightSeconds + 100);
+        Pattern(EnemyAttack.GD04);
+        await Until(() => Count(KarmaSfxId.GdHeavySlam) == 1, 5, "GD04 actual ground slam");
+        PlacePlayer(new Vector2(enemy.Position.x + 3, KarmaSpace.PlayerHalfHeight));
+        await Until(() => !(bool)Get(enemy, "running"), 15, "GD04 rear-counter completion");
+        Check(Count(KarmaSfxId.GdCounter) == 1 && Count(KarmaSfxId.GdHeavySwing) == 0, "GD04 rear counter keeps its dedicated release cue");
+        Check(Count(KarmaSfxId.GdHeavyHit) == 1 && Count(KarmaSfxId.GdHeavySlam) == 1, "Rear-counter contact and preceding ground slam are separate events");
+
+        var bed = Array.Find(Sources(), source => source.clip != null && source.clip.name == "Amb_Arena_Loop");
+        Check(bed != null && Mathf.Abs(bed.volume - 0.28f * KarmaPreferences.MusicVolume) < 0.001f,
+            "Actual background music uses its cue gain and Music setting");
+        Check(Mathf.Abs(AudioListener.volume - (KarmaPreferences.Muted ? 0 : KarmaPreferences.MasterVolume)) < 0.001f,
+            "Master and mute apply once through AudioListener");
+        game.TogglePause();
+        await Wait(0.1f);
+        int heldSample = bed.timeSamples;
+        await Wait(0.15f);
+        Check(bed.timeSamples == heldSample, "Music playhead holds during ordinary pause");
+        game.TogglePause();
+        await Wait(0.15f);
+        Check(bed.timeSamples > heldSample, "Music resumes its existing playhead");
+        await CheckLifecycle();
+    }
     static async Task CheckReflection()
     {
         await Prepare(Essence.Guard);
@@ -132,7 +286,8 @@ public static class KarmaSfxCompletionChecks
         while (game.Player.ParryCount == parries && EditorApplication.timeSinceStartup < parryDeadline)
         {
             foreach (var sprite in ((Transform)Get(enemy, "effectsRoot")).GetComponentsInChildren<SpriteRenderer>())
-                if (sprite.name == "GD03 큰 방패 투척")
+                if (sprite.GetComponent<TrailRenderer>() != null
+                    && sprite.sprite == KarmaArtwork.Sprite("GuardBossVFX", "WholeHot"))
                 {
                     var body = game.Player.GetComponent<Rigidbody2D>();
                     body.position = sprite.transform.position;
@@ -146,6 +301,8 @@ public static class KarmaSfxCompletionChecks
         Check(observed.Contains("GD_Shield_Break"), "GD03 breaks active shield; active=" + enemy.AutoShieldActive + " observed=" + string.Join(",", observed));
         await Wait(2);
         Check(observed.Contains("Combat_Boss_Stagger"), "Reflected shield actually stuns Guard");
+        Check(Count(KarmaSfxId.GdShieldBreak) == 1 && Count(KarmaSfxId.CombatBossStagger) == 1
+            && Count(KarmaSfxId.CombatPerfectParry) == 1, "Reflection has one shield break, one delayed stagger and one parry");
     }
     static async Task CheckLifecycle()
     {
@@ -154,11 +311,10 @@ public static class KarmaSfxCompletionChecks
         typeof(KarmaAudio).GetMethod("Reset", privateStatic).Invoke(null, null);
         typeof(KarmaAudio).GetMethod("Boot", privateStatic).Invoke(null, null);
         await Wait(0.15f);
-        int hosts = 0;
-        foreach (var node in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
-            if (node.name == "K4RMA Audio") hosts++;
-        Check(hosts == 1, "Subsystem reset leaves one audio host");
-        Check(UnityEngine.Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None).Length == 1, "One audio listener after subsystem reset");
+        var host = AudioHost;
+        Check(host != null && UnityEngine.Object.FindObjectsByType(host.GetType(),
+            FindObjectsInactive.Include).Length == 1, "Subsystem reset leaves one audio host");
+        Check(UnityEngine.Object.FindObjectsByType<AudioListener>().Length == 1, "One audio listener after subsystem reset");
         KarmaAudio.Play(KarmaSfxId.UiConfirm);
         Check(Playing("UI_Confirm"), "Playback recreated after subsystem reset");
     }
@@ -171,6 +327,12 @@ public static class KarmaSfxCompletionChecks
         {
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             Check(game != null, "Game exists in Play Mode");
+            if (SessionState.GetBool(Key + ".Release", false))
+            {
+                await CheckReleases();
+                Finish("PASS: " + assertions + " live release, contact, rain and duplicate-feedback assertions. Audio quality unapproved.", 0);
+                return;
+            }
             if (SessionState.GetBool(Key + ".Followup", false))
             {
                 await CheckReflection();
@@ -334,6 +496,7 @@ public static class KarmaSfxCompletionChecks
     {
         Application.logMessageReceived -= CaptureError;
         SessionState.EraseBool(Key + ".Followup");
+        SessionState.EraseBool(Key + ".Release");
         SessionState.SetBool(Key, false);
         Directory.CreateDirectory("output/validation");
         File.WriteAllText("output/validation/sfx-completion.txt", result);

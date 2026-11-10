@@ -10,6 +10,8 @@ namespace KarmaPrototype
             public UP05Pattern(KarmaEnemy owner) : base(owner) { }
             public override IEnumerator Execute()
             {
+                // Recovery and pattern interruption clear this through the existing host lifecycle.
+                owner.fullShield = true;
                 owner.state = ActionState.Telegraph;
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
                 float warning = owner.Warning(0.62f);

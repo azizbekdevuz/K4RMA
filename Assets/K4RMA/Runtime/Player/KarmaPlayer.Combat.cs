@@ -14,7 +14,7 @@ namespace KarmaPrototype
         int trainingExecution;
         float normalSwordPressureUntil;
         internal bool SwordPressureActive { get { return !airSlashRunning && Time.time < normalSwordPressureUntil && Time.time < nextSword; } }
-        bool CanSword() { return game.AllowsPlayerActions && Health > 0 && Time.time >= nextSword && !airSlashRunning && !Stunned && !Shielded && !techniques.CounterReady(Time.time); }
+        bool CanSword() { return game.AllowsPlayerActions && Health > 0 && Time.time >= nextSword && !airSlashRunning && !ControlLocked && !Shielded && !techniques.CounterReady(Time.time); }
         Vector2 AttackDirection()
         {
             float vertical = KarmaInput.Vertical;

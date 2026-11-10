@@ -40,10 +40,12 @@ namespace KarmaPrototype
                 airborneSinceGrounded = false;
             }
             else if (!grounded && hasGroundedForLanding) airborneSinceGrounded = true;
-            if (Stunned)
+            UpdateCrowdControl(grounded);
+            if (ControlLocked)
             {
                 body.gravityScale = game.Config.gravityScale;
-                body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+                if (!KnockedAirborne) body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+                if (Position.y < KarmaSpace.Units(-8)) game.PlayerDied();
                 return;
             }
             if (airSlashRunning)

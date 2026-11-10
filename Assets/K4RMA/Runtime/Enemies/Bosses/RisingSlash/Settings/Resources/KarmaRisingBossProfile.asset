@@ -28,7 +28,7 @@ MonoBehaviour:
     groundBladeHeight: 12
     crossingWarning: 0.65
     crossingReset: 0.65
-    shieldDamageMultiplier: 0.3
+    shieldDamageMultiplier: 0.7
     damageScale: 1
     movementScale: 1
     decisionScale: 1

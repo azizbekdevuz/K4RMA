@@ -17,6 +17,17 @@ namespace KarmaPrototype
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Rise") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride, nextAirPursuit;
+            KarmaRisingBarrier barrier;
+            public override bool ReduceDamage(Vector2 source) => barrier != null && barrier.Formed;
+            public void BeginBarrier(float seconds)
+            {
+                if (barrier == null) barrier = KarmaRisingBarrier.Begin(owner, seconds);
+            }
+            public void ClearBarrier()
+            {
+                if (barrier != null) barrier.End();
+                barrier = null;
+            }
             Transform fragmentsRoot;
             public override Transform PersistentEffects => fragmentsRoot;
             public Transform FragmentsRoot
@@ -40,6 +51,7 @@ namespace KarmaPrototype
             public override void Interrupt(bool preservePressure)
             {
                 base.Interrupt(preservePressure);
+                ClearBarrier();
                 ClearFragments();
                 motionContact = null;
                 KarmaRisingAudio.StopPattern();
@@ -79,7 +91,12 @@ namespace KarmaPrototype
                 Register(EnemyAttack.UP04, new UP04Pattern(owner));
                 Register(EnemyAttack.UP05, new UP05Pattern(owner));
             }
-            public override void Initialize() { owner.animator.ConfigureRisingPresentation(); }
+            public override void Initialize()
+            {
+                owner.animator.ConfigureRisingPresentation();
+                // The rising boss uses its golden sphere instead of the shared white halo.
+                owner.shieldHalo.gameObject.SetActive(false);
+            }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             {
                 var owned = new HashSet<Essence>(inherited);
@@ -117,6 +134,14 @@ namespace KarmaPrototype
                 }
                 return total > 0;
             }
+            public override KarmaBossAttack CreateAttackComponent(GameObject target)
+                => target.AddComponent<KarmaRisingFragmentAttack>();
+            public void FragmentReturned(Vector2 point)
+            {
+                if (!owner.Active || owner.fullShield) return;
+                owner.pendingParry = true;
+                KarmaRisingPolish.ParryBreak(owner.effectsRoot, point);
+            }
             public override void ContactStarting(EnemyAttack pattern, KarmaAttackContact contact)
             {
                 // Lethal damage can cancel the pattern before ContactResolved runs.
@@ -124,6 +149,9 @@ namespace KarmaPrototype
             }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
+                if (parried && contact.ParryWithoutRiposte && fragmentsRoot != null)
+                    foreach (var shard in fragmentsRoot.GetComponentsInChildren<KarmaRisingFragmentAttack>())
+                        if (shard.Matches(contact)) { shard.Reflect(); break; }
                 bool knockback = GuardEmpowered && pattern == EnemyAttack.GroundStrike && damaged && !parried;
                 if (knockback)
                 {
@@ -161,6 +189,7 @@ namespace KarmaPrototype
             {
                 knockbackLeft = 0;
                 knockbackSoundPending = false;
+                ClearBarrier();
                 ClearFragments();
                 motionContact = null;
                 KarmaRisingAudio.StopPattern();

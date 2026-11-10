@@ -10,7 +10,9 @@ namespace KarmaPrototype
             public override IEnumerator Execute()
             {
                 Vector2 start = owner.Position;
-                bool empowered = ((RisingBossBehavior)owner.behavior).GuardEmpowered;
+                var rising = (RisingBossBehavior)owner.behavior;
+                bool empowered = rising.GuardEmpowered;
+                if (empowered) rising.BeginBarrier(0f);
                 Vector2 landing = new Vector2(Mathf.Clamp(owner.game.Player.Position.x,
                     KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY);
                 Vector2 area = KarmaSpace.Units(empowered ? new Vector2(8.5f, 3.2f) : new Vector2(6.5f, 1.25f));
@@ -30,7 +32,8 @@ namespace KarmaPrototype
                 if (owner.Active && start.y > landing.y) KarmaRisingAudio.Descent(fallTime);
                 yield return owner.Motion(landing, fallTime, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
                 // The shards burst from the impact point when the downward strike lands.
-                if (empowered) new UP04Pattern(owner).Burst(landing);
+                rising.ClearBarrier();
+                if (empowered && owner.Active) new UP04Pattern(owner).Burst(landing);
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 if (owner.Active && start.y > landing.y && Mathf.Approximately(owner.Position.y, landing.y))
                     KarmaRisingAudio.Landing();

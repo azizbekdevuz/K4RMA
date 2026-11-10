@@ -12,6 +12,7 @@ namespace KarmaPrototype
             {
                 // Recovery and pattern interruption clear this through the existing host lifecycle.
                 owner.fullShield = true;
+                ((RisingBossBehavior)owner.behavior).BeginBarrier(0.5f);
                 owner.state = ActionState.Telegraph;
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
                 float warning = owner.Warning(0.62f);
@@ -64,6 +65,7 @@ namespace KarmaPrototype
                 }
                 var returnPoint = new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground);
                 yield return owner.Motion(returnPoint, DashSeconds(returnPoint, ultimate: true), Vector2.zero);
+                ((RisingBossBehavior)owner.behavior).ClearBarrier();
                 yield return owner.Recovery(2.5f);
             }
 

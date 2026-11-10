@@ -9,6 +9,8 @@ namespace KarmaPrototype
             public UP02Pattern(KarmaEnemy owner) : base(owner) { }
             public override IEnumerator Execute()
             {
+                var rising = (RisingBossBehavior)owner.behavior;
+                if (rising.GuardEmpowered) rising.BeginBarrier(0.26f);
                 Vector2 start = owner.Position;
                 Vector2 target = start;
                 owner.state = ActionState.Telegraph;

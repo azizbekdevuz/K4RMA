@@ -6,6 +6,7 @@ namespace KarmaPrototype
     [Serializable]
     public sealed class KarmaRisingBossSettings : KarmaBossBalance
     {
+        public KarmaRisingBossSettings() { shieldDamageMultiplier = 0.7f; }
         [NonSerialized] KarmaRisingPatternWeights.RisingPatternWeightValues patternWeights;
         public KarmaRisingPatternWeights.RisingPatternWeightValues Weights => patternWeights ?? (patternWeights = KarmaRisingPatternWeights.LoadCopy());
         [Header("상승베기형")]

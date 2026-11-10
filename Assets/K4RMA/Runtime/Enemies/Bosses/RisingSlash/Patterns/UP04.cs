@@ -33,14 +33,35 @@ namespace KarmaPrototype
                     float rad = degrees * Mathf.Deg2Rad;
                     Vector2 launch = origin + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * KarmaSpace.Units(1.35f);
                     AimFragment(landing, launch, degrees, life, out _, out var velocity);
-                    var shot = owner.Attack(launch, velocity, shard, life, Settings.fragmentDamageMultiplier,
-                        new KarmaAttackContact(), 0f, visualPose: "Blade", parryStun: true, parent: root);
+                    int fragment = Random.Range(0, 3);
+                    // The contact suppresses the instant counter riposte; the shard itself returns.
+                    var contact = new KarmaAttackContact(parryWithoutRiposte: true);
+                    var shot = KarmaBossAttack.Spawn(owner.game, owner, root, launch, velocity, shard, life + 3f,
+                        owner.Damage * Settings.fragmentDamageMultiplier, Color.white, contact, 0f,
+                        visualPose: "Fragment" + fragment, visualSheet: "RisingBossVFX",
+                        renderArtwork: false, sourcePattern: owner.selected);
                     if (shot == null) continue;
+                    ((KarmaRisingFragmentAttack)shot).ConfigureFragment(owner, contact, life,
+                        ((RisingBossBehavior)owner.behavior).FragmentReturned);
                     shot.name = "방패 파편";
-                    shot.Repaint(KarmaRisingArt.Get("Fragment" + (i % 8)), false);
+                    // Irregular chips vary visually; their damage footprint and flight stay unchanged.
+                    var sprite = KarmaRisingArt.Get("Fragment" + fragment);
+                    if (sprite != null && shot.Visual != null)
+                    {
+                        shot.Visual.sprite = sprite;
+                        // Match the original fragments' full visual footprint instead of fitting
+                        // a small chip inside it. Damage still uses the unchanged shard size.
+                        shot.Visual.transform.localScale = new Vector3(
+                            shard.x / sprite.bounds.size.x, shard.y / sprite.bounds.size.y, 1);
+                        shot.Visual.transform.localRotation = Quaternion.Euler(0, 0, degrees + Random.Range(-12f, 12f));
+                        shot.Visual.flipX = Random.value < 0.5f;
+                        shot.Visual.gameObject.SetActive(true);
+                        shot.Visual.gameObject.AddComponent<KarmaRisingFragmentVisual>().Initialize(
+                            Random.Range(35f, 75f) * (i % 2 == 0 ? 1 : -1), life);
+                    }
                     if (shot.Visual != null)
                     {
-                        shot.Visual.color = new Color(0.65f, 1f, 1f, 1f);
+                        shot.Visual.color = Color.white;
                         shot.Visual.sortingOrder = 35;
                     }
                 }

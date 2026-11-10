@@ -45,7 +45,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.SwordWave, "l");
             Bind(KarmaAction.RisingSlash, "leftShift");
             Bind(KarmaAction.Guard, "k");
-            Bind(KarmaAction.Interact, "f");
+            Bind(KarmaAction.Interact, "w");
             Bind(KarmaAction.Pause, "escape");
             Bind(KarmaAction.Confirm, "enter");
             Bind(KarmaAction.Restart, "r");

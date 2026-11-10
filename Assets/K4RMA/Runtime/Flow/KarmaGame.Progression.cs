@@ -16,7 +16,7 @@ namespace KarmaPrototype
         public bool GuardianInheriting => Phase == RunPhase.Transition && guardianInheriting;
         public void StartRun()
         {
-            Tutorial = null; OpeningArrivalFade = 0;
+            Tutorial = null; OpeningArrivalFade = 0; OpeningArrivalSpeech = null;
             KarmaAudio.Play(KarmaSfxId.UiConfirm);
             guardianInheriting = false;
             fallenGuardian = null;

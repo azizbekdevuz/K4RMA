@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
-    public enum KarmaTrainingAttack { Sword, Wave, Rising }
+    public enum KarmaTrainingAttack { Sword, Wave, Rising, Guard }
     public sealed class KarmaTrainingTarget : MonoBehaviour
     {
         public KarmaTrainingAttack Kind;

@@ -7,6 +7,72 @@ namespace KarmaPrototype
         bool confined;
         float arenaLeft, arenaRight;
         public bool Stunned { get { return Time.time < stunUntil; } }
+        public enum CrowdControlKind { Shock, Airborne }
+        float shockUntil, airborneUntil;
+        bool airborneControl, leftGroundUnderControl;
+        public bool Shocked => Time.time < shockUntil;
+        public bool KnockedAirborne => airborneControl && Time.time < airborneUntil;
+        public bool ControlLocked => Stunned || Shocked || KnockedAirborne;
+
+        // Standalone CC respects defenses. For attack contacts prefer TakeCrowdControlHit.
+        // Durations use scaled seconds; launchVelocity uses Unity world units / second.
+        public bool ApplyShock(float seconds) => ApplyCrowdControl(CrowdControlKind.Shock, seconds, Vector2.zero, false);
+        public bool ApplyAirborne(Vector2 launchVelocity, float maxSeconds = 3f)
+            => ApplyCrowdControl(CrowdControlKind.Airborne, maxSeconds, launchVelocity, false);
+
+        // Return true only when damage landed and the requested CC was accepted.
+        // Reuse the normal damage path, including counter, guard, tutorial and test immunity.
+        public bool TakeCrowdControlHit(float damage, CrowdControlKind kind, float seconds,
+            Vector2 launchVelocity = default)
+        {
+            if (!ValidCrowdControl(kind, seconds, launchVelocity) || game == null || body == null
+                || game.Paused || !game.AllowsPlayerActions || Health <= 0 || !Finite(damage) || damage <= 0) return false;
+            float before = Health;
+            TakeDamage(damage);
+            return Health < before && Health > 0 && ApplyCrowdControl(kind, seconds, launchVelocity, true);
+        }
+
+        static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        static bool ValidCrowdControl(CrowdControlKind kind, float seconds, Vector2 velocity)
+            => Finite(seconds) && seconds > 0 && (kind == CrowdControlKind.Shock
+                || kind == CrowdControlKind.Airborne && Finite(velocity.x) && Finite(velocity.y) && velocity.y > 0);
+
+        bool ApplyCrowdControl(CrowdControlKind kind, float seconds, Vector2 velocity, bool confirmedHit)
+        {
+            if (!ValidCrowdControl(kind, seconds, velocity) || game == null || body == null
+                || !game.AllowsPlayerActions || game.Paused || Health <= 0) return false;
+            if (!confirmedHit && (Shielded || TestInvincible || game.Tutorial != null
+                || Time.time < invulnerableUntil || techniques.CounterReady(Time.time))) return false;
+            CancelAirSlash();
+            move = 0; jumpBufferedUntil = airSlashBufferedUntil = 0; lastGrounded = -10;
+            Crouching = false;
+            body.gravityScale = game.Config.gravityScale;
+            if (kind == CrowdControlKind.Shock)
+            {
+                shockUntil = Mathf.Max(shockUntil, Time.time + seconds);
+                if (!KnockedAirborne) body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+            }
+            else
+            {
+                // A repeated launch refreshes the cap and replaces launch velocity.
+                airborneControl = true; leftGroundUnderControl = false;
+                airborneUntil = Time.time + seconds;
+                body.linearVelocity = velocity;
+            }
+            animator.Hurt();
+            return true;
+        }
+
+        void UpdateCrowdControl(bool grounded)
+        {
+            if (!airborneControl) return;
+            if (!grounded) leftGroundUnderControl = true;
+            if (Time.time >= airborneUntil || leftGroundUnderControl && grounded && body.linearVelocity.y <= 0.1f)
+            {
+                airborneControl = leftGroundUnderControl = false;
+                airborneUntil = 0;
+            }
+        }
         public int ParryCount { get; private set; }
         public void Stun(float seconds)
         {
@@ -58,7 +124,8 @@ namespace KarmaPrototype
         }
         public void ClearStatus()
         {
-            CancelAirSlash(); stunUntil = 0; ReleaseArena();
+            CancelAirSlash(); stunUntil = shockUntil = airborneUntil = 0;
+            airborneControl = leftGroundUnderControl = false; ReleaseArena();
         }
     }
 }

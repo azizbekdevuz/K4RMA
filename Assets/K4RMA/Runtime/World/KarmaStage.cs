@@ -39,8 +39,8 @@ namespace KarmaPrototype
             KarmaVisuals.Box(parent,"도장 처마",new Vector2(20,8),new Vector2(44,.5f),new Color(.3f,.12f,.12f),-8);
             }
             Solid(parent, "Ground", new Vector2(ArenaCenter, -0.55f), new Vector2(ArenaWidth + 4, 1.1f), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
-            Solid(parent, "Left wall", new Vector2(ArenaLeft - 1, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
-            Solid(parent, "Right wall", new Vector2(ArenaRight + 1, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
+            Solid(parent, "Left wall", new Vector2(ArenaLeft, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
+            Solid(parent, "Right wall", new Vector2(ArenaRight, KarmaSpace.Units(4)), new Vector2(1, KarmaSpace.Units(12)), stone).GetComponent<SpriteRenderer>().enabled = !suppliedBackground;
         }
         static void BuildArtworkProps(Transform parent, int stage)
         {
@@ -73,9 +73,9 @@ namespace KarmaPrototype
                 ground.localScale = new Vector3(ArenaWidth + 4, 1.1f, 1);
             }
             var left = parent.Find("Left wall");
-            if (left != null) left.localPosition = new Vector3(ArenaLeft - 1, KarmaSpace.Units(4), 0);
+            if (left != null) left.localPosition = new Vector3(ArenaLeft, KarmaSpace.Units(4), 0);
             var right = parent.Find("Right wall");
-            if (right != null) right.localPosition = new Vector3(ArenaRight + 1, KarmaSpace.Units(4), 0);
+            if (right != null) right.localPosition = new Vector3(ArenaRight, KarmaSpace.Units(4), 0);
         }
         static BoxCollider2D Solid(Transform parent, string name, Vector2 p, Vector2 size, Color color)
         {

@@ -71,6 +71,6 @@ MonoBehaviour:
   healAfterPersonalization: 45
   koreanFont: {fileID: 0}
   spriteMaterial: {fileID: 2100000, guid: 1c46e35ad003c436ba8b625a9e519730, type: 2}
-  swordWaveColor: {r: 1, g: 0.38, b: 0.18, a: 1}
-  risingSlashColor: {r: 0.25, g: 0.9, b: 0.9, a: 1}
+  swordWaveColor: {r: 0.25, g: 0.9, b: 0.9, a: 1}
+  risingSlashColor: {r: 1, g: 0.38, b: 0.18, a: 1}
   guardColor: {r: 0.67, g: 0.48, b: 1, a: 1}

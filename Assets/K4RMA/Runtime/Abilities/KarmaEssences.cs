@@ -48,7 +48,7 @@ namespace KarmaPrototype
 
         public void TryUse(Essence e)
         {
-            if (!game.AllowsPlayerActions || game.Tutorial != null && !game.Tutorial.Learned(e) || player.Stunned || !HasActive(e) || Cooldown(e) > 0) return;
+            if (!game.AllowsPlayerActions || game.Tutorial != null && !game.Tutorial.Learned(e) || player.ControlLocked || !HasActive(e) || Cooldown(e) > 0) return;
             var c = game.Config;
             switch (e)
             {
@@ -68,7 +68,7 @@ namespace KarmaPrototype
         }
         public void TryCounter()
         {
-            if (!game.IsCombat || player.Stunned || !HasRemnant(Essence.Guard)) return;
+            if (!game.IsCombat || player.ControlLocked || !HasRemnant(Essence.Guard)) return;
             bool queued = false;
             foreach (var enemy in game.Enemies)
                 if (enemy != null && enemy.TryQueueParry()) queued = true;

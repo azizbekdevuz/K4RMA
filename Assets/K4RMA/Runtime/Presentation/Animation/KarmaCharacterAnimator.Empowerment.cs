@@ -76,7 +76,7 @@ namespace KarmaPrototype
             }
             Color color = empowermentEssence == Essence.Guard
                 ? new Color(1, 0.9f, 0.4f) : empowermentEssence == Essence.RisingSlash
-                ? new Color(0.4f, 1, 1) : new Color(1, 0.65f, 0.35f);
+                ? new Color(1, 0.65f, 0.35f) : new Color(0.4f, 1, 1);
             picture.color = Color.Lerp(pictureColor, color, Mathf.Sin(t * Mathf.PI) * 0.55f);
             float lift = sheet == "Player" && empowermentEssence == Essence.RisingSlash ? Mathf.Sin(t * Mathf.PI) * 0.35f : 0;
             if (sheet != "Player")

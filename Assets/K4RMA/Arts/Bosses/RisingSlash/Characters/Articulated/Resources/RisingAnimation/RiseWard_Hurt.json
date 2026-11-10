@@ -1,0 +1,101 @@
+{
+  "form": "RiseWard",
+  "pose": "Hurt",
+  "atlas": "RiseWard_Hurt",
+  "sourcePose": "Hurt",
+  "ppu": 104.435486,
+  "pivot": {
+    "x": 143.74999576,
+    "y": 247.000000128
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 143,
+        "y": 130
+      },
+      "origin": {
+        "x": 1,
+        "y": 1
+      },
+      "rect": {
+        "x": 4,
+        "y": 4,
+        "width": 292,
+        "height": 248
+      }
+    },
+    {
+      "name": "lowerShield",
+      "parent": 0,
+      "pivot": {
+        "x": 100,
+        "y": 105
+      },
+      "origin": {
+        "x": 44,
+        "y": 90
+      },
+      "rect": {
+        "x": 304,
+        "y": 181,
+        "width": 76,
+        "height": 71
+      }
+    },
+    {
+      "name": "raisedShield",
+      "parent": 0,
+      "pivot": {
+        "x": 156,
+        "y": 68
+      },
+      "origin": {
+        "x": 133,
+        "y": 39
+      },
+      "rect": {
+        "x": 388,
+        "y": 201,
+        "width": 82,
+        "height": 51
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        16,
+        -18
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        -12,
+        14
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        -4,
+        4
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

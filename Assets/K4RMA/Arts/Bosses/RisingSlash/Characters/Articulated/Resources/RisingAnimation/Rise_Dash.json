@@ -1,0 +1,132 @@
+{
+  "form": "Rise",
+  "pose": "Dash",
+  "atlas": "Rise_Dash",
+  "sourcePose": "Dash",
+  "ppu": 125.0,
+  "pivot": {
+    "x": 180.000009,
+    "y": 254.99999975
+  },
+  "parts": [
+    {
+      "name": "rearLeg",
+      "parent": -1,
+      "pivot": {
+        "x": 219,
+        "y": 151
+      },
+      "origin": {
+        "x": 49,
+        "y": 139
+      },
+      "rect": {
+        "x": 4,
+        "y": 388,
+        "width": 181,
+        "height": 120
+      }
+    },
+    {
+      "name": "frontLeg",
+      "parent": -1,
+      "pivot": {
+        "x": 232,
+        "y": 159
+      },
+      "origin": {
+        "x": 198,
+        "y": 143
+      },
+      "rect": {
+        "x": 193,
+        "y": 422,
+        "width": 98,
+        "height": 86
+      }
+    },
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 227,
+        "y": 148
+      },
+      "origin": {
+        "x": 0,
+        "y": 18
+      },
+      "rect": {
+        "x": 4,
+        "y": 145,
+        "width": 331,
+        "height": 235
+      }
+    },
+    {
+      "name": "swordArm",
+      "parent": 2,
+      "pivot": {
+        "x": 220,
+        "y": 106
+      },
+      "origin": {
+        "x": 42,
+        "y": 93
+      },
+      "rect": {
+        "x": 4,
+        "y": 72,
+        "width": 189,
+        "height": 65
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        -10,
+        10,
+        0,
+        0
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        12,
+        -13,
+        0,
+        4
+      ]
+    },
+    {
+      "time": 0.5,
+      "angles": [
+        -10,
+        10,
+        0,
+        0
+      ]
+    },
+    {
+      "time": 0.75,
+      "angles": [
+        12,
+        -13,
+        0,
+        -4
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        -10,
+        10,
+        0,
+        0
+      ]
+    }
+  ]
+}

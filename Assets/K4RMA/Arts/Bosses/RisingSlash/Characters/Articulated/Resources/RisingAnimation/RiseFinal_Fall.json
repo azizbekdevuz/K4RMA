@@ -1,0 +1,101 @@
+{
+  "form": "RiseFinal",
+  "pose": "Fall",
+  "atlas": "RiseFinal_Fall",
+  "sourcePose": "Fall",
+  "ppu": 83.870964,
+  "pivot": {
+    "x": 98.2499997,
+    "y": 326.9999999854
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 145,
+        "y": 194
+      },
+      "origin": {
+        "x": 1,
+        "y": 57
+      },
+      "rect": {
+        "x": 4,
+        "y": 246,
+        "width": 228,
+        "height": 262
+      }
+    },
+    {
+      "name": "weapon",
+      "parent": 0,
+      "pivot": {
+        "x": 197,
+        "y": 99
+      },
+      "origin": {
+        "x": 64,
+        "y": 1
+      },
+      "rect": {
+        "x": 240,
+        "y": 377,
+        "width": 150,
+        "height": 131
+      }
+    },
+    {
+      "name": "rearLeg",
+      "parent": 0,
+      "pivot": {
+        "x": 127,
+        "y": 223
+      },
+      "origin": {
+        "x": 67,
+        "y": 205
+      },
+      "rect": {
+        "x": 398,
+        "y": 384,
+        "width": 77,
+        "height": 124
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        -8,
+        0
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        -16,
+        8
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        -6,
+        12
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "form": "Rise",
+  "pose": "Rising",
+  "atlas": "Rise_Rising",
+  "sourcePose": "Rising",
+  "ppu": 125.0,
+  "pivot": {
+    "x": 149.9999905,
+    "y": 345.0000002
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 162,
+        "y": 164
+      },
+      "origin": {
+        "x": 27,
+        "y": 49
+      },
+      "rect": {
+        "x": 4,
+        "y": 200,
+        "width": 234,
+        "height": 308
+      }
+    },
+    {
+      "name": "upperArm",
+      "parent": 0,
+      "pivot": {
+        "x": 213,
+        "y": 126
+      },
+      "origin": {
+        "x": 204,
+        "y": 70
+      },
+      "rect": {
+        "x": 246,
+        "y": 434,
+        "width": 49,
+        "height": 74
+      }
+    },
+    {
+      "name": "forearm",
+      "parent": 1,
+      "pivot": {
+        "x": 235,
+        "y": 78
+      },
+      "origin": {
+        "x": 62,
+        "y": 10
+      },
+      "rect": {
+        "x": 303,
+        "y": 417,
+        "width": 191,
+        "height": 91
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        4,
+        20,
+        35
+      ]
+    },
+    {
+      "time": 0.3,
+      "angles": [
+        0,
+        10,
+        15
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        -5,
+        -18,
+        -25
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

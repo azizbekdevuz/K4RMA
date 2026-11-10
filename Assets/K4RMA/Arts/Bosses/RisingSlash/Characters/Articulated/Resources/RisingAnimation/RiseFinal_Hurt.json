@@ -1,0 +1,101 @@
+{
+  "form": "RiseFinal",
+  "pose": "Hurt",
+  "atlas": "RiseFinal_Hurt",
+  "sourcePose": "Hurt",
+  "ppu": 83.870964,
+  "pivot": {
+    "x": 139.750002,
+    "y": 272.00000002
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 155,
+        "y": 149
+      },
+      "origin": {
+        "x": 1,
+        "y": 48
+      },
+      "rect": {
+        "x": 4,
+        "y": 282,
+        "width": 279,
+        "height": 226
+      }
+    },
+    {
+      "name": "raisedBlade",
+      "parent": 0,
+      "pivot": {
+        "x": 218,
+        "y": 89
+      },
+      "origin": {
+        "x": 103,
+        "y": 2
+      },
+      "rect": {
+        "x": 291,
+        "y": 396,
+        "width": 151,
+        "height": 112
+      }
+    },
+    {
+      "name": "lowerShield",
+      "parent": 0,
+      "pivot": {
+        "x": 113,
+        "y": 161
+      },
+      "origin": {
+        "x": 65,
+        "y": 140
+      },
+      "rect": {
+        "x": 4,
+        "y": 195,
+        "width": 81,
+        "height": 79
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        18,
+        -16
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        -14,
+        12
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        -4,
+        4
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

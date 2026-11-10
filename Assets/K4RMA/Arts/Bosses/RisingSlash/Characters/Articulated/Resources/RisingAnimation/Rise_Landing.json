@@ -1,0 +1,101 @@
+{
+  "form": "Rise",
+  "pose": "Landing",
+  "atlas": "Rise_Landing",
+  "sourcePose": "Landing",
+  "ppu": 125.0,
+  "pivot": {
+    "x": 225.00001049999997,
+    "y": 252.99999970000002
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 213,
+        "y": 158
+      },
+      "origin": {
+        "x": 21,
+        "y": 31
+      },
+      "rect": {
+        "x": 4,
+        "y": 281,
+        "width": 387,
+        "height": 227
+      }
+    },
+    {
+      "name": "swordArm",
+      "parent": 0,
+      "pivot": {
+        "x": 176,
+        "y": 137
+      },
+      "origin": {
+        "x": 9,
+        "y": 122
+      },
+      "rect": {
+        "x": 4,
+        "y": 139,
+        "width": 179,
+        "height": 134
+      }
+    },
+    {
+      "name": "freeArm",
+      "parent": 0,
+      "pivot": {
+        "x": 291,
+        "y": 165
+      },
+      "origin": {
+        "x": 282,
+        "y": 153
+      },
+      "rect": {
+        "x": 191,
+        "y": 203,
+        "width": 62,
+        "height": 70
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        12,
+        -8
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        4,
+        -3
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        -8,
+        5
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

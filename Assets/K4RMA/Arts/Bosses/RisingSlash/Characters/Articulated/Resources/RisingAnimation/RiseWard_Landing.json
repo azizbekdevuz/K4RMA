@@ -1,0 +1,101 @@
+{
+  "form": "RiseWard",
+  "pose": "Landing",
+  "atlas": "RiseWard_Landing",
+  "sourcePose": "Landing",
+  "ppu": 104.435486,
+  "pivot": {
+    "x": 120.74999580000001,
+    "y": 192.999999855
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 132,
+        "y": 116
+      },
+      "origin": {
+        "x": 1,
+        "y": 1
+      },
+      "rect": {
+        "x": 4,
+        "y": 58,
+        "width": 258,
+        "height": 194
+      }
+    },
+    {
+      "name": "frontShield",
+      "parent": 0,
+      "pivot": {
+        "x": 210,
+        "y": 144
+      },
+      "origin": {
+        "x": 193,
+        "y": 124
+      },
+      "rect": {
+        "x": 270,
+        "y": 185,
+        "width": 66,
+        "height": 67
+      }
+    },
+    {
+      "name": "rearShield",
+      "parent": 0,
+      "pivot": {
+        "x": 142,
+        "y": 143
+      },
+      "origin": {
+        "x": 108,
+        "y": 121
+      },
+      "rect": {
+        "x": 344,
+        "y": 179,
+        "width": 82,
+        "height": 73
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        -10,
+        10
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        -3,
+        3
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        7,
+        -7
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

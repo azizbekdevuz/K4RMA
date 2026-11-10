@@ -40,8 +40,8 @@ namespace KarmaPrototype
         [Header("화면 표시")]
         [InspectorName("한글 UI 폰트 (비우면 자동)")] public Font koreanFont;
         [InspectorName("2D 표시 재질 (빌드에 포함)")] public Material spriteMaterial;
-        [InspectorName("검기 색상")] public Color swordWaveColor = new Color(1, 0.38f, 0.18f);
-        [InspectorName("상승베기 색상")] public Color risingSlashColor = new Color(0.25f, 0.9f, 0.9f);
+        [InspectorName("검기 색상")] public Color swordWaveColor = new Color(0.25f, 0.9f, 0.9f);
+        [InspectorName("상승베기 색상")] public Color risingSlashColor = new Color(1, 0.38f, 0.18f);
         [InspectorName("보호막 색상")] public Color guardColor = new Color(0.67f, 0.48f, 1);
         public Color ColorOf(Essence essence)
         {

@@ -16,9 +16,9 @@ namespace KarmaPrototype
             public bool ConsumeQueuedParry() { bool queued = heavyParryQueued; heavyParryQueued = false; return queued; }
             public override void Interrupt() { heavyParryUntil = 0; heavyParryQueued = false; owner.animator.EndHeavyStrike(); }
             public override IEnumerator Execute() { return ExecuteWithTerrain(null); }
-            public IEnumerator ExecuteWithTerrain(Coroutine terrainWave)
+            public IEnumerator ExecuteWithTerrain(Coroutine terrainWave, bool rearCounter = false)
             {
-                yield return Strike(false, rearCounter: terrainWave != null);
+                yield return Strike(false, rearCounter: rearCounter || terrainWave != null);
                 if (!owner.Active || owner.pendingParry) yield break;
                 // Only the inherited sword-wave form gains this follow-up, at 50% HP or below.
                 if (owner.game.Player.Essences.HasRemnant(Essence.SwordWave) && owner.Health <= owner.MaxHealth * 0.5f)
@@ -53,7 +53,7 @@ namespace KarmaPrototype
                 heavyParryUntil = 0;
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.animator.SwingHeavyStrike(); owner.state = ActionState.Attack;
-                if (rearCounter && owner.Active) KarmaAudio.Play(KarmaSfxId.GdCounter);
+                if (owner.Active) KarmaAudio.Play(rearCounter ? KarmaSfxId.GdCounter : KarmaSfxId.GdHeavySwing);
 
                 int parries = owner.game.Player.ParryCount;
                 var contact = new KarmaAttackContact(breaksShieldOnParry: !inDome, parryWithoutRiposte: inDome);
@@ -64,7 +64,7 @@ namespace KarmaPrototype
                         renderArtwork: false, sourcePattern: EnemyAttack.GD02)
                     : owner.Attack(center, Vector2.zero, size, 0.18f, Settings.heavyStrikeDamageMultiplier,
                         contact, Settings.heavyHitStunSeconds, pattern: EnemyAttack.GD02);
-                owner.TryAttackHit(center, center, size, owner.Damage * Settings.heavyStrikeDamageMultiplier, contact, Settings.heavyHitStunSeconds);
+                owner.TryAttackHit(center, center, size, owner.Damage * Settings.heavyStrikeDamageMultiplier, contact, Settings.heavyHitStunSeconds, sourcePattern: EnemyAttack.GD02);
                 if (owner.game.Player.ParryCount != parries)
                 {
                     if (inDome && hitbox != null) { hitbox.gameObject.SetActive(false); Destroy(hitbox.gameObject); }

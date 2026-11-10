@@ -139,6 +139,11 @@ namespace KarmaPrototype
             public override Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.GuardDamageBounds(renderer); }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
+                if (damaged && !parried)
+                {
+                    if (pattern == EnemyAttack.GroundStrike) KarmaAudio.Play(KarmaSfxId.GdBasicHit);
+                    else if (pattern == EnemyAttack.GD02) KarmaAudio.Play(KarmaSfxId.GdHeavyHit);
+                }
                 if (damaged && Dome.Active) Dome.RecordHit();
                 if (parried && contact.ParryWithoutRiposte && Dome.Active) Dome.StunFromParry();
             }

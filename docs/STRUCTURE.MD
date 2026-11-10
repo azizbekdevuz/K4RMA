@@ -188,6 +188,10 @@ K4RMA/
 │       │       │   ├── Combat_Guard_Block.wav
 │       │       │   └── Combat_Perfect_Parry.wav
 │       │       ├── Guard/
+│       │       │   ├── GD_Basic_Hit.wav
+│       │       │   ├── GD_Basic_Swing.wav
+│       │       │   ├── GD02_Heavy_Hit.wav
+│       │       │   ├── GD02_Heavy_Swing.wav
 │       │       │   ├── GD_Counter.wav
 │       │       │   ├── GD_Heavy_Slam.wav
 │       │       │   ├── GD_Protection_Pulse.wav
@@ -223,6 +227,8 @@ K4RMA/
 │       │       │   └── RS_UP05_Final.wav
 │       │       ├── SwordWave/
 │       │       │   ├── SW_Crossing_Blades.wav
+│       │       │   ├── SW_Electric_Discharge.wav
+│       │       │   ├── SW05_PerSword_Thunder.wav
 │       │       │   ├── SW_Energy_Charge.wav
 │       │       │   ├── SW_Scar_Rise.wav
 │       │       │   ├── SW_Ultimate_Rain.wav

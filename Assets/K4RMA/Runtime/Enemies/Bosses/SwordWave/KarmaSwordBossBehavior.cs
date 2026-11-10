@@ -351,6 +351,7 @@ namespace KarmaPrototype
                 KarmaAudio.StopSlot("sw-bed");
                 KarmaAudio.StopSlot("sw-pattern");
                 KarmaAudio.StopSlot("sw-rain");
+                KarmaAudio.StopSlot("sw-rain-impact");
                 skillAfterRetreat = false;
                 if (persistentRoot == null) return;
                 foreach (Transform child in persistentRoot)

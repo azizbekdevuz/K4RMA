@@ -18,6 +18,7 @@ namespace KarmaPrototype
         {
             if (Kind != kind || !tutorial.Accepts(kind) || !hits.Add(execution)) return false;
             shakeUntil = Time.time + 0.22f;
+            KarmaAudio.Play(kind == KarmaTrainingAttack.Guard ? KarmaSfxId.CombatGuardBlock : KarmaSfxId.CombatBladeHit);
             KarmaCombatVFX.SpawnSprite(transform.parent, hitBounds.center, "PlayerVFX", "Barrier", Vector2.one * 2, 0.18f);
             tutorial.Success();
             return true;

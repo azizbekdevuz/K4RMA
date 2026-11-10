@@ -107,6 +107,11 @@ namespace KarmaPrototype
         static void Reset()
         {
             SceneManager.activeSceneChanged -= SceneChanged;
+            if (host != null)
+            {
+                host.gameObject.SetActive(false);
+                Object.Destroy(host.gameObject);
+            }
             host = null;
             ClearHostState();
         }

@@ -29,6 +29,7 @@ public static class KarmaSfxCompletionChecks
         EditorApplication.QueuePlayerLoopUpdate();
         if (!EditorApplication.isPlaying) return;
         Application.runInBackground = true;
+        Sample();
         if (!started) EditorApplication.isPaused = false;
         if (!started && Time.frameCount > 2) { started = true; Run(); }
     }
@@ -73,6 +74,7 @@ public static class KarmaSfxCompletionChecks
             Sample();
             await Task.Delay(20);
         }
+        Sample();
         Check(runtimeError == null, "No runtime exception: " + runtimeError);
     }
     static void Clear()
@@ -113,6 +115,53 @@ public static class KarmaSfxCompletionChecks
     static void CaptureError(string message, string stack, LogType type)
     { if (type == LogType.Exception || type == LogType.Error) runtimeError = message; }
 
+    public static void RunFollowupBatch()
+    {
+        SessionState.SetBool(Key + ".Followup", true);
+        RunBatch();
+    }
+    static async Task CheckReflection()
+    {
+        await Prepare(Essence.Guard);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        Set(enemy, "shieldUntil", enemy.FightSeconds + 100);
+        Clear();
+        int parries = game.Player.ParryCount;
+        Pattern(EnemyAttack.GD03);
+        double parryDeadline = EditorApplication.timeSinceStartup + 5;
+        while (game.Player.ParryCount == parries && EditorApplication.timeSinceStartup < parryDeadline)
+        {
+            foreach (var sprite in ((Transform)Get(enemy, "effectsRoot")).GetComponentsInChildren<SpriteRenderer>())
+                if (sprite.name == "GD03 큰 방패 투척")
+                {
+                    var body = game.Player.GetComponent<Rigidbody2D>();
+                    body.position = sprite.transform.position;
+                    game.Player.transform.position = body.position;
+                    Physics2D.SyncTransforms();
+                    game.Player.BeginCounter();
+                }
+            await Wait(0.02f);
+        }
+        Check(game.Player.ParryCount > parries, "GD03 actual reflection; parries=" + game.Player.ParryCount + " observed=" + string.Join(",", observed));
+        Check(observed.Contains("GD_Shield_Break"), "GD03 breaks active shield; active=" + enemy.AutoShieldActive + " observed=" + string.Join(",", observed));
+        await Wait(2);
+        Check(observed.Contains("Combat_Boss_Stagger"), "Reflected shield actually stuns Guard");
+    }
+    static async Task CheckLifecycle()
+    {
+        game.ReturnToTitle();
+        var privateStatic = BindingFlags.Static | BindingFlags.NonPublic;
+        typeof(KarmaAudio).GetMethod("Reset", privateStatic).Invoke(null, null);
+        typeof(KarmaAudio).GetMethod("Boot", privateStatic).Invoke(null, null);
+        await Wait(0.15f);
+        int hosts = 0;
+        foreach (var node in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+            if (node.name == "K4RMA Audio") hosts++;
+        Check(hosts == 1, "Subsystem reset leaves one audio host");
+        Check(UnityEngine.Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None).Length == 1, "One audio listener after subsystem reset");
+        KarmaAudio.Play(KarmaSfxId.UiConfirm);
+        Check(Playing("UI_Confirm"), "Playback recreated after subsystem reset");
+    }
     static async void Run()
     {
         Application.logMessageReceived += CaptureError;
@@ -122,6 +171,13 @@ public static class KarmaSfxCompletionChecks
         {
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             Check(game != null, "Game exists in Play Mode");
+            if (SessionState.GetBool(Key + ".Followup", false))
+            {
+                await CheckReflection();
+                await CheckLifecycle();
+                Finish("PASS: " + assertions + " reflection and subsystem lifecycle assertions", 0);
+                return;
+            }
             var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
             Check(library != null && library.Clips.Length == (int)KarmaSfxId.Count, "Catalog length");
             foreach (var clip in library.Clips) Check(clip != null, "Serialized clip resolves");
@@ -232,10 +288,52 @@ public static class KarmaSfxCompletionChecks
             game.ReturnToTitle();
             await Wait(0.2f);
             Check(!Playing("Amb_Arena_Loop"), "Title stops ambience");
+            game.StartRun();
+            enemy = game.Enemies[0];
+            Set(enemy, "timer", float.MaxValue);
+            Set(enemy, "engaged", true);
+            typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, true);
+            enemy.transform.position = new Vector3(game.Player.Position.x + 5, KarmaSpace.GuardianGroundY, 0);
+            await Wait(0.3f);
+            Clear();
+            health = enemy.Health;
+            game.Player.Essences.TryUse(Essence.SwordWave);
+            Check(Playing("SW_Wave_Launch"), "Accepted player wave launch");
+            await Wait(0.8f);
+            Check(enemy.Health < health && observed.Contains("SW_Wave_Impact"), "Player wave confirmed impact");
+            Clear();
+            game.Player.Essences.TryUse(Essence.RisingSlash);
+            Check(Playing("PL_Rising_Slash"), "Accepted active rising slash");
+            game.Player.Essences.TryUse(Essence.Guard);
+            Check(Playing("GD_Shield_Activate"), "Accepted player guard activation");
+            game.Player.Essences.Preview(Essence.RisingSlash);
+            game.Player.Essences.Confirm(out _);
+            Clear();
+            Call(game.Player, "BeginAirSlash", Vector2.right);
+            Check(Playing("PL_Sword_Swing"), "Committed inherited air slash");
+            Call(game.Player, "CancelAirSlash");
+            Clear();
+            Pattern(EnemyAttack.GroundStrike);
+            await Wait(2);
+            Check(observed.Contains("GD_Basic_Swing"), "Neutral guardian actual release");
+            Call(enemy, "InterruptPattern");
+            typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+            Set(game.Player, "invulnerableUntil", 0f);
+            Set(game.Player, "guardUntil", 0f);
+            playerPoint = game.Player.GetComponent<Collider2D>().bounds.center;
+            health = game.Player.Health;
+            enemy.TryAttackHit(playerPoint, playerPoint, Vector2.one, 1, new KarmaAttackContact(), 0);
+            Check(game.Player.Health < health && Playing("Combat_Blade_Hit"), "Neutral guardian confirmed contact");
+            await CheckReflection();
             result = "PASS: " + assertions + " catalog, actual-pattern release, contact outcome, rain landing, concurrency, cleanup and pause assertions. No audible quality verdict.";
         }
         catch (Exception error) { result = "FAIL: " + error; exit = 1; }
+        Finish(result, exit);
+    }
+    static void Finish(string result, int exit)
+    {
         Application.logMessageReceived -= CaptureError;
+        SessionState.EraseBool(Key + ".Followup");
         SessionState.SetBool(Key, false);
         Directory.CreateDirectory("output/validation");
         File.WriteAllText("output/validation/sfx-completion.txt", result);

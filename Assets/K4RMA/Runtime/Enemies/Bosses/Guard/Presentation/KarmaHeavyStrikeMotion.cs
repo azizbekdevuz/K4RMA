@@ -10,6 +10,10 @@ namespace KarmaPrototype
         readonly Vector3 home, scale;
         readonly Sprite[] poses = new Sprite[3];
         readonly Sprite[] heatedPoses = new Sprite[3];
+        readonly Sprite[] shieldlessPoses = new Sprite[3], shieldlessHeatedPoses = new Sprite[3];
+        public bool ShieldAway { get; set; }
+        public Sprite DamageSprite { get; private set; }
+        public Vector3 DamageScale { get { return scale; } }
         bool active, swinging, heated;
         float swingAt;
         public string FormKey { get; private set; }
@@ -30,6 +34,14 @@ namespace KarmaPrototype
             for (int i = 0; i < names.Length; i++)
                 if (poses[i] == null || heatedPoses[i] == null)
                     throw new System.InvalidOperationException("GD02 공격 자세가 없습니다: " + key + "/" + names[i]);
+            if (key == "WardFinal")
+                for (int i = 0; i < names.Length; i++)
+                {
+                    shieldlessPoses[i] = KarmaArtwork.Sprite("GuardTrialHeavyWardFinal", names[i]);
+                    shieldlessHeatedPoses[i] = KarmaArtwork.Sprite("GuardTrialHeavyMoltenWardFinal", names[i]);
+                    if (shieldlessPoses[i] == null || shieldlessHeatedPoses[i] == null)
+                        throw new System.InvalidOperationException("GD05 빈손 강공격 자세 누락: " + names[i]);
+                }
             // Match the helmet-to-sole body against this form's standing pose, excluding the raised weapon.
             // All three frames and their molten variants share the same authored body scale.
             float bodyFraction = key == "Ward" ? 0.76f : key == "WardRise" ? 0.64f : key == "WardWave" ? 0.60f : 0.65f;
@@ -48,7 +60,8 @@ namespace KarmaPrototype
         }
         void Apply(int index)
         {
-            picture.sprite = heated ? heatedPoses[index] : poses[index];
+            DamageSprite = heated ? heatedPoses[index] : poses[index];
+            picture.sprite = ShieldAway ? (heated ? shieldlessHeatedPoses[index] : shieldlessPoses[index]) : DamageSprite;
             picture.transform.localPosition = home;
             picture.transform.localScale = scale;
             picture.transform.localRotation = Quaternion.identity;

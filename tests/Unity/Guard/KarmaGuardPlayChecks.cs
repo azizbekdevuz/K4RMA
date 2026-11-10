@@ -11,7 +11,7 @@ using KarmaPrototype;
 
 // Exercises actual Update/coroutine contacts in a disposable Unity project.
 [InitializeOnLoad]
-public static class KarmaGuardPlayChecks
+public static partial class KarmaGuardPlayChecks
 {
     const string BatchKey = "K4RMA.GuardPlayChecks.Batch";
     const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -490,11 +490,11 @@ public static class KarmaGuardPlayChecks
         }
     }
 
-    static async Task CheckShieldCancellation()
+    static async Task CheckShieldCancellation(Essence[] order = null)
     {
         foreach (string phase in new[] { "outward", "return", "reflected" })
         {
-            Reset(new[] { Essence.Guard, Essence.SwordWave });
+            Reset(order ?? new[] { Essence.Guard, Essence.SwordWave });
             Vector2 playerAt = new Vector2(34, KarmaSpace.PlayerHalfHeight);
             Place(playerAt + (phase == "reflected" ? Vector2.zero : Vector2.up * 10));
             Force(EnemyAttack.GD03, 1);
@@ -508,24 +508,32 @@ public static class KarmaGuardPlayChecks
                 await Until(() => shield.name.EndsWith("반사"), 1);
             }
             float bossHealth = enemy.Health;
+            var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
             Call(enemy, "InterruptPattern");
+            Check(Get<SpriteRenderer>(animator, "guardThrownShield") == null && !animator.CurrentPose.StartsWith("GD03/ShieldAway"),
+                "GD03 interruption restores the hand in " + phase);
             await Seconds(0.3f);
             Check(WholeShield() == null && Get<Transform>(enemy, "effectsRoot").GetComponentsInChildren<TrailRenderer>().Length == 0
                 && enemy.Health == bossHealth && !enemy.Stunned && enemy.AutoShieldActive == (phase != "reflected"),
                 "GD03 interruption removes all flight and delayed damage in " + phase);
         }
-        Reset(new[] { Essence.Guard, Essence.SwordWave });
+        Reset(order ?? new[] { Essence.Guard, Essence.SwordWave });
         Force(EnemyAttack.GD03);
         await Until(() => WholeShield() != null, 2);
+        var survivingAnimator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
         game.PlayerDied(); await Task.Delay(80);
+        Check(Get<SpriteRenderer>(survivingAnimator, "guardThrownShield") == null, "GD03 player death clears hand ownership");
         Check(WholeShield() == null && !Get<bool>(enemy, "running"), "GD03 player death cancels the flying shield");
-        Reset(new[] { Essence.Guard, Essence.SwordWave });
+        Reset(order ?? new[] { Essence.Guard, Essence.SwordWave });
         Force(EnemyAttack.GD03);
         await Until(() => WholeShield() != null, 2);
         var effects = Get<Transform>(enemy, "effectsRoot");
+        var fallenAnimator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
         enemy.TakeDamage(enemy.MaxHealth * 4);
         await Task.Delay(80);
         Check(effects == null && game.Enemies.Count == 0, "GD03 boss death clears the shield and its trail");
+        Check(Get<SpriteRenderer>(fallenAnimator, "guardThrownShield") == null && fallenAnimator.CurrentPose == "Death",
+            "GD03 boss death keeps the existing death form after clearing hand ownership");
     }
 
     static SpriteRenderer SlamFan()
@@ -1270,6 +1278,8 @@ public static class KarmaGuardPlayChecks
         Call(enemy, "InterruptPattern");
         Set(enemy, "selected", pattern); Set(enemy, "direction", (float)facing); Set(enemy, "running", true);
         Set(enemy, "patternStarted", enemy.FightSeconds);
+        // Match BeginAttack and the practice menu: logical heading and artwork must agree.
+        Get<Transform>(enemy, "art").localScale = new Vector3(facing * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
         if (pattern == EnemyAttack.GD02) Call(enemy, "RefreshAutoShield");
         enemy.StartCoroutine((IEnumerator)Call(enemy, "RunPattern"));
     }

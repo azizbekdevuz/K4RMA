@@ -209,3 +209,32 @@ MonoBehaviour:
     - {fileID: 21300000, guid: c40c0267790048bbac6eb13318170b9a, type: 3}
     poses:
     - Impact
+  - id: GuardShieldlessWardWave
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardWave.png
+    sprites:
+    - {fileID: 21300001, guid: 8c0d19ea62e44009925b8c2caa3b0901, type: 3}
+    - {fileID: 21300003, guid: 8c0d19ea62e44009925b8c2caa3b0901, type: 3}
+    poses: []
+  - id: GuardShieldlessWardFinal
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardFinal.png
+    sprites:
+    - {fileID: 21300001, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300003, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300004, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300005, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300006, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    poses: []
+  - id: GuardTrialHeavyWardFinal
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardFinalHeavy.png
+    sprites:
+    - {fileID: 1393750050, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
+    - {fileID: -1144299091, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
+    - {fileID: 1952035418, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
+    poses: []
+  - id: GuardTrialHeavyMoltenWardFinal
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardFinalHeavyMolten.png
+    sprites:
+    - {fileID: 368111346, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
+    - {fileID: 80612033, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
+    - {fileID: 473790212, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
+    poses: []

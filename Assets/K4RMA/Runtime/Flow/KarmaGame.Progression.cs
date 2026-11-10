@@ -134,6 +134,7 @@ namespace KarmaPrototype
                 Phase = RunPhase.Transition;
                 guardianInheriting = true;
                 transitionLeft = InheritanceDuration;
+                GetComponent<KarmaHUD>().BeginBossEntrance(Enemies[0]);
                 var previous = new List<Essence>(Player.Essences.PersonalizationOrder);
                 previous.RemoveAt(previous.Count - 1);
                 KarmaPersonalizationVFX.Play(this, Enemies[0].transform, LastPersonalizedEssence,

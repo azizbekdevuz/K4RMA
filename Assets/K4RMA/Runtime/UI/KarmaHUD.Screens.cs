@@ -52,6 +52,7 @@ namespace KarmaPrototype
         }
         void StageTransitionScreen()
         {
+            if (DrawBossEntrance()) return;
             // A low caption keeps the actual actors and their transformation visible.
             Fill(new Rect(280, 578, 720, 112), new Color(0.015f, 0.025f, 0.07f, 0.72f));
             SpriteArt(new Rect(460, 578, 360, 12), KarmaArtwork.Sprite("UI", "LongRule"));

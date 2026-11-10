@@ -441,6 +441,7 @@ K4RMA/
 │       │   │   ├── KarmaTrainingTarget.cs
 │       │   │   └── KarmaHUD.Tutorial.cs
 │       │   ├── UI/
+│       │   │   ├── KarmaHUD.BossEntrance.cs
 │       │   │   ├── KarmaHUD.Combat.cs
 │       │   │   ├── KarmaHUD.cs
 │       │   │   ├── KarmaHUD.Screens.cs
@@ -531,6 +532,7 @@ K4RMA/
 │   │   │   ├── KarmaSwordSlideDistanceChecks.cs
 │   │   │   ├── KarmaSwordTempoRangeChecks.cs
 │   │   │   └── KarmaSwordWallCounterChecks.cs
+│   │   ├── KarmaBossEntranceChecks.cs
 │   │   ├── KarmaBossIsolationChecks.cs
 │   │   ├── KarmaBossPracticeChecks.cs
 │   │   ├── KarmaCameraCoverageChecks.cs

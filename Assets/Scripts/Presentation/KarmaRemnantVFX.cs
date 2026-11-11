@@ -77,31 +77,6 @@ namespace KarmaPrototype
             if (KarmaCombatVFX.ApplySprite(sr, "PlayerVFX", "Wave", KarmaSpace.Units(new Vector2(2.3f, 1.25f)), true)) sr.color = Color.white;
             sr.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
         }
-        public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
-        {
-            var icon = KarmaArtwork.SkillIcon(essence);
-            var procVisual = icon != null ? KarmaCombatVFX.Burst(game.World, p, icon,
-                "Personalization symbol " + essence, KarmaSpace.Units(new Vector2(2.5f, 2)),
-                0.35f, essence == Essence.SwordWave && facing < 0 ? 180 : 0, game.Config.ColorOf(essence)) : null;
-            if (procVisual != null && essence != Essence.SwordWave)
-                procVisual.transform.parent.localScale = new Vector3(facing, 1, 1);
-            Color color = game.Config.ColorOf(essence);
-            if (essence == Essence.Guard)
-            {
-                // A local parry pulse.
-                float diameter = KarmaSpace.Units(2.2f);
-                var sr = Draw(game.World, p, Vector2.one * diameter, color, 0);
-                Animate(sr, 0.65f, 1, Vector2.zero);
-            }
-            else
-            {
-                var sr = Draw(game.World, p + Vector2.right * facing * KarmaSpace.Units(0.8f),
-                    KarmaSpace.Units(essence == Essence.SwordWave ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f)), color, 1);
-                sr.transform.localRotation = Quaternion.Euler(0, 0, essence == Essence.SwordWave && facing < 0 ? 180 : 0);
-                if (essence == Essence.RisingSlash) sr.flipX = facing < 0;
-                Animate(sr, 0.35f, 0.35f, Vector2.right * facing * KarmaSpace.Units(0.5f));
-            }
-        }
         public static void SwordSlash(Transform parent, Vector2 origin, Vector2 direction,
             float reach, float height, float seconds)
         {

@@ -51,6 +51,7 @@ public static class KarmaIntegrationChecks
             typeof(KarmaGame).GetMethod("LoadRoom", Hidden).Invoke(game, new object[] { true });
             foreach (var enemy in game.Enemies) enemy.gameObject.SetActive(false);
             await Task.Delay(100);
+            KarmaPresentationChecks.CheckCeremonyLayers(game, Check);
             KarmaPrototype.EditorTools.KarmaPlayerAnimationAssets.VerifyParrySuccess();
             Check(true, "Parry input, frames, facing, expiry, hurt and death");
             var player = game.Player;

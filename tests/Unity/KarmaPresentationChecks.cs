@@ -67,9 +67,12 @@ public static class KarmaPresentationChecks
         var root = symbolGame.World.Find(guardian ? "Guardian inheritance ceremony" : "Player personalization ceremony");
         Check(root != null, "Real ceremony exists for " + essence);
         var pictures = root.GetComponentsInChildren<SpriteRenderer>();
-        var marks = pictures.Where(p => p.name == "Inherited power" || p.name == "Absorbed sigil" || p.name == "Awakening pulse").ToArray();
-        Check(marks.Length == 5 && marks.All(p => p.sprite == KarmaArtwork.SkillIcon(essence)),
-            "Absorbed, inherited and expanding symbols share the selection icon for " + essence);
+        var awakening = pictures.Where(p => p.name == "Absorbed sigil" || p.name == "Awakening pulse").ToArray();
+        Check(awakening.Length == 4 && awakening.All(p => p.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken")),
+            "Original awakening sigil and three pulses remain for " + essence);
+        var marks = pictures.Where(p => p.name == "Technique symbol").ToArray();
+        Check(marks.Length == 1 && marks[0].sprite == KarmaArtwork.SkillIcon(essence),
+            "One additional skill symbol for " + essence);
         Check(marks.All(p => Mathf.Abs(p.transform.localScale.x - p.transform.localScale.y) < 0.001f),
             "Ceremony preserves the source symbol proportions");
     }
@@ -110,10 +113,9 @@ public static class KarmaPresentationChecks
             {
                 symbolGame.Player.Essences.NotifyUnique(essence);
                 var proc = symbolGame.World.Find("Personalization symbol " + essence);
-                Check(proc != null && proc.GetComponentsInChildren<SpriteRenderer>().Where(p => p.name != "Spark")
-                    .All(p => p.sprite == KarmaArtwork.SkillIcon(essence)), "Proc core, glow and echo use the same canonical symbol");
+                Check(proc == null && symbolGame.Player.Essences.JustTriggered(essence),
+                    "Skill use updates HUD feedback without an extra world symbol");
                 await SymbolCapture("proc-" + essence);
-                await SymbolsUntil(() => proc == null);
             }
             var members = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
             typeof(KarmaGame).GetProperty("StageIndex").SetValue(symbolGame, 3);
@@ -141,6 +143,53 @@ public static class KarmaPresentationChecks
         SessionState.SetBool(SymbolKey, false);
         Application.runInBackground = SessionState.GetBool(SymbolKey + ".Background", false);
         EditorApplication.ExitPlaymode();
+    }
+
+    public static void CheckCeremonyLayers(KarmaGame game, Action<bool, string> check)
+    {
+        var actor = new GameObject("Ceremony validation actor");
+        actor.transform.SetParent(game.World, false);
+        try
+        {
+            foreach (bool guardian in new[] { false, true })
+            foreach (Essence essence in Enum.GetValues(typeof(Essence)))
+            {
+                KarmaPersonalizationVFX.Play(game, actor.transform, essence, 2.4f, guardian);
+                var root = game.World.Find(guardian ? "Guardian inheritance ceremony" : "Player personalization ceremony");
+                try
+                {
+                    var pictures = root.GetComponentsInChildren<SpriteRenderer>();
+                    var awaken = KarmaArtwork.Sprite("PersonalizationVFX", "Awaken");
+                    check(awaken != null && pictures.Count(p => p.sprite == awaken) == 4,
+                        "Original awakening artwork is restored: " + essence + "/" + guardian);
+                    var symbol = pictures.Single(p => p.name == "Technique symbol");
+                    check(symbol.sprite != null && symbol.sprite == KarmaArtwork.SkillIcon(essence), "One correct skill mark");
+                    var incoming = pictures.Single(p => p.name == "Inherited power");
+                    string oldPose = essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry";
+                    check(incoming.sprite != null && incoming.sprite == (guardian ? KarmaArtwork.SkillIcon(essence)
+                        : KarmaArtwork.Sprite("UI", oldPose)), "Original incoming power artwork is preserved");
+                    var effect = root.GetComponent<KarmaPersonalizationVFX>();
+                    var fields = BindingFlags.Instance | BindingFlags.NonPublic;
+                    foreach (float t in new[] { 0f, 0.3f, 0.55f, 0.6f, 0.65f, 0.75f, 0.9f })
+                    {
+                        typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, t * 2.4f);
+                        typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
+                        check(pictures.Count(p => p.sprite == symbol.sprite && p.color.a > 0.001f) <= 1,
+                            "Never duplicate the visible skill mark: " + essence + "/" + guardian + "/" + t);
+                        if (t == 0.75f) check(symbol.color.a > 0.9f, "Skill mark is visible during awakening");
+                        check(Mathf.Abs(symbol.transform.localScale.x - symbol.transform.localScale.y) < 0.001f,
+                            "Skill mark preserves proportions");
+                    }
+                }
+                finally { UnityEngine.Object.DestroyImmediate(root.gameObject); }
+                int children = game.World.childCount;
+                game.Player.Essences.ResetTemporaryState();
+                for (int i = 0; i < 2; i++) game.Player.Essences.NotifyUnique(essence);
+                check(game.World.childCount == children && game.Player.Essences.JustTriggered(essence),
+                    "Repeated skill use emits no extra world effect and preserves HUD feedback");
+            }
+        }
+        finally { UnityEngine.Object.DestroyImmediate(actor); }
     }
 
     [MenuItem("K4RMA/검증/배경과 사망 접지")]

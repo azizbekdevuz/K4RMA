@@ -6,7 +6,7 @@ namespace KarmaPrototype
     public sealed class KarmaPersonalizationVFX : MonoBehaviour
     {
         Transform actor;
-        SpriteRenderer halo, sigil, orb;
+        SpriteRenderer halo, sigil, orb, techniqueSymbol;
         readonly SpriteRenderer[] motes = new SpriteRenderer[20];
         readonly SpriteRenderer[] waves = new SpriteRenderer[3];
         Color color;
@@ -26,12 +26,15 @@ namespace KarmaPrototype
             effect.radius = guardian ? 5.5f : 3.5f;
             effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
             var iconSprite = KarmaArtwork.SkillIcon(essence);
-            effect.sigil = effect.Layer("Absorbed sigil", iconSprite, 16);
-            effect.orb = effect.Layer("Inherited power", iconSprite, 25);
+            effect.sigil = effect.Layer("Absorbed sigil", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 16);
+            var absorbedIcon = guardian ? iconSprite : KarmaArtwork.Sprite("UI",
+                essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry");
+            effect.orb = effect.Layer("Inherited power", absorbedIcon, 25);
+            effect.techniqueSymbol = effect.Layer("Technique symbol", iconSprite, 26);
             for (int i = 0; i < effect.motes.Length; i++)
                 effect.motes[i] = effect.Layer("Absorbing fragment", KarmaArtwork.Sprite("PersonalizationVFX", "Core"), 23);
             for (int i = 0; i < effect.waves.Length; i++)
-                effect.waves[i] = effect.Layer("Awakening pulse", iconSprite, 17);
+                effect.waves[i] = effect.Layer("Awakening pulse", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 17);
             var animator = actor.GetComponentInChildren<KarmaCharacterAnimator>(true);
             if (animator != null) animator.Empower(essence, seconds, previousAppearance,
                 guardian && game.Player.Essences.Count == 1, previousForm);
@@ -44,7 +47,7 @@ namespace KarmaPrototype
             var renderer = child.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite; renderer.sortingOrder = order;
             KarmaVisuals.ApplyMaterial(renderer);
-            if (name != "Inherited power" && KarmaCombatVFX.GlowMaterial != null)
+            if (name != "Inherited power" && name != "Technique symbol" && KarmaCombatVFX.GlowMaterial != null)
                 renderer.sharedMaterial = KarmaCombatVFX.GlowMaterial;
             renderer.color = Color.clear;
             return renderer;
@@ -92,6 +95,9 @@ namespace KarmaPrototype
             var orbPoint = Vector2.Lerp(entry, Vector2.zero, gather);
             Show(orb, orbPoint, Mathf.Lerp(1.2f, 0.35f, gather) * (guardian ? 1.5f : 1), age * 12,
                 Color.white, (1 - Mathf.InverseLerp(0.45f, 0.6f, t)) * Mathf.Min(1, t * 8));
+            // Show one clear skill mark after the incoming power has been absorbed.
+            Show(techniqueSymbol, Vector2.up * radius * 0.38f, radius * 0.55f, 0,
+                Color.white, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.6f, 0.68f, t)) * fade);
         }
 
         void LateUpdate()

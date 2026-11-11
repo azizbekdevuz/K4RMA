@@ -65,12 +65,10 @@ namespace KarmaPrototype
             FaceAction();
             Vector2 from = Position;
             Vector2 to = MoveSlash(direction, distance);
-            // Pierce travel is atomic. Cover the execution frame and a brief arrival window;
-            // blocked attempts grant nothing, and existing hit protection is never shortened.
+            // MoveSlash teleports the collision body: attacks along the skipped path miss,
+            // while the destination remains vulnerable throughout the existing slash visuals.
             if (essence == Essence.SwordWave && (to - from).sqrMagnitude > 0.0001f)
             {
-                invulnerableUntil = Mathf.Max(invulnerableUntil,
-                    Time.time + Mathf.Clamp(game.Config.Techniques.pierceInvulnerabilitySeconds, 0, 0.2f));
                 KarmaAudio.Play(KarmaSfxId.PlDash);
             }
             Color color = game.Config.ColorOf(essence);

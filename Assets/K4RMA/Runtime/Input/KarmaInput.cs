@@ -57,7 +57,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.Pierce, "l");
             Bind(KarmaAction.Settings, "o");
             Bind(KarmaAction.DialogueConfirm, "space");
-            Bind(KarmaAction.SkipCinematic, "space");
+            Bind(KarmaAction.SkipCinematic, "f");
             if (PlayerPrefs.HasKey(BindingsKey))
             {
                 try { map.LoadBindingOverridesFromJson(PlayerPrefs.GetString(BindingsKey)); }

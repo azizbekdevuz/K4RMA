@@ -72,18 +72,22 @@ public static class KarmaCinematicSkipChecks
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial.Step == KarmaTutorialStep.Practice,
             "Short Space still advances one teacher line");
         Check(game.Player.Position.y < KarmaSpace.PlayerHalfHeight + 0.15f, "Dialogue confirmation does not jump");
+        await Wait(1.4f);
+        Check(game.Phase == RunPhase.Tutorial && game.CinematicSkipProgress == 0, "Holding Space confirms dialogue without skipping");
+        Check(KarmaInput.BindingLabel(KarmaAction.SkipCinematic) == "F", "Skip hint and input both use F");
         await Keys(); Check(game.CinematicSkipProgress == 0, "Release clears hold progress");
-        await Keys(Key.Space); await Wait(0.45f);
+        await Keys(Key.F); await Wait(0.45f);
         Check(game.CinematicSkipProgress > 0.1f && game.CinematicSkipProgress < 0.8f, "Partial hold reports progress");
-        await Keys(); await Keys(Key.Space); await Wait(0.3f);
+        await Keys(); await Keys(Key.F); await Wait(0.3f);
         Check(game.Phase == RunPhase.Tutorial, "Separate partial holds never accumulate"); await Keys();
-        game.TogglePause(); await Keys(Key.Space); await Wait(1.65f);
+        game.TogglePause(); await Keys(Key.F); await Wait(1.65f);
         Check(game.Paused && game.Phase == RunPhase.Tutorial && game.CinematicSkipProgress == 0, "Pause blocks skip");
         game.TogglePause(); await Wait(0.3f);
-        Check(game.CinematicSkipProgress == 0, "Unpausing with Space held requires release"); await Keys();
+        Check(game.CinematicSkipProgress == 0, "Unpausing with F held requires release"); await Keys();
         FreezeLesson(); await Frames();
-        // Confirm lesson first, then freeze again while the same physical key remains down.
-        await Keys(Key.Space); FreezeLesson(); await Frames();
+        // F skips independently of Space dialogue confirmation, including while scaled time is frozen.
+        await Keys(Key.F); await Frames();
+        Check(game.Tutorial.Step == KarmaTutorialStep.Lesson, "F does not confirm teacher dialogue");
         Check(Time.timeScale == 0, "Frozen dialogue uses unscaled hold time");
         await Until(() => game.Tutorial == null, "Frozen tutorial never skips");
         Check(game.Phase == RunPhase.Combat && Time.timeScale == 1, "Skip fades into first combat and restores time");
@@ -92,8 +96,12 @@ public static class KarmaCinematicSkipChecks
         Check(game.World.GetComponentsInChildren<KarmaTrainingTarget>().Length == 0, "Skip removes tutorial actors");
         Check(game.Player.GetComponent<Rigidbody2D>().linearVelocity.y <= 0.1f, "Held skip does not leak a jump into combat");
         await Keys(); foreach (var enemy in game.Enemies) enemy.gameObject.SetActive(false);
-        await Keys(Key.Space); await Wait(1.65f);
-        Check(game.Phase == RunPhase.Combat && game.CinematicSkipProgress == 0, "Ordinary combat Space never skips");
+        await Keys(Key.F); await Wait(1.65f);
+        Check(game.Phase == RunPhase.Combat && game.CinematicSkipProgress == 0, "Ordinary combat F never skips");
+        await Keys();
+        if (!string.IsNullOrEmpty(game.OpeningArrivalSpeech)) { await Keys(Key.Space); await Keys(); }
+        await Keys(Key.Space); await Wait(0.12f);
+        Check(game.Player.Airborne && game.CinematicSkipProgress == 0, "Space still jumps during combat");
         await Keys();
         await Tutorial();
         typeof(KarmaTutorial).GetProperty("Lesson").SetValue(game.Tutorial, 3);
@@ -102,7 +110,7 @@ public static class KarmaCinematicSkipChecks
         body.position = game.Player.transform.position = new Vector2(3, KarmaSpace.PlayerHalfHeight);
         await Until(() => game.Tutorial.WaitingForGuard, "Guard training did not freeze");
         Check(Time.timeScale == 0, "Real guard training freeze reached");
-        await Keys(Key.Space); await Until(() => game.Tutorial == null, "Guard hold never skips");
+        await Keys(Key.F); await Until(() => game.Tutorial == null, "Guard hold never skips");
         Check(game.Phase == RunPhase.Combat && Time.timeScale == 1, "Guard freeze skip cleans up and resumes combat");
         await Keys();
     }
@@ -110,11 +118,11 @@ public static class KarmaCinematicSkipChecks
     {
         await FinalBoss(); var presentation = game.World.Find("Ending presentation");
         int soundStage = (int)typeof(KarmaGame).GetField("endingSoundStage", Fields).GetValue(game);
-        await Keys(Key.Space); await Until(() => game.CinematicSkipProgress > 0.15f, "Ending hold did not start");
+        await Keys(Key.F); await Until(() => game.CinematicSkipProgress > 0.15f, "Ending hold did not start");
         game.TogglePause(); float pausedAt = game.EndingTime; await Wait(1.65f);
         Check(game.Paused && game.EndingTime == pausedAt && !game.EndingCompleted, "Paused ending cannot advance or skip");
         game.TogglePause(); await Wait(0.3f); Check(game.CinematicSkipProgress == 0, "Ending hold resets on pause");
-        await Keys(); await Keys(Key.Space);
+        await Keys(); await Keys(Key.F);
         await Until(() => game.EndingFade > 0.1f, "Skip fade missing");
         Check(game.Phase == RunPhase.Ending && game.EndingTime < 8, "Skip fades from current shot without fast-forwarding cues");
         await Until(() => game.EndingCompleted, "Ending skip never completes"); await Frames();
@@ -122,10 +130,10 @@ public static class KarmaCinematicSkipChecks
         Check(presentation == null && game.World.Find("Ending presentation") == null, "Early skip removes presentation objects");
         Check((Transform)typeof(KarmaGame).GetField("fallenGuardian", Fields).GetValue(game) == null, "Early skip removes undissolved boss");
         Check((int)typeof(KarmaGame).GetField("endingSoundStage", Fields).GetValue(game) == soundStage, "Skipping never bursts pending sound cues");
-        await Keys(Key.Space, Key.R); await Keys(Key.Space); await Wait(1.65f);
+        await Keys(Key.F, Key.R); await Keys(Key.F); await Wait(1.65f);
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial != null && !game.EndingCompleted && game.EndingTime == 0,
             "Victory R starts tutorial and clears ending state");
-        Check(game.CinematicSkipProgress == 0, "Space carried through restart cannot skip new tutorial"); await Keys();
+        Check(game.CinematicSkipProgress == 0, "F carried through restart cannot skip new tutorial"); await Keys();
         await FinalBoss(); await Keys(Key.R);
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial != null && Time.timeScale == 1, "Mid-ending R starts tutorial"); await Keys();
         game.TogglePause(); await Keys(Key.R);

@@ -373,7 +373,6 @@ K4RMA/
 │       │   │   ├── PierceDiagonal.anim
 │       │   │   ├── PierceDown.anim
 │       │   │   ├── PierceUp.anim
-│       │   │   ├── Ready.txt
 │       │   │   ├── Recovery.anim
 │       │   │   ├── Riposte.anim
 │       │   │   ├── Rising.anim
@@ -648,7 +647,8 @@ K4RMA/
 │   │   │   ├── KarmaTutorialChecks.cs
 │   │   │   └── KarmaCinematicSkipChecks.cs
 │   │   ├── Player/
-│   │   │   └── KarmaPlayer24Checks.cs
+│   │   │   ├── KarmaPlayer24Checks.cs
+│   │   │   └── KarmaPlayerPierceChecks.cs
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingAnimationChecks.cs
 │   │   │   ├── KarmaRisingOwnershipChecks.cs

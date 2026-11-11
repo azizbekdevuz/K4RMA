@@ -7,7 +7,6 @@ K4RMA/
 │   │       │   ├── MountainDojo/
 │   │       │   │   ├── Background.png
 │   │       │   │   ├── Extended.png
-│   │       │   │   ├── Moon.png
 │   │       │   │   └── Panorama.png
 │   │       │   └── TrialHall/
 │   │       │       ├── Background.png

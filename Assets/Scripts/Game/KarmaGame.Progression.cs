@@ -41,7 +41,11 @@ namespace KarmaPrototype
             World = new GameObject("Stage " + (StageIndex + 1)).transform;
             World.SetParent(runRoot, false);
             KarmaStage.Build(this, World, StageIndex);
-            Player.ResetForRoom(KarmaStage.Spawn, fullHealth);
+            var spawn = KarmaStage.Spawn;
+            if (OpeningArrivalSpeech != null) spawn.y = KarmaSpace.PlayerHalfHeight;
+            Player.ResetForRoom(spawn, fullHealth);
+            // Arrival dialogue freezes physics before the new floor gets a simulation step.
+            if (OpeningArrivalSpeech != null) Physics2D.SyncTransforms();
             var enemyObject = new GameObject(StageIndex == 3 ? "마지막 수호자" : "수호자");
             enemyObject.transform.SetParent(World, false);
             enemyObject.transform.position = new Vector3(27, KarmaSpace.GuardianGroundY, 0);

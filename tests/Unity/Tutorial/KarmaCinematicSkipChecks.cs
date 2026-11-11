@@ -94,12 +94,17 @@ public static class KarmaCinematicSkipChecks
             && !game.CanMove && !game.AllowsPlayerActions && !game.IsCombat && Time.timeScale == 0,
             "Arrival speech freezes movement, attacks and combat until acknowledged");
         Vector2 at = game.Player.Position;
+        var animator = game.Player.GetComponentInChildren<KarmaCharacterAnimator>();
+        Check(animator.CurrentPose == "Idle" && !game.Player.Airborne
+            && Mathf.Abs(at.y - KarmaSpace.PlayerHalfHeight) <= Physics2D.defaultContactOffset * 2 + 0.001f,
+            $"Arrival starts grounded in Idle, not a frozen airborne pose (pose={animator.CurrentPose}, airborne={game.Player.Airborne}, position={at})");
         float health = game.Enemies[0].Health, fight = game.Enemies[0].FightSeconds;
         await Keys(Key.D, Key.J, Key.L, Key.LeftShift, Key.K);
         await Wait(0.2f);
         Check(Vector2.Distance(game.Player.Position, at) < 0.001f
             && game.Player.GetComponent<Rigidbody2D>().linearVelocity == Vector2.zero,
             "Movement and buffered skill inputs cannot move the player during arrival speech");
+        Check(animator.CurrentPose == "Idle", "Held input cannot replace arrival Idle with an action pose");
         Check(game.Enemies[0].Health == health && game.Enemies[0].FightSeconds == fight && game.Projectiles.Count == 0,
             "Dialogue does not allow attacks or advance the boss clock");
         await Keys();
@@ -107,6 +112,10 @@ public static class KarmaCinematicSkipChecks
         Check(game.OpeningArrivalSpeech != null, "Paused Space cannot acknowledge arrival speech");
         game.TogglePause(); await Keys();
         await Until(() => game.OpeningArrivalFade < 0.45f, "Arrival fade did not finish while gameplay was frozen");
+        string capture = "output/validation/arrival-idle-" + checks + ".png";
+        Directory.CreateDirectory("output/validation");
+        ScreenCapture.CaptureScreenshot(capture);
+        await Until(() => File.Exists(capture), "Arrival Idle screenshot was not captured");
         await Keys(Key.Space); await Keys(); await Frames();
         Check(game.OpeningArrivalSpeech == null && game.CanMove && game.AllowsPlayerActions && game.IsCombat
             && !game.GameplayFrozen && Time.timeScale == 1, "Space acknowledgement resumes normal play");

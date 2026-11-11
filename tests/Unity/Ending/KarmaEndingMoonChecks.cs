@@ -24,6 +24,7 @@ public static class KarmaEndingMoonChecks
     static KarmaEnemy enemy;
     static RenderTexture target;
     static Texture2D image;
+    static Rect renderedViewport;
     static KarmaEndingMoonChecks() { EditorApplication.update += Pump; }
     static object Get(object obj, string name) => obj.GetType().GetField(name, F).GetValue(obj);
     static void Set(object obj, string name, object value) => obj.GetType().GetField(name, F).SetValue(obj, value);
@@ -99,6 +100,7 @@ public static class KarmaEndingMoonChecks
             if (!nativeViewport) camera.rect = new Rect(0, 0, 1, 1);
             RenderTexture.active = captureTarget;
             GL.Clear(true, true, Color.clear);
+            renderedViewport = camera.pixelRect;
             camera.Render(); RenderTexture.active = captureTarget;
             if (image.width != captureTarget.width || image.height != captureTarget.height)
                 image.Reinitialize(captureTarget.width, captureTarget.height);
@@ -113,6 +115,7 @@ public static class KarmaEndingMoonChecks
     }
     static float MoonRatio(bool mountain, bool nativeViewport = false)
     {
+        if (mountain) return EmbeddedMountainMoonRatio(nativeViewport);
         var moon = game.World.Find("Round moon").GetComponent<SpriteRenderer>();
         Color32[] without;
         try { moon.enabled = false; Render(nativeViewport: nativeViewport); without = image.GetPixels32(); }
@@ -133,6 +136,37 @@ public static class KarmaEndingMoonChecks
         float ratio = (maxX - minX + 1f) / (maxY - minY + 1f);
         Debug.Log("MOON ratio=" + ratio + " size=" + (maxX - minX + 1) + "x" + (maxY - minY + 1));
         return ratio;
+    }
+    static float EmbeddedMountainMoonRatio(bool nativeViewport)
+    {
+        Render(nativeViewport ? "restored-mountain-native" : "restored-mountain", nativeViewport: nativeViewport);
+        var bounds = Background.bounds;
+        var camera = game.GameCamera;
+        // Measure only the original moon's known source region, excluding warm house windows.
+        Vector3 World(float x, float y) => new Vector3(bounds.min.x + (x + 669) / 4682 * bounds.size.x,
+            bounds.max.y - y / 1882 * bounds.size.y, bounds.center.z);
+        var lo = camera.WorldToViewportPoint(World(1207, 617.5f));
+        var hi = camera.WorldToViewportPoint(World(1295, 529.5f));
+        var viewport = renderedViewport;
+        int left = Mathf.Max(0, Mathf.FloorToInt(viewport.x + lo.x * viewport.width));
+        int right = Mathf.Min(image.width - 1, Mathf.CeilToInt(viewport.x + hi.x * viewport.width));
+        int bottom = Mathf.Max(0, Mathf.FloorToInt(viewport.y + lo.y * viewport.height));
+        int top = Mathf.Min(image.height - 1, Mathf.CeilToInt(viewport.y + hi.y * viewport.height));
+        int minX = image.width, minY = image.height, maxX = -1, maxY = -1;
+        var pixels = image.GetPixels32();
+        for (int y = bottom; y <= top; y++)
+        for (int x = left; x <= right; x++)
+        {
+            var pixel = pixels[y * image.width + x];
+            if (pixel.r < 150 || pixel.g < 135 || pixel.b < 105 || pixel.r <= pixel.b) continue;
+            minX = Mathf.Min(minX, x); maxX = Mathf.Max(maxX, x);
+            minY = Mathf.Min(minY, y); maxY = Mathf.Max(maxY, y);
+        }
+        Check(maxX > minX && maxY > minY, "Original embedded mountain moon is visible");
+        float expectedWidth = 78f / 4682 * bounds.size.x / (camera.orthographicSize * 2 * camera.aspect) * viewport.width;
+        Check(Mathf.Abs(maxX - minX + 1 - expectedWidth) <= 3,
+            $"Embedded moon retains its original projected diameter without a shrinking overlay (actual={maxX-minX+1}x{maxY-minY+1}, expected width={expectedWidth}, viewport={viewport})");
+        return (maxX - minX + 1f) / (maxY - minY + 1f);
     }
     static void SettleCamera()
     {
@@ -272,11 +306,16 @@ public static class KarmaEndingMoonChecks
             Check(bg.bounds.size.x >= 140 && Mathf.Abs(bg.bounds.size.y - 50 * 941f / 1672 * 2) < 0.001f,
                 "Background keeps native vertical detail and covers the original zoom range");
             Check(bg.sharedMaterial == (game.Config.spriteMaterial != null ? game.Config.spriteMaterial : KarmaVisuals.DefaultMaterial) && !bg.HasPropertyBlock(),
-                "Moonless plate has no sky reconstruction material or property overrides");
-            var moonSprite = game.World.Find("Round moon").GetComponent<SpriteRenderer>().sprite;
-            Check(moonSprite == Resources.Load<Sprite>("Backgrounds/" + (stage == 0 ? "MountainDojo" : "TrialHall") + "/Moon"),
-                "Moon uses the approved original-pixel extraction");
-            CheckMoonExterior();
+                "Background has no sky reconstruction material or property overrides");
+            if (stage == 0)
+                Check(game.World.Find("Round moon") == null, "Restored mountain plate draws its embedded moon only once");
+            else
+            {
+                var moonSprite = game.World.Find("Round moon").GetComponent<SpriteRenderer>().sprite;
+                Check(moonSprite == Resources.Load<Sprite>("Backgrounds/TrialHall/Moon"),
+                    "Trial hall moon uses the approved original-pixel extraction");
+                CheckMoonExterior();
+            }
             float normal = Mathf.Max(frame.extents.y, 25 / game.GameCamera.aspect);
             Check(Mathf.Abs(game.GameCamera.orthographicSize - normal) < 0.05f, "Original normal zoom preserved");
             var viewport = game.GameCamera.pixelRect;

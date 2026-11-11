@@ -75,6 +75,13 @@ namespace KarmaPrototype
                 || game.Phase == RunPhase.PlayerFallen || game.Phase == RunPhase.Defeat
                 || animator.ParrySuccessVisible
                 || Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
+            if (game.OpeningArrivalSpeech != null)
+            {
+                move = 0; jumpBufferedUntil = airSlashBufferedUntil = 0;
+                Crouching = false;
+                animator.Pose(0, false);
+                return;
+            }
             bool airborne = Airborne;
             Crouching = game.CanMove && !ControlLocked && !airborne && KarmaInput.Vertical < 0
                 && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;

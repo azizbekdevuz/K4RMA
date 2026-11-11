@@ -42,7 +42,7 @@ namespace KarmaPrototype
         public void TakeDamage(float amount) { TakeDamage(amount, game.Player.Position); }
         public void TakeDamage(float amount, Vector2 source) { TakeDamage(amount, source, out _); }
         internal void TakeDamage(float amount, out bool reduced) { TakeDamage(amount, game.Player.Position, out reduced); }
-        void TakeDamage(float amount, Vector2 source, out bool reduced)
+        internal void TakeDamage(float amount, Vector2 source, out bool reduced)
         {
             reduced = false;
             if (!Alive || !game.IsCombat || amount <= 0 || stopped) return;

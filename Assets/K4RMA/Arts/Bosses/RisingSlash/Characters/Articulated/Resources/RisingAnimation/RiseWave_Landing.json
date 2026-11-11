@@ -1,0 +1,101 @@
+{
+  "form": "RiseWave",
+  "pose": "Landing",
+  "atlas": "RiseWave_Landing",
+  "sourcePose": "Landing",
+  "ppu": 90.32258,
+  "pivot": {
+    "x": 134.7499965,
+    "y": 173.999999888
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 146,
+        "y": 116
+      },
+      "origin": {
+        "x": 1,
+        "y": 1
+      },
+      "rect": {
+        "x": 4,
+        "y": 77,
+        "width": 239,
+        "height": 175
+      }
+    },
+    {
+      "name": "bracingArm",
+      "parent": 0,
+      "pivot": {
+        "x": 124,
+        "y": 137
+      },
+      "origin": {
+        "x": 111,
+        "y": 118
+      },
+      "rect": {
+        "x": 251,
+        "y": 194,
+        "width": 81,
+        "height": 58
+      }
+    },
+    {
+      "name": "blade",
+      "parent": 0,
+      "pivot": {
+        "x": 228,
+        "y": 101
+      },
+      "origin": {
+        "x": 213,
+        "y": 90
+      },
+      "rect": {
+        "x": 340,
+        "y": 192,
+        "width": 114,
+        "height": 60
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        8,
+        -8
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        2,
+        -3
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        -12,
+        5
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

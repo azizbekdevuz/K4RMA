@@ -1,0 +1,109 @@
+{
+  "form": "RiseFinal",
+  "pose": "Dash",
+  "atlas": "RiseFinal_Dash",
+  "sourcePose": "Dash",
+  "ppu": 83.870964,
+  "pivot": {
+    "x": 162.2499984,
+    "y": 191.000000058
+  },
+  "parts": [
+    {
+      "name": "rearLeg",
+      "parent": -1,
+      "pivot": {
+        "x": 132,
+        "y": 123
+      },
+      "origin": {
+        "x": 12,
+        "y": 108
+      },
+      "rect": {
+        "x": 4,
+        "y": 423,
+        "width": 143,
+        "height": 85
+      }
+    },
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 156,
+        "y": 111
+      },
+      "origin": {
+        "x": 1,
+        "y": 1
+      },
+      "rect": {
+        "x": 155,
+        "y": 316,
+        "width": 303,
+        "height": 192
+      }
+    },
+    {
+      "name": "shieldArm",
+      "parent": 1,
+      "pivot": {
+        "x": 171,
+        "y": 78
+      },
+      "origin": {
+        "x": 57,
+        "y": 60
+      },
+      "rect": {
+        "x": 4,
+        "y": 250,
+        "width": 123,
+        "height": 58
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        -8,
+        0,
+        0
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        12,
+        0,
+        3
+      ]
+    },
+    {
+      "time": 0.5,
+      "angles": [
+        -8,
+        0,
+        0
+      ]
+    },
+    {
+      "time": 0.75,
+      "angles": [
+        12,
+        0,
+        -3
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        -8,
+        0,
+        0
+      ]
+    }
+  ]
+}

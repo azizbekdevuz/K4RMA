@@ -33,6 +33,7 @@ namespace KarmaPrototype
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             animator.Attack(direction);
+            KarmaAudio.Play(KarmaSfxId.PlSwordSwing);
             animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
             Essences.NotifyUnique(Essence.RisingSlash);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);

@@ -40,6 +40,7 @@ namespace KarmaPrototype
             public override void Interrupt(bool preservePressure)
             {
                 base.Interrupt(preservePressure);
+                owner.animator.EndGuardianAction();
                 ClearFragments();
                 motionContact = null;
                 KarmaRisingAudio.StopPattern();

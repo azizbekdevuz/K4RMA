@@ -11,6 +11,7 @@ namespace KarmaPrototype
         public void BeginGuard(float seconds)
         {
             guardUntil = Time.time + seconds; animator.PlayPose("Guard", seconds);
+            KarmaAudio.Play(KarmaSfxId.GdShieldActivate);
         }
         public void TakeDamage(float damage)
         { TakeDamage(damage, false); }

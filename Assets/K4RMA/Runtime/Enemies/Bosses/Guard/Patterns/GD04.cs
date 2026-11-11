@@ -130,7 +130,7 @@ namespace KarmaPrototype
                     owner.direction = -attackDirection;
                     owner.art.localScale = new Vector3(owner.Facing * KarmaSpace.GuardianArtScale, KarmaSpace.GuardianArtScale, 1);
                     owner.patternStarted = owner.FightSeconds;
-                    yield return heavy.Execute();
+                    yield return heavy.ExecuteWithTerrain(null, rearCounter: true);
                 }
             }
 

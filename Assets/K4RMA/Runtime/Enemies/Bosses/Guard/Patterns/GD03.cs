@@ -60,6 +60,7 @@ namespace KarmaPrototype
                             owner.TakeDamage(owner.game.Config.Techniques.counterDamage, before);
                             if (!owner.Active) yield break;
                             owner.state = ActionState.Stunned;
+                            KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
                             owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.parryStunSeconds);
                             owner.ShowStunCue();
                             while (owner.Active && owner.Stunned) yield return null;
@@ -74,6 +75,7 @@ namespace KarmaPrototype
                         if (!owner.Active) yield break;
                         if (owner.game.Player.ParryCount != parries)
                         {
+                            if (owner.AutoShieldActive) KarmaAudio.Play(KarmaSfxId.GdShieldBreak);
                             BreakShield();
                             owner.shieldHalo.enabled = false;
                             returning = reflected = true;

@@ -28,6 +28,7 @@ namespace KarmaPrototype
                     yield return owner.Wait(owner.Warning(i == 0 ? owner.game.Config.enemyTelegraphTime : 0.55f));
                     yield return owner.Motion(target, 0.16f, Vector2.zero);
                     Destroy(mark.gameObject); owner.animator.Attack(); owner.state = ActionState.Attack;
+                    if (owner.Active) KarmaAudio.Play(KarmaSfxId.GdBasicSwing);
                     owner.Attack(center, Vector2.zero, size, 0.18f, finish ? 1.25f : 0.85f);
                     yield return owner.Wait(0.2f);
                 }

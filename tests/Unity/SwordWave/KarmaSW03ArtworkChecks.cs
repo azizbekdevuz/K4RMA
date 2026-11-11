@@ -112,119 +112,17 @@ public static class KarmaSW03ArtworkChecks
     }
     static async void Run()
     {
-        int exit = 0; baseline = SessionState.GetBool(Key + ".Before", false);
-        Directory.CreateDirectory(Output + "/" + (baseline ? "before" : "after"));
-        var data = new Data(); var lines = new List<string>();
+        int exit=0;
         try
         {
-            game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>(); Fixture.GetField("game", F).SetValue(null, game);
-            var config = UnityEngine.Object.Instantiate(game.Config); Set(game, "config", config); config.playerHealth = 100000;
-            Application.targetFrameRate = 120; Time.captureDeltaTime = 1f / 60; game.GameCamera.aspect = 1600f / 700;
-            Fixture.GetMethod("Reset", F).Invoke(null, new object[] { Essence.SwordWave });
-            await Task.Delay(60);
-            var seen = new Dictionary<KarmaBossAttack, int>(); var ended = new HashSet<int>();
-            var warningIds = new HashSet<SpriteRenderer>(); var ledgers = new Dictionary<object, int>();
-            int tick = 0, rounds = 0, first = -1, hit = -1;
-            bool began = false, done = false, sawHit = false;
-            var probe = new GameObject("SW03 artwork-only probe").AddComponent<KarmaSwordDashFrameProbe>();
-            probe.Before = () =>
-            {
-                typeof(KarmaEnemy).GetProperty("FightSeconds").SetValue(Enemy, 0f); UnityEngine.Random.InitState(6103);
-                Fixture.GetMethod("Force", F).Invoke(null, new object[] { EnemyAttack.SW03 }); began = true; probe.Before = null;
-            };
-            probe.After = () =>
-            {
-                if (!began) return;
-                try
-                {
-                    var live = Root.GetComponentsInChildren<KarmaBossAttack>();
-                    var bounds = Enemy.DamageBounds;
-                    data.frames.Add(new Frame { tick = tick, active = live.Length, state = Get(Enemy, "state").ToString(), boss = Enemy.Position,
-                        boundsCenter = bounds.center, boundsSize = bounds.size, health = game.Player.Health });
-                    foreach (var sr in Root.GetComponentsInChildren<SpriteRenderer>())
-                        if (sr.name.StartsWith("SW03 sword-cut warning / cell ") && warningIds.Add(sr))
-                        {
-                            var core = KarmaWaveArtwork.CorePixels("SW03_GroundScar_v5");
-                            data.warnings.Add(new Warning { tick = tick, name = sr.name, x = sr.transform.position.x,
-                                width = Mathf.Round(sr.transform.lossyScale.x * core.width / sr.sprite.pixelsPerUnit * 10000) / 10000 });
-                            if (!baseline)
-                            {
-                                Check(sr.sprite.name == "SW03_GroundScar_v7" && sr.sprite.texture.width == 2172, "new warning loads without texture downscaling");
-                                var center = sr.transform.TransformPoint((core.center - sr.sprite.pivot) / sr.sprite.pixelsPerUnit);
-                                Check(Mathf.Abs(center.x - sr.transform.position.x) < 0.002f && Mathf.Abs(data.warnings.Last().width - 9.5f) < 0.002f,
-                                    "warning limits align to the unchanged paired damage footprint");
-                            }
-                            if (warningIds.Count == 1) Capture("warning-start");
-                        }
-                    var fresh = live.Where(s => !seen.ContainsKey(s)).ToArray();
-                    if (fresh.Length > 0)
-                    {
-                        rounds++; Check(fresh.Length == 20, "twenty blades per round");
-                        foreach (var shot in fresh)
-                        {
-                            var contact = Get(shot, "contact"); if (!ledgers.ContainsKey(contact)) ledgers.Add(contact, ledgers.Count);
-                            seen.Add(shot, data.shots.Count);
-                            data.shots.Add(new Shot { launch = tick, round = rounds, ledger = ledgers[contact], position = shot.transform.position,
-                                size = (Vector2)Get(shot, "size"), velocity = (Vector2)Get(shot, "velocity"), life = (float)Get(shot, "remaining"), damage = (float)Get(shot, "damage") });
-                            if (!baseline)
-                            {
-                                var sr = shot.Visual; var core = KarmaWaveArtwork.CorePixels("SW03_RisingBlade_v5");
-                                var foot = sr.transform.TransformPoint((new Vector2(core.center.x, core.yMin) - sr.sprite.pivot) / sr.sprite.pixelsPerUnit);
-                                Check(Mathf.Abs(foot.y) < 0.002f && Mathf.Abs(foot.x - shot.transform.position.x) < 0.002f, "grounded rising blade");
-                                Check(sr.bounds.max.y <= 19.002f && sr.bounds.max.y <= game.GameCamera.transform.position.y + game.GameCamera.orthographicSize - 0.49f,
-                                    "complete sprite rectangle below hall roof and camera ceiling");
-                                Check(sr.sprite.name == "SW03_RisingBlade_v7", "new sharp blade loaded");
-                            }
-                        }
-                        if (first < 0)
-                        {
-                            first = tick;
-                            // Preserve planning inputs; move into a committed blade only
-                            // after launch to exercise its real unchanged contact path.
-                            var target = fresh.OrderBy(s => Mathf.Abs(s.transform.position.x - 20)).First();
-                            Fixture.GetMethod("Place", F).Invoke(null, new object[] { target.transform.position.x });
-                            Set(game.Player, "invulnerableUntil", 0f); Set(game.Player, "guardUntil", 0f);
-                        }
-                        Capture("round-" + rounds + "-release");
-                    }
-                    foreach (var entry in seen)
-                        if ((entry.Key == null || !entry.Key.gameObject.activeInHierarchy) && ended.Add(entry.Value)) data.shots[entry.Value].end = tick;
-                    if (first < 0 && tick == 40) Capture("warning-locked");
-                    if (first >= 0 && (tick == first + 3 || tick == first + 10 || tick == first + 28)) Capture("rise-" + (tick - first));
-                    if (data.frames.Last().health < data.frames.First().health && hit < 0) hit = tick;
-                    if (!baseline)
-                    {
-                        var flash = Root.GetComponentsInChildren<SpriteRenderer>().FirstOrDefault(sr => sr.name == "SW03 confirmed cut / no damage");
-                        if (flash != null) { sawHit = true; Check(flash.sprite.name == "SW03_HitCut_v7" && flash.GetComponent<Collider2D>() == null, "confirmed hit sprite is harmless"); }
-                    }
-                    if (hit >= 0 && tick == hit + 3) Capture("confirmed-hit");
-                    if (!(bool)Get(Enemy, "running") && first >= 0) { Set(Enemy, "running", true); done = true; probe.After = null; }
-                    tick++;
-                }
-                catch (Exception error) { failure = error.ToString(); done = true; probe.After = null; }
-            };
-            double limit = EditorApplication.timeSinceStartup + 150;
-            while (!done) { Check(EditorApplication.timeSinceStartup < limit, "SW03 cast timeout"); await Task.Delay(5); }
-            UnityEngine.Object.Destroy(probe.gameObject); Check(failure == null, failure);
-            Check(rounds == 5 && data.shots.Count == 100 && data.warnings.Count == 50 && ended.Count == 100, "five complete rounds, 100 blades, 50 warnings");
-            Check(data.shots.GroupBy(s => s.ledger).Count() == 50 && data.shots.GroupBy(s => s.ledger).All(g => g.Count() == 2), "unchanged pair ledgers");
-            Check(hit >= 0, "real SW03 damage contact");
-            File.WriteAllText(Output + "/" + (baseline ? "baseline" : "updated") + ".json", JsonUtility.ToJson(data, true));
-            if (!baseline)
-            {
-                var old = JsonUtility.FromJson<Data>(File.ReadAllText(Output + "/baseline.json"));
-                Check(JsonUtility.ToJson(old) == JsonUtility.ToJson(data), "exact full-cast count/timing/geometry/contact/health comparison");
-                Check(sawHit, "confirmed hit effect actually rendered");
-                var material = Resources.Load<Material>("KarmaSwordRisePolish"); Check(material != null && !ShaderUtil.ShaderHasError(material.shader), "rise shader compiles and loads");
-                lines.Add("PASS: exact before/after five-round launch/end ticks, warnings, roots, velocities, sizes, lifetimes, damage, pair ledgers and player health");
-                lines.Add("PASS: new warning/rise/hit Sprite playback; complete blade rectangle below y19 and camera ceiling; ground y0; harmless confirmed hit");
-            }
-            lines.Add("PASS: SW03 only, five rounds, 100 blades, 50 locked warnings; first launch=" + first + ", first damage=" + hit + ", cast end=" + (tick - 1));
-            lines.Add("Actual health loss=" + (data.frames.First().health - data.frames.Last().health));
+            // Placement/count/timing intentionally changed. Historical artwork
+            // baseline JSON is no longer a gameplay-equivalence oracle.
+            await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(null,true);
+            Directory.CreateDirectory(Output);
+            File.WriteAllText(Output+"/result.txt","PASS: current SW03 5 x (8+8); preserved artwork/anchor/aura and full warnings; physical safe-route checks\n");
         }
-        catch (Exception error) { lines.Insert(0, "FAIL: " + error); Debug.LogException(error); exit = 1; }
-        File.WriteAllLines(Output + "/" + (baseline ? "baseline-result" : "result") + ".txt", lines);
-        Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(exit);
+        catch(Exception e){Debug.LogException(e);exit=1;}
+        Time.captureDeltaTime=0;SessionState.SetBool(Key,false);EditorApplication.Exit(exit);
     }
 }
 #endif

@@ -81,6 +81,14 @@ namespace KarmaPrototype
             GuardianDamageScale = damageScale;
             GuardianPhaseOverridesPose = true;
         }
+        // A braced electrical display keeps the host's Hurt damage silhouette.
+        // Only SW04's real parry stun requests this presentation.
+        internal void ShowSwordElectrocutionPose()
+        {
+            if (picture == null || deathAt >= 0 || sheet != "Wave") return;
+            ShowPose(poses.ContainsKey("Guard") ? "Guard" : "Hurt");
+            GuardianPhaseOverridesPose = true;
+        }
         void SwordGuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
         {
             // Poses follow the actual combat state, including long attacks and recovery.

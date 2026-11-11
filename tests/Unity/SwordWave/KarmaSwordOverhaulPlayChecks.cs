@@ -141,43 +141,8 @@ public static class KarmaSwordOverhaulPlayChecks
     }
     static async Task CheckScarEscape()
     {
-        Reset(); Place(20); Set(game.Player, "invulnerableUntil", 0f); Force(EnemyAttack.SW03);
-        float health = game.Player.Health, target = 20, warningAt = 0; int escapes = 0;
-        bool warning = false; string failure = null;
-        var probe = new GameObject("SW03 real movement escape observer").AddComponent<KarmaSwordDashFrameProbe>();
-        probe.Before = () =>
-        {
-            try
-            {
-                var centers = new System.Collections.Generic.List<float>();
-                foreach (Transform child in Root) if (child.gameObject.activeInHierarchy && child.name.StartsWith("SW03 sword-cut warning")) centers.Add(child.position.x);
-                if (centers.Count == 10 && !warning)
-                {
-                    warning = true; warningAt = enemy.FightSeconds; float nearest = float.PositiveInfinity;
-                    var candidates = new System.Collections.Generic.List<float> { game.Player.Position.x };
-                    foreach (float center in centers) { candidates.Add(center - 4.75f - KarmaSpace.PlayerHalfWidth - 0.21f); candidates.Add(center + 4.75f + KarmaSpace.PlayerHalfWidth + 0.21f); }
-                    foreach (float point in candidates)
-                    {
-                        if (point < -15 + KarmaSpace.PlayerHalfWidth + 0.2f || point > 55 - KarmaSpace.PlayerHalfWidth - 0.2f) continue;
-                        bool safe = true; foreach (float center in centers) safe &= Mathf.Abs(point - center) >= 4.75f + KarmaSpace.PlayerHalfWidth + 0.199f;
-                        float distance = Mathf.Abs(point - game.Player.Position.x);
-                        if (safe && distance < nearest) { nearest = distance; target = point; }
-                    }
-                    Check(!float.IsInfinity(nearest), "independent geometry finds body-wide escape");
-                    if (nearest > 0.5f) escapes++;
-                }
-                if (centers.Count == 0) warning = false;
-                if (warning && enemy.FightSeconds - warningAt >= 0.28f)
-                {
-                    float step = Mathf.MoveTowards(game.Player.Position.x, target, game.Config.moveSpeed * 0.8f * Time.deltaTime) - game.Player.Position.x;
-                    if (Mathf.Abs(step) > 0.00001f) Call(game.Player, "MoveSlash", Vector2.right * Mathf.Sign(step), Mathf.Abs(step));
-                }
-            } catch (Exception e) { failure = e.ToString(); }
-        };
-        await Until(() => !(bool)Get(enemy, "running") || failure != null); probe.Before = null; UnityEngine.Object.Destroy(probe.gameObject);
-        Check(failure == null && game.Player.Health == health, "SW03 0.28-second reaction then real collision-checked walking evades every round: " + failure);
-        Check(escapes >= 2, "SW03 forces repeated movement, rather than a standing safe pocket");
-        Set(enemy, "running", true); results.Add("PASS: SW03 real 11.2-unit/s collision-checked walking after 0.28-second reaction evades all rounds; " + escapes + " forced relocations, invulnerability disabled");
+        await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(false,true);
+        results.Add("PASS: SW03 reaction-delayed physical walking avoids both staggered groups");
     }
     static void Tick(float dt)
     {
@@ -280,62 +245,13 @@ public static class KarmaSwordOverhaulPlayChecks
     }
     static async Task CheckScars(bool enraged)
     {
-        Reset(); Place(-13.8f);
-        if (enraged) typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.1f);
-        Force(EnemyAttack.SW03);
-        var seen = new System.Collections.Generic.HashSet<KarmaBossAttack>(); int rounds = 0; bool rising = false, warningShot = false;
-        var centers = new System.Collections.Generic.HashSet<float>();
-        while ((bool)Get(enemy, "running"))
-        {
-            typeof(KarmaSwordPlayChecks).GetMethod("RepeatedOrdinaryDamage", F).Invoke(null, null);
-            var attacks = Attacks();
-            if (attacks.Length == 0)
-            {
-                centers.Clear();
-                foreach (Transform child in Root) if (child.gameObject.activeInHierarchy && child.name.StartsWith("SW03 sword-cut warning"))
-                { centers.Add(child.position.x); Check(child.GetComponent<SpriteRenderer>().sprite.name == "SW03_GroundScar_v5", "new crack warning"); }
-                if (centers.Count == 10 && !warningShot) { warningShot = true; Shot("SW03-warning-" + enraged); }
-                rising = false;
-            }
-            else if (!rising)
-            {
-                rising = true; rounds++; Check(attacks.Length == 20 && centers.Count == 10, "ten warned pairs / twenty simultaneous blades");
-                var contacts = new System.Collections.Generic.Dictionary<KarmaAttackContact, int>();
-                foreach (var attack in attacks)
-                {
-                    seen.Add(attack); Vector2 size = (Vector2)Get(attack, "size");
-                    Check(size == new Vector2(4.75f, 30) && attack.Visual.sprite.name == "SW03_RisingBlade_v5", "larger 4.75x30 v5 blades");
-                    float x = attack.transform.position.x;
-                    Check(x - size.x / 2 >= -15 && x + size.x / 2 <= 55, "full blade in arena");
-                    bool match = false; foreach (float center in centers) match |= Mathf.Abs(Mathf.Abs(x - center) - 2.375f) < 0.001f;
-                    Check(match, "pair matches locked ground warning");
-                    var contact = (KarmaAttackContact)Get(attack, "contact");
-                    contacts[contact] = contacts.TryGetValue(contact, out int count) ? count + 1 : 1;
-                }
-                Check(contacts.Count == 10, "shared pair ledger prevents seam duplicate damage");
-                foreach (int count in contacts.Values) Check(count == 2, "exactly two per contact ledger");
-                Shot("SW03-rise-" + enraged + "-" + rounds);
-            }
-            await Task.Delay(5);
-        }
-        Check(rounds == 5 && seen.Count == rounds * 20, "five normal/enraged full rounds under repeated incoming damage");
-        Set(enemy, "running", true);
-        results.Add("PASS: SW03 " + (enraged ? "enraged" : "normal") + " 100 blades, five rounds, warnings/size/bounds/shared ledgers/cleanup");
+        await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(enraged);
+        results.Add("PASS: SW03 normal/empowered 80 swords in five staggered rounds");
     }
     static async Task CheckScarHitAndCancel()
     {
-        Reset(); Force(EnemyAttack.SW03); await Seconds(0.1f); Call(enemy, "InterruptPattern");
-        Check(Root.GetComponentsInChildren<SpriteRenderer>().Length == 0, "interrupt clears crack warnings");
-        Force(EnemyAttack.SW03); await Until(() => Attacks().Length == 20);
-        Place(Attacks()[0].transform.position.x); float health = game.Player.Health; await Seconds(0.08f);
-        Check(game.Player.Health == health && Root.Find("SW03 confirmed hit") == null, "invulnerability has no false hit flash");
-        Force(EnemyAttack.SW03); await Until(() => Attacks().Length == 20);
-        Place(Attacks()[0].transform.position.x); Set(game.Player, "invulnerableUntil", 0f); health = game.Player.Health;
-        await Until(() => game.Player.Health < health && Root.Find("SW03 confirmed hit") != null);
-        Check(Root.Find("SW03 confirmed hit").GetComponentInChildren<SpriteRenderer>().sprite.name == "SW03_HitFlash_v5", "confirmed actual damage emits v5 hit flash");
-        Shot("SW03-confirmed-hit"); var root = Root; enemy.TakeDamage(enemy.MaxHealth * 10); await Task.Delay(100);
-        Check(root == null || root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "death clears contacts");
-        results.Add("PASS: SW03 v5 flash only on actual damage; invulnerability/miss suppress flash; interruption/death cleanup");
+        await KarmaSwordSkillRefreshChecks.CheckSW03ContactAndCancellation();
+        results.Add("PASS: SW03 real shared contact prevents cross-group duplicate damage; cancellation clears groups");
     }
 }
 #endif

@@ -17,6 +17,6 @@ MonoBehaviour:
     sw01Weight: 3
     sw02Weight: 3
     sw03Weight: 2
-    sw04Weight: 1
+    sw04Weight: 2
     allowRepeatFallback: 1
     closeBasicMultiplier: 2

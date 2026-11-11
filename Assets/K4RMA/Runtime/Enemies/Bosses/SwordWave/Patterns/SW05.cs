@@ -170,6 +170,7 @@ namespace KarmaPrototype
                         if (!owner.Active) yield break;
                         ignition.Ignite();
                         var contact = new KarmaAttackContact();
+                        sword.RegisterFinalDetonation(contact);
                         foreach (var blade in planted) if (blade != null) blade.Explode(contact);
                     }
                     yield return owner.Wait(0.25f);

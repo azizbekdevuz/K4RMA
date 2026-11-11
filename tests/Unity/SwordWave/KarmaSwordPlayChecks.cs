@@ -214,97 +214,13 @@ public static class KarmaSwordPlayChecks
     }
     static async Task CheckSW03(bool enraged)
     {
-        Reset(); Place(-13.8f);
-        if (enraged) typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.1f);
-        Force(EnemyAttack.SW03);
-        var ids = new HashSet<KarmaBossAttack>(); int rounds = 0; bool rising = false, paused = false, warningCaptured = false;
-        var warnedCenters = new HashSet<float>();
-        double deadline = EditorApplication.timeSinceStartup + 30;
-        while (Get<bool>(enemy, "running"))
-        {
-            RepeatedOrdinaryDamage();
-            var attacks = Attacks();
-            if (attacks.Length == 0)
-            {
-                var current = new HashSet<float>();
-                foreach (Transform child in Root)
-                    if (child.gameObject.activeInHierarchy && child.name.StartsWith("SW03 sword-cut warning / cell "))
-                        current.Add(child.position.x);
-                if (current.Count == 5)
-                {
-                    warnedCenters = current;
-                    if (!warningCaptured && !enraged) { warningCaptured = true; Snapshot("sw03-warning"); }
-                }
-            }
-            if (attacks.Length > 0 && !rising)
-            {
-                rising = true; rounds++;
-                Check(attacks.Length == 10, "SW03 five pairs / ten simultaneous blades");
-                var cells = new HashSet<int>();
-                var ledgers = new Dictionary<KarmaAttackContact, int>();
-                foreach (var attack in attacks)
-                {
-                    ids.Add(attack);
-                    float x = attack.transform.position.x;
-                    int cell = int.Parse(System.Text.RegularExpressions.Regex.Match(attack.Visual.name, @"cell (\d+)").Groups[1].Value);
-                    cells.Add(cell);
-                    float center = Mathf.Clamp(-15 + (cell + 0.5f) * 7, -10.5f, 50.5f);
-                    Check(warnedCenters.Contains(center), "SW03 pair shares its locked crack warning's center");
-                    Check(cell >= 0 && cell < 10 && Mathf.Abs(Mathf.Abs(x - center) - 2.25f) < 0.001f, "SW03 two distinct blade centers per selected cell");
-                    var size = Get<Vector2>(attack, "size");
-                    Check(size == new Vector2(4.5f, 27), "SW03 paired footprint 9 x 27, double original width/height");
-                    Check(x - size.x / 2 >= -15 && x + size.x / 2 <= 55, "SW03 entire contact inside arena");
-                    Check(attack.Visual.sprite.name == "SW03_RisingBlade_v4", "SW03 v4 rising PNG");
-                    Check(Mathf.Abs(attack.Visual.transform.localScale.y * 1751 / 100 - size.y) < 0.001f,
-                        "SW03 full hit height visible from the first active frame");
-                    var ledger = Get<KarmaAttackContact>(attack, "contact");
-                    ledgers[ledger] = ledgers.TryGetValue(ledger, out int count) ? count + 1 : 1;
-                }
-                Check(cells.Count == 5, "SW03 no duplicate cells");
-                Check(ledgers.Count == 5, "SW03 each pair shares exactly one damage ledger");
-                foreach (int count in ledgers.Values) Check(count == 2, "SW03 pair cannot deal duplicate seam damage");
-                Snapshot(enraged ? "sw03-enraged-rise" : "sw03-rise");
-                if (!paused)
-                {
-                    paused = true; Call(game, "TogglePause"); float clock = enemy.FightSeconds;
-                    float life = Get<float>(attacks[0], "remaining");
-                    await Task.Delay(250);
-                    Check(enemy.FightSeconds == clock && Get<float>(attacks[0], "remaining") == life, "pause freezes scar clock and contacts");
-                    Call(game, "TogglePause");
-                }
-            }
-            if (attacks.Length == 0) rising = false;
-            Check(EditorApplication.timeSinceStartup < deadline, "SW03 completes within timeout");
-            await Task.Delay(15);
-        }
-        Set(enemy, "running", true);
-        Check(rounds == (enraged ? 3 : 2) && ids.Count == rounds * 10, "SW03 normal/enraged round count and doubled total blades");
-        Check(Attacks().Length == 0, "SW03 recovery clears every contact");
-        results.Add("SW03 " + (enraged ? "enraged" : "normal") + ": " + rounds + " x ten blades in five cells; doubled footprint, shared pair ledgers, pause, bounds and cleanup pass.");
+        await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(enraged);
+        results.Add("PASS: SW03 5 x (8+8), locked warnings, stagger, vulnerability, gating and cleanup");
     }
     static async Task CheckScarCancellation()
     {
-        Reset(); Force(EnemyAttack.SW03); await Seconds(0.1f);
-        Check(Root.GetComponentsInChildren<SpriteRenderer>().Length >= 5, "SW03 five visible crack warnings");
-        Call(enemy, "InterruptPattern");
-        Check(Root.GetComponentsInChildren<SpriteRenderer>().Length == 0, "interruption clears warnings immediately");
-        Force(EnemyAttack.SW03); await Until(() => Attacks().Length == 10);
-        Place(Attacks()[0].transform.position.x);
-        float invulnerableHealth = game.Player.Health;
-        await Seconds(0.08f);
-        Check(game.Player.Health == invulnerableHealth && Root.Find("SW03 confirmed hit") == null,
-            "SW03 miss/invulnerability produces no false damage feedback");
-        Force(EnemyAttack.SW03); await Until(() => Attacks().Length == 10);
-        Place(Attacks()[0].transform.position.x); Set(game.Player, "invulnerableUntil", 0f);
-        float health = game.Player.Health; await Until(() => game.Player.Health < health);
-        await Until(() => Root.Find("SW03 confirmed hit") != null);
-        var hit = Root.Find("SW03 confirmed hit");
-        Check(hit.GetComponentInChildren<SpriteRenderer>().sprite.name == "SW03_HitFlash_v4", "SW03 confirmed damage uses dedicated v4 hit PNG");
-        Snapshot("sw03-confirmed-hit");
-        var retainedRoot = Root;
-        enemy.TakeDamage(enemy.MaxHealth * 10); await Task.Delay(100);
-        Check(retainedRoot == null || retainedRoot.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "death clears active scar contacts");
-        results.Add("SW03 real collision emits dedicated hit flash; invulnerability suppresses false feedback; interruption/death clears all owned effects.");
+        await KarmaSwordSkillRefreshChecks.CheckSW03ContactAndCancellation();
+        results.Add("PASS: SW03 real shared-contact damage, duplicate consumption and cancellation");
     }
     static async Task CheckSW04()
     {

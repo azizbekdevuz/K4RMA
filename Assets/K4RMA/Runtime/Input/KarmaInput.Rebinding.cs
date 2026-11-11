@@ -16,6 +16,57 @@ namespace KarmaPrototype
             KarmaAction.Left, KarmaAction.Right, KarmaAction.Up, KarmaAction.Down, KarmaAction.Jump,
             KarmaAction.Attack, KarmaAction.Pierce, KarmaAction.Counter, KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard
         };
+        // Keep Input System's existing v1 JSON format. Runtime-created maps get
+        // new binding GUIDs each launch, but v1 also stores the stable map/action
+        // name. This UI has always edited binding zero only; use that contract
+        // when an earlier launch's GUID no longer resolves.
+        [Serializable] sealed class SavedBindings { public SavedBinding[] bindings = null; }
+        [Serializable] sealed class SavedBinding
+        {
+            public string action = null, id = null, path = null, interactions = null, processors = null;
+        }
+        internal static void RestoreSavedBindings(InputActionMap target, string json)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (string.IsNullOrEmpty(json)) { target.RemoveAllBindingOverrides(); return; }
+            SavedBindings saved;
+            try { saved = JsonUtility.FromJson<SavedBindings>(json); }
+            catch (ArgumentException error) { throw new FormatException("Invalid binding JSON.", error); }
+            if (saved?.bindings == null) throw new FormatException("Missing binding list.");
+            var pending = new System.Collections.Generic.List<(InputAction action, int index, InputBinding binding)>();
+            foreach (var entry in saved.bindings)
+            {
+                if (entry == null || entry.path == null && entry.interactions == null && entry.processors == null)
+                    throw new FormatException("Missing binding override.");
+                InputAction action = null;
+                int index = -1;
+                if (Guid.TryParse(entry.id, out var id))
+                    index = target.FindBinding(new InputBinding { id = id }, out action);
+                if (index < 0)
+                {
+                    string prefix = target.name + "/";
+                    if (entry.action == null || !entry.action.StartsWith(prefix, StringComparison.Ordinal))
+                        throw new FormatException("Unknown saved action: " + entry.action);
+                    string name = entry.action.Substring(prefix.Length);
+                    if (!Enum.TryParse(name, out KarmaAction key) || key.ToString() != name
+                        || Array.IndexOf(ConfigurableActions, key) < 0
+                        || (action = target.FindAction(name)) == null || action.bindings.Count == 0)
+                        throw new FormatException("Unknown saved action: " + entry.action);
+                    index = 0;
+                }
+                foreach (var item in pending)
+                    if (item.action == action && item.index == index)
+                        throw new FormatException("Duplicate saved binding: " + entry.action);
+                pending.Add((action, index, new InputBinding {
+                    overridePath = entry.path == "null" ? null : entry.path,
+                    overrideInteractions = entry.interactions == "null" ? null : entry.interactions,
+                    overrideProcessors = entry.processors == "null" ? null : entry.processors
+                }));
+            }
+            // Validate the complete document before replacing any active keys.
+            target.RemoveAllBindingOverrides();
+            foreach (var item in pending) item.action.ApplyBindingOverride(item.index, item.binding);
+        }
         public static string BindingLabel(KarmaAction id)
         {
             Initialize();

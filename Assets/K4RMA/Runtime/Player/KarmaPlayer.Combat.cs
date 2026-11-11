@@ -105,8 +105,8 @@ namespace KarmaPrototype
             to.x = Mathf.Clamp(to.x, KarmaStage.ArenaLeft + KarmaSpace.PlayerHalfWidth, KarmaStage.ArenaRight - KarmaSpace.PlayerHalfWidth);
             float travel = Vector2.Distance(from, to);
             direction = travel > 0 ? (to - from).normalized : direction;
-            var hits = Physics2D.BoxCastAll(from, KarmaSpace.PlayerSize, 0, direction, travel);
-            foreach (var h in hits)
+            KarmaPhysicsQueries.BoxCast(from, KarmaSpace.PlayerSize, direction, travel, movementHits);
+            foreach (var h in movementHits)
             {
                 if (h.collider.isTrigger || h.collider.GetComponent<KarmaSurface>() == null) continue;
                 // One-way platforms block only downward crossings from above.

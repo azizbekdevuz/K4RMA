@@ -196,7 +196,10 @@ public static class KarmaSfxCompletionChecks
         }
         await Prepare(Essence.SwordWave);
         Pattern(EnemyAttack.SW03);
-        await Until(() => !(bool)Get(enemy, "running"), 30, "SW03 completion");
+        var ground = Get(Get(enemy, "behavior"), "ground");
+        var groundRunning = ground.GetType().GetProperty("Running", Fields);
+        Check((bool)groundRunning.GetValue(ground), "SW03 independent timeline started");
+        await Until(() => !(bool)groundRunning.GetValue(ground), 30, "SW03 independent timeline completion");
         Check(Count(KarmaSfxId.SwElectricDischarge) == 5, "SW03 one electrical cue for each actual round");
         Check(Count(KarmaSfxId.SwScarRise) == 0 && Count(KarmaSfxId.SwWaveLaunch) == 0, "SW03 no redundant release cues");
 

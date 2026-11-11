@@ -22,7 +22,7 @@ namespace KarmaPrototype
             if (lookup == null)
             {
                 lookup = new Dictionary<(string sheet, string pose), Sprite>();
-                foreach (var entry in sheets)
+                foreach (var entry in sheets ?? Array.Empty<Sheet>())
                     if (entry != null && entry.sprites != null)
                         for (int i = 0; i < entry.sprites.Length; i++)
                         {
@@ -38,7 +38,8 @@ namespace KarmaPrototype
         }
         public Sprite[] All(string sheet)
         {
-            foreach (var entry in sheets) if (entry.id == sheet) return entry.sprites;
+            foreach (var entry in sheets ?? Array.Empty<Sheet>())
+                if (entry != null && entry.id == sheet) return entry.sprites ?? Array.Empty<Sprite>();
             return Array.Empty<Sprite>();
         }
         void OnEnable() { lookup = null; }

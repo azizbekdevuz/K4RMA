@@ -271,7 +271,11 @@ public static class KarmaSwordPlayChecks
         Check(!(bool)Behavior.GetType().GetProperty("BasicMeleeSelected").GetValue(Behavior), "medium basic is a wave");
         await Until(() => Attacks().Length > 0);
         Check(Get<Vector2>(Attacks()[0], "velocity").x > 0, "medium wave aims toward player");
-        Check(Attacks()[0].Visual.sprite == KarmaWaveArtwork.Sprite("SWBasic_CrescentWave_v3"), "medium wave uses shared sword crescent");
+        bool rangedFrame = false;
+        for (int i = 0; i < 5; i++)
+            rangedFrame |= Attacks()[0].Visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_" + i);
+        Check(rangedFrame && Attacks()[0].GetComponent<KarmaSwordBasicPresentation>() != null,
+            "medium wave preserves the current animated SW01 crescent presentation");
         Snapshot("swbasic-wave");
         Reset(); typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.49f);
         object[] args = { 15f, true, true, EnemyAttack.SWBasic };

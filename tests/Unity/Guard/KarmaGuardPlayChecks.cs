@@ -973,11 +973,19 @@ public static partial class KarmaGuardPlayChecks
         Reset();
         Set(enemy, "nextUltimate", 0f);
         var selected = new HashSet<EnemyAttack>();
-        for (int i = 0; i < 10; i++)
+        // Weighted selection has no ten-draw coverage guarantee. Use a reproducible
+        // sample while retaining the real attack entry/cancellation and every required attack.
+        var randomState = UnityEngine.Random.state;
+        try
         {
-            Call(enemy, "BeginAttack"); selected.Add(Get<EnemyAttack>(enemy, "selected"));
-            Call(enemy, "InterruptPattern");
+            UnityEngine.Random.InitState(19018);
+            for (int i = 0; i < 128; i++)
+            {
+                Call(enemy, "BeginAttack"); selected.Add(Get<EnemyAttack>(enemy, "selected"));
+                Call(enemy, "InterruptPattern");
+            }
         }
+        finally { UnityEngine.Random.state = randomState; }
         Check(selected.Contains(EnemyAttack.GD02) && selected.Contains(EnemyAttack.GD03)
             && selected.Contains(EnemyAttack.GD04) && !selected.Contains(EnemyAttack.GD05),
             "persistent GD01 does not force GD02 forever or starve inherited attacks");

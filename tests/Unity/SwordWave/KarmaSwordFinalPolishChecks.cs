@@ -81,6 +81,25 @@ public static class KarmaSwordFinalPolishChecks
     static void VerifyArt(KarmaBossAttack shot, EnemyAttack pattern)
     {
         var size = (Vector2)Get(shot, "size"); var velocity = (Vector2)Get(shot, "velocity");
+        bool rangedBasic = pattern == EnemyAttack.SWBasic && velocity.sqrMagnitude > 0.01f;
+        if (rangedBasic || pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
+        {
+            var visual = shot.Visual;
+            string sequence = pattern == EnemyAttack.SW02 ? "SW02Flight" : "SW01Flight";
+            bool validFrame = false;
+            for (int i = 0; i < 5; i++)
+                validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_" + sequence + "_" + i);
+            Check(validFrame, "released shot uses a registered frame from its electric flight sequence");
+            Vector2 footprint = rangedBasic
+                ? (Vector2)Behavior.GetType().GetMethod("SwordSize", F).Invoke(Behavior, new object[] { EnemyAttack.SW01 }) * 0.5f
+                : size;
+            Vector2 coreFraction = pattern == EnemyAttack.SW02 ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f);
+            var actual = Vector2.Scale(visual.sprite.bounds.size, visual.transform.localScale);
+            Check(Vector2.Distance(Vector2.Scale(actual, coreFraction), footprint) < 0.002f,
+                "animated frame preserves the authored footprint and unchanged damage rectangle");
+            Check(visual.flipX == (velocity.x < 0) && !visual.flipY, "electric flight keeps its committed facing");
+            return;
+        }
         string pose = KarmaWaveArtwork.Pose(pattern);
         var core = KarmaWaveArtwork.CorePixels(pose); var sr = shot.Visual;
         Check(sr.sprite == KarmaWaveArtwork.Sprite(pose), "released shot uses expected final sprite");
@@ -143,7 +162,13 @@ public static class KarmaSwordFinalPolishChecks
         m.seconds = Enemy.FightSeconds - start; Check(error == null, error);
         Check(m.shots == (pattern == EnemyAttack.SW01 ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
 
-        if (pattern == EnemyAttack.SW01) Check(both && m.heights[0] < m.heights[1] && Mathf.Abs(m.heights[0] - 2.1f) < 0.01f && Mathf.Abs(m.heights[1] - 6.6f) < 0.01f, "SW01 low then high, both visible in flight");
+        // SW01 chooses its first lane randomly once per cast. Both original
+        // heights and their stagger must survive in either order.
+        if (pattern == EnemyAttack.SW01) Check(both
+            && Mathf.Abs(Mathf.Min(m.heights[0], m.heights[1]) - 2.1f) < 0.01f
+            && Mathf.Abs(Mathf.Max(m.heights[0], m.heights[1]) - 6.6f) < 0.01f
+            && m.releaseTimes[1] - m.releaseTimes[0] >= 0.42f,
+            "SW01 retains both randomized lanes and release stagger: " + JsonUtility.ToJson(m) + "; overlap=" + both);
         if (pattern == EnemyAttack.SWBasic && melee) Check(seen.Count == 1, "one melee retains latched mode");
         Check(m.peakCosmetics <= KarmaSwordVfxPool.Capacity, "bounded sprite pool");
         File.WriteAllText(output + "/" + prefix + ".json", JsonUtility.ToJson(m, true)); Log(prefix + ": " + m.shots + " shots, " + m.rounds + " rises, " + m.seconds.ToString("F3") + "s, cosmetics peak " + m.peakCosmetics);
@@ -151,13 +176,17 @@ public static class KarmaSwordFinalPolishChecks
     static async Task LockTest()
     {
         Reset(); Place(35); await Seconds(0.1f); Force(EnemyAttack.SW02); await Seconds(0.10f); Place(5);
-        await Until(() => Root.Find("고정 공격 경로") != null); float lockedDirection = Enemy.Facing;
-        var warning = Root.Find("고정 공격 경로"); Vector2 center = warning.position; Shot("SW02-locked"); Place(40);
+        await Seconds(0.3f);
+        Check(Enemy.Facing < 0, "SW02 tracks the player crossing left during preparation");
+        Shot("SW02-tracking-left"); Place(40);
         await Until(() => Root.GetComponentsInChildren<KarmaBossAttack>().Length > 0);
         var shot = Root.GetComponentsInChildren<KarmaBossAttack>()[0];
-        Check(lockedDirection < 0 && ((Vector2)Get(shot, "velocity")).x < 0, "SW02 tracks before lock and never retargets after lock");
+        var released = (Vector2)Get(shot, "velocity");
+        Check(Enemy.Facing > 0 && released.x > 0, "SW02 keeps tracking through the presentation's Locked phase until release");
         Check(((Vector2)Get(shot, "velocity")).y == 0 && (bool)Get(shot, "aimedSlash"), "horizontal slash flag/trajectory preserved");
-        Shot("SW02-committed-left-after-player-crosses"); Log("SW02 tracking -> fixed left lock -> player crosses right -> fixed left release");
+        Place(5); await Seconds(0.05f);
+        Check(shot != null && (Vector2)Get(shot, "velocity") == released, "released SW02 never retargets after a second crossing");
+        Shot("SW02-committed-right-after-release"); Log("SW02 tracks both preparation crossings; the released projectile keeps its original direction");
     }
     static async Task Impact()
     {
@@ -166,7 +195,12 @@ public static class KarmaSwordFinalPolishChecks
         await Until(() => Root.GetComponentsInChildren<KarmaBossAttack>().Length > 0);
         var shot = Root.GetComponentsInChildren<KarmaBossAttack>()[0]; Place(shot.transform.position.x); Set(game.Player, "invulnerableUntil", 0f);
         float hp = game.Player.Health; await Until(() => game.Player.Health < hp); Shot("player-confirmed-hit");
-        Check(game.World.Find("Sword player confirmed hit") != null, "player confirmed-hit red flash"); Log("boss and player actual confirmed-hit effects; ordinary hit preserves action");
+        var pool = game.World.GetComponent<KarmaSwordVfxPool>();
+        var hitSprite = KarmaWaveArtwork.Sprite("Sword_Impact_v6");
+        Check(pool != null && Array.Exists(pool.GetComponentsInChildren<SpriteRenderer>(),
+            picture => picture.sprite == hitSprite && Vector2.Distance(picture.transform.position, game.Player.DamageBounds.center) < 2),
+            "SWBasic confirmed contact displays its pooled impact at the player");
+        Log("boss and player actual confirmed-hit effects; ordinary hit preserves action");
     }
     static async Task PoolCheck()
     {
@@ -174,12 +208,16 @@ public static class KarmaSwordFinalPolishChecks
         var cosmeticRoot = (Transform)Get(pool, "poolRoot");
         Check(cosmeticRoot.GetComponentsInChildren<Collider2D>(true).Length == 0 && cosmeticRoot.GetComponentsInChildren<KarmaBossAttack>(true).Length == 0, "cosmetic pool cannot deal damage");
         pool.Sparks(Enemy, Enemy.Position, Vector2.up, 1, 1); pool.Flash(Enemy, "Sword_Impact_v6", Enemy.Position, Vector2.one, 0.1f);
-        long start = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 100; i++) { pool.Sparks(Enemy, Enemy.Position, Vector2.up, 3, 5); pool.Flash(Enemy, "Sword_Impact_v6", Enemy.Position, Vector2.one, 0.1f); }
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - start;
-        File.WriteAllText(output + "/pool-allocation.txt", "100 iterations / 400 pooled emissions after warmup; managed bytes = " + allocated + "; fixed slots = " + KarmaSwordVfxPool.Capacity);
-        Check(allocated < 2048, "warm cosmetic emission avoids per-effect managed allocation: " + allocated);
-        await Seconds(0.4f); Check(pool.ActiveCount == 0, "pooled effects expire"); Log("100 warmed pooled-emission iterations, allocated " + allocated + " managed bytes; fixed 96 slots");
+        // Enemy is a reflection-based fixture accessor; keep its allocations
+        // outside the measured runtime operation.
+        var owner = Enemy;
+        long allocated = KarmaAllocationChecks.Count(() =>
+        {
+            for (int i = 0; i < 100; i++) { pool.Sparks(owner, owner.Position, Vector2.up, 3, 5); pool.Flash(owner, "Sword_Impact_v6", owner.Position, Vector2.one, 0.1f); }
+        });
+        File.WriteAllText(output + "/pool-allocation.txt", "100 iterations / 400 pooled emissions after warmup; GC.Alloc events = " + allocated + "; fixed slots = " + KarmaSwordVfxPool.Capacity);
+        Check(allocated == 0, "warm cosmetic emission avoids per-effect managed allocation: " + allocated);
+        await Seconds(0.4f); Check(pool.ActiveCount == 0, "pooled effects expire"); Log("100 warmed pooled-emission iterations, allocated " + allocated + " GC.Alloc events; fixed 96 slots");
     }
     static async Task AccentCancellation()
     {
@@ -233,6 +271,11 @@ public static class KarmaSwordFinalPolishChecks
             game.Player.BeginCounter(); int parries = game.Player.ParryCount;
             Vector2 at = game.Player.GetComponent<Collider2D>().bounds.center;
             bool wasRunning = (bool)Get(Enemy, "running");
+            float stunBegan = float.NaN;
+            var onsetProbe = stage == 3 ? null
+                : new GameObject("stun onset frame observer").AddComponent<KarmaSwordDashFrameProbe>();
+            if (onsetProbe != null)
+                onsetProbe.After = () => { if (float.IsNaN(stunBegan) && Enemy.Stunned) stunBegan = Enemy.FightSeconds; };
             Enemy.TryAttackHit(at, at, Vector2.one, 1, contact, 0, sourcePattern: pattern);
             if (stage == 3)
             {
@@ -256,8 +299,9 @@ public static class KarmaSwordFinalPolishChecks
             Check(game.Player.ParryCount == parries + 1 && (bool)Get(Enemy, "pendingParry"), pattern + " real successful contact queues boss stun");
             Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0
                 && Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, pattern + " suppresses every live contact synchronously");
-            await Until(() => Enemy.Stunned);
-            float start = Enemy.FightSeconds, deadline = (float)Get(Enemy, "stunnedUntil");
+            try { await Until(() => !float.IsNaN(stunBegan)); }
+            finally { onsetProbe.After = null; UnityEngine.Object.Destroy(onsetProbe.gameObject); }
+            float start = stunBegan, deadline = (float)Get(Enemy, "stunnedUntil");
             Vector2 position = Enemy.Position;
             Check(Mathf.Abs(deadline - start - 2) < 0.02f, pattern + " stun deadline is exactly two combat seconds");
             Check(!Enemy.Armored && !Enemy.Invulnerable && !(bool)Get(Enemy, "running"), pattern + " releases armor/ultimate invulnerability and interrupts attack");
@@ -266,14 +310,23 @@ public static class KarmaSwordFinalPolishChecks
             var picture = ((Transform)Get(Enemy, "art")).Find("Guardian sprite").GetComponent<SpriteRenderer>();
             var feedback = Enemy.GetComponent<KarmaSwordStunFeedback>();
             Shot("parry-stun-" + pattern);
-            Check(orbit != null && orbit.gameObject.activeInHierarchy && orbit.GetComponentsInChildren<LineRenderer>().Length == 4,
-                pattern + " has a visible orbit and three stars; found=" + (orbit != null)
-                + ", visible=" + (orbit != null && orbit.gameObject.activeInHierarchy)
-                + ", lines=" + (orbit != null ? orbit.GetComponentsInChildren<LineRenderer>(true).Length : -1)
-                + ", component=" + (feedback != null && feedback.isActiveAndEnabled));
-            Check(picture.color.r < 0.7f && picture.color.b > picture.color.r && ((KarmaCharacterAnimator)Get(Enemy, "animator")).CurrentPose == "Hurt",
-                pattern + " distinct stunned body tint and hurt pose");
-            Check(Quaternion.Angle(picture.transform.localRotation, Quaternion.identity) > 5, "stunned body visibly leans");
+            var electric = Array.Find(game.World.GetComponentsInChildren<KarmaSwordElectrocution>(), fx => fx.IsBoss);
+            if (pattern == EnemyAttack.SW04)
+            {
+                Check(feedback.Electrocuted && electric != null && electric.FrameIndex > 0
+                    && electric.GetComponentsInChildren<LineRenderer>().Length == 15 && !orbit.gameObject.activeInHierarchy,
+                    "SW04 uses its animated electrocution instead of the ordinary star orbit");
+                Check(electric.GetComponentsInChildren<Collider2D>().Length == 0
+                    && electric.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "electrocution cannot deal damage");
+            }
+            else
+            {
+                Check(orbit != null && orbit.gameObject.activeInHierarchy && orbit.GetComponentsInChildren<LineRenderer>().Length == 4,
+                    pattern + " has a visible orbit and three stars");
+                Check(picture.color.r < 0.7f && picture.color.b > picture.color.r && ((KarmaCharacterAnimator)Get(Enemy, "animator")).CurrentPose == "Hurt",
+                    pattern + " distinct stunned body tint and hurt pose");
+                Check(Quaternion.Angle(picture.transform.localRotation, Quaternion.identity) > 5, "stunned body visibly leans");
+            }
             Check(orbit.GetComponentsInChildren<Collider2D>().Length == 0 && orbit.GetComponentsInChildren<KarmaBossAttack>().Length == 0,
                 "stun marker is cosmetic and outside incoming damage artwork");
             float health = Enemy.Health; Enemy.TakeDamage(1);
@@ -284,25 +337,36 @@ public static class KarmaSwordFinalPolishChecks
             if (pattern == EnemyAttack.SW04)
             {
                 Shot("parry-stun-active");
-                Vector3 star = orbit.GetChild(1).localPosition;
-                Quaternion lean = picture.transform.localRotation;
+                int electricFrame = electric.FrameIndex;
                 typeof(KarmaGame).GetMethod("TogglePause", F).Invoke(game, null);
                 float clock = Enemy.FightSeconds;
                 try
                 {
                     await Task.Delay(150);
-                    Check(Enemy.FightSeconds == clock && orbit.GetChild(1).localPosition == star
-                        && Quaternion.Angle(picture.transform.localRotation, lean) < 0.01f, "pause freezes stun timer, stars and body lean");
+                    Check(Enemy.FightSeconds == clock && electric.FrameIndex == electricFrame
+                        && Array.TrueForAll(electric.GetComponentsInChildren<LineRenderer>(), line => !line.enabled),
+                        "pause freezes the stun clock and electric frame and hides its discharges");
                 }
                 finally { typeof(KarmaGame).GetMethod("TogglePause", F).Invoke(game, null); }
             }
-            await Until(() => Enemy.FightSeconds >= deadline - 0.1f);
-            Check(Enemy.Stunned && Vector2.Distance(position, Enemy.Position) < 0.001f
-                && Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, pattern + " cannot move or attack before two seconds");
-            await Until(() => !Enemy.Stunned);
-            Check(Enemy.FightSeconds >= deadline && Enemy.FightSeconds <= deadline + 0.04f, pattern + " recovers at the two-second boundary");
+            float recoveredAt = float.NaN;
+            var recoveryProbe = new GameObject("stun recovery frame observer").AddComponent<KarmaSwordDashFrameProbe>();
+            recoveryProbe.After = () => { if (float.IsNaN(recoveredAt) && !Enemy.Stunned) recoveredAt = Enemy.FightSeconds; };
+            try
+            {
+                await Until(() => Enemy.FightSeconds >= deadline - 0.1f);
+                Check(Enemy.Stunned && Vector2.Distance(position, Enemy.Position) < 0.001f
+                    && Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, pattern + " cannot move or attack before two seconds");
+                await Until(() => !float.IsNaN(recoveredAt));
+                // Observe the actual transition frame, not the later async poll.
+                Check(recoveredAt >= deadline && recoveredAt <= deadline + 0.04f,
+                    pattern + " recovers at the two-second boundary: " + recoveredAt + " / " + deadline);
+            }
+            finally { recoveryProbe.After = null; UnityEngine.Object.Destroy(recoveryProbe.gameObject); }
             await Seconds(0.05f);
             Check(!orbit.gameObject.activeInHierarchy && picture.color.r > 0.9f, "recovery removes the orbit and restores body tint");
+            Check(!feedback.Electrocuted && Array.Find(game.World.GetComponentsInChildren<KarmaSwordElectrocution>(), fx => fx.IsBoss) == null,
+                "recovery removes electrical status and its presentation");
             Check(Enemy.GetComponentsInChildren<KarmaSwordStunFeedback>(true).Length == 1, "stun feedback is reused without accumulating components");
             if (pattern == EnemyAttack.SW04) Shot("parry-stun-recovered");
             Log(pattern + ": successful parry, two-second stun, tint/lean/orbit, damage and recovery verified");
@@ -406,7 +470,7 @@ public static class KarmaSwordFinalPolishChecks
                 await Pattern(EnemyAttack.SW03, 1);
                 await CounterPresentation();
                 foreach (int direction in new[] { -1, 1 }) { await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Render", direction, false); await Invoke(typeof(KarmaSwordSlideDistanceChecks), "Render", direction, true); }
-                Log("cyan movement afterimages rendered for both ordinary 32-unit and wall 48-unit directions");
+                Log("cyan movement afterimages rendered for both ordinary and wall-escape directions");
                 }
                 }
             }

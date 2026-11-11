@@ -32,8 +32,9 @@ namespace KarmaPrototype
         bool ClearCeremonyPath(float target)
         {
             float distance = Mathf.Abs(target-Position.x);
-            foreach (var hit in Physics2D.BoxCastAll(body.position, KarmaSpace.PlayerSize * 0.95f, 0,
-                target < Position.x ? Vector2.left : Vector2.right, distance))
+            KarmaPhysicsQueries.BoxCast(body.position, KarmaSpace.PlayerSize * 0.95f,
+                target < Position.x ? Vector2.left : Vector2.right, distance, movementHits);
+            foreach (var hit in movementHits)
                 if (hit.collider.GetComponent<KarmaSurface>() != null
                     && hit.collider.GetComponent<PlatformEffector2D>() == null && hit.distance < distance-0.05f)
                     return false;

@@ -11,6 +11,42 @@ public static class KarmaSettingsChecks
     const string Bindings = "K4RMA.InputBindings.v1";
     static int checks;
     static void Check(bool ok, string message) { checks++; if (!ok) throw new Exception(message); }
+    public static void CheckBindingPersistence(Action<bool, string> verify)
+    {
+        // Exercise genuine Input System JSON across separately created maps,
+        // without reading or writing the user's PlayerPrefs.
+        var restore = typeof(KarmaInput).GetMethod("RestoreSavedBindings", BindingFlags.Static | BindingFlags.NonPublic);
+        using (var first = new InputActionMap("K4RMA"))
+        using (var restarted = new InputActionMap("K4RMA"))
+        {
+            foreach (var map in new[] { first, restarted })
+            {
+                map.AddAction("Left", binding: "<Keyboard>/a").AddBinding("<Keyboard>/leftArrow");
+                map.AddAction("Jump", binding: "<Keyboard>/space");
+            }
+            first["Left"].ApplyBindingOverride(0, "<Keyboard>/h");
+            first["Jump"].ApplyBindingOverride(0, "<Keyboard>/rightShift");
+            string saved = first.SaveBindingOverridesAsJson();
+            verify(first["Left"].bindings[0].id != restarted["Left"].bindings[0].id, "Restart fixture changes binding GUIDs");
+            restore.Invoke(null, new object[] { restarted, saved });
+            verify(restarted["Left"].bindings[0].effectivePath == "<Keyboard>/h"
+                && restarted["Jump"].bindings[0].effectivePath == "<Keyboard>/rightShift", "Existing v1 settings survive a fresh map");
+            verify(restarted["Left"].bindings[1].effectivePath == "<Keyboard>/leftArrow", "Secondary default alias is preserved");
+            string roundTrip = restarted.SaveBindingOverridesAsJson();
+            restore.Invoke(null, new object[] { restarted, roundTrip });
+            verify(restarted.SaveBindingOverridesAsJson() == roundTrip, "Same-map IDs and repeated restoration retain v1 data");
+            foreach (string invalid in new[] { "{", "{}", saved.Replace("K4RMA/Jump", "K4RMA/Unknown") })
+            {
+                bool rejected = false;
+                try { restore.Invoke(null, new object[] { restarted, invalid }); }
+                catch (TargetInvocationException error) when (error.InnerException is FormatException) { rejected = true; }
+                verify(rejected && restarted.SaveBindingOverridesAsJson() == roundTrip,
+                    "Invalid or unresolvable data cannot partially replace active bindings");
+            }
+            restore.Invoke(null, new object[] { restarted, "" });
+            verify(restarted["Left"].bindings[0].effectivePath == "<Keyboard>/a", "Empty override data restores defaults");
+        }
+    }
     public static async Task<string> Run()
     {
         var game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>(); game.StartRun();

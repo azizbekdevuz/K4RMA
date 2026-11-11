@@ -23,8 +23,9 @@ namespace KarmaPrototype
                 var body = sword.SwordPlayerBounds;
                 float dx = targetX - body.center.x;
                 if (Mathf.Abs(dx) < 0.001f) return true;
-                foreach (var hit in Physics2D.BoxCastAll(body.center, (Vector2)body.size, 0,
-                    Vector2.right * Mathf.Sign(dx), Mathf.Abs(dx)))
+                KarmaPhysicsQueries.BoxCast(body.center, body.size,
+                    Vector2.right * Mathf.Sign(dx), Mathf.Abs(dx), owner.terrainHits);
+                foreach (var hit in owner.terrainHits)
                 {
                     if (hit.collider.GetComponent<KarmaSurface>() == null
                         || hit.collider.GetComponent<PlatformEffector2D>() != null) continue;

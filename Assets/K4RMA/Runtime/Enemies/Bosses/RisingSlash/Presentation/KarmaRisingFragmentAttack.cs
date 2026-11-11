@@ -35,7 +35,7 @@ namespace KarmaPrototype
             return fragmentContact != null && !Reflected
                 ? Mathf.Min(dt, Mathf.Max(0, outboundLife - age + Time.deltaTime)) : base.FlightStep(from, dt);
         }
-        protected new void Update()
+        private new void Update()
         {
             if (fragmentContact == null) { base.Update(); return; }
             if (game == null || target == null || !target.PresentationActive)

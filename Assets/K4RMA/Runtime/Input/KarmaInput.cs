@@ -60,8 +60,13 @@ namespace KarmaPrototype
             Bind(KarmaAction.SkipCinematic, "f");
             if (PlayerPrefs.HasKey(BindingsKey))
             {
-                try { map.LoadBindingOverridesFromJson(PlayerPrefs.GetString(BindingsKey)); }
-                catch (System.Exception) { map.RemoveAllBindingOverrides(); }
+                try { RestoreSavedBindings(map, PlayerPrefs.GetString(BindingsKey)); }
+                catch (System.FormatException error)
+                {
+                    // Leave the saved value intact so malformed data remains
+                    // recoverable; this fresh map still has its default keys.
+                    Debug.LogWarning("저장된 키 설정을 불러올 수 없습니다: " + error.Message);
+                }
             }
             map.Enable();
             Application.quitting += Reset;

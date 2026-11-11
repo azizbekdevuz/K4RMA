@@ -140,7 +140,7 @@ namespace KarmaPrototype
                         KarmaSW05VFX.ApplyDepth(blades[member], shot.depth);
                         blades[member].transform.position = owner.Position;
                         blades[member].color = Color.clear;
-                        KarmaSW05VFX.Ascent(blades[member], shot.size);
+                        KarmaSW05VFX.Ascent(blades[member], shot.size, owner.game);
                     }
 
                     yield return FormAerialSword(blades, plan, warning);

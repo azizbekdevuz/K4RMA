@@ -13,8 +13,6 @@ namespace KarmaPrototype
         bool restrainedVisual, aerialVisual, aerialGround;
         readonly List<Vector2> points = new List<Vector2>(8);
         readonly List<Vector2> hull = new List<Vector2>(16);
-        static readonly IComparer<Vector2> PointOrder = Comparer<Vector2>.Create(
-            (a, b) => a.x != b.x ? a.x.CompareTo(b.x) : a.y.CompareTo(b.y));
         Vector2[] vertices = System.Array.Empty<Vector2>();
         ushort[] triangles = System.Array.Empty<ushort>();
         public void SetPath(SpriteRenderer renderer, Vector2 from, Vector2 to, Vector2 size, bool restrained = false, bool oriented = false, bool aerial = false)
@@ -35,7 +33,16 @@ namespace KarmaPrototype
                 for (int x = -1; x <= 1; x += 2)
                     for (int y = -1; y <= 1; y += 2)
                         points.Add((end == 0 ? from : to) + axis * (size.x * x / 2) + normal * (size.y * y / 2));
-            points.Sort(PointOrder);
+            // There are always eight corners. Sorting this tiny buffer directly
+            // avoids the comparer/delegate allocations in Mono's List.Sort.
+            for (int i = 1; i < points.Count; i++)
+            {
+                var point = points[i];
+                int j = i - 1;
+                while (j >= 0 && (points[j].x > point.x || points[j].x == point.x && points[j].y > point.y))
+                { points[j + 1] = points[j]; j--; }
+                points[j + 1] = point;
+            }
             foreach (var p in points)
             {
                 while (hull.Count >= 2 && Cross(hull[hull.Count - 1] - hull[hull.Count - 2], p - hull[hull.Count - 1]) <= 0) hull.RemoveAt(hull.Count - 1);
@@ -49,7 +56,8 @@ namespace KarmaPrototype
                 hull.Add(p);
             }
             hull.RemoveAt(hull.Count - 1);
-            if (vertices.Length != hull.Count)
+            bool geometryChanged = vertices.Length != hull.Count;
+            if (geometryChanged)
             {
                 vertices = new Vector2[hull.Count];
                 triangles = new ushort[(hull.Count - 2) * 3];
@@ -60,15 +68,22 @@ namespace KarmaPrototype
             // positions. Unity applies the centered pivot itself. Clamp rounding
             // error so every point stays inside this 1x1 pixel rectangle.
             for (int i = 0; i < vertices.Length; i++)
-                vertices[i] = new Vector2(
+            {
+                var vertex = new Vector2(
                     Mathf.Clamp01((hull[i].x - center.x) / bounds.x + 0.5f),
                     Mathf.Clamp01((hull[i].y - center.y) / bounds.y + 0.5f));
+                geometryChanged |= !vertices[i].Equals(vertex);
+                vertices[i] = vertex;
+            }
             if (shape == null)
             {
                 shape = Sprite.Create(renderer.sprite.texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1);
                 renderer.sprite = shape;
+                geometryChanged = true;
             }
-            shape.OverrideGeometry(vertices, triangles);
+            // Unity's geometry upload allocates internally. A repeated path (or
+            // a changed scale with the same normalized hull) needs no upload.
+            if (geometryChanged) shape.OverrideGeometry(vertices, triangles);
             transform.localPosition = center; transform.localScale = new Vector3(bounds.x, bounds.y, 1);
             if (edge == null)
             {
@@ -95,7 +110,7 @@ namespace KarmaPrototype
             if (arrow.enabled)
             {
                 axis = (to - from).normalized; normal = new Vector2(-axis.y, axis.x);
-                float length = Mathf.Min(KarmaSpace.Units(0.5f), Vector2.Distance(from, to) * 0.2f, Mathf.Min(size.x, size.y) * 0.45f);
+                float length = Mathf.Min(Mathf.Min(KarmaSpace.Units(0.5f), Vector2.Distance(from, to) * 0.2f), Mathf.Min(size.x, size.y) * 0.45f);
                 // In a dense volley, keep each direction cue close to its own
                 // forming sword instead of placing every arrow across the arena.
                 Vector2 tip = aerialVisual

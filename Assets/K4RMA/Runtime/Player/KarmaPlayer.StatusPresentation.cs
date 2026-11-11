@@ -9,9 +9,13 @@ namespace KarmaPrototype
         string recoveryPose = "StunRecovery";
         Vector2 previousVisualPosition;
         LineRenderer[] shockArcs;
-        void BeginControlPresentation() { controlVisualAt = Time.time; animator?.ResetPlayerStatus(); animator?.CancelPlayerActionForControl(); if (art != null) art.localScale = new Vector3(Facing, 1, 1); }
+        // Presentation clients can discard a reaction after another hit or room reset.
+        // This avoids a dependency from the player onto a boss-specific effect.
+        internal int ControlRevision { get; private set; }
+        void BeginControlPresentation() { ControlRevision++; controlVisualAt = Time.time; animator?.ResetPlayerStatus(); animator?.CancelPlayerActionForControl(); if (art != null) art.localScale = new Vector3(Facing, 1, 1); }
         void ResetControlPresentation()
         {
+            ControlRevision++;
             hadVisualControl = false; controlRecoveryAt = -10; animator?.ResetPlayerStatus();
             previousVisualPosition = Position;
             if (shockArcs != null) foreach (var arc in shockArcs) if (arc != null) arc.enabled = false;

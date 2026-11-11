@@ -91,10 +91,13 @@ public static class KarmaBossIsolationChecks
         var expected = KarmaArtwork.Sprite("BossStun", "Wave");
         for (int i = 0; i < 32; i++)
         { KarmaArtwork.Sprite("BossStun", "Wave"); KarmaArtwork.Sprite("Missing", "Missing"); }
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 1024; i++)
-        { KarmaArtwork.Sprite("BossStun", "Wave"); KarmaArtwork.Sprite("Missing", "Missing"); }
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(KarmaAllocationChecks.Count(() => GC.KeepAlive(new byte[256])) > 0,
+            "Allocation counter detects an allocating positive control");
+        long allocated = KarmaAllocationChecks.Count(() =>
+        {
+            for (int i = 0; i < 1024; i++)
+            { KarmaArtwork.Sprite("BossStun", "Wave"); KarmaArtwork.Sprite("Missing", "Missing"); }
+        });
         Check(allocated == 0, "Warm sprite lookups allocate no managed memory: " + allocated);
         Check(KarmaArtwork.Sprite("BossStun", "Wave") == expected, "Optimized lookup preserves routing");
 
@@ -127,11 +130,12 @@ public static class KarmaBossIsolationChecks
                 }
             // Warm both geometry and Unity bindings, then track without changing topology.
             for (int i = 0; i < 32; i++) warning.SetPath(renderer, Vector2.zero, new Vector2(10, 8), new Vector2(4, 2));
-            before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 128; i++) warning.SetPath(renderer, Vector2.zero, new Vector2(10, 8), new Vector2(4, 2));
-            allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            allocated = KarmaAllocationChecks.Count(() =>
+            {
+                for (int i = 0; i < 128; i++) warning.SetPath(renderer, Vector2.zero, new Vector2(10, 8), new Vector2(4, 2));
+            });
             Check(allocated == 0, "Warm warning updates allocate no managed memory: " + allocated);
-            Debug.Log("Optimization checks: 2048 sprite lookups and 128 warning updates allocated 0 managed bytes");
+            Debug.Log("Optimization checks: 2048 sprite lookups and 128 warning updates produced 0 GC.Alloc events");
         }
         finally
         {

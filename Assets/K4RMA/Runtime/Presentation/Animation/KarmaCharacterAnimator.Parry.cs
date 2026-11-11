@@ -25,6 +25,7 @@ namespace KarmaPrototype
             // The existing poseUntil (0.3 seconds) remains the authority for ending this pose.
             int index = Mathf.Clamp(Mathf.FloorToInt(Mathf.Max(0, Time.time - playerClipAt) * 24), 0, 7);
             picture.sprite = parryFrames[index];
+            picture.flipX = false;
             picture.transform.localScale = pictureScale;
             CurrentPose = "Riposte";
             if (parryFlash == null)
@@ -45,8 +46,13 @@ namespace KarmaPrototype
 
         void LateUpdate()
         {
-            if (parryFlash != null && (CurrentPose != "Riposte" || Time.time >= poseUntil || deathAt >= 0))
+            if (parryFlash != null && (!ParrySuccessVisible || CurrentPose != "Riposte"))
                 parryFlash.enabled = false;
+        }
+
+        void OnDisable()
+        {
+            if (parryFlash != null) parryFlash.enabled = false;
         }
     }
 }

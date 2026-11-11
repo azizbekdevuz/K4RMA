@@ -139,8 +139,7 @@ namespace KarmaPrototype
             bool TryGroundImpact(Vector2 center, Vector2 size)
             {
                 var player = owner.game.Player;
-                var collider = player.GetComponent<Collider2D>();
-                var bounds = collider != null && collider.enabled ? collider.bounds : new Bounds(player.Position, KarmaSpace.PlayerSize);
+                var bounds = player.DamageBounds;
                 if (Mathf.Abs(bounds.center.x - center.x) > bounds.extents.x + size.x / 2
                     || Mathf.Abs(bounds.center.y - center.y) > bounds.extents.y + size.y / 2) return false;
                 if (player.Shielded)

@@ -36,7 +36,13 @@ public static class KarmaGuardCameraChecks
                     KarmaCameraCoverageChecks.CheckView(game, "GD05/" + aspect); checks++;
                 }
                 var frame = (Bounds)typeof(KarmaGame).GetField("stageBackgroundBounds", f).GetValue(game);
-                float intended = Mathf.Max(frame.extents.y, 25 / aspect, 16, 22 / aspect);
+                // LateUpdate restores the fixed gameplay aspect inside the display's letterbox.
+                // Keep testing the real camera loop, including that restoration.
+                const float gameplayAspect = 16f / 9;
+                if (Mathf.Abs(game.GameCamera.aspect - gameplayAspect) > 0.001f)
+                    throw new Exception("GD05 must preserve the 16:9 gameplay viewport");
+                checks++;
+                float intended = Mathf.Max(frame.extents.y, 25 / gameplayAspect, 16, 22 / gameplayAspect);
                 if (Mathf.Abs(game.GameCamera.orthographicSize - intended) > 0.1f) throw new Exception("GD05 zoom was changed");
             }
             return "PASS: " + checks + " GD05 expanded-background camera coverage assertions, original zoom preserved";

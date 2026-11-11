@@ -7,8 +7,7 @@ namespace KarmaPrototype
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player;
-            var collider = player.GetComponent<Collider2D>();
-            var body = collider != null && collider.enabled ? collider.bounds : new Bounds(player.Position, KarmaSpace.PlayerSize);
+            var body = player.DamageBounds;
             var p = body.center;
             if (KarmaGuardGeometry.SweptCircle(from.x, from.y, to.x, to.y, radius,
                 p.x, p.y, body.extents.x, body.extents.y)) ResolveAttackHit(p, amount, contact, 0);

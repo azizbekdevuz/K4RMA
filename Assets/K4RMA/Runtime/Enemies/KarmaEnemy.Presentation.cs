@@ -79,8 +79,7 @@ namespace KarmaPrototype
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
-            var collider = player.GetComponent<Collider2D>();
-            var body = collider != null && collider.enabled ? collider.bounds : new Bounds(p, KarmaSpace.PlayerSize);
+            var body = player.DamageBounds;
             p = body.center;
             bool hit = attackAxis.HasValue
                 ? KarmaBossGeometry.SweptOrientedBox(from.x, from.y, to.x, to.y, p.x, p.y, attackAxis.Value.x, attackAxis.Value.y,

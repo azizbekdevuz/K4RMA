@@ -262,6 +262,14 @@ public static class KarmaPlayer24Checks
                 Check(clip.frameRate == 24, sheet.id + " is authored at 24 FPS");
                 var setting = AnimationUtility.GetAnimationClipSettings(clip);
                 Check(Mathf.Abs(setting.stopTime - sheet.sprites.Length / 24f) < 0.001f, sheet.id + " duration preserved");
+                if (sheet.id == "Riposte")
+                {
+                    // Successful parry now owns an eight-frame player/flash pair,
+                    // while this legacy native sheet remains available to authoring tools.
+                    KarmaPrototype.EditorTools.KarmaPlayerAnimationAssets.VerifyParrySuccess();
+                    Check(true, "Successful parry preserves 16 facing/frame samples, expiry and interruption");
+                    continue;
+                }
                 sample.Invoke(animator, new object[] { sheet.id, true });
                 for (int i = 0; i < sheet.sprites.Length; i++)
                 {

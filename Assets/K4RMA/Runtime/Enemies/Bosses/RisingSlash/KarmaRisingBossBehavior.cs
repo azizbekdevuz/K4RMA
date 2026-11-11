@@ -175,7 +175,8 @@ namespace KarmaPrototype
                 var body = player.GetComponent<Rigidbody2D>();
                 float travel = KarmaSpace.Units(12f) * dt;
                 var axis = Vector2.right * knockbackDirection;
-                foreach (var hit in Physics2D.BoxCastAll(player.Position, KarmaSpace.PlayerSize, 0, axis, travel))
+                KarmaPhysicsQueries.BoxCast(player.Position, KarmaSpace.PlayerSize, axis, travel, owner.terrainHits);
+                foreach (var hit in owner.terrainHits)
                     if (!hit.collider.isTrigger && hit.collider.GetComponent<KarmaSurface>() != null && Vector2.Dot(hit.normal, axis) < -0.01f)
                         travel = Mathf.Min(travel, Mathf.Max(0, hit.distance - 0.02f));
                 var target = player.Position + axis * travel;

@@ -19,7 +19,6 @@ public static class KarmaRisingBarrierChecks
     static bool started;
     static int checks;
     static string runtimeError;
-    static int existingWarningCount;
     static RenderTexture target;
     static Texture2D image;
     static KarmaRisingBarrierChecks() { EditorApplication.update += Pump; }
@@ -34,8 +33,19 @@ public static class KarmaRisingBarrierChecks
         if (!SessionState.GetBool(Key, false)) return;
         if (EditorApplication.isPlaying) { Application.runInBackground = true; EditorApplication.isPaused = false; }
         EditorApplication.QueuePlayerLoopUpdate();
-        if (!started && EditorApplication.isPlaying && Time.frameCount > 2) { started = true; Run(); }
+        if (!started && EditorApplication.isPlaying && Time.frameCount > 2)
+        {
+            started = true;
+            UnityEngine.Object.FindAnyObjectByType<KarmaGame>().StartCoroutine(BeginOnPlayerFrame());
+        }
 
+    }
+    static System.Collections.IEnumerator BeginOnPlayerFrame()
+    {
+        // Sprite geometry writes are runtime operations. Do not force the first
+        // attack synchronously from the Editor update callback.
+        yield return null;
+        Run();
     }
     public static void RunBatch()
     {
@@ -197,8 +207,6 @@ public static class KarmaRisingBarrierChecks
     }
     static void Log(string message, string stack, LogType type)
     {
-        if (message == "Not allowed to override geometry on sprite ''" && stack.Contains("KarmaAttackWarning"))
-        { existingWarningCount++; return; }
         if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert)
             && stack.Contains("Assets/K4RMA/")) runtimeError = message;
     }
@@ -325,7 +333,7 @@ public static class KarmaRisingBarrierChecks
             string scope = SessionState.GetBool(Key + ".FragmentsOnly", false)
                 ? " faster fragment flight, flank distribution, left/right damage, empowered UP01/UP02, reflected parry, pause and cleanup checks"
                 : " rising barrier, reflected-shard parry, cleanup and invulnerability assertions";
-            verdict = "PASS: " + checks + scope + "; existing attack-warning geometry messages: " + existingWarningCount;
+            verdict = "PASS: " + checks + scope;
         }
         catch (Exception ex) { verdict = "FAIL: " + ex; Debug.LogException(ex); }
         finally

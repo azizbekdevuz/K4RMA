@@ -139,7 +139,7 @@ public static class KarmaSW05PlayChecks
         KarmaSW05RainBlade.Spawn(game, enemy, Root, shot, damage, null);
         await Until(() => game.Player.Health < before, 2);
         Check(Mathf.Abs((before - game.Player.Health) - damage) < 0.01f, "real rain contact applies the full ultimate damage once");
-        await Until(() => Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, 2);
+        await Until(() => Array.TrueForAll(Root.GetComponentsInChildren<KarmaSW05RainBlade>(), blade => blade.Landed), 2);
         float after = game.Player.Health;
         Set(game.Player, "invulnerableUntil", 0f); await Seconds(0.2f);
         Check(game.Player.Health == after, "planted sword cannot damage the player again");
@@ -194,6 +194,8 @@ public static class KarmaSW05PlayChecks
             var config = UnityEngine.Object.Instantiate(game.Config); Set(game, "config", config);
             config.playerHealth = 100000; config.BossTuning.sword.aerialSwordSeed = 5005;
             Time.maximumDeltaTime = 0.05f;
+            // Render/readback work must not consume the short reaction window.
+            Time.captureDeltaTime = 1f / 60;
             Reset(); launches.Clear();
             var dodge = game.gameObject.AddComponent<SW05DodgeDriver>();
             dodge.Game = game; dodge.Owner = enemy;
@@ -213,11 +215,15 @@ public static class KarmaSW05PlayChecks
             Check(Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, "ascent is harmless");
             await Seconds(0.24f);
             Check(Vector3.Distance(before, blades[0].transform.position) > 0.5f, "blades travel from boss into sky");
-            await Seconds(0.94f);
+            // Sample the locked apex at ~0.99 seconds, within the existing 1.25s
+            // formation. At 1.33s these harmless pictures have already become rain.
+            await Seconds(0.60f);
             Capture("apex");
             float low = float.PositiveInfinity, high = float.NegativeInfinity;
             bool tilted = false;
-            foreach (var blade in Forming())
+            var apex = Forming();
+            Check(apex.Length == blades.Length, "every promised blade remains visible before release");
+            foreach (var blade in apex)
             {
                 float angle = Mathf.Abs(Mathf.DeltaAngle(blade.transform.eulerAngles.z, 0));
                 Check(angle <= 62, "crown sword faces downward with a controlled fan angle");
@@ -248,7 +254,8 @@ public static class KarmaSW05PlayChecks
             Check(diagonal, "outer swords fall on strongly slanted trajectories");
             Check(leftTip <= KarmaStage.ArenaLeft + 0.3f && rightTip >= KarmaStage.ArenaRight - 0.3f,
                 "rain includes the entire arena width and both edges");
-            Check(attacks[0].Visual.sprite.name == "SW05JudgementSword_v2", "released sword uses refined weapon art");
+            Check(attacks[0].Visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional"),
+                "released sword preserves the current heavy judgement artwork");
             // Exercise the real player counter/contact path without moving the
             // falling blade or changing the physical escape fixture.
             float beforeParryHealth = game.Player.Health;
@@ -276,11 +283,21 @@ public static class KarmaSW05PlayChecks
             Check(firstShot.acceleration.magnitude >= 1200, "rain accelerates toward ground");
             float ordinaryDamage = (float)typeof(KarmaEnemy).GetProperty("Damage", Private).GetValue(enemy);
             Check(Get<float>(attacks[0], "damage") >= ordinaryDamage * 2.5f - 0.0001f, "ultimate deals at least 2.5x ordinary damage");
-            Check(attacks[0].GetComponentsInChildren<TrailRenderer>().Length > 0, "falling sword has tapered wake");
+            bool wake = false, aura = false;
+            foreach (var energy in Root.GetComponentsInChildren<KarmaSW05Energy>())
+                wake |= Get<Transform>(energy, "follow") == attacks[0].Visual.transform
+                    && Get<object>(energy, "kind").ToString() == "Fall"
+                    && energy.GetComponent<MeshFilter>().sharedMesh != null;
+            foreach (var packed in Root.GetComponentsInChildren<KarmaSwordPackedVfx>())
+                aura |= packed.ClipId == KarmaSwordPackedVfx.Clip.FallingAura
+                    && Get<Transform>(packed, "follow") == attacks[0].transform;
+            Check(wake && aura, "falling sword owns its bounded mesh wake and animated aura");
             await Seconds(0.035f); Capture("rain");
             Check(!enemy.Stunned && Get<bool>(enemy, "running") && Forming().Length == 0,
                 "ultimate continues its existing rain after parry without spawning stun feedback");
-            await Until(() => Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, 3);
+            // Landed blades keep their shared contact ledger until the final
+            // simultaneous detonation; completion of flight does not destroy them.
+            await Until(() => Array.TrueForAll(attacks, blade => blade != null && blade.Landed), 3);
             await Seconds(0.04f); Capture("impact");
             bool contactShadow = false;
             foreach (var sr in Root.GetComponentsInChildren<SpriteRenderer>())
@@ -295,13 +312,43 @@ public static class KarmaSW05PlayChecks
             foreach (var sr in Root.GetComponentsInChildren<SpriteRenderer>())
                 if (sr.name == "SW05 wood-embedded sword / no damage")
                 {
-                    Check(sr.sprite.name == "SW05JudgementSword_v2", "wood contact keeps the airborne weapon picture");
+                    Check(sr.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional"),
+                        "wood contact keeps the airborne weapon picture");
                     Check(flightTints.Exists(tint => Mathf.Abs(tint.r - sr.color.r) + Mathf.Abs(tint.g - sr.color.g)
                         + Mathf.Abs(tint.b - sr.color.b) < 0.001f), "embedded sword retains its airborne depth tint");
                 }
-            await Until(() => !Get<bool>(enemy, "running"), 25);
+            // LatestGroup is published before formation, not at release. Wait
+            // for all promised swords, so an all-landed previous volley cannot
+            // accidentally start the final-blast escape during the third charge.
+            await Until(() => dodge.Groups == 3 && launches.Count == dodge.ExpectedSwords
+                && Array.TrueForAll(Root.GetComponentsInChildren<KarmaSW05RainBlade>(),
+                blade => blade.Landed), 25);
+            Check(game.Player.Health == safeHealth, "real dynamic player follows each of the three rain escape routes without damage");
+            // The planner reserves rain routes. The final 0.60s charge is a
+            // separate hazard requiring the existing upward jump attack or dash.
+            dodge.enabled = false;
+            var escape = game.Player.gameObject.AddComponent<KarmaSwordRefreshJumpDriver>();
+            escape.player = game.Player; escape.VerticalTrial = true; escape.UpAttackAt = 0.38f;
+            float escapeAt = enemy.FightSeconds;
+            Vector2 escapeStart = game.Player.Position;
+            await Seconds(0.18f);
+            game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.up * game.Config.jumpSpeed;
+            string escapeContact = null;
+            await Until(() =>
+            {
+                if (escapeContact == null && game.Player.Health != safeHealth)
+                    escapeContact = "hit age=" + escape.age + "; bottom=" + game.Player.DamageBounds.min.y
+                        + "; velocity=" + game.Player.GetComponent<Rigidbody2D>().linearVelocity
+                        + "; shock=" + game.Player.Shocked + "; slash=" + Get<bool>(game.Player, "airSlashRunning")
+                        + "; game time=" + (enemy.FightSeconds - escapeAt);
+                return !Get<bool>(enemy, "running");
+            }, 5);
+            escape.enabled = false; UnityEngine.Object.Destroy(escape);
             dodge.enabled = false; game.Player.enabled = true;
-            Check(game.Player.Health == safeHealth, "real dynamic player follows a physically available escape through all three slams without damage");
+            Check(game.Player.Health == safeHealth, "upward jump attack avoids the unchanged final blast without added immunity"
+                + "; start=" + escapeStart + "; health=" + game.Player.Health + "/" + safeHealth
+                + "; driver age=" + escape.age + "; slashed=" + escape.slashed + "; elapsed=" + (enemy.FightSeconds - escapeAt)
+                + "; " + escapeContact);
             Check(dodge.Groups == 3, "every slam provides a new physical escape route");
             Check(launches.Count == dodge.ExpectedSwords && launches.Count >= 48 && launches.Count <= 54, "three complete dense rain slams");
             bool changed = false;
@@ -341,12 +388,12 @@ public static class KarmaSW05PlayChecks
             var wood = Resources.Load<Material>("SW05/SW05EmbeddedWood");
             Check(wood != null && !UnityEditor.ShaderUtil.ShaderHasError(wood.shader), "wood floor clipping shader compiles");
             File.WriteAllText(Output + "/sw05-play-validation.txt", "PASS: " + assertions + " SW05 flight, rain, impact, completion and cancellation assertions\n");
-            SessionState.SetBool(Key, false); EditorApplication.Exit(0);
+            Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(0);
         }
         catch (Exception error)
         {
             File.WriteAllText(Output + "/sw05-play-validation.txt", "FAIL: " + error + "\n");
-            Debug.LogException(error); SessionState.SetBool(Key, false); EditorApplication.Exit(1);
+            Debug.LogException(error); Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(1);
         }
     }
 }

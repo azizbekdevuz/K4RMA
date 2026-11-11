@@ -25,15 +25,7 @@ namespace KarmaPrototype
                 if (attack == EnemyAttack.SW01) return SwordSize(EnemyAttack.SW02) * 0.425f;
                 return WaveSize * (attack == EnemyAttack.SW03 ? new Vector2(1.35f, 1.30f) : Vector2.one * 1.30f);
             }
-            public Bounds SwordPlayerBounds
-            {
-                get
-                {
-                    var collider = owner.game.Player.GetComponent<Collider2D>();
-                    return collider != null && collider.enabled ? collider.bounds
-                    : new Bounds(owner.game.Player.Position, KarmaSpace.PlayerSize);
-                }
-            }
+            public Bounds SwordPlayerBounds => owner.game.Player.DamageBounds;
             public float WaveLife { get { return Mathf.Clamp(Settings.swordLifetime, 0.5f, 2); } }
             public Vector2 BasicSwordSize { get { return WaveSize * new Vector2(0.9f, 1); } }
             public float BasicSwordSpeed { get { return Mathf.Max(KarmaSpace.Units(5), Settings.swordSpeed * 0.8f); } }

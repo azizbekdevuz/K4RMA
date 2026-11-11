@@ -6,24 +6,47 @@ K4RMA/
 │       │   ├── Bosses/
 │       │   │   ├── Guard/
 │       │   │   │   ├── Characters/
-│       │   │   │   │   ├── HeavyStrike/
+│       │   │   │   │   ├── GroundSlam/
 │       │   │   │   │   │   ├── Ward.png
 │       │   │   │   │   │   ├── WardFinal.png
 │       │   │   │   │   │   ├── WardRise.png
 │       │   │   │   │   │   └── WardWave.png
-│       │   │   │   │   └── Stagger/
-│       │   │   │   │       ├── Ward.png
-│       │   │   │   │       ├── WardFinal.png
-│       │   │   │   │       ├── WardRise.png
-│       │   │   │   │       └── WardWave.png
+│       │   │   │   │   ├── HeavyStrike/
+│       │   │   │   │   │   ├── Molten/
+│       │   │   │   │   │   │   ├── Ward.png
+│       │   │   │   │   │   │   ├── WardFinal.png
+│       │   │   │   │   │   │   ├── WardRise.png
+│       │   │   │   │   │   │   └── WardWave.png
+│       │   │   │   │   │   ├── Ward.png
+│       │   │   │   │   │   ├── WardFinal.png
+│       │   │   │   │   │   ├── WardRise.png
+│       │   │   │   │   │   └── WardWave.png
+│       │   │   │   │   ├── ShieldAway/
+│       │   │   │   │   │   ├── WardFinal.png
+│       │   │   │   │   │   ├── WardFinalHeavy.png
+│       │   │   │   │   │   ├── WardFinalHeavyMolten.png
+│       │   │   │   │   │   └── WardWave.png
+│       │   │   │   │   ├── Stagger/
+│       │   │   │   │   │   ├── Ward.png
+│       │   │   │   │   │   ├── WardFinal.png
+│       │   │   │   │   │   ├── WardRise.png
+│       │   │   │   │   │   └── WardWave.png
+│       │   │   │   │   └── PlayerAirborneHit.png
 │       │   │   │   ├── Effects/
+│       │   │   │   │   ├── GroundSlam/
+│       │   │   │   │   │   ├── Basalt.png
+│       │   │   │   │   │   ├── Debris.png
+│       │   │   │   │   │   ├── FanShock.png
+│       │   │   │   │   │   └── FootSparks.png
 │       │   │   │   │   ├── Bash.png
+│       │   │   │   │   ├── DomeShield.png
 │       │   │   │   │   ├── ParryRed.png
 │       │   │   │   │   ├── Pillar.png
 │       │   │   │   │   ├── Seal.png
 │       │   │   │   │   ├── Shard.png
 │       │   │   │   │   ├── ShardDB.png
 │       │   │   │   │   ├── Shield.png
+│       │   │   │   │   ├── StunStars.png
 │       │   │   │   │   ├── Wave.png
 │       │   │   │   │   └── WholeShield.png
 │       │   │   │   └── Resources/
@@ -39,37 +62,94 @@ K4RMA/
 │       │   │   │                   └── Revival/
 │       │   │   │                       └── Ward.png
 │       │   │   ├── RisingSlash/
-│       │   │   │   ├── Characters/
-│       │   │   │   │   └── Articulated/
-│       │   │   │   │       └── Resources/
-│       │   │   │   │           └── RisingAnimation/
 │       │   │   │   ├── Effects/
 │       │   │   │   │   ├── Fragment0.png
 │       │   │   │   │   ├── Fragment1.png
 │       │   │   │   │   ├── Fragment2.png
-│       │   │   │   │   ├── Fragment3.png
-│       │   │   │   │   ├── Fragment4.png
-│       │   │   │   │   ├── Fragment5.png
-│       │   │   │   │   ├── Fragment6.png
-│       │   │   │   │   ├── Fragment7.png
 │       │   │   │   │   ├── Impact.png
 │       │   │   │   │   ├── Shield.png
 │       │   │   │   │   ├── Slash.png
 │       │   │   │   │   ├── SlashEcho.png
+│       │   │   │   │   ├── StunStars.png
 │       │   │   │   │   ├── Wave.png
 │       │   │   │   │   └── WaveEcho.png
-│       │   │   │   └── Resources/
-│       │   │   │       └── K4RMAArtwork/
-│       │   │   │           └── Characters/
-│       │   │   │               └── Guardians/
-│       │   │   │                   ├── Base/
-│       │   │   │                   │   └── Rise.png
-│       │   │   │                   ├── Inherited/
-│       │   │   │                   │   ├── RiseFinal.png
-│       │   │   │                   │   ├── RiseWard.png
-│       │   │   │                   │   └── RiseWave.png
-│       │   │   │                   └── Revival/
-│       │   │   │                       └── Rise.png
+│       │   │   │   ├── Resources/
+│       │   │   │   │   ├── K4RMAArtwork/
+│       │   │   │   │   │   └── Characters/
+│       │   │   │   │   │       └── Guardians/
+│       │   │   │   │   │           ├── Base/
+│       │   │   │   │   │           │   └── Rise.png
+│       │   │   │   │   │           ├── Inherited/
+│       │   │   │   │   │           │   ├── RiseFinal.png
+│       │   │   │   │   │           │   ├── RiseWard.png
+│       │   │   │   │   │           │   └── RiseWave.png
+│       │   │   │   │   │           └── Revival/
+│       │   │   │   │   │               └── Rise.png
+│       │   │   │   │   ├── RisingAnimation/
+│       │   │   │   │   │   ├── Rise_AirSlash.json
+│       │   │   │   │   │   ├── Rise_Dash.json
+│       │   │   │   │   │   ├── Rise_Dash.png
+│       │   │   │   │   │   ├── Rise_Fall.json
+│       │   │   │   │   │   ├── Rise_Hurt.json
+│       │   │   │   │   │   ├── Rise_Hurt.png
+│       │   │   │   │   │   ├── Rise_Idle.json
+│       │   │   │   │   │   ├── Rise_Idle.png
+│       │   │   │   │   │   ├── Rise_Landing.json
+│       │   │   │   │   │   ├── Rise_Landing.png
+│       │   │   │   │   │   ├── Rise_Rising.json
+│       │   │   │   │   │   ├── Rise_Rising.png
+│       │   │   │   │   │   ├── Rise_Slash.json
+│       │   │   │   │   │   ├── Rise_Slash.png
+│       │   │   │   │   │   ├── RiseFinal_AirSlash.json
+│       │   │   │   │   │   ├── RiseFinal_Dash.json
+│       │   │   │   │   │   ├── RiseFinal_Dash.png
+│       │   │   │   │   │   ├── RiseFinal_Fall.json
+│       │   │   │   │   │   ├── RiseFinal_Fall.png
+│       │   │   │   │   │   ├── RiseFinal_Hurt.json
+│       │   │   │   │   │   ├── RiseFinal_Hurt.png
+│       │   │   │   │   │   ├── RiseFinal_Idle.json
+│       │   │   │   │   │   ├── RiseFinal_Idle.png
+│       │   │   │   │   │   ├── RiseFinal_Landing.json
+│       │   │   │   │   │   ├── RiseFinal_Landing.png
+│       │   │   │   │   │   ├── RiseFinal_Rising.json
+│       │   │   │   │   │   ├── RiseFinal_Rising.png
+│       │   │   │   │   │   ├── RiseFinal_Slash.json
+│       │   │   │   │   │   ├── RiseFinal_Slash.png
+│       │   │   │   │   │   ├── RiseWard_AirSlash.json
+│       │   │   │   │   │   ├── RiseWard_AirSlash.png
+│       │   │   │   │   │   ├── RiseWard_Dash.json
+│       │   │   │   │   │   ├── RiseWard_Dash.png
+│       │   │   │   │   │   ├── RiseWard_Fall.json
+│       │   │   │   │   │   ├── RiseWard_Fall.png
+│       │   │   │   │   │   ├── RiseWard_Hurt.json
+│       │   │   │   │   │   ├── RiseWard_Hurt.png
+│       │   │   │   │   │   ├── RiseWard_Idle.json
+│       │   │   │   │   │   ├── RiseWard_Idle.png
+│       │   │   │   │   │   ├── RiseWard_Landing.json
+│       │   │   │   │   │   ├── RiseWard_Landing.png
+│       │   │   │   │   │   ├── RiseWard_Rising.json
+│       │   │   │   │   │   ├── RiseWard_Rising.png
+│       │   │   │   │   │   ├── RiseWard_Slash.json
+│       │   │   │   │   │   ├── RiseWard_Slash.png
+│       │   │   │   │   │   ├── RiseWave_AirSlash.json
+│       │   │   │   │   │   ├── RiseWave_AirSlash.png
+│       │   │   │   │   │   ├── RiseWave_Dash.json
+│       │   │   │   │   │   ├── RiseWave_Dash.png
+│       │   │   │   │   │   ├── RiseWave_Fall.json
+│       │   │   │   │   │   ├── RiseWave_Fall.png
+│       │   │   │   │   │   ├── RiseWave_Hurt.json
+│       │   │   │   │   │   ├── RiseWave_Hurt.png
+│       │   │   │   │   │   ├── RiseWave_Idle.json
+│       │   │   │   │   │   ├── RiseWave_Idle.png
+│       │   │   │   │   │   ├── RiseWave_Landing.json
+│       │   │   │   │   │   ├── RiseWave_Landing.png
+│       │   │   │   │   │   ├── RiseWave_Rising.json
+│       │   │   │   │   │   ├── RiseWave_Rising.png
+│       │   │   │   │   │   ├── RiseWave_Slash.json
+│       │   │   │   │   │   └── RiseWave_Slash.png
+│       │   │   │   │   └── KarmaRisingTranslucentFragment.mat
+│       │   │   │   └── Shaders/
+│       │   │   │       └── KarmaRisingTranslucentFragment.shader
 │       │   │   └── SwordWave/
 │       │   │       ├── Characters/
 │       │   │       │   └── SW02/
@@ -78,34 +158,44 @@ K4RMA/
 │       │   │       │       ├── WaveRise_SW02_Transitions.png
 │       │   │       │       └── WaveWard_SW02_Transitions.png
 │       │   │       ├── Effects/
-│       │   │       │   ├── Variants/
-│       │   │       │   │   ├── SW01_AimedSlash_LowerHalf_v2.png
-│       │   │       │   │   ├── SW01_AimedSlash_UpperHalf_v2.png
-│       │   │       │   │   ├── SW01_CrescentWave_v4.png
-│       │   │       │   │   ├── SW02_AimedSlash_v2.png
-│       │   │       │   │   ├── SW03_GroundScar_v5.png
-│       │   │       │   │   ├── SW03_HitFlash_v5.png
-│       │   │       │   │   ├── SW03_RisingBlade_v5.png
-│       │   │       │   │   └── SWBasic_CrescentWave_v3.png
-│       │   │       │   ├── SW01_StaggeredWave.png
-│       │   │       │   ├── SW02_AimedSlash.png
-│       │   │       │   ├── SW03_GroundImpact.png
-│       │   │       │   ├── SW03_GroundScar_v6.png
-│       │   │       │   ├── SW03_GroundScar_v7.png
-│       │   │       │   ├── SW03_HitCut_v7.png
-│       │   │       │   ├── SW03_RisingBlade.png
-│       │   │       │   ├── SW03_RisingBlade_v6.png
-│       │   │       │   ├── SW03_RisingBlade_v7.png
-│       │   │       │   ├── SW04_CounterBlade_v6.png
-│       │   │       │   ├── SW04_CounterWave.png
-│       │   │       │   ├── SW05_AerialSword.png
-│       │   │       │   ├── SW05GroundImpact_v2.png
-│       │   │       │   ├── SW05JudgementSword_v2.png
-│       │   │       │   ├── Sword_Crescent_v6.png
-│       │   │       │   ├── Sword_GuardRing_v6.png
-│       │   │       │   ├── Sword_Impact_v6.png
-│       │   │       │   ├── Sword_Release_v6.png
-│       │   │       │   └── Sword_Shard_v6.png
+│       │   │       │   ├── Shared/
+│       │   │       │   │   ├── SW01_SW02_EnergyFrames.png
+│       │   │       │   │   ├── Sword_Crescent_v6.png
+│       │   │       │   │   ├── Sword_GuardRing_v6.png
+│       │   │       │   │   ├── Sword_Impact_v6.png
+│       │   │       │   │   ├── Sword_Release_v6.png
+│       │   │       │   │   └── Sword_Shard_v6.png
+│       │   │       │   ├── SW01/
+│       │   │       │   │   └── SW01_StaggeredWave.png
+│       │   │       │   ├── SW02/
+│       │   │       │   │   └── SW02_AimedSlash.png
+│       │   │       │   ├── SW03/
+│       │   │       │   │   ├── SW03_BladeSurge_6f.png
+│       │   │       │   │   ├── SW03_GroundCharge_6f.png
+│       │   │       │   │   ├── SW03_GroundImpact.png
+│       │   │       │   │   ├── SW03_GroundScar_5f.png
+│       │   │       │   │   ├── SW03_GroundScar_v6.png
+│       │   │       │   │   ├── SW03_GroundScar_v7.png
+│       │   │       │   │   ├── SW03_HitCut_5f.png
+│       │   │       │   │   ├── SW03_HitCut_v7.png
+│       │   │       │   │   ├── SW03_RisingBlade.png
+│       │   │       │   │   ├── SW03_RisingBlade_Tall_5f.png
+│       │   │       │   │   ├── SW03_RisingBlade_v6.png
+│       │   │       │   │   └── SW03_RisingBlade_v7.png
+│       │   │       │   ├── SW04/
+│       │   │       │   │   ├── SW04_CounterBlade_v6.png
+│       │   │       │   │   ├── SW04_CounterWave.png
+│       │   │       │   │   ├── SW04_OrbitingSwordGuard_16f.png
+│       │   │       │   │   └── SW04_OrbitingSwordGuard_Base.png
+│       │   │       │   └── SW05/
+│       │   │       │       ├── SW05_AerialSword.png
+│       │   │       │       ├── SW05_FallingSwordAura_6f.png
+│       │   │       │       ├── SW05_FinalDetonation_8f.png
+│       │   │       │       ├── SW05_FinalOvercharge_6f.png
+│       │   │       │       ├── SW05_HeavyJudgementSword_optional.png
+│       │   │       │       ├── SW05_LandingShock_6f.png
+│       │   │       │       ├── SW05GroundImpact_v2.png
+│       │   │       │       └── SW05JudgementSword_v2.png
 │       │   │       ├── Resources/
 │       │   │       │   ├── K4RMAArtwork/
 │       │   │       │   │   └── Characters/
@@ -138,13 +228,6 @@ K4RMA/
 │       │   │           ├── KarmaSwordRisePolish.shader
 │       │   │           └── KarmaSwordSkillPolish.shader
 │       │   └── Common/
-│       │       ├── Tutorial/
-│       │       │   └── Resources/
-│       │       │       └── KarmaTutorial/
-│       │       │           ├── 01_Dojo_NoMaster.png
-│       │       │           ├── 04_Boss_Gate.png
-│       │       │           ├── Master.png
-│       │       │           └── TrainingDummy.png
 │       │       ├── Resources/
 │       │       │   ├── K4RMAArtwork/
 │       │       │   │   ├── Characters/
@@ -155,10 +238,10 @@ K4RMA/
 │       │       │   │   │   │   │   └── Neutral.png
 │       │       │   │   │   │   └── ReferencePoses.png
 │       │       │   │   │   └── Player/
-│       │       │   │   │       ├── Actions.png
-│       │       │   │   │       ├── Additional.png
-│       │       │   │   │       ├── Locomotion.png
 │       │       │   │   │       ├── Native24/
+│       │       │   │   │       │   ├── AirborneApex.png
+│       │       │   │   │       │   ├── AirborneFall.png
+│       │       │   │   │       │   ├── AirborneRise.png
 │       │       │   │   │       │   ├── AirDiagonal.png
 │       │       │   │   │       │   ├── AirDown.png
 │       │       │   │   │       │   ├── AirHorizontal.png
@@ -166,9 +249,6 @@ K4RMA/
 │       │       │   │   │       │   ├── AirKnockback.png
 │       │       │   │   │       │   ├── AirRecovery.png
 │       │       │   │   │       │   ├── AirUp.png
-│       │       │   │   │       │   ├── AirborneApex.png
-│       │       │   │   │       │   ├── AirborneFall.png
-│       │       │   │   │       │   ├── AirborneRise.png
 │       │       │   │   │       │   ├── Apex.png
 │       │       │   │   │       │   ├── Attack.png
 │       │       │   │   │       │   ├── Crouch.png
@@ -209,11 +289,16 @@ K4RMA/
 │       │       │   │   │       │   ├── SwordWave.png
 │       │       │   │   │       │   ├── Turn.png
 │       │       │   │   │       │   └── Walk.png
+│       │       │   │   │       ├── Actions.png
+│       │       │   │   │       ├── Additional.png
+│       │       │   │   │       ├── Locomotion.png
+│       │       │   │   │       ├── ParrySuccess.png
 │       │       │   │   │       └── Poses.png
 │       │       │   │   ├── Effects/
 │       │       │   │   │   ├── Guardian.png
 │       │       │   │   │   ├── Hit.png
 │       │       │   │   │   ├── Parry.png
+│       │       │   │   │   ├── ParrySuccess.png
 │       │       │   │   │   ├── Personalization.png
 │       │       │   │   │   └── Player.png
 │       │       │   │   ├── Environments/
@@ -236,46 +321,18 @@ K4RMA/
 │       │       │       ├── KarmaEndingDissolve.mat
 │       │       │       ├── KarmaMoonBackground.mat
 │       │       │       └── KarmaPlayer24.mat
-│       │       │   └── K4RMAArtwork/
-│       │       │       ├── Characters/
-│       │       │       │   ├── Guardians/
-│       │       │       │   │   ├── Base/
-│       │       │       │   │   │   └── Neutral.png
-│       │       │       │   │   ├── Revival/
-│       │       │       │   │   │   └── Neutral.png
-│       │       │       │   │   └── ReferencePoses.png
-│       │       │       │   └── Player/
-│       │       │       │       ├── Actions.png
-│       │       │       │       ├── ParrySuccess.png
-│       │       │       │       ├── Additional.png
-│       │       │       │       ├── Locomotion.png
-│       │       │       │       └── Poses.png
-│       │       │       ├── Effects/
-│       │       │       │   ├── Guardian.png
-│       │       │       │   ├── Hit.png
-│       │       │       │   ├── Parry.png
-│       │       │       │   ├── Personalization.png
-│       │       │       │   ├── ParrySuccess.png
-│       │       │       │   └── Player.png
-│       │       │       ├── Environments/
-│       │       │       │   ├── MountainDojo/
-│       │       │       │   │   ├── Background.png
-│       │       │       │   │   ├── Extended.png
-│       │       │       │   │   └── Panorama.png
-│       │       │       │   └── TrialHall/
-│       │       │       │       ├── Background.png
-│       │       │       │       ├── Extended.png
-│       │       │       │       └── Panorama.png
-│       │       │       ├── Props/
-│       │       │       │   └── Props.png
-│       │       │       └── UI/
-│       │       │           ├── Components.png
-│       │       │           └── MenuBackground.png
-│       │       └── Shaders/
-│       │           ├── KarmaCombatGlow.shader
-│       │           ├── KarmaEndingDissolve.shader
-│       │           ├── KarmaMoonBackground.shader
-│       │           └── KarmaPlayer24.shader
+│       │       ├── Shaders/
+│       │       │   ├── KarmaCombatGlow.shader
+│       │       │   ├── KarmaEndingDissolve.shader
+│       │       │   ├── KarmaMoonBackground.shader
+│       │       │   └── KarmaPlayer24.shader
+│       │       └── Tutorial/
+│       │           └── Resources/
+│       │               └── KarmaTutorial/
+│       │                   ├── 01_Dojo_NoMaster.png
+│       │                   ├── 04_Boss_Gate.png
+│       │                   ├── Master.png
+│       │                   └── TrainingDummy.png
 │       ├── Audio/
 │       │   └── SFX/
 │       │       ├── Ambience/
@@ -287,10 +344,10 @@ K4RMA/
 │       │       │   ├── Combat_Guard_Block.wav
 │       │       │   └── Combat_Perfect_Parry.wav
 │       │       ├── Guard/
-│       │       │   ├── GD_Basic_Hit.wav
-│       │       │   ├── GD_Basic_Swing.wav
 │       │       │   ├── GD02_Heavy_Hit.wav
 │       │       │   ├── GD02_Heavy_Swing.wav
+│       │       │   ├── GD_Basic_Hit.wav
+│       │       │   ├── GD_Basic_Swing.wav
 │       │       │   ├── GD_Counter.wav
 │       │       │   ├── GD_Heavy_Slam.wav
 │       │       │   ├── GD_Protection_Pulse.wav
@@ -325,9 +382,9 @@ K4RMA/
 │       │       │   ├── RS_UP05_Crossing.wav
 │       │       │   └── RS_UP05_Final.wav
 │       │       ├── SwordWave/
+│       │       │   ├── SW05_PerSword_Thunder.wav
 │       │       │   ├── SW_Crossing_Blades.wav
 │       │       │   ├── SW_Electric_Discharge.wav
-│       │       │   ├── SW05_PerSword_Thunder.wav
 │       │       │   ├── SW_Energy_Charge.wav
 │       │       │   ├── SW_Scar_Rise.wav
 │       │       │   ├── SW_Ultimate_Rain.wav
@@ -343,14 +400,14 @@ K4RMA/
 │       │   ├── KarmaBossRules.cs
 │       │   ├── KarmaPatternCatalog.cs
 │       │   ├── KarmaProgressionState.cs
+│       │   ├── KarmaStory.cs
 │       │   ├── KarmaTechniqueState.cs
 │       │   └── KarmaTypes.cs
 │       ├── Editor/
 │       │   ├── KarmaBossPractice.cs
+│       │   ├── KarmaPlayer24AnimationAssets.cs
 │       │   ├── KarmaPlayerAnimationAssets.cs
-│       │   └── KarmaPlayer24AnimationAssets.cs
-│       │   ├── KarmaPlayerAnimationAssets.Parry.cs
-│       │   └── KarmaPlayerAnimationAssets.cs
+│       │   └── KarmaPlayerAnimationAssets.Parry.cs
 │       ├── Resources/
 │       │   ├── PlayerAnimation/
 │       │   │   ├── AirSlash.anim
@@ -375,6 +432,9 @@ K4RMA/
 │       │   │   ├── SwordWave.anim
 │       │   │   └── Transition.anim
 │       │   ├── PlayerAnimation24/
+│       │   │   ├── AirborneApex.anim
+│       │   │   ├── AirborneFall.anim
+│       │   │   ├── AirborneRise.anim
 │       │   │   ├── AirDiagonal.anim
 │       │   │   ├── AirDown.anim
 │       │   │   ├── AirHorizontal.anim
@@ -383,9 +443,6 @@ K4RMA/
 │       │   │   ├── AirRecovery.anim
 │       │   │   ├── AirSlash.anim
 │       │   │   ├── AirUp.anim
-│       │   │   ├── AirborneApex.anim
-│       │   │   ├── AirborneFall.anim
-│       │   │   ├── AirborneRise.anim
 │       │   │   ├── Apex.anim
 │       │   │   ├── Attack.anim
 │       │   │   ├── Crouch.anim
@@ -434,14 +491,14 @@ K4RMA/
 │       │   ├── KarmaSpriteLibrary.asset
 │       │   └── KarmaSpriteUnlit.mat
 │       ├── Runtime/
-│       │   ├── Audio/
-│       │   │   ├── KarmaAudio.cs
-│       │   │   ├── KarmaAudioHost.cs
-│       │   │   ├── KarmaSfxLibrary.cs
-│       │   │   └── Resources/
-│       │   │       └── KarmaSfxLibrary.asset
 │       │   ├── Abilities/
 │       │   │   └── KarmaEssences.cs
+│       │   ├── Audio/
+│       │   │   ├── Resources/
+│       │   │   │   └── KarmaSfxLibrary.asset
+│       │   │   ├── KarmaAudio.cs
+│       │   │   ├── KarmaAudioHost.cs
+│       │   │   └── KarmaSfxLibrary.cs
 │       │   ├── Combat/
 │       │   │   ├── KarmaBossAttack.cs
 │       │   │   └── KarmaProjectile.cs
@@ -473,6 +530,7 @@ K4RMA/
 │       │   │   │   │   │   ├── KarmaCharacterAnimator.Guard.cs
 │       │   │   │   │   │   ├── KarmaGuardAirborneHit.cs
 │       │   │   │   │   │   ├── KarmaGuardDome.cs
+│       │   │   │   │   │   ├── KarmaGuardStunStars.cs
 │       │   │   │   │   │   └── KarmaHeavyStrikeMotion.cs
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
@@ -503,8 +561,12 @@ K4RMA/
 │       │   │   │   │   │   ├── KarmaRisingArt.cs
 │       │   │   │   │   │   ├── KarmaRisingArticulatedMotion.cs
 │       │   │   │   │   │   ├── KarmaRisingAudio.cs
+│       │   │   │   │   │   ├── KarmaRisingBarrier.cs
 │       │   │   │   │   │   ├── KarmaRisingCharge.cs
-│       │   │   │   │   │   └── KarmaRisingPolish.cs
+│       │   │   │   │   │   ├── KarmaRisingFragmentAttack.cs
+│       │   │   │   │   │   ├── KarmaRisingFragmentVisual.cs
+│       │   │   │   │   │   ├── KarmaRisingPolish.cs
+│       │   │   │   │   │   └── KarmaRisingStunStars.cs
 │       │   │   │   │   ├── Settings/
 │       │   │   │   │   │   ├── Resources/
 │       │   │   │   │   │   │   ├── KarmaRisingBossProfile.asset
@@ -538,12 +600,16 @@ K4RMA/
 │       │   │   │       │   ├── KarmaCharacterAnimator.Sword.cs
 │       │   │   │       │   ├── KarmaCharacterAnimator.SwordRetreat.cs
 │       │   │   │       │   ├── KarmaCharacterAnimator.SwordSW02.cs
+│       │   │   │       │   ├── KarmaSW05Energy.cs
 │       │   │   │       │   ├── KarmaSW05VFX.cs
 │       │   │   │       │   ├── KarmaSwordAttackPolish.cs
 │       │   │   │       │   ├── KarmaSwordHitFeedback.cs
+│       │   │   │       │   ├── KarmaSwordPackedVfx.cs
 │       │   │   │       │   ├── KarmaSwordRetreatAfterimages.cs
 │       │   │   │       │   ├── KarmaSwordScarRise.cs
 │       │   │   │       │   ├── KarmaSwordSkillSurface.cs
+│       │   │   │       │   ├── KarmaSwordWardVfx.cs
+│       │   │   │       │   ├── KarmaSwordWaveAnimation.cs
 │       │   │   │       │   ├── KarmaWaveArtwork.cs
 │       │   │   │       │   └── KarmaWaveMotion.cs
 │       │   │   │       ├── Settings/
@@ -591,10 +657,10 @@ K4RMA/
 │       │   │   │   ├── KarmaCharacterAnimator.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Empowerment.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Ending.cs
+│       │   │   │   ├── KarmaCharacterAnimator.Guardian.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Parry.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Player.cs
-│       │   │   │   ├── KarmaCharacterAnimator.PlayerStatus.cs
-│       │   │   │   └── KarmaCharacterAnimator.Guardian.cs
+│       │   │   │   └── KarmaCharacterAnimator.PlayerStatus.cs
 │       │   │   ├── Artwork/
 │       │   │   │   ├── KarmaArtwork.cs
 │       │   │   │   ├── KarmaArtworkSettings.cs
@@ -611,20 +677,21 @@ K4RMA/
 │       │   │   └── KarmaVisuals.cs
 │       │   ├── Tutorial/
 │       │   │   ├── KarmaGame.Opening.cs
-│       │   │   ├── KarmaTutorial.cs
-│       │   │   ├── KarmaTutorialStage.cs
-│       │   │   ├── KarmaTutorialGate.cs
+│       │   │   ├── KarmaHUD.Tutorial.cs
 │       │   │   ├── KarmaTrainingTarget.cs
-│       │   │   └── KarmaHUD.Tutorial.cs
+│       │   │   ├── KarmaTutorial.cs
+│       │   │   ├── KarmaTutorialGate.cs
+│       │   │   └── KarmaTutorialStage.cs
 │       │   ├── UI/
 │       │   │   ├── KarmaHUD.BossEntrance.cs
-│       │   │   ├── KarmaHUD.Combat.cs
 │       │   │   ├── KarmaHUD.CinematicSkip.cs
+│       │   │   ├── KarmaHUD.Combat.cs
 │       │   │   ├── KarmaHUD.cs
 │       │   │   ├── KarmaHUD.Ending.cs
 │       │   │   ├── KarmaHUD.Screens.cs
 │       │   │   └── KarmaHUD.Settings.cs
 │       │   └── World/
+│       │       ├── KarmaPhysicsQueries.cs
 │       │       ├── KarmaSpace.cs
 │       │       ├── KarmaStage.cs
 │       │       └── KarmaSurface.cs
@@ -677,22 +744,26 @@ K4RMA/
 │   │   ├── Program.cs
 │   │   └── SwordWavePlanner.csproj
 │   ├── Unity/
+│   │   ├── Audio/
+│   │   │   └── KarmaSfxCompletionChecks.cs
+│   │   ├── Ending/
+│   │   │   └── KarmaEndingMoonChecks.cs
 │   │   ├── Guard/
 │   │   │   ├── KarmaGuardBasicDodgeChecks.cs
 │   │   │   ├── KarmaGuardCameraChecks.cs
+│   │   │   ├── KarmaGuardGD03PresentationChecks.cs
+│   │   │   ├── KarmaGuardGD04FeedbackChecks.cs
+│   │   │   ├── KarmaGuardIntegrationChecks.cs
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
 │   │   │   ├── KarmaGuardPlayChecks.cs
 │   │   │   └── KarmaGuardSelectionChecks.cs
-│   │   ├── Ending/
-│   │   │   └── KarmaEndingMoonChecks.cs
-│   │   ├── Tutorial/
-│   │   │   ├── KarmaTutorialChecks.cs
-│   │   │   └── KarmaCinematicSkipChecks.cs
 │   │   ├── Player/
 │   │   │   ├── KarmaPlayer24Checks.cs
+│   │   │   ├── KarmaPlayerCrowdControlChecks.cs
 │   │   │   └── KarmaPlayerPierceChecks.cs
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingAnimationChecks.cs
+│   │   │   ├── KarmaRisingBarrierChecks.cs
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
 │   │   │   ├── KarmaRisingPlayChecks.cs
 │   │   │   └── KarmaRisingSelectionChecks.cs
@@ -703,6 +774,7 @@ K4RMA/
 │   │   │   ├── KarmaSW03ArtworkChecks.cs
 │   │   │   ├── KarmaSW05ArtworkChecks.cs
 │   │   │   ├── KarmaSW05PlayChecks.cs
+│   │   │   ├── KarmaSwordCacheChecks.cs
 │   │   │   ├── KarmaSwordFinalPolishChecks.cs
 │   │   │   ├── KarmaSwordOverhaulPlayChecks.cs
 │   │   │   ├── KarmaSwordOwnershipChecks.cs
@@ -712,31 +784,36 @@ K4RMA/
 │   │   │   ├── KarmaSwordRandomParryChecks.cs
 │   │   │   ├── KarmaSwordRetreatDashPlayChecks.cs
 │   │   │   ├── KarmaSwordSelectionChecks.cs
+│   │   │   ├── KarmaSwordSkillRefreshChecks.cs
 │   │   │   ├── KarmaSwordSkillVfxChecks.cs
 │   │   │   ├── KarmaSwordSlideDistanceChecks.cs
 │   │   │   ├── KarmaSwordTempoRangeChecks.cs
 │   │   │   └── KarmaSwordWallCounterChecks.cs
+│   │   ├── Tutorial/
+│   │   │   ├── KarmaCinematicSkipChecks.cs
+│   │   │   └── KarmaTutorialChecks.cs
+│   │   ├── KarmaAllocationChecks.cs
 │   │   ├── KarmaBossEntranceChecks.cs
 │   │   ├── KarmaBossIsolationChecks.cs
 │   │   ├── KarmaBossPracticeChecks.cs
+│   │   ├── KarmaBuildChecks.cs
 │   │   ├── KarmaCameraCoverageChecks.cs
-│   │   ├── KarmaTransitionBackgroundChecks.cs
+│   │   ├── KarmaFeatureChecks.cs
+│   │   ├── KarmaIntegrationChecks.cs
+│   │   ├── KarmaPhysicsQueryChecks.cs
 │   │   ├── KarmaPresentationChecks.cs
-│   │   └── KarmaSettingsChecks.cs
+│   │   ├── KarmaSettingsChecks.cs
+│   │   └── KarmaTransitionBackgroundChecks.cs
+│   ├── test_asset_integrity.py
 │   ├── test_boss_boundaries.py
-│   └── test_optimize_images.py
+│   ├── test_optimize_images.py
+│   └── test_validation_runner.py
 ├── tools/
 │   ├── RisingSlash/
 │   │   ├── build-articulated.py
 │   │   └── rigs.json
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
-├── .gitignore
 ├── AGENTS.md
 └── README.md
 ```
-
-## 문서·도구 생성 제한
-
-- 사용자가 명시적으로 요청하지 않은 문서·작업 보고서·검증 기록·중복 문서는 생성하지 않는다.
-- 일회성 도구와 이름 뒤에 숫자가 붙은 도구 복사본은 생성하지 않으며, 기존 도구를 재사용한다.

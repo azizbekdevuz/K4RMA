@@ -26,10 +26,15 @@ namespace KarmaPrototype
             if (material == null) return;
             var surface = renderer.GetComponent<KarmaSwordSkillSurface>();
             if (surface == null) surface = renderer.gameObject.AddComponent<KarmaSwordSkillSurface>();
-            surface.picture = renderer; surface.age = 0; surface.style = mode;
+            surface.picture = renderer;
             if (surface.properties == null) surface.properties = new MaterialPropertyBlock();
             renderer.sharedMaterial = material;
-            surface.Paint();
+            surface.Restart(mode);
+        }
+        internal void Restart(int mode)
+        {
+            age = 0; style = mode;
+            Paint();
         }
         void Update()
         {

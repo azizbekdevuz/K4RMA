@@ -53,7 +53,7 @@ namespace KarmaPrototype
         }
         internal void CancelPlayerActionForControl()
         {
-            if (!nativePlayer24) return;
+            if (sheet != "Player") return;
             actionUntil = poseUntil = hurtUntil = playerExplicitRecoveryEnd = playerTurnUntil = 0;
             explicitPose = null;
         }
@@ -67,7 +67,9 @@ namespace KarmaPrototype
             => airborne ? "AirRecovery" : Mathf.Abs(movement) > 0.1f ? "RunRecovery" : "Recovery";
         internal void ResetNativePlayerForRoom()
         {
-            if (!nativePlayer24) return;
+            // Both the legacy profile and optional native profile can be reset
+            // while parrying, hurt or dead; no prior pose may cross a room reset.
+            if (sheet != "Player") return;
             CancelPlayerActionForControl(); ResetPlayerStatus();
             deathAt = -1; empowermentUntil = 0; playerClip = null;
             wasAirborne = false; landedUntil = jumpVisualUntil = 0;

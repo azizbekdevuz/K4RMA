@@ -8,11 +8,7 @@ namespace KarmaPrototype
         enum ActionState { Approach, Telegraph, Attack, Recover, Stunned }
         static readonly string[] ActionStateNames = System.Enum.GetNames(typeof(ActionState));
         readonly List<RaycastHit2D> terrainHits = new List<RaycastHit2D>(8);
-        static ContactFilter2D TerrainFilter => new ContactFilter2D
-        {
-            useLayerMask = true, layerMask = Physics2D.DefaultRaycastLayers,
-            useTriggers = Physics2D.queriesHitTriggers
-        };
+        static ContactFilter2D TerrainFilter => KarmaPhysicsQueries.DefaultFilter;
         KarmaGame game;
         Transform art, effectsRoot;
         KarmaCharacterAnimator animator;

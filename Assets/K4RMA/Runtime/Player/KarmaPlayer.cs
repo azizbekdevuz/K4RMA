@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KarmaPrototype
@@ -7,6 +8,8 @@ namespace KarmaPrototype
     {
         KarmaGame game;
         Rigidbody2D body;
+        Collider2D damageCollider;
+        readonly List<RaycastHit2D> movementHits = new List<RaycastHit2D>(8);
         PhysicsMaterial2D movementMaterial;
         Transform art;
         KarmaCharacterAnimator animator;
@@ -20,6 +23,15 @@ namespace KarmaPrototype
         public float Health { get; private set; }
         public int Facing { get; private set; } = 1;
         public Vector2 Position { get { return transform.position; } }
+        public Bounds DamageBounds
+        {
+            get
+            {
+                if (damageCollider == null) TryGetComponent(out damageCollider);
+                return damageCollider != null && damageCollider.enabled ? damageCollider.bounds
+                    : new Bounds(Position, KarmaSpace.PlayerSize);
+            }
+        }
         public bool Shielded { get { return Time.time < guardUntil; } }
         public bool TestInvincible { get; private set; }
         public bool Crouching { get; private set; }

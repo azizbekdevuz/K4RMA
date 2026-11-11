@@ -8,7 +8,7 @@ public sealed class KarmaRisingOwnershipChecks : KarmaBossOwnershipFixture
     public override Essence? Primary => Essence.RisingSlash;
     public override string BehaviorName => "RisingBossBehavior";
     public override string BasicPattern => "UPBasicPattern";
-    public override Type ProjectileType => typeof(KarmaBossAttack);
+    public override Type ProjectileType => typeof(KarmaRisingFragmentAttack);
     public override List<EnemyAttack> Expected(List<Essence> inherited)
     {
             var result = new List<EnemyAttack> { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02 };

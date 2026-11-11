@@ -48,8 +48,9 @@ namespace KarmaPrototype
                 float right = Mathf.Max(before, KarmaStage.BossRightWall - 0.5f);
                 float available = Mathf.Min(requested, direction < 0 ? before - left : right - before);
                 var body = SwordMoveBounds();
-                foreach (var hit in Physics2D.BoxCastAll(body.center, body.size,
-                    0, Vector2.right * direction, available + 0.1f))
+                KarmaPhysicsQueries.BoxCast(body.center, body.size,
+                    Vector2.right * direction, available + 0.1f, owner.terrainHits);
+                foreach (var hit in owner.terrainHits)
                 {
                     if (!BlocksSwordMove(hit.collider)) continue;
                     if (Vector2.Dot(hit.normal, Vector2.right * direction) >= -0.001f) continue;
@@ -87,7 +88,9 @@ namespace KarmaPrototype
             }
             bool SwordFloorAt(float x)
             {
-                foreach (var hit in Physics2D.RaycastAll(new Vector2(x, owner.Position.y), Vector2.down, KarmaSpace.GuardianGroundY + 0.5f))
+                KarmaPhysicsQueries.Raycast(new Vector2(x, owner.Position.y), Vector2.down,
+                    KarmaSpace.GuardianGroundY + 0.5f, owner.terrainHits);
+                foreach (var hit in owner.terrainHits)
                     if (hit.collider.GetComponent<KarmaSurface>() != null) return true;
                 return false;
             }
@@ -315,8 +318,9 @@ namespace KarmaPrototype
                 step = after - before;
                 if (Mathf.Abs(step) <= 0.0001f) return 0;
                 var body = SwordMoveBounds();
-                foreach (var hit in Physics2D.BoxCastAll(body.center, body.size, 0,
-                Vector2.right * Mathf.Sign(step), Mathf.Abs(step) + 0.1f))
+                KarmaPhysicsQueries.BoxCast(body.center, body.size,
+                    Vector2.right * Mathf.Sign(step), Mathf.Abs(step) + 0.1f, owner.terrainHits);
+                foreach (var hit in owner.terrainHits)
                 if (BlocksSwordMove(hit.collider)
                     && Vector2.Dot(hit.normal, Vector2.right * Mathf.Sign(step)) < -0.001f)
                 return 0;

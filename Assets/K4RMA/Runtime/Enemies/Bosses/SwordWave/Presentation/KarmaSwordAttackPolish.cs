@@ -96,6 +96,7 @@ namespace KarmaPrototype
         sealed class Entry
         {
             public SpriteRenderer renderer;
+            public KarmaSwordSkillSurface surface;
             public KarmaEnemy owner;
             public Transform scope;
             public Vector3 velocity, scale;
@@ -128,7 +129,10 @@ namespace KarmaPrototype
             {
                 var node = new GameObject("Sword pooled cosmetic " + i); node.transform.SetParent(poolRoot, false);
                 var sr = node.AddComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(sr); sr.sortingOrder = 29;
-                node.SetActive(false); entries[i] = new Entry { renderer = sr };
+                // Allocate the per-slot component/property block during pool
+                // preparation, before a dense release first fills all 96 slots.
+                KarmaSwordSkillSurface.Apply(sr, 4);
+                node.SetActive(false); entries[i] = new Entry { renderer = sr, surface = sr.GetComponent<KarmaSwordSkillSurface>() };
             }
         }
         Entry Next(KarmaEnemy owner, Sprite sprite, Vector2 at, Vector3 scale, float seconds, Color color, float angle, Vector2 velocity, float growth, Transform scope = null)
@@ -138,7 +142,14 @@ namespace KarmaPrototype
             if (e == null) { e = entries[cursor]; cursor = (cursor + 1) % entries.Length; RecycledLive++; }
             e.owner = owner; e.scope = scope; e.active = true; e.age = 0; e.life = Mathf.Max(0.04f, seconds); e.color = color; e.velocity = velocity; e.scale = scale; e.growth = growth;
             var sr = e.renderer; sr.sprite = sprite; sr.color = color; sr.flipX = sr.flipY = false; sr.sortingOrder = 29;
-            KarmaSwordSkillSurface.Apply(sr, 4);
+            if (e.surface != null) e.surface.Restart(4);
+            else
+            {
+                // Preserve retry behavior if the material was unavailable when
+                // the pool was prepared (for example during an Editor import).
+                KarmaSwordSkillSurface.Apply(sr, 4);
+                e.surface = sr.GetComponent<KarmaSwordSkillSurface>();
+            }
             sr.transform.position = at; sr.transform.rotation = Quaternion.Euler(0, 0, angle); sr.transform.localScale = scale;
             sr.gameObject.SetActive(true); return e;
         }

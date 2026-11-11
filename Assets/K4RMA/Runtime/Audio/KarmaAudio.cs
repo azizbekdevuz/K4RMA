@@ -102,6 +102,8 @@ namespace KarmaPrototype
         static RunPhase phase;
         static bool loadedLibrary, inheriting, haveLevels;
         static float nextGameSearch, effects, music;
+        static float endingAmbience = 1;
+        public static void SetEndingAmbience(float level) { endingAmbience = Mathf.Clamp01(level); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset()
@@ -142,6 +144,7 @@ namespace KarmaPrototype
             library = null;
             loadedLibrary = inheriting = haveLevels = false;
             phase = RunPhase.Title;
+            endingAmbience = 1;
             nextGameSearch = 0f;
             effects = KarmaPreferences.EffectsVolume;
             music = KarmaPreferences.MusicVolume;
@@ -224,7 +227,7 @@ namespace KarmaPrototype
             {
                 if (voice == null || !voice.Live || voice.Source == null) continue;
                 var source = voice.Source;
-                source.volume = voice.Gain * BusLevel(voice.Bus) * (voice.Bus == KarmaSfxBus.Ambience ? ambienceDuck : 1f);
+                source.volume = voice.Gain * BusLevel(voice.Bus) * (voice.Bus == KarmaSfxBus.Ambience ? ambienceDuck * endingAmbience : 1f);
                 bool hold = ShouldPause(voice.Bus);
                 if (hold != voice.Held)
                 {

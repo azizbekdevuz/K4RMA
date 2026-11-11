@@ -64,9 +64,9 @@ namespace KarmaPrototype
             pictureScale = picture.transform.localScale;
         }
         public void Attack() { Attack(Vector2.right); }
-        public void Attack(Vector2 direction) { slashDirection = direction; actionUntil = Time.time + 0.18f;
+        public void Attack(Vector2 direction) { if (nativePlayer24) hurtUntil = 0; slashDirection = direction; actionUntil = Time.time + 0.18f;
             if (sheet == "Player") SamplePlayerClip(direction.y < -0.25f ? "AirSlash" : direction.y > 0.25f ? "Rising" : "Attack", true); }
-        public void Hurt() { hurtUntil = Time.time + 0.16f; }
+        public void Hurt() { if (nativePlayer24) { CancelPlayerActionForControl(); playerClip = null; } hurtUntil = Time.time + 0.16f; }
         public void Die()
         {
             EndGuardianAction(); deathAt = Time.time;
@@ -125,21 +125,22 @@ namespace KarmaPrototype
                     bool takeoff = !wasAirborne && airborne && verticalSpeed > 0;
                     wasAirborne = airborne;
                     if (takeoff) jumpVisualUntil = Time.time + 1f / 12;
-                    string pose = Time.time < hurtUntil ? "Hurt"
+                    string pose = Time.time < hurtUntil ? (nativePlayer24 && airborne ? "AirKnockback" : "Hurt")
                         : Time.time < poseUntil ? explicitPose
                         : Time.time < actionUntil ? (slashDirection.y < -0.25f ? "AirSlash"
                             : slashDirection.y > 0.25f ? "Rising" : "Attack")
-                        : actionUntil > 0 && Time.time < actionUntil + 0.08f ? "Recovery"
+                        : PlayerRecovering(movement, airborne) ? PlayerRecoveryPose(movement, airborne)
+                        : !nativePlayer24 && actionUntil > 0 && Time.time < actionUntil + 0.08f ? "Recovery"
                         : airborne ? (Time.time < jumpVisualUntil ? "JumpStart" : verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
                         : crouching ? "Crouch"
                         : Time.time < landedUntil ? "Land"
-                        : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
+                        : PlayerTurning ? "Turn" : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
                     SamplePlayerClip(pose);
                 }
                 float bob = sheet == "Player" || airborne || crouching ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;
                 picture.transform.localPosition = pictureHome + Vector3.up * bob;
                 picture.color = Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
-                transform.localRotation = Quaternion.Euler(0, 0, Time.time < hurtUntil ? -8 : 0);
+                transform.localRotation = Quaternion.Euler(0, 0, !nativePlayer24 && Time.time < hurtUntil ? -8 : 0);
             }
         }
         void GroundFallenGuardian()

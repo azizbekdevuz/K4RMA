@@ -68,6 +68,8 @@ namespace KarmaPrototype
             {
                 SettingsScreen(); GUI.matrix = saved; return;
             }
+            if (game.Phase == RunPhase.Ending || game.EndingCompleted)
+            { EndingScreen(); CinematicSkipHint(); GUI.matrix = saved; return; }
             if (game.Phase == RunPhase.Title) TitleScreen();
             else
             {
@@ -96,6 +98,7 @@ namespace KarmaPrototype
                 Label(255, 655, 770, 25, "[ " + KarmaInput.BindingLabel(KarmaAction.DialogueConfirm) + " ] 계속", small);
             }
             if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
+            CinematicSkipHint();
             GUI.matrix = saved;
         }
 

@@ -80,8 +80,10 @@ namespace KarmaPrototype
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
         {
             string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
-            KarmaCombatVFX.SpawnSprite(game.World, p, "PersonalizationVFX", pose,
-                KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, facing > 0 ? 0 : 180);
+            var procVisual = KarmaCombatVFX.SpawnSprite(game.World, p, "PersonalizationVFX", pose,
+                KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, essence == Essence.SwordWave && facing < 0 ? 180 : 0);
+            if (procVisual != null && essence != Essence.SwordWave)
+                procVisual.transform.parent.localScale = new Vector3(facing, 1, 1);
             Color color = game.Config.ColorOf(essence);
             if (essence == Essence.Guard)
             {
@@ -94,7 +96,8 @@ namespace KarmaPrototype
             {
                 var sr = Draw(game.World, p + Vector2.right * facing * KarmaSpace.Units(0.8f),
                     KarmaSpace.Units(essence == Essence.SwordWave ? new Vector2(2.2f, 2.2f) : new Vector2(1.8f, 2.8f)), color, 1);
-                sr.transform.localRotation = Quaternion.Euler(0, 0, facing > 0 ? 0 : 180);
+                sr.transform.localRotation = Quaternion.Euler(0, 0, essence == Essence.SwordWave && facing < 0 ? 180 : 0);
+                if (essence == Essence.RisingSlash) sr.flipX = facing < 0;
                 Animate(sr, 0.35f, 0.35f, Vector2.right * facing * KarmaSpace.Units(0.5f));
             }
         }

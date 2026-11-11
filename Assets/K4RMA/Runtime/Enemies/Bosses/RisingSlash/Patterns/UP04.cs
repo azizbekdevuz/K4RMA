@@ -21,15 +21,22 @@ namespace KarmaPrototype
                 Vector2 shard = KarmaSpace.Units(new Vector2(1.05f, 0.675f));
                 KarmaRisingPolish.ShieldPlant(root, landing, KarmaSpace.Units(new Vector2(5.4f, 4.8f)));
                 if (owner.Active) KarmaRisingAudio.ShieldBurst();
-                const int lowerCount = 9, upperCount = 5;
-                for (int i = 0; i < lowerCount + upperCount && owner.Active; i++)
+                const int upperCount = 8, sideCount = 6;
+                for (int i = 0; i < upperCount + sideCount && owner.Active; i++)
                 {
-                    // More lower-half sectors, with a fresh direction inside each sector per burst.
-                    bool lower = i < lowerCount;
-                    int sector = lower ? i : i - lowerCount;
-                    float sectorWidth = 180f / (lower ? lowerCount : upperCount);
-                    float sectorStart = (lower ? 180f : 0f) + sector * sectorWidth;
-                    float degrees = sectorStart + Random.Range(sectorWidth * 0.15f, sectorWidth * 0.85f);
+                    // No downward rays: retain the upper fan and distribute the rest to both flanks.
+                    float degrees;
+                    if (i < upperCount)
+                    {
+                        float sectorWidth = 140f / upperCount;
+                        degrees = 20f + i * sectorWidth + Random.Range(sectorWidth * 0.15f, sectorWidth * 0.85f);
+                    }
+                    else
+                    {
+                        int side = i - upperCount;
+                        float angle = 1f + (side / 2) * 6f + Random.Range(0.5f, 2.5f);
+                        degrees = side % 2 == 0 ? angle : 180f - angle;
+                    }
                     float rad = degrees * Mathf.Deg2Rad;
                     Vector2 launch = origin + new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)) * KarmaSpace.Units(1.35f);
                     AimFragment(landing, launch, degrees, life, out _, out var velocity);
@@ -49,10 +56,9 @@ namespace KarmaPrototype
                     if (sprite != null && shot.Visual != null)
                     {
                         shot.Visual.sprite = sprite;
-                        // Match the original fragments' full visual footprint instead of fitting
-                        // a small chip inside it. Damage still uses the unchanged shard size.
+                        // Emphasize the actual shard silhouette while preserving its damage footprint.
                         shot.Visual.transform.localScale = new Vector3(
-                            shard.x / sprite.bounds.size.x, shard.y / sprite.bounds.size.y, 1);
+                            shard.x * 1.5f / sprite.bounds.size.x, shard.y * 1.5f / sprite.bounds.size.y, 1);
                         shot.Visual.transform.localRotation = Quaternion.Euler(0, 0, degrees + Random.Range(-12f, 12f));
                         shot.Visual.flipX = Random.value < 0.5f;
                         shot.Visual.gameObject.SetActive(true);

@@ -11,6 +11,8 @@ namespace KarmaPrototype
             for (int i = 0; i < names.Length; i++) requests[i] = Resources.LoadAsync<Texture2D>("KarmaTutorial/" + names[i]);
             foreach (var request in requests) yield return request;
         }
+        // Original Master.png: last broad sandal support is row 1294 of 1312 (17 px transparent inset).
+        internal static float MasterGroundCenter(float height) => height * (0.5f - 17f / 1312f);
         public const float RoomWidth = 50;
         public const float Right = 75;
         public const float FinalGate = 59;
@@ -20,7 +22,7 @@ namespace KarmaPrototype
             Picture(parent, "01_Dojo_NoMaster", new Vector2(0, 9), new Vector2(RoomWidth, RoomWidth * 9 / 16), -30);
             Picture(parent, "04_Boss_Gate", new Vector2(RoomWidth, 9), new Vector2(RoomWidth, RoomWidth * 9 / 16), -30);
             // Place the master on the ground in front of the dojo steps.
-            Picture(parent, "Master", new Vector2(-12, 2.4f), new Vector2(4.39f, 4.8f), 2);
+            Picture(parent, "Master", new Vector2(-12, MasterGroundCenter(4.8f)), new Vector2(4.39f, 4.8f), 2);
             BuildGround(parent);
             Solid(parent, "수련길 시작", new Vector2(-25, 10), new Vector2(1, 30)).GetComponent<SpriteRenderer>().enabled = false;
             Solid(parent, "수련길 끝", new Vector2(Right, 10), new Vector2(1, 30)).GetComponent<SpriteRenderer>().enabled = false;

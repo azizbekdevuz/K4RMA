@@ -38,6 +38,16 @@ namespace KarmaPrototype
             Game = game; Step = KarmaTutorialStep.Travel;
             KarmaTutorialStage.Build(this, out targets, out barriers);
         }
+        internal void Skip()
+        {
+            if (Step == KarmaTutorialStep.Fade) return;
+            WaitingForGuard = preparingGuard = false;
+            inputReleaseRequired = true;
+            Step = KarmaTutorialStep.Fade; fade = 0;
+            Game.Player.ClearStatus();
+            Game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+            Time.timeScale = 0;
+        }
         public bool Learned(Essence e) => Lesson >= (int)e + 1;
         public bool Accepts(KarmaTrainingAttack kind) => Step == KarmaTutorialStep.Practice && !Game.GameplayFrozen && Lesson == (int)kind;
         public void HitArea(KarmaTrainingAttack kind, int id, Vector2 center, Vector2 size)

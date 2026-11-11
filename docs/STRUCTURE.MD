@@ -146,41 +146,99 @@ K4RMA/
 │       │       │           ├── Master.png
 │       │       │           └── TrainingDummy.png
 │       │       ├── Resources/
-│       │       │   └── K4RMAArtwork/
-│       │       │       ├── Characters/
-│       │       │       │   ├── Guardians/
-│       │       │       │   │   ├── Base/
-│       │       │       │   │   │   └── Neutral.png
-│       │       │       │   │   ├── Revival/
-│       │       │       │   │   │   └── Neutral.png
-│       │       │       │   │   └── ReferencePoses.png
-│       │       │       │   └── Player/
-│       │       │       │       ├── Actions.png
-│       │       │       │       ├── Additional.png
-│       │       │       │       ├── Locomotion.png
-│       │       │       │       └── Poses.png
-│       │       │       ├── Effects/
-│       │       │       │   ├── Guardian.png
-│       │       │       │   ├── Hit.png
-│       │       │       │   ├── Parry.png
-│       │       │       │   ├── Personalization.png
-│       │       │       │   └── Player.png
-│       │       │       ├── Environments/
-│       │       │       │   ├── MountainDojo/
-│       │       │       │   │   ├── Background.png
-│       │       │       │   │   ├── Extended.png
-│       │       │       │   │   └── Panorama.png
-│       │       │       │   └── TrialHall/
-│       │       │       │       ├── Background.png
-│       │       │       │       ├── Extended.png
-│       │       │       │       └── Panorama.png
-│       │       │       ├── Props/
-│       │       │       │   └── Props.png
-│       │       │       └── UI/
-│       │       │           ├── Components.png
-│       │       │           └── MenuBackground.png
+│       │       │   ├── K4RMAArtwork/
+│       │       │   │   ├── Characters/
+│       │       │   │   │   ├── Guardians/
+│       │       │   │   │   │   ├── Base/
+│       │       │   │   │   │   │   └── Neutral.png
+│       │       │   │   │   │   ├── Revival/
+│       │       │   │   │   │   │   └── Neutral.png
+│       │       │   │   │   │   └── ReferencePoses.png
+│       │       │   │   │   └── Player/
+│       │       │   │   │       ├── Actions.png
+│       │       │   │   │       ├── Additional.png
+│       │       │   │   │       ├── Locomotion.png
+│       │       │   │   │       ├── Native24/
+│       │       │   │   │       │   ├── AirDiagonal.png
+│       │       │   │   │       │   ├── AirDown.png
+│       │       │   │   │       │   ├── AirHorizontal.png
+│       │       │   │   │       │   ├── AirHover.png
+│       │       │   │   │       │   ├── AirKnockback.png
+│       │       │   │   │       │   ├── AirRecovery.png
+│       │       │   │   │       │   ├── AirUp.png
+│       │       │   │   │       │   ├── AirborneApex.png
+│       │       │   │   │       │   ├── AirborneFall.png
+│       │       │   │   │       │   ├── AirborneRise.png
+│       │       │   │   │       │   ├── Apex.png
+│       │       │   │   │       │   ├── Attack.png
+│       │       │   │   │       │   ├── Crouch.png
+│       │       │   │   │       │   ├── Death.png
+│       │       │   │   │       │   ├── DownLoop.png
+│       │       │   │   │       │   ├── Fall.png
+│       │       │   │   │       │   ├── GetUp.png
+│       │       │   │   │       │   ├── Guard.png
+│       │       │   │   │       │   ├── Hurt.png
+│       │       │   │   │       │   ├── Idle.png
+│       │       │   │   │       │   ├── Jump.png
+│       │       │   │   │       │   ├── JumpStart.png
+│       │       │   │   │       │   ├── Kneel.png
+│       │       │   │   │       │   ├── Knockback.png
+│       │       │   │   │       │   ├── Knockdown.png
+│       │       │   │   │       │   ├── Land.png
+│       │       │   │   │       │   ├── Parry.png
+│       │       │   │   │       │   ├── PersonalizeGuard.png
+│       │       │   │   │       │   ├── PersonalizeRising.png
+│       │       │   │   │       │   ├── PersonalizeWave.png
+│       │       │   │   │       │   ├── Pierce.png
+│       │       │   │   │       │   ├── PierceDiagonal.png
+│       │       │   │   │       │   ├── PierceDown.png
+│       │       │   │   │       │   ├── PierceUp.png
+│       │       │   │   │       │   ├── Recovery.png
+│       │       │   │   │       │   ├── Riposte.png
+│       │       │   │   │       │   ├── Rising.png
+│       │       │   │   │       │   ├── Run.png
+│       │       │   │   │       │   ├── RunRecovery.png
+│       │       │   │   │       │   ├── Salute.png
+│       │       │   │   │       │   ├── ShockLoop.png
+│       │       │   │   │       │   ├── ShockRecovery.png
+│       │       │   │   │       │   ├── ShockStart.png
+│       │       │   │   │       │   ├── StandFromKneel.png
+│       │       │   │   │       │   ├── StunLoop.png
+│       │       │   │   │       │   ├── StunRecovery.png
+│       │       │   │   │       │   ├── StunStart.png
+│       │       │   │   │       │   ├── SwordWave.png
+│       │       │   │   │       │   ├── Turn.png
+│       │       │   │   │       │   └── Walk.png
+│       │       │   │   │       └── Poses.png
+│       │       │   │   ├── Effects/
+│       │       │   │   │   ├── Guardian.png
+│       │       │   │   │   ├── Hit.png
+│       │       │   │   │   ├── Parry.png
+│       │       │   │   │   ├── Personalization.png
+│       │       │   │   │   └── Player.png
+│       │       │   │   ├── Environments/
+│       │       │   │   │   ├── MountainDojo/
+│       │       │   │   │   │   ├── Background.png
+│       │       │   │   │   │   ├── Extended.png
+│       │       │   │   │   │   └── Panorama.png
+│       │       │   │   │   └── TrialHall/
+│       │       │   │   │       ├── Background.png
+│       │       │   │   │       ├── Extended.png
+│       │       │   │   │       └── Panorama.png
+│       │       │   │   ├── Props/
+│       │       │   │   │   └── Props.png
+│       │       │   │   └── UI/
+│       │       │   │       ├── Components.png
+│       │       │   │       └── MenuBackground.png
+│       │       │   └── Materials/
+│       │       │       ├── KarmaEndingDissolve.mat
+│       │       │       ├── KarmaMoonBackground.mat
+│       │       │       └── KarmaPlayer24.mat
 │       │       └── Shaders/
-│       │           └── KarmaCombatGlow.shader
+│       │           ├── KarmaCombatGlow.shader
+│       │           ├── KarmaEndingDissolve.shader
+│       │           ├── KarmaMoonBackground.shader
+│       │           └── KarmaPlayer24.shader
 │       ├── Audio/
 │       │   └── SFX/
 │       │       ├── Ambience/
@@ -252,7 +310,8 @@ K4RMA/
 │       │   └── KarmaTypes.cs
 │       ├── Editor/
 │       │   ├── KarmaBossPractice.cs
-│       │   └── KarmaPlayerAnimationAssets.cs
+│       │   ├── KarmaPlayerAnimationAssets.cs
+│       │   └── KarmaPlayer24AnimationAssets.cs
 │       ├── Resources/
 │       │   ├── PlayerAnimation/
 │       │   │   ├── AirSlash.anim
@@ -276,6 +335,62 @@ K4RMA/
 │       │   │   ├── Run.anim
 │       │   │   ├── SwordWave.anim
 │       │   │   └── Transition.anim
+│       │   ├── PlayerAnimation24/
+│       │   │   ├── AirDiagonal.anim
+│       │   │   ├── AirDown.anim
+│       │   │   ├── AirHorizontal.anim
+│       │   │   ├── AirHover.anim
+│       │   │   ├── AirKnockback.anim
+│       │   │   ├── AirRecovery.anim
+│       │   │   ├── AirSlash.anim
+│       │   │   ├── AirUp.anim
+│       │   │   ├── AirborneApex.anim
+│       │   │   ├── AirborneFall.anim
+│       │   │   ├── AirborneRise.anim
+│       │   │   ├── Apex.anim
+│       │   │   ├── Attack.anim
+│       │   │   ├── Crouch.anim
+│       │   │   ├── Dash.anim
+│       │   │   ├── Death.anim
+│       │   │   ├── DownLoop.anim
+│       │   │   ├── Fall.anim
+│       │   │   ├── Frames.asset
+│       │   │   ├── GetUp.anim
+│       │   │   ├── Guard.anim
+│       │   │   ├── Hurt.anim
+│       │   │   ├── Idle.anim
+│       │   │   ├── Jump.anim
+│       │   │   ├── JumpStart.anim
+│       │   │   ├── Kneel.anim
+│       │   │   ├── Knockback.anim
+│       │   │   ├── Knockdown.anim
+│       │   │   ├── Land.anim
+│       │   │   ├── Parry.anim
+│       │   │   ├── PersonalizeGuard.anim
+│       │   │   ├── PersonalizeRising.anim
+│       │   │   ├── PersonalizeWave.anim
+│       │   │   ├── Pierce.anim
+│       │   │   ├── PierceDiagonal.anim
+│       │   │   ├── PierceDown.anim
+│       │   │   ├── PierceUp.anim
+│       │   │   ├── Ready.txt
+│       │   │   ├── Recovery.anim
+│       │   │   ├── Riposte.anim
+│       │   │   ├── Rising.anim
+│       │   │   ├── Run.anim
+│       │   │   ├── RunRecovery.anim
+│       │   │   ├── Salute.anim
+│       │   │   ├── ShockLoop.anim
+│       │   │   ├── ShockRecovery.anim
+│       │   │   ├── ShockStart.anim
+│       │   │   ├── StandFromKneel.anim
+│       │   │   ├── StunLoop.anim
+│       │   │   ├── StunRecovery.anim
+│       │   │   ├── StunStart.anim
+│       │   │   ├── SwordWave.anim
+│       │   │   ├── Transition.anim
+│       │   │   ├── Turn.anim
+│       │   │   └── Walk.anim
 │       │   ├── KarmaArtworkSettings.asset
 │       │   ├── KarmaCombatGlow.mat
 │       │   ├── KarmaSpriteLibrary.asset
@@ -413,7 +528,9 @@ K4RMA/
 │       │   ├── Flow/
 │       │   │   ├── KarmaBootstrap.cs
 │       │   │   ├── KarmaGame.Camera.cs
+│       │   │   ├── KarmaGame.CinematicSkip.cs
 │       │   │   ├── KarmaGame.cs
+│       │   │   ├── KarmaGame.Ending.cs
 │       │   │   ├── KarmaGame.Progression.cs
 │       │   │   └── KarmaGame.Settings.cs
 │       │   ├── Input/
@@ -425,22 +542,29 @@ K4RMA/
 │       │   │   ├── KarmaPlayer.Combat.cs
 │       │   │   ├── KarmaPlayer.cs
 │       │   │   ├── KarmaPlayer.Defense.cs
+│       │   │   ├── KarmaPlayer.Ending.cs
 │       │   │   ├── KarmaPlayer.Movement.cs
-│       │   │   └── KarmaPlayer.Status.cs
+│       │   │   ├── KarmaPlayer.Status.cs
+│       │   │   └── KarmaPlayer.StatusPresentation.cs
 │       │   ├── Presentation/
 │       │   │   ├── Animation/
 │       │   │   │   ├── KarmaCharacterAnimator.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Empowerment.cs
+│       │   │   │   ├── KarmaCharacterAnimator.Ending.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Player.cs
+│       │   │   │   ├── KarmaCharacterAnimator.PlayerStatus.cs
 │       │   │   │   └── KarmaCharacterAnimator.Guardian.cs
 │       │   │   ├── Artwork/
 │       │   │   │   ├── KarmaArtwork.cs
 │       │   │   │   ├── KarmaArtworkSettings.cs
+│       │   │   │   ├── KarmaMoonArtwork.cs
+│       │   │   │   ├── KarmaMoonProjection.cs
 │       │   │   │   └── KarmaSpriteLibrary.cs
 │       │   │   ├── Effects/
 │       │   │   │   ├── KarmaAttackWarning.cs
 │       │   │   │   ├── KarmaCombatVFX.cs
 │       │   │   │   ├── KarmaEffect.cs
+│       │   │   │   ├── KarmaEndingPresentation.cs
 │       │   │   │   ├── KarmaPersonalizationVFX.cs
 │       │   │   │   └── KarmaRemnantVFX.cs
 │       │   │   └── KarmaVisuals.cs
@@ -454,7 +578,9 @@ K4RMA/
 │       │   ├── UI/
 │       │   │   ├── KarmaHUD.BossEntrance.cs
 │       │   │   ├── KarmaHUD.Combat.cs
+│       │   │   ├── KarmaHUD.CinematicSkip.cs
 │       │   │   ├── KarmaHUD.cs
+│       │   │   ├── KarmaHUD.Ending.cs
 │       │   │   ├── KarmaHUD.Screens.cs
 │       │   │   └── KarmaHUD.Settings.cs
 │       │   └── World/
@@ -516,9 +642,13 @@ K4RMA/
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
 │   │   │   ├── KarmaGuardPlayChecks.cs
 │   │   │   └── KarmaGuardSelectionChecks.cs
+│   │   ├── Ending/
+│   │   │   └── KarmaEndingMoonChecks.cs
 │   │   ├── Tutorial/
-│   │   │   └── KarmaTutorialChecks.cs
+│   │   │   ├── KarmaTutorialChecks.cs
+│   │   │   └── KarmaCinematicSkipChecks.cs
 │   │   ├── Player/
+│   │   │   └── KarmaPlayer24Checks.cs
 │   │   ├── RisingSlash/
 │   │   │   ├── KarmaRisingAnimationChecks.cs
 │   │   │   ├── KarmaRisingOwnershipChecks.cs

@@ -83,6 +83,8 @@ namespace KarmaPrototype
         {
             UpdateCameraViewport();
             if (Player == null) return;
+            if (Phase == RunPhase.Ending) { FrameEnding(); return; }
+            if (EndingCompleted && Phase == RunPhase.Victory) return;
             if (Tutorial != null) { Tutorial.FrameCamera(); return; }
             if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
                 || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)

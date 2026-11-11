@@ -5,12 +5,15 @@ namespace KarmaPrototype
     {
         public void BeginCounter()
         {
+            FaceAction();
             techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow);
-            animator.PlayPose("Parry", game.Config.Techniques.counterWindow);
+            animator.PlayPlayerAction("Parry", "Parry", game.Config.Techniques.counterWindow);
         }
         public void BeginGuard(float seconds)
         {
-            guardUntil = Time.time + seconds; animator.PlayPose("Guard", seconds);
+            FaceAction();
+            aura.flipX = Facing < 0;
+            guardUntil = Time.time + seconds; animator.PlayPlayerAction("Guard", "Guard", seconds);
             KarmaAudio.Play(KarmaSfxId.GdShieldActivate);
         }
         public void TakeDamage(float damage)
@@ -25,7 +28,7 @@ namespace KarmaPrototype
             {
                 ParryCount++;
                 KarmaAudio.Play(KarmaSfxId.CombatPerfectParry);
-                animator.PlayPose("Riposte", 0.3f);
+                animator.PlayPlayerAction("Riposte", "Riposte", 0.3f);
                 invulnerableUntil = Time.time + 0.12f;
                 Essences.NotifyUnique(Essence.Guard);
                 if (!counterDamage) return;
@@ -47,13 +50,14 @@ namespace KarmaPrototype
             {
                 KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
                 game.Tutorial?.GuardBlocked();
-                KarmaCombatVFX.SpawnSprite(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
+                var blockVisual = KarmaCombatVFX.SpawnSprite(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
+                if (blockVisual != null) blockVisual.transform.parent.localScale = new Vector3(Facing, 1, 1);
                 return;
             }
             if (game.Tutorial != null || TestInvincible) return;
             float actual = Mathf.Min(Health, damage);
             CancelAirSlash();
-            animator.Hurt();
+            FaceAction(); animator.Hurt();
             Health -= actual; game.DamageTaken += actual;
             KarmaAudio.Play(KarmaSfxId.PlDamage);
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;

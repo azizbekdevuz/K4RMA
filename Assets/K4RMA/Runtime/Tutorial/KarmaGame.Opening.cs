@@ -17,6 +17,7 @@ namespace KarmaPrototype
             World = new GameObject("노을 수련길").transform;
             World.SetParent(runRoot, false);
             Phase = RunPhase.Tutorial;
+            ResetCinematicSkip();
             Tutorial = World.gameObject.AddComponent<KarmaTutorial>();
             Tutorial.Initialize(this);
             Player.ResetForRoom(new Vector2(-7, KarmaSpace.PlayerHalfHeight), true);
@@ -39,8 +40,7 @@ namespace KarmaPrototype
         }
         public void RestartSession()
         {
-            openingRequested = false;
-            StartRun();
+            StartOpening();
         }
     }
 }

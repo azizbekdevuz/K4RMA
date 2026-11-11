@@ -32,9 +32,11 @@ namespace KarmaPrototype
             jumpBufferedUntil = 0; lastGrounded = -10;
             nextSword = Time.time + Mathf.Max(game.Config.swordCooldown, tuning.airSlashDuration);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
-            animator.Attack(direction);
+            FaceAction(); animator.Attack(direction);
             KarmaAudio.Play(KarmaSfxId.PlSwordSwing);
-            animator.PlayPose("AirSlash", tuning.airSlashDuration + 0.04f);
+            string airPose = direction.y < -0.25f ? "AirHover" : direction.y > 0.75f ? "AirUp"
+                : direction.y > 0.25f ? "AirDiagonal" : "AirHorizontal";
+            animator.PlayPlayerAction(airPose, "AirSlash", tuning.airSlashDuration + 0.04f);
             Essences.NotifyUnique(Essence.RisingSlash);
             KarmaRemnantVFX.SwordSlash(transform, Vector2.zero, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(1.8f), tuning.airSlashDuration + 0.04f);
         }
@@ -68,7 +70,10 @@ namespace KarmaPrototype
                     body.linearVelocity.y);
                 if (airSlashDownward)
                 {
+                    float previousHover = airSlashHoverLeft;
                     airSlashHoverLeft = Mathf.Max(0, airSlashHoverLeft - Time.fixedDeltaTime);
+                    if (previousHover > 0 && airSlashHoverLeft <= 0)
+                        animator.PlayPlayerAction("AirDown", "AirSlash", Mathf.Max(0.02f, tuning.airSlashDuration * (1 - progress)) + 0.04f);
                     body.gravityScale = airSlashHoverLeft > 0 ? 0 : game.Config.gravityScale;
                 }
             }

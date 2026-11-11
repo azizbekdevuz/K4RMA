@@ -8,7 +8,7 @@ namespace KarmaPrototype
     {
         Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Guard,
         Interact, Pause, Confirm, Restart, Title, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
-        ToggleInvincibility, Pierce, Settings, DialogueConfirm
+        ToggleInvincibility, Pierce, Settings, DialogueConfirm, SkipCinematic
     }
 
     // Shared actions stay enabled in menus and while Time.timeScale is zero.
@@ -57,6 +57,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.Pierce, "l");
             Bind(KarmaAction.Settings, "o");
             Bind(KarmaAction.DialogueConfirm, "space");
+            Bind(KarmaAction.SkipCinematic, "space");
             if (PlayerPrefs.HasKey(BindingsKey))
             {
                 try { map.LoadBindingOverridesFromJson(PlayerPrefs.GetString(BindingsKey)); }

@@ -276,7 +276,7 @@ public static class KarmaTutorialChecks
         InputSystem.QueueStateEvent(keyboard, new KeyboardState());
         game.Player.ToggleTestInvincibility();
         game.StartOpening(); Check(game.Tutorial != null && game.Phase == RunPhase.Tutorial, "Title start enters opening");
-        game.RestartSession(); Check(game.Tutorial == null && game.IsCombat, "Restart skips opening");
+        game.RestartSession(); Check(game.Tutorial != null && game.Phase == RunPhase.Tutorial, "Restart begins tutorial");
         game.StartRun(); Check(game.IsCombat && game.Tutorial == null, "Practice and test direct entry preserved");
         await CheckGuardExit();
     }
@@ -297,13 +297,15 @@ public static class KarmaTutorialChecks
         game.ReturnToTitle(); game.StartOpening(); await Wait();
         Check(game.Tutorial != null && game.Enemies.Count == 0, "Title start enters tutorial");
         game.TogglePause(); game.RestartSession(); await Wait();
-        Check(game.IsCombat && game.StageIndex == 0 && game.Tutorial == null && game.Enemies.Count == 1, "Pause restart during tutorial enters first guardian");
+        Check(game.Phase == RunPhase.Tutorial && game.StageIndex == 0 && game.Tutorial != null && game.Enemies.Count == 0, "Pause restart begins tutorial");
+        game.StartRun();
         game.Player.TakeDamage(game.Player.Health + 1);
         await WaitFor(() => game.Phase == RunPhase.Defeat, "Boss death reaches defeat", 4000);
         await Press(KarmaAction.Restart);
-        Check(game.IsCombat && game.StageIndex == 0 && game.Tutorial == null, "Death restart enters first guardian");
+        Check(game.Phase == RunPhase.Tutorial && game.StageIndex == 0 && game.Tutorial != null, "Death restart begins tutorial");
+        game.StartRun();
         game.TogglePause(); await Press(KarmaAction.Restart);
-        Check(game.IsCombat && game.StageIndex == 0 && game.Tutorial == null, "Combat pause restart enters first guardian");
+        Check(game.Phase == RunPhase.Tutorial && game.StageIndex == 0 && game.Tutorial != null, "Combat pause restart begins tutorial");
         game.ReturnToTitle(); game.StartOpening();
         Check(game.Tutorial != null && game.Phase == RunPhase.Tutorial, "Returning to title still enters tutorial");
         tutorial = game.Tutorial;

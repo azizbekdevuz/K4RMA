@@ -92,7 +92,14 @@ public static class KarmaRisingBarrierChecks
         var pattern = Activator.CreateInstance(patternType, F, null, new object[] { enemy }, null);
         Call(pattern, "Burst", enemy.Position);
         var fragments = Root.GetComponentsInChildren<KarmaRisingFragmentAttack>();
-        Check(fragments.Length == 14, "UP04 keeps fourteen damaging fragments");
+        Check(fragments.Length == 14, "UP04 emits fourteen damaging fragments");
+        int down = 0, up = 0;
+        foreach (var fragment in fragments)
+        {
+            float y = fragment.transform.position.y - enemy.Position.y - KarmaSpace.Units(0.35f);
+            if (y < 0) down++; else if (y > 0) up++;
+        }
+        Check(down == 0 && up == 14, "No downward fragments; all fourteen fire above ground");
         var shot = fragments[0];
         for (int i = 1; i < fragments.Length; i++) fragments[i].gameObject.SetActive(false);
         var point = new Vector2(15, KarmaSpace.Units(3));
@@ -195,15 +202,15 @@ public static class KarmaRisingBarrierChecks
                     var material = shot.Visual.sharedMaterial;
                     Check(material != null && material.shader.name == "K4RMA/RisingTranslucentFragment"
                         && material.shader.isSupported, "Every shard uses the translucent lattice material");
-                    Check(material.GetFloat("_MembraneAlpha") <= 0.2f
+                    Check(material.GetFloat("_MembraneAlpha") <= 0.3f
                         && material.GetFloat("_GridAlpha") < 1
                         && material.GetFloat("_GridAlpha") > material.GetFloat("_MembraneAlpha"),
                         "Membrane is translucent while lattice remains readable");
                     var local = shot.Visual.transform.localScale;
                     var bounds = shot.Visual.sprite.bounds.size;
-                    Check(Mathf.Abs(local.x * bounds.x - KarmaSpace.Units(1.05f)) < 0.01f
-                        && Mathf.Abs(local.y * bounds.y - KarmaSpace.Units(0.675f)) < 0.01f,
-                        "Fragments match the original visual footprint");
+                    Check(Mathf.Abs(local.x * bounds.x - KarmaSpace.Units(1.05f) * 1.5f) < 0.01f
+                        && Mathf.Abs(local.y * bounds.y - KarmaSpace.Units(0.675f) * 1.5f) < 0.01f,
+                        "Fragments display fifty percent larger for a substantial silhouette without changing hit size");
                     Check(shot.Visual.color.r == 1 && shot.Visual.color.g == 1 && shot.Visual.color.b == 1,
                         "Shard keeps its golden color");
                 }

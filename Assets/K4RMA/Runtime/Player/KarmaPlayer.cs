@@ -48,10 +48,12 @@ namespace KarmaPrototype
             remnantHalo = KarmaRemnantVFX.CreateGuardHalo(transform, game.Config.guardColor);
             remnantHalo.enabled = false;
         }
+        void FaceAction() { if (art != null) art.localScale = new Vector3(Facing, 1, 1); }
         void OnDestroy() { if (movementMaterial != null) Destroy(movementMaterial); }
         void Update()
         {
             if (game == null) return;
+            if (game.Phase == RunPhase.Ending) return;
             if (!game.SettingsOpen && KarmaInput.Pressed(KarmaAction.ToggleInvincibility)) ToggleTestInvincibility();
             if (game.Paused) { airSlashBufferedUntil = 0; return; }
             if (!game.IsCombat) ClearStatus();
@@ -63,13 +65,16 @@ namespace KarmaPrototype
             bool airborne = Airborne;
             Crouching = game.CanMove && !ControlLocked && !airborne && KarmaInput.Vertical < 0
                 && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;
-            animator.Pose(game.Phase == RunPhase.GuardianFallen ? ceremonyMove : move,
+            if (!PresentControlState(!airborne)) animator.Pose(game.Phase == RunPhase.GuardianFallen ? ceremonyMove : move,
                 airborne, body.linearVelocity.y, Crouching);
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; return; }
             if (ControlLocked) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; return; }
             move = Crouching ? 0 : KarmaInput.Horizontal;
+            int previousFacing = Facing;
             if (move != 0) Facing = move > 0 ? 1 : -1;
-            art.localScale = new Vector3(Facing, 1, 1);
+            if (Facing != previousFacing && !airborne && !ControlLocked) animator.BeginPlayerTurn();
+            aura.flipX = remnantHalo.flipX = Facing < 0;
+            art.localScale = new Vector3(animator.PlayerTurning ? -Facing : Facing, 1, 1);
             if (game.OpeningArrivalSpeech != null && KarmaInput.Pressed(KarmaAction.DialogueConfirm)) return;
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;
             if (game.AllowsPlayerActions)

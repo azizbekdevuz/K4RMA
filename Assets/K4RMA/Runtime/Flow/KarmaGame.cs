@@ -67,6 +67,7 @@ namespace KarmaPrototype
             UpdateHitFeedback();
             if (SettingsOpen)
             {
+                ResetCinematicSkip();
                 if (!KarmaInput.RebindingThisFrame && KarmaInput.Pressed(KarmaAction.Pause))
                 {
                     if (DisplayConfirmationPending) RevertDisplaySettings(); else CloseSettings();
@@ -77,6 +78,7 @@ namespace KarmaPrototype
             { OpenSettings(); return; }
             if (Phase == RunPhase.Title)
             {
+                ResetCinematicSkip();
                 if (KarmaInput.Pressed(KarmaAction.Confirm)) StartOpening();
                 return;
             }
@@ -84,9 +86,11 @@ namespace KarmaPrototype
             {
                 if (Phase == RunPhase.Choosing && !Paused) CancelChoice(); else TogglePause();
             }
-            if (KarmaInput.Pressed(KarmaAction.Title) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { ReturnToTitle(); return; }
-            if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat)) { RestartSession(); return; }
-            if (Paused) return;
+            if (KarmaInput.Pressed(KarmaAction.Title) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat || Phase == RunPhase.Ending)) { ReturnToTitle(); return; }
+            if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat || Phase == RunPhase.Ending)) { RestartSession(); return; }
+            if (Paused) { ResetCinematicSkip(); return; }
+            if (UpdateCinematicSkip()) return;
+            if (Phase == RunPhase.Ending) { UpdateEnding(); return; }
             if (Phase == RunPhase.Tutorial) { Tutorial.Tick(); return; }
             if (Phase == RunPhase.PlayerFallen)
             {
@@ -114,7 +118,7 @@ namespace KarmaPrototype
             if (Phase == RunPhase.Defeat && KarmaInput.Pressed(KarmaAction.Restart)) RetryRoom();
         }
 
-        void OnDisable() { RevertDisplaySettings(); Time.timeScale = 1; }
+        void OnDisable() { CancelEnding(); RevertDisplaySettings(); Time.timeScale = 1; }
         void OnDestroy() { if (ownsConfig && config != null) Destroy(config); }
     }
 }

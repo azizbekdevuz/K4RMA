@@ -9,6 +9,7 @@ namespace KarmaPrototype
         void FixedUpdate()
         {
             if (game == null || game.Paused) return;
+            if (game.Phase == RunPhase.Ending) { TickEndingMovement(); return; }
             if (!game.CanMove)
             {
                 ResetLandingAudio();
@@ -44,7 +45,7 @@ namespace KarmaPrototype
             if (ControlLocked)
             {
                 body.gravityScale = game.Config.gravityScale;
-                if (!KnockedAirborne) body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+                if (!KnockedAirborne && !KnockedBack) body.linearVelocity = new Vector2(0, body.linearVelocity.y);
                 if (Position.y < KarmaSpace.Units(-8)) game.PlayerDied();
                 return;
             }
@@ -126,6 +127,8 @@ namespace KarmaPrototype
             ClearStatus();
             Facing = 1; ParryCount = 0;
             Essences.ResetTemporaryState();
+            animator.ResetNativePlayerForRoom();
+            art.localScale = new Vector3(Facing, 1, 1);
             if (restoreHealth) Health = game.Config.playerHealth;
         }
     }

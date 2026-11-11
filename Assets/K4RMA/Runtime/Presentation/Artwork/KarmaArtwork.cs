@@ -160,6 +160,7 @@ namespace KarmaPrototype
             go.transform.localScale = new Vector3(width / sprite.bounds.size.x, height / sprite.bounds.size.y, 1);
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite; renderer.sortingOrder = -20; KarmaVisuals.ApplyMaterial(renderer);
+            KarmaMoonArtwork.Apply(renderer, mountain);
             if (game != null) game.FrameStageBackground(coverage > 1
                 ? new Bounds(renderer.bounds.center, new Vector3(frameWidth, frameHeight, renderer.bounds.size.z))
                 : renderer.bounds);

@@ -16,6 +16,7 @@ namespace KarmaPrototype
         public bool GuardianInheriting => Phase == RunPhase.Transition && guardianInheriting;
         public void StartRun()
         {
+            CancelEnding();
             Tutorial = null; OpeningArrivalFade = 0; OpeningArrivalSpeech = null;
             KarmaAudio.Play(KarmaSfxId.UiConfirm);
             guardianInheriting = false;
@@ -50,6 +51,7 @@ namespace KarmaPrototype
         }
         public void EnemyDefeated(KarmaEnemy enemy, Transform fallenArt = null)
         {
+            if (Phase != RunPhase.Combat || !Enemies.Contains(enemy)) return;
             BossSplits[StageIndex] = enemy.FightSeconds;
             Enemies.Remove(enemy);
             if (Enemies.Count != 0) return;
@@ -57,6 +59,7 @@ namespace KarmaPrototype
             fallenGuardianPosition = enemy.transform.position;
             fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
             guardianInheriting = false;
+            if (StageIndex == 3) { BeginEnding(); return; }
             Phase = RunPhase.GuardianFallen;
             ceremonySpacingStarted = ceremonySpacingFinished = false;
             transitionLeft = GuardianFallDuration;
@@ -149,7 +152,7 @@ namespace KarmaPrototype
         }
         public void PlayerDied()
         {
-            if (Player == null || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat || Phase == RunPhase.Victory) return;
+            if (Player == null || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat || Phase == RunPhase.Victory || Phase == RunPhase.Ending) return;
             ResetHitFeedback();
             Phase = RunPhase.PlayerFallen;
             transitionLeft = PlayerFallDuration;
@@ -183,6 +186,7 @@ namespace KarmaPrototype
         }
         public void ReturnToTitle()
         {
+            CancelEnding();
             if (Phase != RunPhase.Title) KarmaAudio.Play(KarmaSfxId.UiCancel);
             Tutorial = null; OpeningArrivalFade = 0;
             ResetHitFeedback();
@@ -194,7 +198,7 @@ namespace KarmaPrototype
         }
         public void TogglePause()
         {
-            if (Phase != RunPhase.Combat && Phase != RunPhase.Gate && Phase != RunPhase.Choosing && Phase != RunPhase.Tutorial) return;
+            if (Phase != RunPhase.Combat && Phase != RunPhase.Gate && Phase != RunPhase.Choosing && Phase != RunPhase.Tutorial && Phase != RunPhase.Ending) return;
             Paused = !Paused; Time.timeScale = GameplayFrozen ? 0 : 1;
         }
     }

@@ -22,6 +22,7 @@ public static class KarmaRisingAnimationChecks
     static void Pump()
     {
         if (!SessionState.GetBool(Key, false)) return;
+        if (EditorApplication.isPlaying) { EditorApplication.isPaused = false; Application.runInBackground = true; }
         EditorApplication.QueuePlayerLoopUpdate();
         if (!EditorApplication.isPlaying || started || Time.frameCount < 3) return;
         started = true; Run();
@@ -225,7 +226,8 @@ public static class KarmaRisingAnimationChecks
                 // Real lethal damage detaches surviving artwork before destroying the boss.
                 enemy.TakeDamage(1000000);
                 await Task.Delay(40);
-                Check(animator!=null && animator.CurrentPose=="Death",form+" survives actual boss death");
+                Check(animator!=null && (animator.CurrentPose=="Death" || game.Phase==RunPhase.Ending && animator.CurrentPose=="Hurt"),form+" survives actual boss death");
+                if(game.Phase==RunPhase.Ending)await Wait(()=>animator.CurrentPose=="Death");
                 int deathCapture=0,lastDeathSample=-1;
                 double deathLimit=EditorApplication.timeSinceStartup+1.2;
                 await Wait(()=>{
@@ -257,6 +259,8 @@ public static class KarmaRisingAnimationChecks
     }
     static void Log(string message,string stack,LogType type)
     {
+        // Unity 6000.6 Search indexing can throw before/around the first Play frame in a cached batch project.
+        if(message.StartsWith("ArgumentOutOfRangeException:",StringComparison.Ordinal) && stack.Contains("UnityEditor.Search."))return;
         if(type==LogType.Exception || type==LogType.Error || type==LogType.Assert) error=message;
     }
 }

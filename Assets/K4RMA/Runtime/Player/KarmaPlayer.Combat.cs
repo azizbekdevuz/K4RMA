@@ -37,7 +37,7 @@ namespace KarmaPrototype
                 BeginAirSlash(AttackDirection());
                 return;
             }
-            animator.Attack();
+            FaceAction(); animator.Attack();
             KarmaAudio.Play(KarmaSfxId.PlSwordSwing);
             int trainingAttack = ++trainingExecution;
             nextSword = Time.time + game.Config.swordCooldown;
@@ -58,8 +58,11 @@ namespace KarmaPrototype
         void BeginDirectionalSlash(Vector2 direction, float distance, Essence essence)
         {
             animator.Attack(direction); nextSword = Time.time + game.Config.swordCooldown;
-            animator.PlayPose("Pierce", 0.22f);
+            string piercePose = direction.y > 0.75f ? "PierceUp" : direction.y < -0.25f ? "PierceDown"
+                : direction.y > 0.25f ? "PierceDiagonal" : "Pierce";
+            animator.PlayPlayerAction(piercePose, "Pierce", 0.22f);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
+            FaceAction();
             Vector2 from = Position;
             Vector2 to = MoveSlash(direction, distance);
             // Pierce travel is atomic. Cover the execution frame and a brief arrival window;
@@ -123,10 +126,11 @@ namespace KarmaPrototype
         public void BeginRisingSlash()
         {
             game.Tutorial?.HitArea(KarmaTrainingAttack.Rising, ++trainingExecution, Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4)));
-            CancelAirSlash(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
+            CancelAirSlash(); FaceAction(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
             KarmaAudio.Play(KarmaSfxId.PlRisingSlash);
-            KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
+            var risingVisual = KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
                 KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);
+            if (risingVisual != null) risingVisual.transform.parent.localScale = new Vector3(Facing, 1, 1);
             foreach (var enemy in game.Enemies.ToArray())
                 if (enemy != null && enemy.Alive && enemy.OverlapsDamageArea(Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4))))
                 {
@@ -135,6 +139,6 @@ namespace KarmaPrototype
                     if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
                 }
         }
-        public void BeginSwordWave() { animator.PlayPose("SwordWave", 0.25f); }
+        public void BeginSwordWave() { FaceAction(); animator.PlayPlayerAction("SwordWave", "SwordWave", 0.25f); }
     }
 }

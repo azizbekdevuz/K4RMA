@@ -7,18 +7,27 @@ namespace KarmaPrototype
         bool confined;
         float arenaLeft, arenaRight;
         public bool Stunned { get { return Time.time < stunUntil; } }
-        public enum CrowdControlKind { Shock, Airborne }
-        float shockUntil, airborneUntil;
+        public enum CrowdControlKind { Shock, Airborne, Knockback, Knockdown }
+        float shockUntil, airborneUntil, knockbackUntil, knockdownUntil, getUpUntil;
         bool airborneControl, leftGroundUnderControl;
         public bool Shocked => Time.time < shockUntil;
         public bool KnockedAirborne => airborneControl && Time.time < airborneUntil;
-        public bool ControlLocked => Stunned || Shocked || KnockedAirborne;
+        public bool KnockedBack => Time.time < knockbackUntil;
+        public bool KnockedDown => Time.time < knockdownUntil;
+        public bool GettingUp => Time.time < getUpUntil;
+        public bool ControlLocked => Stunned || Shocked || KnockedAirborne || KnockedBack || KnockedDown || GettingUp;
 
         // Standalone CC respects defenses. For attack contacts prefer TakeCrowdControlHit.
         // Durations use scaled seconds; launchVelocity uses Unity world units / second.
         public bool ApplyShock(float seconds) => ApplyCrowdControl(CrowdControlKind.Shock, seconds, Vector2.zero, false);
         public bool ApplyAirborne(Vector2 launchVelocity, float maxSeconds = 3f)
             => ApplyCrowdControl(CrowdControlKind.Airborne, maxSeconds, launchVelocity, false);
+
+        // Opt-in CC contracts; existing boss contacts do not acquire these effects automatically.
+        public bool ApplyKnockback(Vector2 velocity, float seconds = 0.3f)
+            => ApplyCrowdControl(CrowdControlKind.Knockback, seconds, velocity, false);
+        public bool ApplyKnockdown(float seconds = 0.6f)
+            => ApplyCrowdControl(CrowdControlKind.Knockdown, seconds, Vector2.zero, false);
 
         // Return true only when damage landed and the requested CC was accepted.
         // Reuse the normal damage path, including counter, guard, tutorial and test immunity.
@@ -35,7 +44,9 @@ namespace KarmaPrototype
         static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         static bool ValidCrowdControl(CrowdControlKind kind, float seconds, Vector2 velocity)
             => Finite(seconds) && seconds > 0 && (kind == CrowdControlKind.Shock
-                || kind == CrowdControlKind.Airborne && Finite(velocity.x) && Finite(velocity.y) && velocity.y > 0);
+                || kind == CrowdControlKind.Airborne && Finite(velocity.x) && Finite(velocity.y) && velocity.y > 0
+                || kind == CrowdControlKind.Knockback && Finite(velocity.x) && Finite(velocity.y)
+                || kind == CrowdControlKind.Knockdown);
 
         bool ApplyCrowdControl(CrowdControlKind kind, float seconds, Vector2 velocity, bool confirmedHit)
         {
@@ -43,14 +54,28 @@ namespace KarmaPrototype
                 || !game.AllowsPlayerActions || game.Paused || Health <= 0) return false;
             if (!confirmedHit && (Shielded || TestInvincible || game.Tutorial != null
                 || Time.time < invulnerableUntil || techniques.CounterReady(Time.time))) return false;
+            if (kind == CrowdControlKind.Knockdown && !Grounded()) return false;
             CancelAirSlash();
             move = 0; jumpBufferedUntil = airSlashBufferedUntil = 0; lastGrounded = -10;
             Crouching = false;
             body.gravityScale = game.Config.gravityScale;
+            BeginControlPresentation();
+            if (kind != CrowdControlKind.Knockdown) knockdownUntil = getUpUntil = 0;
             if (kind == CrowdControlKind.Shock)
             {
                 shockUntil = Mathf.Max(shockUntil, Time.time + seconds);
                 if (!KnockedAirborne) body.linearVelocity = new Vector2(0, body.linearVelocity.y);
+            }
+            else if (kind == CrowdControlKind.Knockback)
+            {
+                knockbackUntil = Mathf.Max(knockbackUntil, Time.time + seconds);
+                body.linearVelocity = velocity;
+            }
+            else if (kind == CrowdControlKind.Knockdown)
+            {
+                knockdownUntil = Mathf.Max(knockdownUntil, Time.time + seconds);
+                getUpUntil = knockdownUntil + 0.5f;
+                body.linearVelocity = new Vector2(0, body.linearVelocity.y);
             }
             else
             {
@@ -59,7 +84,7 @@ namespace KarmaPrototype
                 airborneUntil = Time.time + seconds;
                 body.linearVelocity = velocity;
             }
-            animator.Hurt();
+            if (!animator.UsesNativePlayer24) animator.Hurt();
             return true;
         }
 
@@ -78,6 +103,8 @@ namespace KarmaPrototype
         {
             if (!game.IsCombat || Health <= 0 || Stunned) return;
             CancelAirSlash(); move = 0; jumpBufferedUntil = 0;
+            BeginControlPresentation();
+            knockdownUntil = getUpUntil = 0;
             stunUntil = Time.time + Mathf.Max(0, seconds);
             // A complete recovery interval before another hit is allowed.
             invulnerableUntil = Mathf.Max(invulnerableUntil, stunUntil + 0.25f);
@@ -124,7 +151,8 @@ namespace KarmaPrototype
         }
         public void ClearStatus()
         {
-            CancelAirSlash(); stunUntil = shockUntil = airborneUntil = 0;
+            CancelAirSlash(); stunUntil = shockUntil = airborneUntil = knockbackUntil = knockdownUntil = getUpUntil = 0;
+            ResetControlPresentation();
             airborneControl = leftGroundUnderControl = false; ReleaseArena();
         }
     }

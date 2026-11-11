@@ -87,8 +87,10 @@ namespace KarmaPrototype
                 }
                 float started = owner.FightSeconds, previousElapsed = -0.001f;
                 bool resolved = false;
-                const float travelSeconds = 0.55f, riseSeconds = 0.12f, hitStart = 0.12f, hitEnd = 0.20f;
-                const float lowerAt = travelSeconds + riseSeconds + 0.16f, lowerSeconds = 0.24f;
+                // Speed up each vertical emergence to two 24 FPS visual frames.
+                // Preserve the near-to-far spread, damage windows and complete sequence/chain timing.
+                const float travelSeconds = 0.55f, riseSeconds = 2f / 24f, hitStart = 0.12f, hitEnd = 0.20f;
+                const float lowerAt = travelSeconds + hitStart + 0.16f, lowerSeconds = 0.24f;
                 while (owner.Active)
                 {
                     if (owner.game.Paused) { yield return null; continue; }
@@ -148,6 +150,7 @@ namespace KarmaPrototype
                     // Ground damage bypasses counter consumption; Stun cancels player attacks before the physical launch.
                     player.Stun(Mathf.Max(0.1f, Settings.slamStunSeconds));
                     player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.up * Mathf.Max(0.1f, Settings.slamKnockUpSpeed);
+                    KarmaGuardAirborneHit.Play(owner.game, player);
                     KarmaCombatVFX.SpawnSprite(owner.effectsRoot, player.Position, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one), 0.18f);
                 }
                 return true;

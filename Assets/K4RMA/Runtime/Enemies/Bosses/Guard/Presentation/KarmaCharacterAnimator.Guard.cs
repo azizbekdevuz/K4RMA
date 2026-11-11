@@ -10,6 +10,11 @@ namespace KarmaPrototype
         Sprite guardDamageSprite;
         Vector3 guardDamageScale;
         bool guardDamageOverride;
+        SpriteRenderer guardThrownShield, guardTrialShield;
+        Sprite guardTrialIdle, guardTrialMove, guardTrialStun;
+        bool GuardTrialShieldAway { get { return guardTrialShield != null && guardTrialShield.gameObject.activeInHierarchy; } }
+        Sprite guardThrownRelease, guardThrownHurt;
+        string guardFlightPose;
         Sprite[] groundSlam;
         int groundSlamFrame = -1;
         public void ConfigureHeavyStrike(IReadOnlyList<Essence> order)
@@ -21,6 +26,15 @@ namespace KarmaPrototype
             guardianPose = GuardGuardianPose;
             onActionEnded = EndHeavyStrike;
             heavyStrike = new KarmaHeavyStrikeMotion(picture, pictureHome, pictureScale, poses["Idle"], order);
+            string shieldlessSheet = "GuardShieldless" + heavyStrike.FormKey;
+            guardThrownRelease = KarmaArtwork.Sprite(shieldlessSheet, "ShieldBash");
+            guardThrownHurt = KarmaArtwork.Sprite(shieldlessSheet, "Hurt");
+            if (heavyStrike.FormKey == "WardFinal")
+            {
+                guardTrialIdle = KarmaArtwork.Sprite(shieldlessSheet, "Idle");
+                guardTrialMove = KarmaArtwork.Sprite(shieldlessSheet, "Move");
+                guardTrialStun = KarmaArtwork.Sprite(shieldlessSheet, "Crouch");
+            }
             Sprite reference = null;
             foreach (var sprite in KarmaArtwork.Sprites("GuardStagger" + heavyStrike.FormKey))
             {
@@ -48,12 +62,30 @@ namespace KarmaPrototype
                 picture.transform.localScale = staggerScale;
                 picture.transform.localRotation = Quaternion.identity;
                 picture.color = new Color(pictureColor.r * 0.82f, pictureColor.g * 0.82f, pictureColor.b * 0.82f, pictureColor.a);
-                CurrentPose = "Stagger/" + heavyStrike.FormKey;
+                if (GuardTrialShieldAway)
+                {
+                    guardDamageSprite = guardStagger; guardDamageScale = staggerScale; guardDamageOverride = true;
+                    picture.sprite = guardTrialStun;
+                    picture.transform.localScale = pictureScale;
+                }
+                CurrentPose = (GuardTrialShieldAway ? "GD05/ShieldAway/Stagger/" : "Stagger/") + heavyStrike.FormKey;
                 guardianPreviousPosition = transform.position;
                 return;
             }
-            if (heavyStrike != null && heavyStrike.Show(attack))
-            { CurrentPose = heavyStrike.CurrentPose; return; }
+            if (heavyStrike != null)
+            {
+                heavyStrike.ShieldAway = GuardTrialShieldAway;
+                if (heavyStrike.Show(attack))
+                {
+                    if (GuardTrialShieldAway)
+                    {
+                        guardDamageSprite = heavyStrike.DamageSprite;
+                        guardDamageScale = heavyStrike.DamageScale; guardDamageOverride = true;
+                    }
+                    CurrentPose = (GuardTrialShieldAway ? "GD05/ShieldAway/" : "") + heavyStrike.CurrentPose;
+                    return;
+                }
+            }
             if (attack == EnemyAttack.GD04 && ShowGroundSlam()) return;
             string pose = Time.time < hurtUntil ? "Hurt"
                 : action == "Stunned" ? "Crouch"
@@ -78,6 +110,49 @@ namespace KarmaPrototype
                 pose = "Move";
             }
             ApplyGuardianPose(pose);
+            if (GuardTrialShieldAway)
+            {
+                if (!guardDamageOverride)
+                {
+                    guardDamageSprite = picture.sprite;
+                    guardDamageScale = picture.transform.localScale;
+                    guardDamageOverride = true;
+                }
+                picture.sprite = pose == "Hurt" ? guardThrownHurt : pose == "Move" ? guardTrialMove : guardTrialIdle;
+                picture.transform.localScale = pictureScale;
+                CurrentPose = "GD05/ShieldAway/" + pose;
+            }
+            if (attack == EnemyAttack.GD03 && guardThrownShield != null && guardThrownShield.gameObject.activeInHierarchy)
+            {
+                var replacement = pose == "Hurt" ? guardThrownHurt : guardThrownRelease;
+                if (replacement == null)
+                    throw new System.InvalidOperationException("GD03 빈손 자세가 없습니다: " + heavyStrike.FormKey + "/" + pose);
+                // Only the shield arm extends. Keep the old Thrust/Hurt damage silhouette independently.
+                guardDamageSprite = poses[pose];
+                guardDamageScale = pictureScale;
+                guardDamageOverride = true;
+                guardFlightPose = pose == "Hurt" ? "Hurt" : "ShieldBash";
+                picture.sprite = replacement;
+                CurrentPose = "GD03/ShieldAway/" + heavyStrike.FormKey + "/" + guardFlightPose;
+            }
+        }
+        public void SetGuardTrialShield(SpriteRenderer shield)
+        {
+            guardTrialShield = shield;
+            heavyStrike.ShieldAway = GuardTrialShieldAway;
+            GuardianPose("Approach", EnemyAttack.GD05, false, false);
+        }
+        public void SetGuardThrownShield(SpriteRenderer shield)
+        {
+            guardThrownShield = shield;
+            if (shield != null)
+                GuardianPose("Attack", EnemyAttack.GD03, false, false);
+            else if (guardFlightPose != null)
+            {
+                picture.sprite = poses[guardFlightPose];
+                CurrentPose = guardFlightPose;
+                guardFlightPose = null;
+            }
         }
         public void PrepareHeavyStrike() { heavyStrike.Prepare(); }
         public void HeatHeavyStrike() { heavyStrike.Heat(); }

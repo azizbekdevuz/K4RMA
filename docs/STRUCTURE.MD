@@ -236,6 +236,41 @@ K4RMA/
 │       │       │       ├── KarmaEndingDissolve.mat
 │       │       │       ├── KarmaMoonBackground.mat
 │       │       │       └── KarmaPlayer24.mat
+│       │       │   └── K4RMAArtwork/
+│       │       │       ├── Characters/
+│       │       │       │   ├── Guardians/
+│       │       │       │   │   ├── Base/
+│       │       │       │   │   │   └── Neutral.png
+│       │       │       │   │   ├── Revival/
+│       │       │       │   │   │   └── Neutral.png
+│       │       │       │   │   └── ReferencePoses.png
+│       │       │       │   └── Player/
+│       │       │       │       ├── Actions.png
+│       │       │       │       ├── ParrySuccess.png
+│       │       │       │       ├── Additional.png
+│       │       │       │       ├── Locomotion.png
+│       │       │       │       └── Poses.png
+│       │       │       ├── Effects/
+│       │       │       │   ├── Guardian.png
+│       │       │       │   ├── Hit.png
+│       │       │       │   ├── Parry.png
+│       │       │       │   ├── Personalization.png
+│       │       │       │   ├── ParrySuccess.png
+│       │       │       │   └── Player.png
+│       │       │       ├── Environments/
+│       │       │       │   ├── MountainDojo/
+│       │       │       │   │   ├── Background.png
+│       │       │       │   │   ├── Extended.png
+│       │       │       │   │   └── Panorama.png
+│       │       │       │   └── TrialHall/
+│       │       │       │       ├── Background.png
+│       │       │       │       ├── Extended.png
+│       │       │       │       └── Panorama.png
+│       │       │       ├── Props/
+│       │       │       │   └── Props.png
+│       │       │       └── UI/
+│       │       │           ├── Components.png
+│       │       │           └── MenuBackground.png
 │       │       └── Shaders/
 │       │           ├── KarmaCombatGlow.shader
 │       │           ├── KarmaEndingDissolve.shader
@@ -314,6 +349,8 @@ K4RMA/
 │       │   ├── KarmaBossPractice.cs
 │       │   ├── KarmaPlayerAnimationAssets.cs
 │       │   └── KarmaPlayer24AnimationAssets.cs
+│       │   ├── KarmaPlayerAnimationAssets.Parry.cs
+│       │   └── KarmaPlayerAnimationAssets.cs
 │       ├── Resources/
 │       │   ├── PlayerAnimation/
 │       │   │   ├── AirSlash.anim
@@ -418,6 +455,7 @@ K4RMA/
 │       │   │   ├── Bosses/
 │       │   │   │   ├── Guard/
 │       │   │   │   │   ├── Editor/
+│       │   │   │   │   │   ├── KarmaGuardAirborneAssets.cs
 │       │   │   │   │   │   └── KarmaGuardPracticeMenu.cs
 │       │   │   │   │   ├── Patterns/
 │       │   │   │   │   │   ├── GD01.cs
@@ -433,6 +471,7 @@ K4RMA/
 │       │   │   │   │   │   │   └── BossArtwork/
 │       │   │   │   │   │   │       └── KarmaGuardBossSprites.asset
 │       │   │   │   │   │   ├── KarmaCharacterAnimator.Guard.cs
+│       │   │   │   │   │   ├── KarmaGuardAirborneHit.cs
 │       │   │   │   │   │   ├── KarmaGuardDome.cs
 │       │   │   │   │   │   └── KarmaHeavyStrikeMotion.cs
 │       │   │   │   │   ├── Settings/
@@ -552,6 +591,7 @@ K4RMA/
 │       │   │   │   ├── KarmaCharacterAnimator.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Empowerment.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Ending.cs
+│       │   │   │   ├── KarmaCharacterAnimator.Parry.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Player.cs
 │       │   │   │   ├── KarmaCharacterAnimator.PlayerStatus.cs
 │       │   │   │   └── KarmaCharacterAnimator.Guardian.cs

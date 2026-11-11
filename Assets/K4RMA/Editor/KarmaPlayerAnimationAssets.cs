@@ -7,7 +7,7 @@ namespace KarmaPrototype.EditorTools
 {
     // Rebuildable native sprite clips; no Animator controller or animation-driven gameplay.
     [InitializeOnLoad]
-    public static class KarmaPlayerAnimationAssets
+    public static partial class KarmaPlayerAnimationAssets
     {
         const string Art = "Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Characters/Player/";
         const string Clips = "Assets/K4RMA/Resources/PlayerAnimation";

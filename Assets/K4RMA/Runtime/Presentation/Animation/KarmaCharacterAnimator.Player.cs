@@ -83,6 +83,7 @@ namespace KarmaPrototype
         {
             if (picture == null) return;
             playerStatusPose = null;
+            if (name == "Riposte" && SampleParrySuccess(restart)) return;
             LoadNativePlayerPose(name);
             if (!playerClips.TryGetValue(name, out var clip) || !playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) { if (!nativePlayer24) ShowPose(name); return; }
             if (restart || playerClip != name) { playerClip = name; playerClipAt = Time.time; }

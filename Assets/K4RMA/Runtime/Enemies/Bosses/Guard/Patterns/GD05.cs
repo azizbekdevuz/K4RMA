@@ -13,7 +13,7 @@ namespace KarmaPrototype
 
             public GD05Pattern(KarmaEnemy owner, GD02Pattern heavy) : base(owner) { this.heavy = heavy; }
             public bool Active { get; private set; }
-            public override void Interrupt() { Active = false; trial.Clear(); }
+            public override void Interrupt() { Active = false; trial.Clear(); owner.animator.SetGuardTrialShield(null); }
             public void RecordHit() { if (Active) trial.Hit(); }
 
             public void StunFromParry()
@@ -26,6 +26,11 @@ namespace KarmaPrototype
             }
 
             public override IEnumerator Execute()
+            {
+                try { yield return ExecuteTrial(); }
+                finally { owner.animator.SetGuardTrialShield(null); }
+            }
+            IEnumerator ExecuteTrial()
             {
                 trial.Clear();
                 owner.fullShield = true;
@@ -55,6 +60,7 @@ namespace KarmaPrototype
                 var start = center + KarmaSpace.Units(new Vector2(heading * 1.55f, 1.65f));
                 var shield = KarmaVisuals.Box(owner.effectsRoot, "GD05 튕기는 방패", start, Vector2.one, Color.white, 26);
                 shield.sprite = sprite;
+                owner.animator.SetGuardTrialShield(shield);
                 // The transparent margin and aura are outside the round shield's physical rim.
                 shield.transform.localScale = Vector3.one * (2 * radius / (sprite.rect.width / sprite.pixelsPerUnit * 0.77f));
                 yield return owner.Wait(0.4f);
@@ -95,6 +101,7 @@ namespace KarmaPrototype
                 Active = false;
                 trial.CompleteAttack();
                 shield.gameObject.SetActive(false);
+                owner.animator.SetGuardTrialShield(null);
                 heavy.Interrupt();
                 owner.HideStunCue();
                 owner.state = ActionState.Recover;

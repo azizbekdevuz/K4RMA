@@ -67,56 +67,158 @@ MonoBehaviour:
     - {fileID: 1453833098, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
     - {fileID: -588242779, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
     - {fileID: 1634365799, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
+    poses: []
   - id: GuardHeavyWardWave
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/HeavyStrike
     sprites:
     - {fileID: -774171877, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
     - {fileID: -197919176, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
     - {fileID: 1813446154, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
+    poses: []
   - id: GuardHeavyWardRise
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/HeavyStrike
     sprites:
     - {fileID: 1958433419, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
     - {fileID: 1789754190, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
     - {fileID: -804145536, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
+    poses: []
   - id: GuardHeavyWardFinal
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/HeavyStrike
     sprites:
     - {fileID: 1952035418, guid: e23e801929fe5cb4597425597e38456f, type: 3}
     - {fileID: 1393750050, guid: e23e801929fe5cb4597425597e38456f, type: 3}
     - {fileID: -1144299091, guid: e23e801929fe5cb4597425597e38456f, type: 3}
+    poses: []
   - id: GuardStaggerWard
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/Stagger
     sprites:
     - {fileID: 2055513753, guid: 8cb0f5b7306699f4680da1172c578a9a, type: 3}
     - {fileID: -403814162, guid: 8cb0f5b7306699f4680da1172c578a9a, type: 3}
+    poses: []
   - id: GuardStaggerWardWave
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/Stagger
     sprites:
     - {fileID: 267211721, guid: e9dc5d8380fd0b946ba347b0ca554e3d, type: 3}
     - {fileID: -476478516, guid: e9dc5d8380fd0b946ba347b0ca554e3d, type: 3}
+    poses: []
   - id: GuardStaggerWardRise
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/Stagger
     sprites:
     - {fileID: -1476393565, guid: 4fee35af4fbfb26438f78054d9bfff5b, type: 3}
     - {fileID: -1289503404, guid: 4fee35af4fbfb26438f78054d9bfff5b, type: 3}
+    poses: []
   - id: GuardStaggerWardFinal
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/Stagger
     sprites:
     - {fileID: 869182589, guid: 844159e55f9d8644f94527dede0f822a, type: 3}
     - {fileID: 12131052, guid: 844159e55f9d8644f94527dede0f822a, type: 3}
+    poses: []
   - id: BossAppearance
     source: Assets/K4RMA/Arts/Bosses/Guard/Resources/K4RMAArtwork/Characters/Guardians/Base/Ward.png
     sprites:
     - {fileID: 1341530238, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
     poses:
     - Ward
-  - id: BossStun
-    source: Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Parry.png
+  - id: GuardStunStars
+    source: Assets/K4RMA/Arts/Bosses/Guard/Effects/StunStars.png
     sprites:
-    - {fileID: 21300000, guid: d0af752ce12b47a498546508cb0efa0d, type: 3}
+    - {fileID: 21310000, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310001, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310002, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310003, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310004, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310005, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310006, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310007, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310008, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310009, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310010, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310011, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310012, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310013, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310014, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310015, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310016, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310017, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310018, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310019, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310020, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310021, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310022, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310023, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310024, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310025, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310026, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310027, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310028, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310029, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310030, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310031, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310032, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310033, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310034, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310035, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310036, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310037, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310038, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310039, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310040, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310041, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310042, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310043, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310044, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310045, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310046, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
+    - {fileID: 21310047, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     poses:
-    - Ward
+    - Frame00
+    - Frame01
+    - Frame02
+    - Frame03
+    - Frame04
+    - Frame05
+    - Frame06
+    - Frame07
+    - Frame08
+    - Frame09
+    - Frame10
+    - Frame11
+    - Frame12
+    - Frame13
+    - Frame14
+    - Frame15
+    - Frame16
+    - Frame17
+    - Frame18
+    - Frame19
+    - Frame20
+    - Frame21
+    - Frame22
+    - Frame23
+    - Frame24
+    - Frame25
+    - Frame26
+    - Frame27
+    - Frame28
+    - Frame29
+    - Frame30
+    - Frame31
+    - Frame32
+    - Frame33
+    - Frame34
+    - Frame35
+    - Frame36
+    - Frame37
+    - Frame38
+    - Frame39
+    - Frame40
+    - Frame41
+    - Frame42
+    - Frame43
+    - Frame44
+    - Frame45
+    - Frame46
+    - Frame47
   - id: GuardHeavyMoltenWard
     source: Assets/K4RMA/Arts/Bosses/Guard/Characters/HeavyStrike/Molten/Ward.png
     sprites:
@@ -209,3 +311,44 @@ MonoBehaviour:
     - {fileID: 21300000, guid: c40c0267790048bbac6eb13318170b9a, type: 3}
     poses:
     - Impact
+  - id: GuardShieldlessWardWave
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardWave.png
+    sprites:
+    - {fileID: 21300001, guid: 8c0d19ea62e44009925b8c2caa3b0901, type: 3}
+    - {fileID: 21300003, guid: 8c0d19ea62e44009925b8c2caa3b0901, type: 3}
+    poses: []
+  - id: GuardShieldlessWardFinal
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardFinal.png
+    sprites:
+    - {fileID: 21300001, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300003, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300004, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300005, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    - {fileID: 21300006, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
+    poses: []
+  - id: GuardTrialHeavyWardFinal
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardFinalHeavy.png
+    sprites:
+    - {fileID: 1393750050, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
+    - {fileID: -1144299091, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
+    - {fileID: 1952035418, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
+    poses: []
+  - id: GuardTrialHeavyMoltenWardFinal
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/ShieldAway/WardFinalHeavyMolten.png
+    sprites:
+    - {fileID: 368111346, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
+    - {fileID: 80612033, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
+    - {fileID: 473790212, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
+    poses: []
+  - id: GuardPlayerAirborneHit
+    source: Assets/K4RMA/Arts/Bosses/Guard/Characters/PlayerAirborneHit.png
+    sprites:
+    - {fileID: 1837636187, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
+    - {fileID: -736114145, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
+    - {fileID: -548037179, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
+    - {fileID: -2129928004, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
+    poses:
+    - Frame00
+    - Frame01
+    - Frame02
+    - Frame03

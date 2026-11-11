@@ -14,7 +14,7 @@ namespace KarmaPrototype
             public bool PracticeHold;
 #endif
             new KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
-            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Rise") ?? base.StunSprite; } }
+            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("RisingStunStars", "Frame00"); } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride, nextAirPursuit;
             KarmaRisingBarrier barrier;
@@ -97,6 +97,8 @@ namespace KarmaPrototype
                 owner.animator.ConfigureRisingPresentation();
                 // The rising boss uses its golden sphere instead of the shared white halo.
                 owner.shieldHalo.gameObject.SetActive(false);
+                owner.gameObject.AddComponent<KarmaRisingStunStars>().Initialize(owner.game,
+                    owner.art.GetComponentInChildren<SpriteRenderer>(), () => owner.stunCue);
             }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             {

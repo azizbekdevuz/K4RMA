@@ -103,6 +103,7 @@ namespace KarmaPrototype
             landing = to + shot.velocity.normalized * (shot.size.x / 2);
             planted = KarmaSW05VFX.Strike(transform.parent, game, to, shot.size, shot.velocity.normalized, shot.depth);
             Landed = true;
+            if (game.IsCombat && owner.Alive) KarmaAudio.Play(KarmaSfxId.SwPerSwordThunder, lifetimeOwner: this);
             Visual.gameObject.SetActive(false);
             if (explosionArmed) ArmExplosion(explosionWarning);
         }

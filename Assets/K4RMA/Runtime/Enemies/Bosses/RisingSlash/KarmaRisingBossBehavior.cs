@@ -52,6 +52,7 @@ namespace KarmaPrototype
             {
                 base.Interrupt(preservePressure);
                 ClearBarrier();
+                owner.animator.EndGuardianAction();
                 ClearFragments();
                 motionContact = null;
                 KarmaRisingAudio.StopPattern();

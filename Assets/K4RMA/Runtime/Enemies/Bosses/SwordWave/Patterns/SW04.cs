@@ -127,6 +127,7 @@ namespace KarmaPrototype
                             shots[i] = owner.Attack(origin, aim * Settings.swordSpeed, size, sword.WaveLife,
                             contact: volley.Contacts[i], pattern: EnemyAttack.SW04, parent: slot);
                             KarmaSwordWardVfx.CounterProjectile(owner.game, owner, shots[i], aim * Settings.swordSpeed, size);
+                            KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shots[i]);
                             wardVfx?.Released(origin,aim);
                             KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Projectile=" + (i + 1) + ", Result=Released, Time=" + Time.time.ToString("F4"));
                             if (i + 1 < blades.Length)

@@ -50,6 +50,8 @@ namespace KarmaPrototype
             if (owner.CurrentPattern == (int)EnemyAttack.SW01 || owner.CurrentPattern == (int)EnemyAttack.SW02)
             {
                 KarmaSwordWaveAnimation.Flight(game, owner, shot, velocity, size);
+                if (game.IsCombat && owner.Alive)
+                    KarmaAudio.Play(KarmaSfxId.SwElectricDischarge, lifetimeOwner: shot);
                 return;
             }
             KarmaSwordSkillSurface.Apply(shot.Visual, KarmaSwordSkillSurface.ProjectileStyle(owner.CurrentPattern));

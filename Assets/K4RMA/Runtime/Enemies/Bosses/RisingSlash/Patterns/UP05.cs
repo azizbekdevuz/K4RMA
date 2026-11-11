@@ -16,6 +16,7 @@ namespace KarmaPrototype
                 owner.state = ActionState.Telegraph;
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
                 float warning = owner.Warning(0.62f);
+                owner.animator.PlayRisingMotion("Slash", warning, 0, 0.3f);
                 KarmaRisingAudio.Charge(warning);
                 yield return owner.Wait(warning);
                 KarmaRisingAudio.EndWarning();
@@ -30,6 +31,7 @@ namespace KarmaPrototype
                     new Vector2(left, ground), new Vector2(right, high),
                     new Vector2(left, mid)
                 };
+                owner.animator.PlayRisingMotion("Dash", DashSeconds(points[0], ultimate: true));
                 yield return owner.Motion(points[0], DashSeconds(points[0], ultimate: true), Vector2.zero);
                 Vector2 slash = KarmaSpace.Units(new Vector2(2.2f, 1.8f));
                 var trail = KarmaRisingArt.Get("Slash");
@@ -40,6 +42,7 @@ namespace KarmaPrototype
                     Vector2 target = endpoint;
                     var mark = RisingPath(start, target, slash, KarmaRisingCue.Tracking);
                     float tracking = owner.Warning(0.12f);
+                    owner.animator.PlayRisingMotion("AirSlash", tracking + 0.08f, 0, 0.3f);
                     float elapsed = 0;
                     while (elapsed < tracking && owner.Active)
                     {
@@ -57,6 +60,7 @@ namespace KarmaPrototype
                     yield return owner.Wait(0.08f);
                     if (mark != null) Destroy(mark.gameObject);
                     float duration = DashSeconds(target, ultimate: true);
+                    owner.animator.PlayRisingMotion("AirSlash", duration, 0.3f, 1);
                     if (owner.Active) KarmaRisingAudio.Crossing();
                     if (i == points.Length - 2)
                         yield return ((RisingBossBehavior)owner.behavior).MotionWithImpact(target, duration, slash, trail, KarmaSfxId.RsUp05Final);
@@ -64,6 +68,7 @@ namespace KarmaPrototype
                         yield return owner.Motion(target, duration, slash, null, trail);
                 }
                 var returnPoint = new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground);
+                owner.animator.PlayRisingMotion("Fall", DashSeconds(returnPoint, ultimate: true));
                 yield return owner.Motion(returnPoint, DashSeconds(returnPoint, ultimate: true), Vector2.zero);
                 ((RisingBossBehavior)owner.behavior).ClearBarrier();
                 yield return owner.Recovery(2.5f);

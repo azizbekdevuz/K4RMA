@@ -52,7 +52,7 @@ namespace KarmaPrototype
                 float width = swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
                 Vector2 center = Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
                 if (enemy.OverlapsDamageArea(center, new Vector2(width, swordTuning.longSlashHeight)))
-                    SwordHit(enemy, Vector2.right * Facing, normalSwing: true);
+                    SwordHit(enemy, Vector2.right * Facing);
             }
         }
         void BeginDirectionalSlash(Vector2 direction, float distance, Essence essence)
@@ -86,13 +86,13 @@ namespace KarmaPrototype
                 SwordHit(enemy, direction);
             }
         }
-        bool SwordHit(KarmaEnemy enemy, Vector2 direction, bool normalSwing = false)
+        bool SwordHit(KarmaEnemy enemy, Vector2 direction)
         {
             float before = enemy.Health;
             Vector2 point = enemy.ClosestDamagePoint(Position);
             enemy.TakeDamage(game.Config.swordDamage, out bool reduced);
             if (enemy.Health >= before) return false;
-            if (normalSwing && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
+            if (!reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
             KarmaRemnantVFX.SwordImpact(game, point, direction);
             game.SwordHitFeedback();
             return true;
@@ -129,7 +129,11 @@ namespace KarmaPrototype
                 KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);
             foreach (var enemy in game.Enemies.ToArray())
                 if (enemy != null && enemy.Alive && enemy.OverlapsDamageArea(Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4))))
-                    enemy.TakeDamage(game.Config.Techniques.risingDamage);
+                {
+                    float before = enemy.Health;
+                    enemy.TakeDamage(game.Config.Techniques.risingDamage, out bool reduced);
+                    if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
+                }
         }
         public void BeginSwordWave() { animator.PlayPose("SwordWave", 0.25f); }
     }

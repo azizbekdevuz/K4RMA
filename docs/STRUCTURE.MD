@@ -39,6 +39,10 @@ K4RMA/
 │       │   │   │                   └── Revival/
 │       │   │   │                       └── Ward.png
 │       │   │   ├── RisingSlash/
+│       │   │   │   ├── Characters/
+│       │   │   │   │   └── Articulated/
+│       │   │   │   │       └── Resources/
+│       │   │   │   │           └── RisingAnimation/
 │       │   │   │   ├── Effects/
 │       │   │   │   │   ├── Fragment0.png
 │       │   │   │   │   ├── Fragment1.png
@@ -188,6 +192,10 @@ K4RMA/
 │       │       │   ├── Combat_Guard_Block.wav
 │       │       │   └── Combat_Perfect_Parry.wav
 │       │       ├── Guard/
+│       │       │   ├── GD_Basic_Hit.wav
+│       │       │   ├── GD_Basic_Swing.wav
+│       │       │   ├── GD02_Heavy_Hit.wav
+│       │       │   ├── GD02_Heavy_Swing.wav
 │       │       │   ├── GD_Counter.wav
 │       │       │   ├── GD_Heavy_Slam.wav
 │       │       │   ├── GD_Protection_Pulse.wav
@@ -223,6 +231,8 @@ K4RMA/
 │       │       │   └── RS_UP05_Final.wav
 │       │       ├── SwordWave/
 │       │       │   ├── SW_Crossing_Blades.wav
+│       │       │   ├── SW_Electric_Discharge.wav
+│       │       │   ├── SW05_PerSword_Thunder.wav
 │       │       │   ├── SW_Energy_Charge.wav
 │       │       │   ├── SW_Scar_Rise.wav
 │       │       │   ├── SW_Ultimate_Rain.wav
@@ -336,6 +346,7 @@ K4RMA/
 │       │   │   │   │   │   │       └── KarmaRisingBossSprites.asset
 │       │   │   │   │   │   ├── KarmaCharacterAnimator.Rising.cs
 │       │   │   │   │   │   ├── KarmaRisingArt.cs
+│       │   │   │   │   │   ├── KarmaRisingArticulatedMotion.cs
 │       │   │   │   │   │   ├── KarmaRisingAudio.cs
 │       │   │   │   │   │   ├── KarmaRisingCharge.cs
 │       │   │   │   │   │   └── KarmaRisingPolish.cs
@@ -441,6 +452,7 @@ K4RMA/
 │       │   │   ├── KarmaTrainingTarget.cs
 │       │   │   └── KarmaHUD.Tutorial.cs
 │       │   ├── UI/
+│       │   │   ├── KarmaHUD.BossEntrance.cs
 │       │   │   ├── KarmaHUD.Combat.cs
 │       │   │   ├── KarmaHUD.cs
 │       │   │   ├── KarmaHUD.Screens.cs
@@ -508,6 +520,7 @@ K4RMA/
 │   │   │   └── KarmaTutorialChecks.cs
 │   │   ├── Player/
 │   │   ├── RisingSlash/
+│   │   │   ├── KarmaRisingAnimationChecks.cs
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
 │   │   │   ├── KarmaRisingPlayChecks.cs
 │   │   │   └── KarmaRisingSelectionChecks.cs
@@ -531,6 +544,7 @@ K4RMA/
 │   │   │   ├── KarmaSwordSlideDistanceChecks.cs
 │   │   │   ├── KarmaSwordTempoRangeChecks.cs
 │   │   │   └── KarmaSwordWallCounterChecks.cs
+│   │   ├── KarmaBossEntranceChecks.cs
 │   │   ├── KarmaBossIsolationChecks.cs
 │   │   ├── KarmaBossPracticeChecks.cs
 │   │   ├── KarmaCameraCoverageChecks.cs
@@ -540,6 +554,9 @@ K4RMA/
 │   ├── test_boss_boundaries.py
 │   └── test_optimize_images.py
 ├── tools/
+│   ├── RisingSlash/
+│   │   ├── build-articulated.py
+│   │   └── rigs.json
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
 ├── .gitignore

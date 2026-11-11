@@ -111,6 +111,7 @@ namespace KarmaPrototype
             }
             if (player.Health < before)
             {
+                if (!PrimaryType.HasValue) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
                 contact.RecordDamage(); behavior.OnPlayerDamaged();
                 if (stun > 0 && Active) player.Stun(stun);
             }

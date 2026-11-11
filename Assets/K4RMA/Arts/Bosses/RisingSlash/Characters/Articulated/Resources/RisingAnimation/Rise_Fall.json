@@ -1,0 +1,145 @@
+{
+  "form": "Rise",
+  "pose": "Fall",
+  "atlas": "Rise_Slash",
+  "sourcePose": "Slash",
+  "ppu": 125.0,
+  "pivot": {
+    "x": 259.9999927,
+    "y": 257.99999958
+  },
+  "parts": [
+    {
+      "name": "rearLeg",
+      "parent": -1,
+      "pivot": {
+        "x": 194,
+        "y": 132
+      },
+      "origin": {
+        "x": 31,
+        "y": 116
+      },
+      "rect": {
+        "x": 4,
+        "y": 362,
+        "width": 168,
+        "height": 146
+      }
+    },
+    {
+      "name": "frontLeg",
+      "parent": -1,
+      "pivot": {
+        "x": 204,
+        "y": 131
+      },
+      "origin": {
+        "x": 198,
+        "y": 115
+      },
+      "rect": {
+        "x": 180,
+        "y": 405,
+        "width": 104,
+        "height": 103
+      }
+    },
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 199,
+        "y": 133
+      },
+      "origin": {
+        "x": 0,
+        "y": 11
+      },
+      "rect": {
+        "x": 4,
+        "y": 143,
+        "width": 387,
+        "height": 211
+      }
+    },
+    {
+      "name": "upperArm",
+      "parent": 2,
+      "pivot": {
+        "x": 279,
+        "y": 97
+      },
+      "origin": {
+        "x": 271,
+        "y": 81
+      },
+      "rect": {
+        "x": 399,
+        "y": 324,
+        "width": 65,
+        "height": 30
+      }
+    },
+    {
+      "name": "forearm",
+      "parent": 3,
+      "pivot": {
+        "x": 327,
+        "y": 91
+      },
+      "origin": {
+        "x": 319,
+        "y": 77
+      },
+      "rect": {
+        "x": 4,
+        "y": 101,
+        "width": 171,
+        "height": 34
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        18,
+        -15,
+        -4,
+        -35,
+        -70
+      ]
+    },
+    {
+      "time": 0.3,
+      "angles": [
+        25,
+        -25,
+        -5,
+        -45,
+        -80
+      ]
+    },
+    {
+      "time": 0.56,
+      "angles": [
+        28,
+        -28,
+        -3,
+        -40,
+        -75
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        15,
+        -12,
+        0,
+        -30,
+        -60
+      ]
+    }
+  ]
+}

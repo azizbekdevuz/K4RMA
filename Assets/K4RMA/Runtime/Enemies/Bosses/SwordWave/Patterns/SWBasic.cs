@@ -34,6 +34,7 @@ namespace KarmaPrototype
                     Settings.basicDamageMultiplier, parent: sword.PersistentRoot);
                 KarmaSwordBasicPresentation.Ranged(owner.game, owner, shot, velocity,
                     sword.BasicSwordSize, sword.SwordSize(EnemyAttack.SW01));
+                KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shot);
                 // Keep the previous casting/recovery/selection cadence. The old
                 // ten-unit lifetime remains only the existing release wait here.
                 yield return owner.Wait(sword.BasicSwordLife);

@@ -106,7 +106,7 @@ namespace KarmaPrototype
                         var pool = KarmaSwordVfxPool.For(owner.game);
                         pool.Sparks(owner, new Vector2(x, 0.35f), Vector2.up, 3, 18);
                     }
-                    KarmaAudio.Play(KarmaSfxId.SwScarRise);
+                    KarmaAudio.Play(KarmaSfxId.SwElectricDischarge);
                     if (round == rounds - 1) KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_GuardRing_v6", owner.Position, Vector2.one * 3.5f, 0.16f);
                     // Contacts expire at active; allow their final hit flash to finish
                     // during the inter-round recovery before the next clear/warning.

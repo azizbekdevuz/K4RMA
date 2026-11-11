@@ -1,0 +1,101 @@
+{
+  "form": "RiseWard",
+  "pose": "Rising",
+  "atlas": "RiseWard_Rising",
+  "sourcePose": "Rising",
+  "ppu": 104.435486,
+  "pivot": {
+    "x": 126.2499945,
+    "y": 313.99999997599997
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 153,
+        "y": 150
+      },
+      "origin": {
+        "x": 1,
+        "y": 52
+      },
+      "rect": {
+        "x": 4,
+        "y": 244,
+        "width": 242,
+        "height": 264
+      }
+    },
+    {
+      "name": "upperArm",
+      "parent": 0,
+      "pivot": {
+        "x": 176,
+        "y": 86
+      },
+      "origin": {
+        "x": 168,
+        "y": 30
+      },
+      "rect": {
+        "x": 254,
+        "y": 436,
+        "width": 37,
+        "height": 72
+      }
+    },
+    {
+      "name": "forearm",
+      "parent": 1,
+      "pivot": {
+        "x": 195,
+        "y": 39
+      },
+      "origin": {
+        "x": 152,
+        "y": 1
+      },
+      "rect": {
+        "x": 299,
+        "y": 413,
+        "width": 93,
+        "height": 95
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        4,
+        18,
+        25
+      ]
+    },
+    {
+      "time": 0.3,
+      "angles": [
+        0,
+        8,
+        10
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        -4,
+        -15,
+        -20
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

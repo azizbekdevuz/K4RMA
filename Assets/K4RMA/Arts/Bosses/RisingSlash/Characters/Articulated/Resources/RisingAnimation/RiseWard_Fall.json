@@ -1,0 +1,101 @@
+{
+  "form": "RiseWard",
+  "pose": "Fall",
+  "atlas": "RiseWard_Fall",
+  "sourcePose": "Fall",
+  "ppu": 104.435486,
+  "pivot": {
+    "x": 102.25000031,
+    "y": 324.000000106
+  },
+  "parts": [
+    {
+      "name": "body",
+      "parent": -1,
+      "pivot": {
+        "x": 122,
+        "y": 161
+      },
+      "origin": {
+        "x": 2,
+        "y": 18
+      },
+      "rect": {
+        "x": 4,
+        "y": 233,
+        "width": 224,
+        "height": 275
+      }
+    },
+    {
+      "name": "raisedShield",
+      "parent": 0,
+      "pivot": {
+        "x": 73,
+        "y": 62
+      },
+      "origin": {
+        "x": 28,
+        "y": 1
+      },
+      "rect": {
+        "x": 236,
+        "y": 443,
+        "width": 63,
+        "height": 65
+      }
+    },
+    {
+      "name": "lowerLeg",
+      "parent": 0,
+      "pivot": {
+        "x": 133,
+        "y": 258
+      },
+      "origin": {
+        "x": 101,
+        "y": 245
+      },
+      "rect": {
+        "x": 307,
+        "y": 427,
+        "width": 49,
+        "height": 81
+      }
+    }
+  ],
+  "keys": [
+    {
+      "time": 0,
+      "angles": [
+        0,
+        -8,
+        8
+      ]
+    },
+    {
+      "time": 0.25,
+      "angles": [
+        0,
+        -16,
+        12
+      ]
+    },
+    {
+      "time": 0.6,
+      "angles": [
+        0,
+        -5,
+        5
+      ]
+    },
+    {
+      "time": 1,
+      "angles": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

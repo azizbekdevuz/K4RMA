@@ -54,6 +54,7 @@ public static class KarmaEndingMoonChecks
         EditorApplication.EnterPlaymode();
     }
     public static void RunEndingBatch() { RunBatch(); SessionState.SetBool(Key + ".EndingOnly", true); }
+    public static void RunArtworkBatch() { SessionState.SetBool(Key + ".ArtworkOnly", true); RunBatch(); }
     static async Task Until(Func<bool> done, float timeout = 90)
     {
         double end = EditorApplication.timeSinceStartup + timeout;
@@ -87,37 +88,44 @@ public static class KarmaEndingMoonChecks
     {
         var camera = game.GameCamera; var prior = camera.targetTexture; var active = RenderTexture.active;
         var priorRect = camera.rect;
+        // Native viewport coordinates belong to the Game View's dimensions.
+        // Applying a portrait Game View rect to a 16:9 target distorts the test image.
+        var captureTarget = nativeViewport
+            ? RenderTexture.GetTemporary(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height), 24) : target;
         try
         {
             // The output texture is 16:9; do not apply the Game View's letterbox a second time.
-            camera.targetTexture = target;
+            camera.targetTexture = captureTarget;
             if (!nativeViewport) camera.rect = new Rect(0, 0, 1, 1);
-            camera.Render(); RenderTexture.active = target;
-            image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
+            RenderTexture.active = captureTarget;
+            GL.Clear(true, true, Color.clear);
+            camera.Render(); RenderTexture.active = captureTarget;
+            if (image.width != captureTarget.width || image.height != captureTarget.height)
+                image.Reinitialize(captureTarget.width, captureTarget.height);
+            image.ReadPixels(new Rect(0, 0, captureTarget.width, captureTarget.height), 0, 0); image.Apply();
             if (name != null) File.WriteAllBytes(Output + "/" + name + ".png", image.EncodeToPNG());
         }
-        finally { camera.targetTexture = prior; camera.rect = priorRect; RenderTexture.active = active; }
+        finally
+        {
+            camera.targetTexture = prior; camera.rect = priorRect; RenderTexture.active = active;
+            if (nativeViewport) RenderTexture.ReleaseTemporary(captureTarget);
+        }
     }
     static float MoonRatio(bool mountain, bool nativeViewport = false)
     {
+        var moon = game.World.Find("Round moon").GetComponent<SpriteRenderer>();
+        Color32[] without;
+        try { moon.enabled = false; Render(nativeViewport: nativeViewport); without = image.GetPixels32(); }
+        finally { moon.enabled = true; }
         Render(nativeViewport: nativeViewport);
-        var renderer = Background; var sprite = renderer.sprite;
-        Vector2 uv = mountain ? new Vector2(0.374f, 0.695f) : new Vector2(0.548f, 0.66f);
-        var local = new Vector3((uv.x * sprite.rect.width - sprite.pivot.x) / sprite.pixelsPerUnit,
-            (uv.y * sprite.rect.height - sprite.pivot.y) / sprite.pixelsPerUnit, 0);
-        var moon = game.World.Find("Round moon");
-        var view = game.GameCamera.WorldToViewportPoint(moon != null ? moon.position : renderer.transform.TransformPoint(local));
-        var rect = nativeViewport ? game.GameCamera.rect : new Rect(0, 0, 1, 1);
-        int cx = Mathf.RoundToInt((rect.x + view.x * rect.width) * 1280);
-        int cy = Mathf.RoundToInt((rect.y + view.y * rect.height) * 720);
-        int radius = Mathf.CeilToInt(0.035f * renderer.bounds.size.y / game.GameCamera.orthographicSize * 720);
-        int minX = 1280, minY = 720, maxX = -1, maxY = -1;
+        int width = image.width, height = image.height;
+        int minX = width, minY = height, maxX = -1, maxY = -1;
         var pixels = image.GetPixels32();
-        for (int y = Mathf.Max(0, cy - radius); y < Mathf.Min(720, cy + radius); y++)
-        for (int x = Mathf.Max(0, cx - radius); x < Mathf.Min(1280, cx + radius); x++)
+        // Compare the actual moon contribution; warm windows must not count as moon pixels.
+        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
         {
-            var c = pixels[y * 1280 + x];
-            if (c.r < 175 || c.g < 170 || c.b < 95) continue;
+            if (pixels[y * width + x].Equals(without[y * width + x])) continue;
             minX = Mathf.Min(minX, x); maxX = Mathf.Max(maxX, x);
             minY = Mathf.Min(minY, y); maxY = Mathf.Max(maxY, y);
         }

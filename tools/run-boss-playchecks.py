@@ -15,7 +15,7 @@ parser.add_argument('--work-project', type=Path)
 parser.add_argument('--unity', type=Path, help='Override the Unity executable')
 parser.add_argument('--licensing-ipc')
 parser.add_argument('--visible', action='store_true', help='Run Play Mode checks in a visible Editor when batch mode cannot advance frames')
-parser.add_argument('--suite', choices=('all', 'isolation', 'guard', 'sw05', 'sword', 'rising', 'integration', 'player-cc', 'player24', 'audio', 'audio-release', 'tutorial-skip', 'rising-barrier', 'sword-refresh', 'sword-scar', 'build'), nargs='+', default=['all'])
+parser.add_argument('--suite', choices=('all', 'isolation', 'guard', 'sw05', 'sword', 'rising', 'integration', 'player-cc', 'player24', 'audio', 'audio-release', 'tutorial-skip', 'rising-barrier', 'sword-refresh', 'sword-scar', 'build', 'artwork'), nargs='+', default=['all'])
 args = parser.parse_args()
 subprocess.run(['python3', '-m', 'unittest', 'discover', '-s', str(root / 'tests'),
                 '-p', 'test_boss_boundaries.py'], check=True)
@@ -23,7 +23,8 @@ version = (root / 'ProjectSettings/ProjectVersion.txt').read_text().splitlines()
 editor = args.unity or Path(f'/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity')
 output = root / 'output/validation'
 output.mkdir(parents=True, exist_ok=True)
-suites = [('isolation', 'KarmaBossIsolationChecks', 'boss-isolation-validation.txt'),
+suites = [('artwork', 'KarmaEndingMoonChecks', 'ending-moon/result.txt'),
+          ('isolation', 'KarmaBossIsolationChecks', 'boss-isolation-validation.txt'),
           ('guard', 'KarmaGuardPlayChecks', 'guard-play-validation.txt'),
           ('sw05', 'KarmaSW05PlayChecks', 'sw05-play-validation.txt'),
           ('sword', 'KarmaSwordFinalPolishChecks', 'sword-play-validation.txt'),
@@ -86,7 +87,7 @@ with (nullcontext(str(args.work_project)) if args.work_project else tempfile.Tem
                                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 time.sleep(2)
             method = {'sword-refresh': 'RunShockAndDetonation', 'sword-scar': 'RunActiveSW03Only',
-                      'audio-release': 'RunReleaseBatch'}.get(key, 'RunBatch')
+                      'audio-release': 'RunReleaseBatch', 'artwork': 'RunArtworkBatch'}.get(key, 'RunBatch')
             if key == 'audio-release':
                 (project / 'output/validation/sfx-completion.txt').unlink(missing_ok=True)
             command = [str(editor), '-batchmode', '-projectPath', str(project),

@@ -15,11 +15,12 @@ namespace KarmaPrototype
         public Transform World { get; private set; }
         public int StageIndex { get; private set; }
         public bool Paused { get; private set; }
-        public bool IsCombat { get { return Phase == RunPhase.Combat && !Paused; } }
-        public bool CanMove { get { return Time.frameCount != openingSpeechDismissFrame && !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
+        public bool IsCombat { get { return Phase == RunPhase.Combat && !Paused && OpeningArrivalSpeech == null; } }
+        public bool CanMove { get { return OpeningArrivalSpeech == null && Time.frameCount != openingSpeechDismissFrame && !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
         public KarmaTutorial Tutorial { get; private set; }
-        public bool GameplayFrozen => Paused || Tutorial != null && Tutorial.Frozen;
-        public bool AllowsPlayerActions => IsCombat || !Paused && Tutorial != null && Tutorial.CanAct;
+        public bool GameplayFrozen => Paused || OpeningArrivalSpeech != null || Tutorial != null && Tutorial.Frozen;
+        public bool AllowsPlayerActions => OpeningArrivalSpeech == null && Time.frameCount != openingSpeechDismissFrame
+            && (IsCombat || !Paused && Tutorial != null && Tutorial.CanAct);
         public float Elapsed { get; private set; }
         public float DamageTaken { get; set; }
         public int Retries { get; private set; }

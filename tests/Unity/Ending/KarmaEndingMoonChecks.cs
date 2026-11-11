@@ -50,7 +50,7 @@ public static class KarmaEndingMoonChecks
         SessionState.SetBool(Key + ".EndingOnly", false);
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     public static void RunEndingBatch() { RunBatch(); SessionState.SetBool(Key + ".EndingOnly", true); }
@@ -170,9 +170,9 @@ public static class KarmaEndingMoonChecks
     }
     static void Log(string message, string stack, LogType type)
     {
-        if (message.StartsWith("Not allowed to override geometry") && stack.Contains("Assets/K4RMA/"))
+        if (message.StartsWith("Not allowed to override geometry") && stack.Contains("Assets/Scripts/"))
         { knownWarnings++; return; }
-        if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/K4RMA/")) runtimeError = message;
+        if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message;
     }
     static void CheckFragmentRedistribution()
     {
@@ -266,7 +266,7 @@ public static class KarmaEndingMoonChecks
             Check(bg.sharedMaterial == (game.Config.spriteMaterial != null ? game.Config.spriteMaterial : KarmaVisuals.DefaultMaterial) && !bg.HasPropertyBlock(),
                 "Moonless plate has no sky reconstruction material or property overrides");
             var moonSprite = game.World.Find("Round moon").GetComponent<SpriteRenderer>().sprite;
-            Check(moonSprite == Resources.Load<Sprite>("K4RMAArtwork/Environments/" + (stage == 0 ? "MountainDojo" : "TrialHall") + "/Moon"),
+            Check(moonSprite == Resources.Load<Sprite>("Backgrounds/" + (stage == 0 ? "MountainDojo" : "TrialHall") + "/Moon"),
                 "Moon uses the approved original-pixel extraction");
             CheckMoonExterior();
             float normal = Mathf.Max(frame.extents.y, 25 / game.GameCamera.aspect);

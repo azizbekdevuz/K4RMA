@@ -1,6 +1,6 @@
 # K4RMA
 
-Unity `6000.6.2f1`에서 `Assets/K4RMA/Scenes/KarmaPrototype.unity`를 실행한다.
+Unity `6000.6.2f1`에서 `Assets/Scenes/KarmaPrototype.unity`를 실행한다.
 
 - 이동: `A/D` 또는 방향키 · 점프: `Space` · 공격: `J`
 - 보스 기술: `Q` 검기 · `Left Shift` 상승베기 · `E` 방어

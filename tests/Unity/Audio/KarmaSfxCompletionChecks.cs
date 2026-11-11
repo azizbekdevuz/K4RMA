@@ -46,7 +46,7 @@ public static class KarmaSfxCompletionChecks
     {
         Debug.Log("Starting focused SFX Play Mode checks");
         SessionState.SetBool(Key, true);
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static void Check(bool ok, string message)

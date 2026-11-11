@@ -68,6 +68,22 @@ class AssetIntegrity(unittest.TestCase):
                 candidate = ROOT / include if include.startswith('Assets/') else path.parent / include
                 self.assertTrue(candidate.is_file(), f'{path}: {include}')
 
+    def test_editor_and_tool_asset_paths_resolve(self):
+        # Authoring destinations matter even when existing assets still load.
+        paths = [*(ASSETS / 'Scripts').rglob('*.cs'), *(ROOT / 'tools').rglob('*.py')]
+        self.assertTrue(paths)
+        for path in paths:
+            for target in re.findall(r'''["'](Assets/[^"'\n]+)["']''', path.read_text()):
+                self.assertTrue((ROOT / target).exists(), f'{path}: {target}')
+
+    def test_build_scenes_preserve_path_and_identity(self):
+        settings = (ROOT / 'ProjectSettings/EditorBuildSettings.asset').read_text()
+        scenes = re.findall(r'path: (Assets/[^\n]+)\n\s+guid: ([0-9a-f]{32})', settings)
+        self.assertTrue(scenes)
+        for path, guid in scenes:
+            self.assertTrue((ROOT / path).is_file(), path)
+            self.assertIn('guid: ' + guid, (ROOT / (path + '.meta')).read_text())
+
 
 if __name__ == '__main__':
     unittest.main()

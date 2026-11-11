@@ -49,7 +49,7 @@ public static class KarmaSwordFinalPolishChecks
         typeof(KarmaSwordPlayChecks).GetMethod("CompilePlayerScripts", F).Invoke(null, null);
         SessionState.SetBool(Key, true); SessionState.SetString(Key + ".Id", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
     }
     public static void RunPresentationOnly() { RunBatch(); SessionState.SetBool(Key + ".PresentationOnly", true); }
     public static void RunLeftPresentation() { RunPresentationOnly(); SessionState.SetBool(Key + ".LeftOnly", true); }
@@ -434,7 +434,7 @@ public static class KarmaSwordFinalPolishChecks
             Application.logMessageReceived += (m, s, type) =>
             {
                 if (m.StartsWith("[SW04]")) ((List<string>)typeof(KarmaSwordRandomParryChecks).GetField("debugTrace", F).GetValue(null)).Add(m);
-                if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && s.Contains("Assets/K4RMA/")) error = m + "\n" + s;
+                if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && s.Contains("Assets/Scripts/")) error = m + "\n" + s;
             };
             Check(ReferenceEquals(KarmaWaveArtwork.Sprite("SW01_CrescentWave_v4"), KarmaWaveArtwork.Sprite("SW02_AimedSlash")), "SW01 and SW02 use the same complete Sprite object");
             typeof(KarmaSwordPlayChecks).GetMethod("CheckNewArtworkImports", F).Invoke(null, null);

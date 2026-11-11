@@ -42,7 +42,7 @@ public static class KarmaSwordSkillVfxChecks
     public static void RunSW01Baseline()=>Begin(true,true,true);
     public static void RunSW01Updated()=>Begin(false,true,true);
     static void Begin(bool before,bool selected=false,bool first=false)
-    {SessionState.SetBool(Key,true);SessionState.SetBool(Key+".Baseline",before);SessionState.SetBool(Key+".Focused",selected);SessionState.SetBool(Key+".SW01Only",first);EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");EditorApplication.EnterPlaymode();}
+    {SessionState.SetBool(Key,true);SessionState.SetBool(Key+".Baseline",before);SessionState.SetBool(Key+".Focused",selected);SessionState.SetBool(Key+".SW01Only",first);EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");EditorApplication.EnterPlaymode();}
     static void Capture(string name)
     {
         var camera=game.GameCamera;var rt=new RenderTexture(1600,700,24);var image=new Texture2D(1600,700,TextureFormat.RGBA32,false);
@@ -129,7 +129,7 @@ public static class KarmaSwordSkillVfxChecks
             var lines=new List<string>{"PASS: exact attack-phase geometry/timing comparison for seven edited variants; shader/Sprite loading verified"};
             for(int i=0;i<a.casts.Count;i++)
             {Compare(a.casts[i],b.casts[i]);lines.Add("PASS: "+b.casts[i].key+" shots="+b.casts[i].shots.Count+", first release="+b.casts[i].shots[0].tick+", physical samples="+b.casts[i].frames.Count);}
-            foreach(string name in new[]{"KarmaSwordSkillPolish","KarmaSwordRisePolish","SW05/SW05Celestial"})
+            foreach(string name in new[]{"SwordWave/Shared/KarmaSwordSkillPolish","SwordWave/SW03/KarmaSwordRisePolish","SwordWave/SW05/SW05Celestial"})
             {var material=Resources.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" loads/compiles");}
             foreach(string pose in new[]{"Sword_Crescent_v6","SW03_GroundScar_v6","SW03_RisingBlade_v6","SW04_CounterBlade_v6","SW05_JudgementSword","Sword_Release_v6","Sword_Impact_v6"})
                 Check(KarmaWaveArtwork.Sprite(pose)!=null,pose+" loads");
@@ -159,8 +159,8 @@ public static class KarmaSwordSkillVfxChecks
                 data.casts.Add(await Observe(EnemyAttack.SWBasic,true));
             }
             if(!baseline){var old=JsonUtility.FromJson<Data>(File.ReadAllText(Folder+"/baseline.json"));for(int i=0;i<data.casts.Count;i++)Compare(old.casts[i],data.casts[i]);
-                var material=Resources.Load<Material>("KarmaSwordSkillPolish");Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),"skill material compiles and loads");
-                foreach(string name in new[]{"KarmaSwordRisePolish","SW05/SW05Celestial"}){material=Resources.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" compiles");}}
+                var material=Resources.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish");Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),"skill material compiles and loads");
+                foreach(string name in new[]{"SwordWave/SW03/KarmaSwordRisePolish","SwordWave/SW05/SW05Celestial"}){material=Resources.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" compiles");}}
             results.Insert(0,"PASS: "+(baseline?"baseline":"updated geometry/timing comparison")+"; edited skills only; first SW03 round / first SW05 rain group");
         }catch(Exception e){results.Insert(0,"FAIL: "+e);Debug.LogException(e);exit=1;}
         File.WriteAllText(Folder+"/"+(baseline?"baseline":"updated")+".json",JsonUtility.ToJson(data,true));File.WriteAllLines(Folder+"/"+(baseline?"baseline-result":"result")+".txt",results);Time.captureDeltaTime=0;SessionState.SetBool(Key,false);EditorApplication.Exit(exit);

@@ -4,8 +4,8 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = ROOT / 'Assets/K4RMA/Runtime'
-BOSSES = RUNTIME / 'Enemies/Bosses'
+RUNTIME = ROOT / 'Assets/Scripts'
+BOSSES = RUNTIME
 OWNERS = ('SwordWave', 'RisingSlash', 'Guard')
 SHARED_PARTIALS = {'KarmaEnemy', 'KarmaCharacterAnimator', 'KarmaBossTuning'}
 
@@ -67,10 +67,13 @@ class BossTypeDiscovery(unittest.TestCase):
 class BossBoundaries(unittest.TestCase):
     def test_common_code_has_no_concrete_boss_dependencies(self):
         owned_types = set()
-        for path in BOSSES.rglob('*.cs'):
-            owned_types.update(owned_type_names(code(path)))
-        for path in [*RUNTIME.rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Core').rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Editor').rglob('*.cs')]:
-            if BOSSES in path.parents:
+        for owner in OWNERS:
+            paths = list((BOSSES / owner).rglob('*.cs'))
+            self.assertTrue(paths, f'Missing owner sources: {owner}')
+            for path in paths:
+                owned_types.update(owned_type_names(code(path)))
+        for path in RUNTIME.rglob('*.cs'):
+            if any(BOSSES / owner in path.parents for owner in OWNERS):
                 continue
             text = code(path)
             with self.subTest(path=path.relative_to(ROOT)):
@@ -91,7 +94,9 @@ class BossBoundaries(unittest.TestCase):
                     self.assertFalse(set(re.findall(r'\b\w+\b', code(path))) & foreign)
 
     def test_shared_enemy_host_does_not_choose_a_boss_effect(self):
-        for path in (RUNTIME / 'Enemies').glob('*.cs'):
+        paths = list((RUNTIME / 'Combat').glob('KarmaEnemy*.cs')) + [RUNTIME / 'Combat/KarmaBossBehavior.cs']
+        self.assertGreater(len(paths), 1)
+        for path in paths:
             with self.subTest(path=path.relative_to(ROOT)):
                 self.assertNotRegex(code(path), r'\bEssence\.(?:Guard|SwordWave|RisingSlash)\b')
 
@@ -118,32 +123,36 @@ class BossBoundaries(unittest.TestCase):
             self.assertNotRegex(path.name, r'Karma(?:Sword|SW05|Guard|Rising)')
 
     def test_boss_art_and_tools_use_owned_paths(self):
-        self.assertFalse((ROOT / 'Assets/K4RMA/Art').exists())
-        self.assertFalse((ROOT / 'Assets/K4RMA/Art.meta').exists())
+        self.assertFalse((ROOT / 'Assets/Art').exists())
+        self.assertFalse((ROOT / 'Assets/Art.meta').exists())
         for path in (ROOT / 'tools').glob('*sword*'):
             self.fail(f'SwordWave tools belong in tools/SwordWave: {path.name}')
 
     def test_sprite_library_sources_exist_and_stay_with_the_owner(self):
-        libraries = [ROOT / 'Assets/K4RMA/Resources/KarmaSpriteLibrary.asset',
-                     *BOSSES.rglob('*BossSprites.asset')]
+        libraries = [ROOT / 'Assets/Data/Resources/KarmaSpriteLibrary.asset',
+                     *(ROOT / 'Assets/Data/Resources/BossArtwork').glob('*BossSprites.asset')]
+        self.assertEqual(len(libraries), 4)
+        owners = {'KarmaSwordBossSprites': 'SwordWave', 'KarmaRisingBossSprites': 'RisingSlash',
+                  'KarmaGuardBossSprites': 'Guard'}
         for library in libraries:
-            owner = next((name for name in OWNERS if BOSSES / name in library.parents), None)
+            owner = owners.get(library.stem)
             for source in re.findall(r'^\s*source: (.+)$', library.read_text(), flags=re.M):
                 with self.subTest(library=library.relative_to(ROOT), source=source):
                     self.assertTrue((ROOT / source).exists(), source)
                     if owner is None:
-                        self.assertNotIn('Arts/Bosses/', source)
+                        for other in OWNERS:
+                            self.assertNotIn('Arts/Resources/' + other + '/', source)
                     else:
                         for other in OWNERS:
                             if other != owner:
-                                self.assertNotIn('Arts/Bosses/' + other + '/', source)
+                                self.assertNotIn('Arts/Resources/' + other + '/', source)
 
     def test_boss_registrations_are_local_and_preserved(self):
         for owner, name in [('SwordWave', 'Sword'), ('RisingSlash', 'Rising'), ('Guard', 'Guard')]:
             text = (BOSSES / owner / f'Karma{name}BossBehavior.cs').read_text()
             self.assertIn(f'[BossKind(Essence.{owner})]', text)
             self.assertIn('[UnityEngine.Scripting.Preserve]', text)
-            self.assertTrue((BOSSES / owner / f'Settings/KarmaBossTuning.{name}.cs').is_file())
+            self.assertTrue((BOSSES / owner / f'KarmaBossTuning.{name}.cs').is_file())
 
 
 if __name__ == '__main__':

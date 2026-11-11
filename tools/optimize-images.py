@@ -88,7 +88,7 @@ def main():
     if args.duplicates_only and args.apply:
         parser.error('--duplicates-only cannot be combined with --apply')
     files = set()
-    for path in args.paths or [ROOT / 'Assets/K4RMA/Arts']:
+    for path in args.paths or [ROOT / 'Assets/Arts']:
         if not path.exists():
             parser.error(f'Path does not exist: {path}')
         files.update(p.resolve() for p in (path.rglob('*') if path.is_dir() else [path])

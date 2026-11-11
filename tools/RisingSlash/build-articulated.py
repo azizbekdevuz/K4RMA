@@ -10,12 +10,12 @@ import numpy as np
 from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "Assets/K4RMA/Arts/Bosses/RisingSlash/Resources/K4RMAArtwork/Characters/Guardians"
-DEST = ROOT / "Assets/K4RMA/Arts/Bosses/RisingSlash/Resources/RisingAnimation"
+SOURCE = ROOT / "Assets/Arts/Resources/RisingSlash"
+DEST = ROOT / "Assets/Arts/Resources/RisingSlash/Animation"
 OUT = ROOT / "output/rising-animation"
 
 def source(form, pose):
-    rel = "Base/Rise.png" if form == "Rise" else "Inherited/" + form + ".png"
+    rel = "Forms/" + form + ".png"
     path = SOURCE / rel
     text = path.with_suffix(".png.meta").read_text(encoding="utf8")
     block = re.search(r"      name: " + pose + r"\n(.*?)(?=\n    - serializedVersion:|\n    outline:)", text, re.S)[1]

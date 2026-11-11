@@ -17,7 +17,7 @@ public static class KarmaSW02InheritedChecks
 {
     const string Folder = "output/validation/sw02-animation-phase3-20261105";
     const string Key = "K4RMA.SW02Inherited";
-    const string Library = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/Resources/BossArtwork/KarmaSwordBossSprites.asset";
+    const string Library = "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags F = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
     static readonly string[] Forms = { "WaveRise", "WaveWard", "WaveFinal" };
     static readonly string[] Names = { "Prepare01", "Prepare02", "Swing01", "Swing02", "Recover01", "Recover02" };
@@ -47,7 +47,7 @@ public static class KarmaSW02InheritedChecks
     {
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     public static void RunImportBatch()
@@ -58,7 +58,7 @@ public static class KarmaSW02InheritedChecks
             var imports = new List<string>();
             foreach (string name in Forms)
             {
-                string sheet = "Assets/K4RMA/Arts/Bosses/SwordWave/Characters/SW02/" + name + "_SW02_Transitions.png";
+                string sheet = "Assets/Arts/Resources/SwordWave/SW02/" + name + "_SW02_Transitions.png";
                 string group = name + "SW02";
                 var frames = JsonUtility.FromJson<KarmaSW02SpriteImportChecks.Frames>(File.ReadAllText(Folder + "/" + name + "-import.json")).frames;
                 AssetDatabase.ImportAsset(sheet, ImportAssetOptions.ForceSynchronousImport);

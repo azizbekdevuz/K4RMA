@@ -30,7 +30,7 @@ public static class KarmaGuardBasicDodgeChecks
     public static void RunBatch()
     {
         SessionState.SetBool(BatchKey, true);
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static async void RunBatchChecks()

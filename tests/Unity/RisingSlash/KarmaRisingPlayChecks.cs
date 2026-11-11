@@ -31,7 +31,7 @@ public static class KarmaRisingPlayChecks
     {
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static object Get(object target, string name) { return target.GetType().GetField(name, F).GetValue(target); }
@@ -197,6 +197,6 @@ public static class KarmaRisingPlayChecks
         Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(exit);
     }
     static void Capture(string message, string stack, LogType type)
-    { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/K4RMA/")) error = message; }
+    { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) error = message; }
 }
 #endif

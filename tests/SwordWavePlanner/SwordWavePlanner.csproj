@@ -5,8 +5,8 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Patterns/KarmaSwordScarPlanner.cs" Link="KarmaSwordScarPlanner.cs" />
-    <Compile Include="../../Assets/K4RMA/Core/KarmaBossRules.cs" Link="KarmaBossRules.cs" />
+    <Compile Include="../../Assets/Scripts/SwordWave/Patterns/KarmaSwordScarPlanner.cs" Link="KarmaSwordScarPlanner.cs" />
+    <Compile Include="../../Assets/Scripts/Core/KarmaBossRules.cs" Link="KarmaBossRules.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

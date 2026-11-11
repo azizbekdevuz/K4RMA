@@ -26,7 +26,7 @@ public static class KarmaPlayerPierceChecks
         SessionState.SetBool(Key + ".Batch", batch);
         SessionState.SetBool(Key + ".Background", Application.runInBackground);
         SessionState.SetBool(Key, true);
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
         EditorApplication.EnterPlaymode();
     }
@@ -72,7 +72,7 @@ public static class KarmaPlayerPierceChecks
         try
         {
             KarmaPrototype.EditorTools.KarmaPlayerAnimationAssets.Validate();
-            Check(Resources.Load<TextAsset>("PlayerAnimation24/Ready") == null, "24 FPS activation marker removed");
+            Check(Resources.Load<TextAsset>("Player/Animation24/Ready") == null, "24 FPS activation marker removed");
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             game.StartRun();
             foreach (var essence in new[] { Essence.SwordWave, Essence.RisingSlash, Essence.Guard })
@@ -88,7 +88,7 @@ public static class KarmaPlayerPierceChecks
             var picture = (SpriteRenderer)typeof(KarmaCharacterAnimator).GetField("picture", Private).GetValue(animator);
             var sample = typeof(KarmaCharacterAnimator).GetMethod("SamplePlayerClip", Private);
             var clock = typeof(KarmaCharacterAnimator).GetField("playerClipAt", Private);
-            var library = Resources.Load<KarmaSpriteLibrary>("PlayerAnimation/Frames");
+            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation/Frames");
             foreach (var sheet in library.sheets)
             {
                 sample.Invoke(animator, new object[] { sheet.id, true });

@@ -15,20 +15,20 @@
 
 경로는 저장소 루트 기준이며, 새 파일도 담당 폴더에 둔다.
 
-| 담당 | 코드·설정·이미지 연결 | 아트·효과·재질·셰이더 | 검사 |
+| 담당 | 코드 | 아트·효과·재질·셰이더 | 검사 |
 |---|---|---|---|
-| RisingSlash · 상승베기 | `Assets/K4RMA/Runtime/Enemies/Bosses/RisingSlash/` | `Assets/K4RMA/Arts/Bosses/RisingSlash/` | `tests/Unity/RisingSlash/` |
-| SwordWave · 검기 | `Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/` | `Assets/K4RMA/Arts/Bosses/SwordWave/` | `tests/Unity/SwordWave/` |
-| Guard · 방어 | `Assets/K4RMA/Runtime/Enemies/Bosses/Guard/` | `Assets/K4RMA/Arts/Bosses/Guard/` | `tests/Unity/Guard/` |
+| RisingSlash · 상승베기 | `Assets/Scripts/RisingSlash/` | `Assets/Arts/Resources/RisingSlash/` | `tests/Unity/RisingSlash/` |
+| SwordWave · 검기 | `Assets/Scripts/SwordWave/` | `Assets/Arts/Resources/SwordWave/` | `tests/Unity/SwordWave/` |
+| Guard · 방어 | `Assets/Scripts/Guard/` | `Assets/Arts/Resources/Guard/` | `tests/Unity/Guard/` |
 
 - 보스의 공격·선택·이동·방어·피격·자세·효과·수치와 검사 기대값은 그 보스의 담당 폴더에서 수정한다. 다른 보스의 구체 타입·전용 상태·전용 애니메이션 메서드를 참조하지 않는다. `partial`은 공통 호스트 접근 수단이며 다른 보스 상태 접근 허가가 아니다.
-- `Behavior`는 공격 목록(`BuildCycle`)·선택(`Eligible`)·이동(`TickMovement`)·공격 주기·연결을 담당한다. 검기 이동은 `KarmaSwordBossMovement.cs`, 개별 공격은 `Patterns/`, 전용 연출은 `Presentation/`, 방어 기본 공격은 `Patterns/GDBasic.cs`다.
-- 공통 호스트는 `BossBehavior`의 피해 경계·피격 효과·접촉 결과·방어·공격 종료·카메라·패링 입력 계약을 호출한다. 보스는 자기 파일의 `[BossKind]`로 등록하고 설정 접근은 `Settings/KarmaBossTuning.*.cs`에 둔다. 공통 팩토리에 보스별 분기를 추가하지 않는다.
+- `Behavior`는 공격 목록(`BuildCycle`)·선택(`Eligible`)·이동(`TickMovement`)·공격 주기·연결을 담당한다. 검기 이동은 `KarmaSwordBossMovement.cs`, 개별 공격은 `Patterns/`, 전용 연출은 `Visuals/`, 방어 기본 공격은 `Patterns/GDBasic.cs`다.
+- 공통 호스트는 `BossBehavior`의 피해 경계·피격 효과·접촉 결과·방어·공격 종료·카메라·패링 입력 계약을 호출한다. 보스는 자기 파일의 `[BossKind]`로 등록하고 설정 접근은 `KarmaBossTuning.*.cs`에 둔다. 공통 팩토리에 보스별 분기를 추가하지 않는다.
 - 기존 `EnemyAttack` 숫자는 호환성을 위해 유지한다. 새 전용 패턴은 보스 폴더에서 이름 있는 `const EnemyAttack` 캐스트 상수로 선언한다. 확장 ID는 SwordWave=1000~1999, RisingSlash=2000~2999, Guard=3000~3999이며 공통 enum에 추가하지 않는다. 공격 목록·해금·기대값은 담당 Behavior와 소유권 검사에서 갱신한다.
 
 ### 공통 모듈 의존성
 
-- `Core`의 규칙·기하 계산은 Unity 오브젝트·UI·보스 구체 타입에 의존하지 않는다. `Configuration`은 저장 에셋에서 런타임 복사본을 만들고, `Flow`가 플레이어·전투·월드의 수명을 조정한다.
+- `Core`의 규칙·기하 계산은 Unity 오브젝트·UI·보스 구체 타입에 의존하지 않는다. `Game`의 설정 코드는 저장 에셋에서 런타임 복사본을 만들고, 같은 모듈의 게임 흐름 코드가 플레이어·전투·월드의 수명을 조정한다.
 - 보스 패턴은 공통 전투·플레이어 계약을 호출한다. 공통 호스트는 `BossBehavior`의 가상 계약으로 보스별 정책을 조회하며 보스 구체 타입을 역참조하지 않는다. 연출은 상태를 읽고 표시하며 피해 판정이나 저장 상태를 소유하지 않는다.
 - 별도 코루틴·풀·캐시를 소유하는 컴포넌트는 해당 기능 파일에 두고 중단·비활성화·재진입 시 정리한다. 새 추상화는 실제 결합이나 중복을 줄일 때만 추가한다. 직렬화 필드·GUID·공개 논리 키는 구조 정리만을 이유로 바꾸지 않는다.
 - 입력 설정은 기존 `K4RMA.InputBindings.v1` JSON을 유지한다. 런타임 맵의 GUID가 바뀌면 저장된 `K4RMA/<동작명>`과 기존 UI의 첫 바인딩 계약으로 복원하며, 문서 전체 검증 전에 활성 키를 교체하거나 손상된 저장값을 덮어쓰지 않는다.
@@ -37,19 +37,22 @@
 
 ### 수치
 
-- 저장 수치는 담당 `Settings/Resources/Karma…BossProfile.asset`에서 수정한다. 접두사는 RisingSlash=`KarmaRising`, SwordWave=`KarmaSword`, Guard=`KarmaGuard`다.
+- 저장 수치는 `Assets/Data/Resources/Karma…BossProfile.asset`에서 수정한다. 접두사는 RisingSlash=`KarmaRising`, SwordWave=`KarmaSword`, Guard=`KarmaGuard`다.
 - Inspector의 `settings`가 실제 저장값이다. `Karma…BossSettings.cs` 초기값만 바꿔서는 기존 에셋에 반영되지 않는다. 피해·이동·판단·회복 배율은 Profile의 `damageScale`·`movementScale`·`decisionScale`·`recoveryScale`을 사용한다. 런타임은 복사본이므로 수정 후 Play Mode를 다시 시작한다.
 
 ### 배치와 연결
 
-- 아트는 `Assets/K4RMA/Arts/`만 사용한다. 보스 전용은 `Bosses/<보스명>/Characters/`·`Effects/`, 플레이어·기본형·배경·UI·공용 효과는 `Common/`에 둔다. `Art/` 폴더를 다시 만들지 않는다.
+- `Assets` 바로 아래에 `Arts`(이미지·애니메이션·재질·셰이더), `Audio`(소리·카탈로그), `Scripts`(코드), `Data`(게임·렌더링 설정), `Scenes`(씬)를 둔다. 새 중간 프로젝트 폴더나 별도의 `Art` 폴더를 만들지 않는다.
+- 아트는 `Arts/Resources/<소유자 또는 화면>/`에 둔다. 소유자는 `Player`, `Guard`, `RisingSlash`, `SwordWave`, `Neutral`이며, 배경·튜토리얼·UI는 `Backgrounds`, `Tutorial`, `UI`, 여러 기능이 함께 쓰는 원본은 `Shared`에 둔다. 오디오는 `Audio/<기능>/`에서 별도로 관리한다.
+- 코드는 `Scripts/<기능>/`에 둔다. `Game`은 초기화·진행·입력·설정, `Combat`은 공통 전투 계약과 적 호스트, `Presentation`은 공통 연출을 담당한다. 전용 에디터 코드는 해당 기능의 `Editor/`에 두며, `Core`의 독립 어셈블리 경계는 유지한다.
 - 파일·폴더·시트·아틀라스는 보스·캐릭터·동작·효과·배경·UI 등 함께 관리·로딩할 의미 단위를 유지한다. 파일 수를 줄이기 위해 관련 없는 이미지를 섞지 않는다.
-- 패턴별 효과가 많은 보스는 `Effects/<패턴 ID>/`, 여러 패턴에서 공유하는 효과는 해당 보스의 `Effects/Shared/`에 둔다. 새 파일은 의미 있는 동작·효과 이름과 필요한 프레임 수를 사용하며 `Variants`나 수정 버전별 보관 폴더를 만들지 않는다. 기존 Sprite 이름·논리 키와 연결된 파일명은 호환성을 위해 유지한다.
-- 동적으로 읽는 에셋은 소유자 바로 아래 `Resources/<로딩 키>/`에 둔다. 상승형 리그는 `Bosses/RisingSlash/Resources/RisingAnimation/`이다. `K4RMAArtwork/Characters/Guardians/{Base,Inherited,Revival}` 등 기존 Resources 상대 경로는 외형·계승 로더의 계약이므로 깊이가 있어도 보존한다.
+- 기본·계승 외형은 `<소유자>/Forms/`, 부활은 `Revival/`에 둔다. 패턴별 이미지·재질·셰이더는 `<소유자>/<패턴 ID>/`에 함께 두고, 여러 패턴이 공유하면 해당 소유자의 `Shared/` 또는 작은 `Effects/` 묶음에 둔다. 새 파일은 의미 있는 동작·효과 이름과 필요한 프레임 수를 사용하며 `Variants`나 수정 버전별 보관 폴더를 만들지 않는다. 기존 Sprite 이름·논리 키와 연결된 파일명은 호환성을 위해 유지한다.
+- 아트의 로딩 키는 `Arts/Resources/` 아래 상대 경로다. 상승형 리그는 `RisingSlash/Animation/`, 플레이어 클립은 `Player/Animation/`·`Player/Animation24/`이다. 기본형과 계승형은 물리적으로 같은 `Forms` 폴더를 쓰지만 계승 로더는 기본형을 제외한다. 논리 외형명·포즈명과 저장 데이터 키는 유지한다.
+- 설정 에셋은 `Data/Resources/`, 보스 Sprite 연결은 그 아래 `BossArtwork/`, 오디오 카탈로그는 `Audio/Resources/`에 둔다. 이 설정들의 기존 Resources 로딩 키는 유지한다.
 - 외형 참조 atlas를 포함해 픽셀·색상 정보·슬라이스·피벗·PPU·임포트 설정·사용 목적이 호환되는 동일 이미지는 공용 원본을 공유한다. 실제 차이가 필요한 전용 이미지는 유지하고, 비슷하게 보인다는 이유만으로 합치지 않는다. 공용 이미지 변경은 모든 참조 보스에 영향을 준다.
-- Sprite와 논리 이름(`poses`)은 담당 `Presentation/Resources/BossArtwork/Karma…BossSprites.asset`의 같은 인덱스에 연결한다. 보스 라이브러리는 자동 검색된다. 공통 라이브러리에 전용 이미지를 등록하거나 그룹/이름 조합을 중복 등록하지 않는다.
+- Sprite와 논리 이름(`poses`)은 담당 `Assets/Data/Resources/BossArtwork/Karma…BossSprites.asset`의 같은 인덱스에 연결한다. 보스 라이브러리는 자동 검색된다. 공통 라이브러리에 전용 이미지를 등록하거나 그룹/이름 조합을 중복 등록하지 않는다.
 - 효과 그룹은 `RisingBossVFX`·`SwordBossVFX`·`GuardBossVFX`, 기본 외형은 `BossAppearance`, 기절은 `BossStun`, 동작 시트는 `Rise`·`Wave`·`Ward`다. 코드는 `KarmaArtwork.Sprite`·`KarmaCombatVFX.SpawnSprite`로 조회한다.
-- 이동·이름 변경은 `.meta`도 함께 옮겨 GUID·Sprite ID를 보존한다. 새 복사본은 새 GUID를 쓰고 기존 `.meta`를 재생성하지 않는다. 계승·부활 Resources 상대 경로를 유지한다.
+- 이동·이름 변경은 `.meta`도 함께 옮겨 GUID·Sprite ID를 보존한다. 새 복사본은 새 GUID를 쓰고 기존 `.meta`를 재생성하지 않는다. Resources 경로를 바꾸면 로더·제작 도구·검사도 함께 갱신하고 실제 로딩을 확인한다.
 
 ### 이미지 작업과 검증
 
@@ -111,7 +114,7 @@
 3. 타인의 변경·생성물, 용도가 불분명한 파일, 유효한 구현·검사·전용 에셋·개발 중 기능은 보존한다. Git 이력·개인 설정·사용 중인 Unity 캐시를 지우거나 `git clean -fdx` 같은 일괄 삭제를 하지 않는다. 버전 백업은 Git 이력으로 관리한다.
 4. `git status --short`, `git diff --check`, 잔여 참조·고아 `.meta`·구조/링크를 확인한다. 삭제 내역과 보존 후보·이유를 짧게 보고한다.
 
-생성물은 `.gitignore`에 등록하고 임시 파일은 Assets 밖에 둔다. `Library/`·`Temp/`·`Logs/`·`UserSettings/`·`output/`·IDE 설정·생성 솔루션/프로젝트·캐시·비밀정보는 커밋하지 않는다. 정리는 작업 종료 절차이며 상시 감시기·예약 작업·Git hook을 설치하지 않는다.
+생성물은 `.gitignore`에 등록하고 임시 파일은 Assets 밖에 둔다. `Library/`·`Temp/`·`Logs/`·`UserSettings/`·`output/`·`backups/`·IDE 설정·생성 솔루션/프로젝트·캐시·비밀정보는 커밋하지 않는다. 정리는 작업 종료 절차이며 상시 감시기·예약 작업·Git hook을 설치하지 않는다.
 
 ## 7. 검증과 PR
 

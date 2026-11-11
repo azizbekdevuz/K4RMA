@@ -12,8 +12,8 @@ using UnityEngine;
 // automatic importer: original sprites, GUIDs and slices are not touched.
 public static class KarmaSW02SpriteImportChecks
 {
-    public const string Sheet = "Assets/K4RMA/Arts/Bosses/SwordWave/Characters/SW02/Wave_SW02_Transitions.png";
-    const string Library = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/Resources/BossArtwork/KarmaSwordBossSprites.asset";
+    public const string Sheet = "Assets/Arts/Resources/SwordWave/SW02/Wave_SW02_Transitions.png";
+    const string Library = "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     [Serializable] public sealed class Polygon { public Vector2[] points; }
     [Serializable] public sealed class Frame { public string name; public float x, y, pivotX, pivotY; public Polygon[] outlines; }
     [Serializable] public sealed class Frames { public Frame[] frames; }

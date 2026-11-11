@@ -38,7 +38,7 @@ public static class KarmaSW02AnimationChecks
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Baseline", original);
         SessionState.SetBool(Key + ".RenderOnly", false);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
     }
     static void Pump()
     {

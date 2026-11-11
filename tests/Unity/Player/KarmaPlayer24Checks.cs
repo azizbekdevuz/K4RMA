@@ -37,7 +37,7 @@ public static class KarmaPlayer24Checks
         }
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static async Task Await(Func<bool> condition, string message)
@@ -177,7 +177,7 @@ public static class KarmaPlayer24Checks
         var sequences=(Dictionary<string,Sprite[]>)typeof(KarmaCharacterAnimator).GetField("playerSequences",F).GetValue(animator);
         var rate=typeof(KarmaCharacterAnimator).GetField("playerSampleRate",F);
         var sample=typeof(KarmaCharacterAnimator).GetMethod("SamplePlayerClip",F);
-        var legacy=Resources.Load<KarmaSpriteLibrary>("PlayerAnimation/Frames");
+        var legacy=Resources.Load<KarmaSpriteLibrary>("Player/Animation/Frames");
         var saved=new Dictionary<string,Sprite[]>(sequences);
         double Measure(KarmaSpriteLibrary library,float fps)
         {
@@ -251,14 +251,14 @@ public static class KarmaPlayer24Checks
             var startupCache=(Dictionary<string,Sprite[]>)typeof(KarmaCharacterAnimator).GetField("playerSequences",F).GetValue(animator);
             Check(startupCache.Count<=5,"Normal startup loads only requested actions, not all CC/ending sheets");
             Debug.Log("PLAYER24 STARTUP: cached actions="+startupCache.Count);
-            var library = Resources.Load<KarmaSpriteLibrary>("PlayerAnimation24/Frames");
+            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation24/Frames");
             Check(library.sheets.Length == KarmaPrototype.EditorTools.KarmaPlayer24AnimationAssets.Names.Length + 3, "All native actions and compatibility aliases exist");
             foreach (var enemy in game.Enemies) enemy.gameObject.SetActive(false);
             player.enabled = false;
             var scale = picture.transform.localScale;
             foreach (var sheet in library.sheets)
             {
-                var clip = Resources.Load<AnimationClip>("PlayerAnimation24/" + sheet.id);
+                var clip = Resources.Load<AnimationClip>("Player/Animation24/" + sheet.id);
                 Check(clip.frameRate == 24, sheet.id + " is authored at 24 FPS");
                 var setting = AnimationUtility.GetAnimationClipSettings(clip);
                 Check(Mathf.Abs(setting.stopTime - sheet.sprites.Length / 24f) < 0.001f, sheet.id + " duration preserved");

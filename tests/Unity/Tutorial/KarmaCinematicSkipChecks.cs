@@ -35,7 +35,7 @@ public static class KarmaCinematicSkipChecks
         SessionState.SetBool(Pending + ".Background", Application.runInBackground);
         SessionState.SetBool(Pending, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static void Check(bool ok, string message) { checks++; if (!ok) throw new Exception(message); }
@@ -192,7 +192,7 @@ public static class KarmaCinematicSkipChecks
             map = (InputActionMap)typeof(KarmaInput).GetField("map", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
             map.devices = new[] { keyboard }; bindings = map.SaveBindingOverridesAsJson(); map.RemoveAllBindingOverrides();
             log = (message, stack, type) => {
-                if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/K4RMA/")
+                if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Scripts/")
                     && !message.StartsWith("Not allowed to override geometry")) runtimeError = message;
             };
             Application.logMessageReceived += log;

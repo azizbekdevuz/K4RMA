@@ -71,7 +71,7 @@ public static class KarmaSwordWallCounterChecks
         SessionState.SetBool(Key + ".Baseline", before); SessionState.SetBool(Key, true);
         SessionState.SetString(Key + ".Run", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static async void Run()
@@ -89,7 +89,7 @@ public static class KarmaSwordWallCounterChecks
             SessionState.SetString("K4RMA.OverhaulChecks.Run", runId); Directory.CreateDirectory("output/overhaul-updated/" + runId);
             typeof(KarmaSwordPolishPlayChecks).GetField("runId", F).SetValue(null, runId); Directory.CreateDirectory("output/polish/" + runId);
             Application.logMessageReceived += (message, stack, type) =>
-            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/K4RMA/")) runtimeError = message + "\n" + stack; };
+            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message + "\n" + stack; };
             await MeasureScars(false); await MeasureScars(true);
             if (!baseline)
             {

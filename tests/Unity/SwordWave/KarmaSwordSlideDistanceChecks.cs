@@ -65,7 +65,7 @@ public static class KarmaSwordSlideDistanceChecks
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Baseline", before);
         SessionState.SetString(Key + ".Run", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity"); EditorApplication.EnterPlaymode();
     }
     [Serializable] sealed class Row { public string scenario, kind, stop; public float direction, requested, planned, actual, seconds, peakSpeed; public int frames; }
     [Serializable] sealed class Metrics { public int left, right, attacks, failures, consecutiveEvades, reached, targetStops, collisionStops, timeoutStops, interruptedStops, inFlight; public float maxIdleSeconds; public List<Row> moves = new List<Row>(); }
@@ -259,7 +259,7 @@ public static class KarmaSwordSlideDistanceChecks
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             foreach (var t in new[] { typeof(KarmaSwordPlayChecks), typeof(KarmaSwordRetreatDashPlayChecks), typeof(KarmaSwordOverhaulPlayChecks), typeof(KarmaSwordWallCounterChecks) }) t.GetField("game", F).SetValue(null, game);
             Set(game, "config", UnityEngine.Object.Instantiate(game.Config)); game.Config.playerHealth = 1000000;
-            Application.logMessageReceived += (m, s, t) => { if ((t == LogType.Error || t == LogType.Exception || t == LogType.Assert) && s.Contains("Assets/K4RMA/")) runtimeError = m + "\n" + s; };
+            Application.logMessageReceived += (m, s, t) => { if ((t == LogType.Error || t == LogType.Exception || t == LogType.Assert) && s.Contains("Assets/Scripts/")) runtimeError = m + "\n" + s; };
             bool sw05Only = SessionState.GetBool(Key + ".SW05Only", false);
             bool presentationOnly = SessionState.GetBool(Key + ".PresentationOnly", false);
             if (sw05Only) await CheckSW05();

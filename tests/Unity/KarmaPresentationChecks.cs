@@ -42,7 +42,7 @@ public static class KarmaPresentationChecks
         SessionState.SetBool(SymbolKey + ".Background", Application.runInBackground);
         SessionState.SetBool(SymbolKey, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static async Task SymbolsUntil(Func<bool> done)
@@ -77,7 +77,7 @@ public static class KarmaPresentationChecks
     {
         string verdict;
         Application.LogCallback log = (message, stack, type) => {
-            if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/K4RMA/")) symbolError = message;
+            if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Scripts/")) symbolError = message;
         };
         try
         {
@@ -164,7 +164,7 @@ public static class KarmaPresentationChecks
         var stage = new GameObject("Presentation checks");
         try
         {
-            var fallen = Resources.LoadAll<Sprite>("K4RMAArtwork/Characters/Guardians/Revival/Neutral")
+            var fallen = Resources.LoadAll<Sprite>("Neutral/Revival/Neutral")
                 .OrderBy(s => s.name).First();
             float silhouetteBottom = fallen.vertices.Min(v => v.y);
             float supportHeight = Support(fallen);

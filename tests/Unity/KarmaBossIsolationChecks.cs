@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using KarmaPrototype;
 using UnityEditor;
@@ -193,14 +194,14 @@ public static class KarmaBossIsolationChecks
     {
         var libraries = Resources.LoadAll<KarmaSpriteLibrary>("BossArtwork");
         Check(libraries.Length == 3, "Three independent boss sprite libraries import");
-        const string sharedParryPath = "Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Effects/Parry.png";
+        const string sharedParryPath = "Assets/Arts/Resources/Shared/Effects/Parry.png";
         var sharedParry = AssetDatabase.LoadAssetAtPath<Sprite>(sharedParryPath);
         Check(sharedParry != null, "Shared parry sprite imports");
-        Check(Resources.Load<Sprite>("K4RMAArtwork/Effects/Parry") == sharedParry, "Shared parry Resources path loads");
-        const string sharedAtlasPath = "Assets/K4RMA/Arts/Common/Resources/K4RMAArtwork/Characters/Guardians/ReferencePoses.png";
-        var sharedAtlas = Resources.LoadAll<Sprite>("K4RMAArtwork/Characters/Guardians/ReferencePoses");
+        Check(Resources.Load<Sprite>("Shared/Effects/Parry") == sharedParry, "Shared parry Resources path loads");
+        const string sharedAtlasPath = "Assets/Arts/Resources/Shared/ReferencePoses.png";
+        var sharedAtlas = Resources.LoadAll<Sprite>("Shared/ReferencePoses");
         Check(sharedAtlas.Length == 16, "Shared guardian atlas loads all sixteen cutouts");
-        foreach (var path in Directory.GetFiles("Assets/K4RMA/Arts", "*.png", SearchOption.AllDirectories))
+        foreach (var path in Directory.GetFiles("Assets/Arts", "*.png", SearchOption.AllDirectories))
         {
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path.Replace('\\', '/'));
             Check(texture != null && texture.width > 0 && texture.height > 0, "Optimized PNG imports: " + path);
@@ -219,7 +220,7 @@ public static class KarmaBossIsolationChecks
                     bool usesSharedParry = sheet.id == "BossStun" || (sheet.id == "RisingBossVFX" && pose == "Parry");
                     string source = AssetDatabase.GetAssetPath(sprite);
                     Check(sheet.id == "Inheritance" ? source == sharedAtlasPath : usesSharedParry ? sprite == sharedParry
-                        : source.StartsWith("Assets/K4RMA/Arts/Bosses/" + folder + "/"),
+                        : source.StartsWith("Assets/Arts/Resources/" + folder + "/"),
                         library.name + "/" + sheet.id + " uses its dedicated or shared image source");
                     Check(KarmaArtwork.Sprite(sheet.id, pose) == sprite, "Artwork routing resolves " + sheet.id + "/" + pose);
                     if (sheet.id == "Inheritance")
@@ -234,11 +235,47 @@ public static class KarmaBossIsolationChecks
             foreach (string kind in new[] { "Base", "Revival", "Inherited" })
             {
                 string key = kind == "Inherited" ? form + "Final" : form;
-                Check(Resources.LoadAll<Sprite>("K4RMAArtwork/Characters/Guardians/" + kind + "/" + key).Length > 0,
+                Check(Resources.LoadAll<Sprite>(folder + "/" + (kind == "Revival" ? "Revival" : "Forms") + "/" + key).Length > 0,
                     "Animation Resources path survives move: " + kind + "/" + key);
             }
+            Check(KarmaArtwork.InheritedPoses(form).Length == 0, "Base form is not an inherited pose set: " + form);
+            foreach (string path in Directory.GetFiles("Assets/Arts/Resources/" + folder + "/Forms", "*.png"))
+            {
+                string key = Path.GetFileNameWithoutExtension(path);
+                if (key == form) continue;
+                var expected = Resources.LoadAll<Sprite>(folder + "/Forms/" + key);
+                var actual = KarmaArtwork.InheritedPoses(key);
+                Check(expected.Length > 0 && actual.Length == expected.Length
+                    && actual.All(expected.Contains), "Inherited form preserves all poses: " + key);
+            }
         }
+        Check(KarmaArtwork.InheritedPoses("Neutral").Length == 0, "Neutral form is not an inherited pose set");
+        Check(KarmaArtwork.InheritedPoses(null).Length == 0 && KarmaArtwork.InheritedPoses("Unknown").Length == 0,
+            "Missing inherited form remains an empty pose set");
+        CheckResourcePaths();
         Check(KarmaArtwork.Sprite("GuardianVFX", "Wave") != null, "Shared boss effects remain available");
+    }
+    static void CheckResourcePaths()
+    {
+        int loaded = 0;
+        foreach (string root in new[] { "Assets/Arts/Resources", "Assets/Data/Resources", "Assets/Audio/Resources" })
+        {
+            Check(Directory.Exists(root), "Resource owner folder exists: " + root);
+            foreach (string file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
+            {
+                string path = file.Replace('\\', '/');
+                if (path.EndsWith(".meta") || path.EndsWith(".hlsl") || Path.GetFileName(path).StartsWith(".")) continue;
+                var asset = AssetDatabase.LoadMainAssetAtPath(path);
+                Check(asset != null, "Resource imports: " + path);
+                string key = path.Substring(root.Length + 1);
+                key = key.Substring(0, key.Length - Path.GetExtension(key).Length);
+                Check(Resources.Load(key, asset.GetType()) == asset, "Resource key resolves exact asset: " + key);
+                if (asset is Material material)
+                    Check(material.shader != null && !ShaderUtil.ShaderHasError(material.shader), "Resource material compiles: " + key);
+                loaded++;
+            }
+        }
+        Check(loaded > 300, "Complete resource inventory checked: " + loaded);
     }
     sealed class NeutralOwnership : KarmaBossOwnershipFixture
     {

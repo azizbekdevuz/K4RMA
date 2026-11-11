@@ -34,7 +34,7 @@ public static class KarmaTutorialChecks
     }
     public static void RunBatch()
     {
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         SessionState.SetBool("K4RMA.TutorialBatch", true); Run();
     }
     public static void RunExitBatch() { SessionState.SetBool("K4RMA.TutorialExit", true); RunBatch(); }

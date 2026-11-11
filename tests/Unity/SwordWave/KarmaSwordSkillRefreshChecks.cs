@@ -49,7 +49,7 @@ public static class KarmaSwordSkillRefreshChecks
         SessionState.SetInt(Key + ".Stage", 0);
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     public static void RunRetreatAndLater() { RunBatch(); SessionState.SetInt(Key + ".Stage", 1); }
@@ -835,7 +835,7 @@ public static class KarmaSwordSkillRefreshChecks
         public void Dispose()
         {
             Check(sawDelay && sawIgnition && sawResidual,"real delayed aura ignition and residual light outliving sword fade");
-            Check(!ShaderUtil.ShaderHasError(Resources.Load<Material>("KarmaSwordRisePolish").shader),"split sword/aura shader compiles");
+            Check(!ShaderUtil.ShaderHasError(Resources.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish").shader),"split sword/aura shader compiles");
             Pass("SW03 separate aura: delayed ignition, independent renderer and residual beyond blade fade verified in Play Mode");
             Check(count>150 && costs.Count>10,"real-time warning/rise/active/fade and repeated-wave footage captured");
             costs.Sort();Pass("SW03 RENDER "+folder+" frames="+count+" 16-sword SubmitRenderRequest CPU ms median="+costs[costs.Count/2].ToString("F3")+" p95="+costs[(int)(costs.Count*0.95)].ToString("F3")+" (readback/PNG excluded; not GPU frame time)");
@@ -1413,7 +1413,7 @@ public static class KarmaSwordSkillRefreshChecks
                 sr.sprite = KarmaArtwork.Sprite("SwordBossVFX", pose); Check(sr.sprite != null, "linked " + pose);
                 sr.color = Color.white; sr.transform.position = -sr.sprite.bounds.center * (4.5f / Mathf.Max(sr.sprite.bounds.size.x, sr.sprite.bounds.size.y));
                 sr.transform.localScale = Vector3.one * (4.5f / Mathf.Max(sr.sprite.bounds.size.x, sr.sprite.bounds.size.y));
-                sr.sharedMaterial = Resources.Load<Material>(pose.StartsWith("SW05") ? "SW05/SW05CrimsonBlade" : pose == "SW03_RisingBlade_v7" ? "KarmaSwordRisePolish" : "KarmaSwordSkillPolish");
+                sr.sharedMaterial = Resources.Load<Material>(pose.StartsWith("SW05") ? "SwordWave/SW05/SW05CrimsonBlade" : pose == "SW03_RisingBlade_v7" ? "SwordWave/SW03/KarmaSwordRisePolish" : "SwordWave/Shared/KarmaSwordSkillPolish");
                 Check(sr.sharedMaterial != null && !UnityEditor.ShaderUtil.ShaderHasError(sr.sharedMaterial.shader), "valid shader " + pose);
                 RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
                 RenderTexture.active = rt; pixels.ReadPixels(new Rect(0, 0, 256, 256), 0, 0); pixels.Apply();
@@ -1509,7 +1509,7 @@ public static class KarmaSwordSkillRefreshChecks
                 }
                 await SW05();
                 if (!rainOnly && !vfxOnly) await JumpExplosion();
-                foreach (string material in new[] { "SW05/SW05Celestial", "SW05/SW05CrimsonBlade", "SW05/SW05EmbeddedWood" })
+                foreach (string material in new[] { "SwordWave/SW05/SW05Celestial", "SwordWave/SW05/SW05CrimsonBlade", "SwordWave/SW05/SW05EmbeddedWood" })
                 {
                     var asset = Resources.Load<Material>(material);
                     Check(asset != null && !UnityEditor.ShaderUtil.ShaderHasError(asset.shader),"SW05 shader compiles: " + material);

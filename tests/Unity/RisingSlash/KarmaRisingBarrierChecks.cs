@@ -51,7 +51,7 @@ public static class KarmaRisingBarrierChecks
     {
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     [MenuItem("K4RMA/상승베기형/파편 속도와 패링 검사")]
@@ -208,7 +208,7 @@ public static class KarmaRisingBarrierChecks
     static void Log(string message, string stack, LogType type)
     {
         if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert)
-            && stack.Contains("Assets/K4RMA/")) runtimeError = message;
+            && stack.Contains("Assets/Scripts/")) runtimeError = message;
     }
     static async void Run()
     {

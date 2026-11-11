@@ -26,7 +26,7 @@ public static class KarmaBossEntranceChecks
         SessionState.SetBool(Key,true);
         var view=EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView"));
         view.position=new Rect(50,50,1280,760);view.Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     [MenuItem("K4RMA/Artwork/Validate inherited boss names")]

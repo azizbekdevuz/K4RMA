@@ -74,7 +74,7 @@ public static class KarmaSwordRandomParryChecks
         SessionState.SetBool(Key + ".Baseline", before); SessionState.SetBool(Key, true);
         SessionState.SetString(Key + ".Run", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static Keyboard keyboard;
@@ -96,7 +96,7 @@ public static class KarmaSwordRandomParryChecks
             Application.logMessageReceived += (message, stack, type) =>
             {
                 if (message.StartsWith("[SW04]")) debugTrace.Add(scenario + " " + message);
-                if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/K4RMA/")) runtimeError = message + "\n" + stack;
+                if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message + "\n" + stack;
             };
             await ParryScenario("A-first-parry", 0, false, false, false);
             await ParryScenario("B-hit1-parry2", 1, false, false, false);

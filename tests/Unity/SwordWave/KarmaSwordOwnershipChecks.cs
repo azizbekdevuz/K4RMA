@@ -21,7 +21,7 @@ public sealed class KarmaSwordOwnershipChecks : KarmaBossOwnershipFixture
     {
         var profile = Resources.Load<KarmaSwordBossProfile>("KarmaSwordBossProfile");
         check(profile != null, "Sword profile imports");
-        check(Resources.Load<Material>("SW05/SW05CrimsonBlade") != null, "Sword material Resources path survives move");
+        check(Resources.Load<Material>("SwordWave/SW05/SW05CrimsonBlade") != null, "Sword material Resources path survives move");
         var first = new KarmaBossTuning(); var second = new KarmaBossTuning();
         check(Mathf.Approximately(first.sword.swordSpeed, 32), "Sword saved settings load");
         first.sword.swordSpeed = 123;

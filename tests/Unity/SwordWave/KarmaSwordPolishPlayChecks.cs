@@ -70,7 +70,7 @@ public static class KarmaSwordPolishPlayChecks
         SessionState.SetString(Key + ".Run", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static async void Run()
@@ -88,7 +88,7 @@ public static class KarmaSwordPolishPlayChecks
             SessionState.SetString("K4RMA.OverhaulChecks.Run", runId);
             Directory.CreateDirectory("output/overhaul-updated/" + runId);
             Application.logMessageReceived += (message, stack, type) =>
-            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/K4RMA/")) runtimeError = message + "\n" + stack; };
+            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message + "\n" + stack; };
             CheckDirections(); CheckLedge(); await Campaign();
             await Invoke(typeof(KarmaSwordOverhaulPlayChecks), "CheckCurves");
             await Invoke(typeof(KarmaSwordRetreatDashPlayChecks), "CheckBlocked");
@@ -240,7 +240,7 @@ public static class KarmaSwordPolishPlayChecks
                 if (node == null || captured) return;
                 overlay = node.GetComponent<SpriteRenderer>();
                 var source = Art.Find("Guardian sprite").GetComponent<SpriteRenderer>();
-                Check(overlay.enabled && overlay.color.a > 0.5f && overlay.sprite == source.sprite && overlay.sharedMaterial.name == "KarmaSwordRetreatEcho", "whole-body visible cyan confirmed-hit pulse");
+                Check(overlay.enabled && overlay.color.a > 0.5f && overlay.sprite == source.sprite && overlay.sharedMaterial.name == "SwordWave/Shared/KarmaSwordRetreatEcho", "whole-body visible cyan confirmed-hit pulse");
                 Check(overlay.transform.localPosition == source.transform.localPosition && overlay.transform.localRotation == source.transform.localRotation, "flash follows real rendered pose after LateUpdate");
                 Check(Enemy.Position == root && (float)Get(Enemy, "patternStarted") == pattern && (bool)Get(Enemy, "running") && !Enemy.Stunned, "visible hit never restarts/interrupts/moves attack");
                 captured = true; Shot("boss-confirmed-hit");

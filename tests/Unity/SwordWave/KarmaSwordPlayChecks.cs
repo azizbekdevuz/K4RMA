@@ -39,7 +39,7 @@ public static class KarmaSwordPlayChecks
         if (!SessionState.GetBool(BatchKey + ".SpacingOnly", false)) CompilePlayerScripts();
         var gameView = EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView"));
         gameView.Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static void CompilePlayerScripts()

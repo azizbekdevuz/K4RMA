@@ -40,7 +40,7 @@ public static partial class KarmaGuardPlayChecks
         EditorApplication.update += EditorApplication.QueuePlayerLoopUpdate;
         var gameView = EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView"));
         gameView.Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     public static void RunFeedbackBatch()

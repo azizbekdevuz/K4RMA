@@ -56,7 +56,7 @@ public static class KarmaSwordTempoRangeChecks
     {
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static async Task Dash(int direction, bool wall)
@@ -219,7 +219,7 @@ public static class KarmaSwordTempoRangeChecks
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             typeof(KarmaSwordPlayChecks).GetField("game", F).SetValue(null, game);
             Set(game, "config", UnityEngine.Object.Instantiate(game.Config)); game.Config.playerHealth = 1000000;
-            Application.logMessageReceived += (m, s, t) => { if ((t == LogType.Exception || t == LogType.Error || t == LogType.Assert) && s.Contains("Assets/K4RMA/")) error = m + "\n" + s; };
+            Application.logMessageReceived += (m, s, t) => { if ((t == LogType.Exception || t == LogType.Error || t == LogType.Assert) && s.Contains("Assets/Scripts/")) error = m + "\n" + s; };
             typeof(KarmaSwordPlayChecks).GetMethod("CheckNewArtworkImports", F).Invoke(null, null);
             foreach (int direction in new[] { -1, 1 }) { await Dash(direction, false); await Dash(direction, true); }
             foreach (var pattern in new[] { EnemyAttack.SW01, EnemyAttack.SW02 })

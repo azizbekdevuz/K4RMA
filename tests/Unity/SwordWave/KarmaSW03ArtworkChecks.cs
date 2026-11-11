@@ -15,7 +15,7 @@ public static class KarmaSW03ArtworkChecks
 {
     const string Output = "output/validation/sw03-artwork-20261105";
     const string Key = "K4RMA.SW03Artwork";
-    const string Library = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/Resources/BossArtwork/KarmaSwordBossSprites.asset";
+    const string Library = "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags F = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
     static KarmaGame game;
     static bool started, baseline;
@@ -50,7 +50,7 @@ public static class KarmaSW03ArtworkChecks
     {
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Before", before);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     public static void ImportArtwork()

@@ -31,7 +31,7 @@ public static class KarmaIntegrationChecks
     {
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static void Log(string message, string trace, LogType type)
@@ -57,7 +57,7 @@ public static class KarmaIntegrationChecks
             var animator = player.GetComponentInChildren<KarmaCharacterAnimator>(true);
             var nativeMode = typeof(KarmaCharacterAnimator).GetField("nativePlayer24", Hidden);
             bool originalNative = (bool)nativeMode.GetValue(animator);
-            Check(originalNative == (Resources.Load<TextAsset>("PlayerAnimation24/Ready") != null),
+            Check(originalNative == (Resources.Load<TextAsset>("Player/Animation24/Ready") != null),
                 "Preserve the repository's native animation activation gate");
             try
             {

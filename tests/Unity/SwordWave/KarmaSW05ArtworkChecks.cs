@@ -17,10 +17,10 @@ public static class KarmaSW05ArtworkChecks
 {
     const string Output = "output/validation/sw05-artwork-20261105";
     const string Key = "K4RMA.SW05Artwork";
-    const string Artwork = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/";
+    const string Artwork = "Assets/Arts/Resources/SwordWave/";
     public static string EffectPath(string name) => Artwork
         + (name.StartsWith("Sword_", StringComparison.Ordinal) ? "Shared" : name.Substring(0, 4)) + "/" + name + ".png";
-    const string Library = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/Resources/BossArtwork/KarmaSwordBossSprites.asset";
+    const string Library = "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
     static KarmaGame game;
     static bool started, baseline;
@@ -175,7 +175,7 @@ public static class KarmaSW05ArtworkChecks
     {
         SessionState.SetBool(Key, true); SessionState.SetBool(Key + ".Before", before);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     // Explicit editor operation for these two new assets only. Existing PNGs,
@@ -380,7 +380,7 @@ public static class KarmaSW05ArtworkChecks
             UnityEngine.Object.Destroy(probe.gameObject); Check(failure == null, failure);
             Check(data.shots.Count >= 16 && data.shots.Count <= 18 && ended.Count == data.shots.Count, "one complete dense group");
             Check(data.frames.Last().playerHealth < data.frames.First().playerHealth, "real descending blade damages player");
-            foreach (string material in new[] { "SW05/SW05Celestial", "SW05/SW05CrimsonBlade", "SW05/SW05EmbeddedWood" })
+            foreach (string material in new[] { "SwordWave/SW05/SW05Celestial", "SwordWave/SW05/SW05CrimsonBlade", "SwordWave/SW05/SW05EmbeddedWood" })
             { var mat = Resources.Load<Material>(material); Check(mat != null && !ShaderUtil.ShaderHasError(mat.shader), material + " compiles"); }
             File.WriteAllText(Output + "/" + (baseline ? "baseline" : "updated") + ".json", JsonUtility.ToJson(data, true));
             if (!baseline)

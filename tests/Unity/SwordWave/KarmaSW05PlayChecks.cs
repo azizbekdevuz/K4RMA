@@ -44,7 +44,7 @@ public static class KarmaSW05PlayChecks
     {
         SessionState.SetBool(Key, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
-        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
     static void Set(object target, string name, object value) { target.GetType().GetField(name, Private).SetValue(target, value); }
@@ -381,11 +381,11 @@ public static class KarmaSW05PlayChecks
             await CheckDamageContact();
             await CheckHealthGates();
             Check(runtimeError == null, "no runtime errors: " + runtimeError);
-            var material = Resources.Load<Material>("SW05/SW05Celestial");
+            var material = Resources.Load<Material>("SwordWave/SW05/SW05Celestial");
             Check(material != null && !UnityEditor.ShaderUtil.ShaderHasError(material.shader), "celestial material compiles");
-            var crimson = Resources.Load<Material>("SW05/SW05CrimsonBlade");
+            var crimson = Resources.Load<Material>("SwordWave/SW05/SW05CrimsonBlade");
             Check(crimson != null && !UnityEditor.ShaderUtil.ShaderHasError(crimson.shader), "crimson steel shader compiles");
-            var wood = Resources.Load<Material>("SW05/SW05EmbeddedWood");
+            var wood = Resources.Load<Material>("SwordWave/SW05/SW05EmbeddedWood");
             Check(wood != null && !UnityEditor.ShaderUtil.ShaderHasError(wood.shader), "wood floor clipping shader compiles");
             File.WriteAllText(Output + "/sw05-play-validation.txt", "PASS: " + assertions + " SW05 flight, rain, impact, completion and cancellation assertions\n");
             Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(0);

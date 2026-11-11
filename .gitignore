@@ -63,3 +63,6 @@ __pycache__/
 *.orig
 *.rej
 *~
+
+# Preserved local copies; never imported as Unity source
+/backups/

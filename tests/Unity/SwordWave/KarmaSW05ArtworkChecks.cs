@@ -18,6 +18,8 @@ public static class KarmaSW05ArtworkChecks
     const string Output = "output/validation/sw05-artwork-20261105";
     const string Key = "K4RMA.SW05Artwork";
     const string Artwork = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/";
+    public static string EffectPath(string name) => Artwork
+        + (name.StartsWith("Sword_", StringComparison.Ordinal) ? "Shared" : name.Substring(0, 4)) + "/" + name + ".png";
     const string Library = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
     static KarmaGame game;
@@ -87,7 +89,7 @@ public static class KarmaSW05ArtworkChecks
             while (poses.Count < sprites.Count) poses.Add(sprites[poses.Count].name);
             foreach (var name in names)
             {
-                string path = Artwork + name + ".png";
+                string path = EffectPath(name);
                 AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Multiple;
@@ -133,7 +135,7 @@ public static class KarmaSW05ArtworkChecks
             var sprites = sheet.sprites.ToList(); var poses = sheet.poses.ToList();
             foreach (string name in new[] { "SW04_OrbitingSwordGuard_16f", "SW04_OrbitingSwordGuard_Base", "SW05_HeavyJudgementSword_optional" })
             {
-                string path = Artwork+name+".png"; AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
+                string path = EffectPath(name); AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 importer.textureType = TextureImporterType.Sprite; importer.spritePixelsPerUnit = 100;
                 importer.mipmapEnabled = false; importer.alphaIsTransparency = true; importer.filterMode = FilterMode.Bilinear;
@@ -182,8 +184,8 @@ public static class KarmaSW05ArtworkChecks
     {
         try
         {
-            string swordPath = Artwork + "SW05JudgementSword_v2.png";
-            string impactPath = Artwork + "SW05GroundImpact_v2.png";
+            string swordPath = EffectPath("SW05JudgementSword_v2");
+            string impactPath = EffectPath("SW05GroundImpact_v2");
             foreach (string path in new[] { swordPath, impactPath })
             {
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);

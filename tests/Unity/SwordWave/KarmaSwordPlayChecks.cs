@@ -363,7 +363,7 @@ public static class KarmaSwordPlayChecks
         foreach (string pose in new[] { "Sword_Crescent_v6", "SW03_GroundScar_v7", "SW03_RisingBlade_v7",
             "SW04_CounterBlade_v6", "Sword_GuardRing_v6", "Sword_Impact_v6", "Sword_Release_v6", "Sword_Shard_v6" })
         {
-            string path = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/" + pose + ".png";
+            string path = KarmaSW05ArtworkChecks.EffectPath(pose);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             var sprite = KarmaWaveArtwork.Sprite(pose);
             Check(importer != null && sprite != null && sprite.name == pose, "library sprite imported: " + pose);

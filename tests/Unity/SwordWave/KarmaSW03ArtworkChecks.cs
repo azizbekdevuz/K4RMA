@@ -15,7 +15,6 @@ public static class KarmaSW03ArtworkChecks
 {
     const string Output = "output/validation/sw03-artwork-20261105";
     const string Key = "K4RMA.SW03Artwork";
-    const string Art = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/";
     const string Library = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags F = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
     static KarmaGame game;
@@ -62,7 +61,7 @@ public static class KarmaSW03ArtworkChecks
             var sprites = new List<Sprite>();
             foreach (string name in names)
             {
-                string path = Art + name + ".png";
+                string path = KarmaSW05ArtworkChecks.EffectPath(name);
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 importer.textureType = TextureImporterType.Sprite; importer.spritePixelsPerUnit = 100;

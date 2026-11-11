@@ -11,7 +11,7 @@ from PIL import Image, ImageChops, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "Assets/K4RMA/Arts/Bosses/RisingSlash/Resources/K4RMAArtwork/Characters/Guardians"
-DEST = ROOT / "Assets/K4RMA/Arts/Bosses/RisingSlash/Characters/Articulated/Resources/RisingAnimation"
+DEST = ROOT / "Assets/K4RMA/Arts/Bosses/RisingSlash/Resources/RisingAnimation"
 OUT = ROOT / "output/rising-animation"
 
 def source(form, pose):

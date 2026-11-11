@@ -81,7 +81,7 @@ public static class KarmaSwordFinalPolishChecks
     static void VerifyArt(KarmaBossAttack shot, EnemyAttack pattern)
     {
         var size = (Vector2)Get(shot, "size"); var velocity = (Vector2)Get(shot, "velocity");
-        string pose = pattern == EnemyAttack.SW03 ? "SW03_RisingBlade_v5" : KarmaWaveArtwork.Pose(pattern);
+        string pose = KarmaWaveArtwork.Pose(pattern);
         var core = KarmaWaveArtwork.CorePixels(pose); var sr = shot.Visual;
         Check(sr.sprite == KarmaWaveArtwork.Sprite(pose), "released shot uses expected final sprite");
         Check(Mathf.Abs(sr.transform.localScale.x * core.width / sr.sprite.pixelsPerUnit - size.x) < 0.002f,
@@ -93,22 +93,15 @@ public static class KarmaSwordFinalPolishChecks
             Check(sr.flipX == (velocity.x < 0) && !sr.flipY, "horizontal crescent mirrors without vertical inversion");
         if (pattern == EnemyAttack.SWBasic && velocity.sqrMagnitude < 0.01f)
             Check(sr.flipX == (Enemy.Facing < 0) && !sr.flipY, "stationary melee arc faces its committed attack direction");
-        if (pattern == EnemyAttack.SW03)
-        {
-            Check(size == new Vector2(4.75f, 30), "SW03 physical 4.75 x 30 blade retained");
-            Vector2 basePixel = new Vector2(core.center.x, core.yMin);
-            Vector3 foot = sr.transform.TransformPoint((basePixel - sr.sprite.pivot) / sr.sprite.pixelsPerUnit);
-            Vector3 tip = sr.transform.TransformPoint((new Vector2(core.center.x, core.yMax) - sr.sprite.pivot) / sr.sprite.pixelsPerUnit);
-            Check(Mathf.Abs(foot.y) < 0.002f && Mathf.Abs(foot.x - shot.transform.position.x) < 0.002f,
-                "SW03 bright ground contact starts at the floor in the warned cell");
-            Check(tip.y <= Camera.main.transform.position.y + Camera.main.orthographicSize - 0.49f
-                && tip.y > foot.y + 5, "complete SW03 blade fits below the screen ceiling");
-            Check(sr.transform.Find("SW03 upward inner echo / no damage") == null, "no duplicate full-height echo renderer");
-            var light = sr.transform.Find("Attack radiance"); Check(light == null || !light.gameObject.activeInHierarchy, "no overlapping full-height glow columns");
-        }
+
     }
     static async Task Pattern(EnemyAttack pattern, float side, bool enraged = false, bool melee = false)
     {
+        if(pattern==EnemyAttack.SW03)
+        {
+            await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(enraged);
+            return;
+        }
         Reset(); Place(20 + side * (melee ? 5 : pattern == EnemyAttack.SWBasic ? 9 : 15));
         if (enraged) typeof(KarmaEnemy).GetProperty("Health").SetValue(Enemy, Enemy.MaxHealth * 0.2f);
         await Seconds(0.1f); Force(pattern);
@@ -132,7 +125,7 @@ public static class KarmaSwordFinalPolishChecks
                 if (attacks.Length > 0 && !rising)
                 {
                     rising = true; m.rounds++;
-                    if (pattern == EnemyAttack.SW03) { Check(attacks.Length == 20, "twenty simultaneous blades per round"); Shot(prefix + "-round-" + m.rounds); }
+
                 }
                 if (attacks.Length == 0) rising = false;
                 foreach (var shot in attacks) if (seen.Add(shot))
@@ -148,8 +141,8 @@ public static class KarmaSwordFinalPolishChecks
         };
         await Until(() => !(bool)Get(Enemy, "running") || error != null); probe.Before = probe.After = null; UnityEngine.Object.Destroy(probe.gameObject); Set(Enemy, "running", true);
         m.seconds = Enemy.FightSeconds - start; Check(error == null, error);
-        Check(m.shots == (pattern == EnemyAttack.SW03 ? 100 : pattern == EnemyAttack.SW01 ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
-        if (pattern == EnemyAttack.SW03) Check(m.rounds == 5, "normal/enraged five rounds");
+        Check(m.shots == (pattern == EnemyAttack.SW01 ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
+
         if (pattern == EnemyAttack.SW01) Check(both && m.heights[0] < m.heights[1] && Mathf.Abs(m.heights[0] - 2.1f) < 0.01f && Mathf.Abs(m.heights[1] - 6.6f) < 0.01f, "SW01 low then high, both visible in flight");
         if (pattern == EnemyAttack.SWBasic && melee) Check(seen.Count == 1, "one melee retains latched mode");
         Check(m.peakCosmetics <= KarmaSwordVfxPool.Capacity, "bounded sprite pool");

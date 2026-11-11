@@ -39,7 +39,7 @@ namespace KarmaPrototype
                 // Bottom is the bright ground-contact point, not the glow's tail.
                 case "SW03_RisingBlade_v6": return new Rect(162, 146, 700, 1344);
                 case "SW03_GroundScar_v7": return new Rect(75, 283, 2028, 180);
-                case "SW03_RisingBlade_v7": return new Rect(289, 130, 442, 1358);
+                case "SW03_RisingBlade_v7": return KarmaSwordScarRise.BladePixels;
                 case "SW03_HitCut_v7": return new Rect(113, 108, 1076, 1038);
                 case "SW04_CounterBlade_v6": return new Rect(46, 251, 2073, 244);
                 case "Sword_Impact_v6": return new Rect(41, 91, 398, 364);

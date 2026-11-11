@@ -100,7 +100,11 @@ namespace KarmaPrototype
             float before = player.Health;
             var hitPattern = sourcePattern ?? selected;
             behavior.ContactStarting(hitPattern, contact);
-            player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern), !contact.ParryWithoutRiposte);
+            if (behavior.TryPlayerCrowdControl(hitPattern, contact, out var crowdControl, out var seconds))
+                player.TakeCrowdControlHit(amount, crowdControl, seconds, Vector2.zero,
+                    behavior.CustomHitVisual(hitPattern), !contact.ParryWithoutRiposte);
+            else
+                player.TakeDamage(amount, behavior.CustomHitVisual(hitPattern), !contact.ParryWithoutRiposte);
             behavior.ContactResolved(hitPattern, contact, point, player.ParryCount != parries, player.Health < before);
             if (player.ParryCount != parries)
             {

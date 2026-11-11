@@ -3,7 +3,7 @@ using UnityEngine;
 namespace KarmaPrototype
 {
     // Flight shares the planner's equation. Planted swords stay harmless until
-    // the final volley explicitly detonates their pre-warned volumes.
+    // the final volley explicitly detonates them after the electrical charge.
     public sealed class KarmaSW05RainBlade : MonoBehaviour
     {
         KarmaGame game;
@@ -32,15 +32,16 @@ namespace KarmaPrototype
         }
         public Vector2 ExplosionSize => new Vector2(Mathf.Max(1.6f, shot.size.y * 1.8f), explosionHeight);
         public Vector2 ExplosionCenter => new Vector2(landing.x, ExplosionSize.y / 2);
+        // Presentation anchors follow the actual embedded blade, not blast bounds.
+        public Vector2 ElectricFoot => new Vector2(landing.x, 0.12f);
+        public Vector2 ElectricHilt => ElectricFoot - shot.velocity.normalized * (shot.size.x * 0.60f);
+        public float ElectricWidth => shot.size.y;
         public void ArmExplosion(float seconds = 0.75f)
         {
             explosionArmed = true; explosionWarning = seconds;
             if (!Landed) return;
-            if (warning != null) return;
-            warning = KarmaSW05VFX.Warning(transform.parent, game, new Vector2(landing.x, 0.12f),
-                new Vector2(ExplosionSize.x, 0.32f));
-            warning.name = "SW05 planted explosion warning / locked footprint";
-            KarmaSW05VFX.EmphasizeExplosion(warning);
+            // Keep falling warnings until landing. Final charge uses local
+            // electricity only; collision geometry stays in ExplosionSize/Center.
             if (planted != null) planted.ChargePlanted(seconds);
         }
         public void Explode(KarmaAttackContact sharedContact)

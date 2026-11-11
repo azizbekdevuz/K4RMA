@@ -93,6 +93,11 @@ namespace KarmaPrototype
                 KarmaVisuals.Flash(owner.game.World, owner.Position, Vector2.one * KarmaSpace.Units(0.7f), Color.white, 0.1f);
             }
             public virtual bool CustomHitVisual(EnemyAttack pattern) { return false; }
+            // Opt in per contact; the damage-inclusive player API still decides
+            // whether defenses reject the hit and whether CC can be applied.
+            public virtual bool TryPlayerCrowdControl(EnemyAttack pattern, KarmaAttackContact contact,
+                out KarmaPlayer.CrowdControlKind kind, out float seconds)
+            { kind = default; seconds = 0; return false; }
             public virtual void ContactStarting(EnemyAttack pattern, KarmaAttackContact contact) { }
             public virtual void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged) { }
             public virtual bool Armored { get { return false; } }

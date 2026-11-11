@@ -169,10 +169,10 @@ namespace KarmaPrototype
                     bool nearMelee = tooClose || distance < Settings.pressureRetreatStartDistance
                         && !behavior.BasicMeleeCanReach(owner.Position, owner.game.Player.Position);
                     bool repositionOpportunity = !pressure && !nearMelee && distance <= behavior.BasicWaveRange + 3;
-                    // Never evade on spawn. A completed action and the existing
-                    // cooldown are required before each single spacing step.
+                    // Ordinary combat still requires a completed action. The live
+                    // SW03 timeline permits evasion-only steps on the same cooldown.
                     if ((!pressure && !nearMelee && !repositionOpportunity)
-                    || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat)
+                    || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat && !behavior.EvasionOnly)
                     return false;
                     // Slightly favor another spacing step after an attack. This roll
                     // only offers an action; ChooseRetreat always picks away.

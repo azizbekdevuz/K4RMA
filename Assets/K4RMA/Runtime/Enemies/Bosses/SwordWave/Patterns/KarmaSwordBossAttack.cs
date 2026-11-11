@@ -8,7 +8,7 @@ namespace KarmaPrototype
         float aimedTravel;
         protected override bool Oriented { get { return oriented; } }
         protected override bool AttachTrail { get { return !aerialSword && !aimedSlash && !scar; } }
-        protected override bool AttachLaunch { get { return !aerialSword && !aimedSlash; } }
+        protected override bool AttachLaunch { get { return !aerialSword && !aimedSlash && !scar; } }
         protected override bool ApplyPatternVisual(SpriteRenderer renderer, string extraPose, Vector2 size, Vector2 velocity)
         {
             aerialSword = extraPose == "SW05_AerialSword";

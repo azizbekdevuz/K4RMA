@@ -107,9 +107,10 @@ namespace KarmaPrototype
             bool TrySelectSwordAttack(float distance, bool sight, bool escape, out EnemyAttack next)
             {
                 next = owner.previous;
+                if (ground.Running) return false;
                 // SW05 is a once-per-health-gate set piece. Its two triggers
                 // bypass ordinary cooldown/repeat rules after the current action.
-                if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed)
+                if (!ground.Running && owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed)
                 { next = EnemyAttack.SW05; return true; }
                 bool basic = Settings.Weights.swBasicWeight > 0 && owner.FightSeconds >= nextSwordBasic && sight && SwordAttackCanReach(EnemyAttack.SWBasic, owner.game.Player.Position);
                 // Due basics and retreat follow-ups remain readable guaranteed responses.
@@ -141,6 +142,7 @@ namespace KarmaPrototype
             }
             bool SwordCandidateAvailable(EnemyAttack candidate, Vector2 from, float distance, bool sight, bool escape)
             {
+                if (ground.Running) return false;
                 if (candidate == EnemyAttack.SW05) return ultimate.ThresholdPending && !counter.Formed;
                 if (candidate == EnemyAttack.SW01 && Settings.Weights.sw01Weight <= 0
                     || candidate == EnemyAttack.SW02 && Settings.Weights.sw02Weight <= 0
@@ -153,8 +155,10 @@ namespace KarmaPrototype
                 return Eligible(candidate, distance, sight, escape)
                 && SwordAttackCanReachFrom(candidate, from, owner.game.Player.Position);
             }
+            public bool EvasionOnly { get { return ground.Running; } }
             public bool HasSwordCandidate(Vector2 from)
             {
+                if (ground.Running) return false;
                 float distance = Mathf.Abs(owner.game.Player.Position.x - from.x);
                 bool escape = from.x > KarmaStage.ArenaLeft + 5 && from.x < KarmaStage.ArenaRight - 5;
                 bool sight = owner.ClearShot(from, owner.game.Player.Position);
@@ -168,6 +172,7 @@ namespace KarmaPrototype
             readonly SwordBossMovement movement;
             readonly SW04Pattern counter;
             readonly SW05Pattern ultimate;
+            readonly SW03Pattern ground;
             int swordSkillsSinceBasic;
             int consecutiveBasics;
             float nextSwordBasic;
@@ -178,7 +183,8 @@ namespace KarmaPrototype
             public bool PracticeHold;
 #endif
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
-            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
+            public override Sprite StunSprite { get { return stunFeedback != null && stunFeedback.Electrocuted ? null
+                : KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             [UnityEngine.Scripting.Preserve]
             public SwordBossBehavior(KarmaEnemy owner) : base(owner)
@@ -188,24 +194,29 @@ namespace KarmaPrototype
                 Register(EnemyAttack.SWBasic, new SWBasicPattern(owner, this));
                 Register(EnemyAttack.SW01, new SW01Pattern(owner, this));
                 Register(EnemyAttack.SW02, new SW02Pattern(owner, this));
-                Register(EnemyAttack.SW03, new SW03Pattern(owner, this));
+                ground = new SW03Pattern(owner, this);
+                Register(EnemyAttack.SW03, ground);
                 Register(EnemyAttack.SW04, counter);
                 ultimate = new SW05Pattern(owner, this);
                 Register(EnemyAttack.SW05, ultimate);
             }
             KarmaWaveMotion damageMotion;
+            KarmaSwordStunFeedback stunFeedback;
+            bool sw04ParryContact;
             public override void Initialize()
             {
                 persistentRoot = new GameObject("Sword persistent attacks").transform;
                 persistentRoot.SetParent(owner.effectsRoot, false);
                 owner.animator.ConfigureSwordPresentation();
                 damageMotion = owner.art.gameObject.AddComponent<KarmaWaveMotion>();
-                owner.gameObject.AddComponent<KarmaSwordStunFeedback>().Initialize(owner, owner.game, owner.art);
+                stunFeedback = owner.gameObject.AddComponent<KarmaSwordStunFeedback>();
+                stunFeedback.Initialize(owner, owner.game, owner.art);
                 movement.Initialize();
             }
             public override float ParryStunSeconds { get { return 2; } }
             public override void OnAttackParried(bool stun)
             {
+                bool electrical = sw04ParryContact; sw04ParryContact = false;
                 // Final inheritance resists parry stun, including contacts that
                 // already queued it in the host. The ultimate also stays committed.
                 if (owner.game.StageIndex == 3 || owner.running && owner.selected == EnemyAttack.SW05)
@@ -214,7 +225,7 @@ namespace KarmaPrototype
                 // Use the host's stun transition next Update. Stop emissions and
                 // live contacts now, including a separately owned SW04 volley.
                 owner.pendingParry = true;
-                if (owner.selected == EnemyAttack.SW03) owner.fullShield = false;
+                if (electrical) stunFeedback.ArmElectrocution();
                 owner.StopAllCoroutines();
                 foreach (Transform effect in owner.effectsRoot)
                     effect.gameObject.SetActive(false);
@@ -223,6 +234,22 @@ namespace KarmaPrototype
             { return damageMotion != null ? damageMotion.GetDamageBounds(renderer) : renderer.bounds; }
             public override void DamageFeedback(Vector2 point) { KarmaSwordHitFeedback.Show(owner.game.World, point, true); }
             public override bool CustomHitVisual(EnemyAttack pattern) { return pattern != EnemyAttack.SW05; }
+            KarmaAttackContact finalDetonationContact;
+            float finalDetonationUntil;
+            public void RegisterFinalDetonation(KarmaAttackContact contact)
+            {
+                finalDetonationContact = contact;
+                finalDetonationUntil = Time.time + KarmaSW05RainBlade.ExplosionActiveSeconds;
+            }
+            void ClearFinalDetonation() { finalDetonationContact = null; finalDetonationUntil = 0; }
+            bool IsFinalDetonation(KarmaAttackContact contact)
+                => contact != null && ReferenceEquals(contact, finalDetonationContact) && Time.time < finalDetonationUntil;
+            public override bool TryPlayerCrowdControl(EnemyAttack pattern, KarmaAttackContact contact,
+                out KarmaPlayer.CrowdControlKind kind, out float seconds)
+            {
+                kind = KarmaPlayer.CrowdControlKind.Shock; seconds = 0.75f;
+                return pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SW05 && IsFinalDetonation(contact);
+            }
             public override void ContactStarting(EnemyAttack pattern, KarmaAttackContact contact)
             { if (pattern == EnemyAttack.SW04) counter.TraceStarting(contact); }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
@@ -230,9 +257,14 @@ namespace KarmaPrototype
                 if (pattern == EnemyAttack.SW04)
                 {
                     counter.TraceResolved(contact);
-                    if (damaged) KarmaSW05Energy.WardBurst(owner.effectsRoot,owner.game,point,Vector2.up,2.5f,1);
-                    if (parried) counter.OnParried(contact);
+                    if (damaged)
+                    {
+                        KarmaSW05Energy.WardBurst(owner.effectsRoot,owner.game,point,Vector2.up,2.5f,1);
+                    }
+                    if (parried) { counter.OnParried(contact); sw04ParryContact = true; }
                 }
+                if (damaged && (pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SW05 && IsFinalDetonation(contact)))
+                    KarmaSwordElectrocution.ShowPlayer(owner.game);
                 if (damaged && CustomHitVisual(pattern) && pattern != EnemyAttack.SW03)
                 {
                     if (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
@@ -266,6 +298,7 @@ namespace KarmaPrototype
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.SW05; }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
+                if (ground.Running) return false;
                 if (!base.Eligible(attack, distance, sight, escape)) return false;
                 if (attack == EnemyAttack.SW01 || attack == EnemyAttack.SW03) return HasWaveRoom(distance);
                 return attack != EnemyAttack.SW02 || sight;
@@ -303,7 +336,13 @@ namespace KarmaPrototype
 #if UNITY_EDITOR
                 if (PracticeHold) return true;
 #endif
-                if (owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed) return false;
+                if (!ground.Running && owner.attacks.Contains(EnemyAttack.SW05) && ultimate.ThresholdPending && !counter.Formed) return false;
+                if (ground.Running)
+                {
+                    // Keep spacing live without handing the action slot to any
+                    // attack. The next ordinary decision is due as soon as it ends.
+                    movement.Tick(dt, dx); owner.timer = 0; return true;
+                }
                 return movement.Tick(dt, dx);
             }
             public override void OnSelected()
@@ -321,6 +360,7 @@ namespace KarmaPrototype
             }
             public override void OnCompleted()
             {
+                ClearFinalDetonation();
                 movement.OnCompleted();
                 consecutiveBasics = owner.selected == EnemyAttack.SWBasic ? consecutiveBasics + 1 : 0;
                 if (owner.selected != EnemyAttack.SWBasic)
@@ -328,7 +368,11 @@ namespace KarmaPrototype
             }
             public override float DecisionDelay { get { return IsUltimate(owner.selected) ? base.DecisionDelay : base.DecisionDelay * Mathf.Clamp(Settings.swordDecisionMultiplier, 0.25f, 1.5f); } }
             public override float RetryDelay { get { return Mathf.Max(0.05f, Settings.swordSelectionRetry); } }
-            public override void Tick() { counter.Tick(); movement.ObservePressure(); }
+            public override void Tick()
+            {
+                if (finalDetonationContact != null && Time.time >= finalDetonationUntil) ClearFinalDetonation();
+                counter.Tick(); movement.ObservePressure();
+            }
             public override void OnDamaged()
             {
                 movement.RememberSwordPressure(); counter.OnDamaged();
@@ -347,6 +391,7 @@ namespace KarmaPrototype
             public void CounterContactResolved(KarmaAttackContact contact) { counter.TraceResolved(contact); }
             public override void Interrupt(bool preservePressure)
             {
+                ClearFinalDetonation();
                 base.Interrupt(preservePressure); movement.Interrupt(preservePressure);
                 KarmaAudio.StopSlot("sw-bed");
                 KarmaAudio.StopSlot("sw-pattern");

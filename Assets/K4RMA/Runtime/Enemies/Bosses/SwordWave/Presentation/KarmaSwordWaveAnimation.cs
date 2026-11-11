@@ -111,7 +111,12 @@ namespace KarmaPrototype
         }
         void DrawEnergy(float dt)
         {
-            if (energy != null) energy.Draw(transform.position, age, duration, dt);
+            if (energy == null) return;
+            var camera = game.GameCamera;
+            float unitsPerPixel = camera != null && camera.orthographic && camera.pixelHeight > 0
+                ? 2 * camera.orthographicSize / camera.pixelHeight : 0;
+            energy.ConfigureVisual(picture.bounds, transform.position, unitsPerPixel);
+            energy.Draw(transform.position, age, duration, dt);
         }
         void ReturnEnergy()
         {
@@ -248,6 +253,9 @@ namespace KarmaPrototype
             readonly MeshRenderer renderer;
             SwordEnergyPhase phase;
             Vector2 size;
+            Vector2 electricSize, electricOffset;
+            float electricWidth;
+            uint arcSeed;
             Vector2 swordOffset;
             Vector3 center;
             float facing, age, power, nextSpark, slashSign;
@@ -289,13 +297,40 @@ namespace KarmaPrototype
                 float direction, Vector3 at, int layer, int order, uint serial)
             {
                 Owner = owner; phase = mode; heavy = strong; aiming = tracking; size = footprint; facing = direction;
-                seed = serial * 747796405u; age = nextSpark = 0; cursor = 0; center = at;
+                seed = serial * 747796405u; arcSeed = seed; age = nextSpark = 0; cursor = 0; center = at;
+                electricSize = size; electricOffset = Vector2.zero; electricWidth = size.y * 0.02f;
                 swordOffset = Vector2.zero; slashSign = 1;
                 System.Array.Clear(motes, 0, motes.Length);
                 renderer.sortingLayerID = layer; renderer.sortingOrder = order;
                 node.transform.position = at; node.SetActive(true); Active = true;
                 if (phase == SwordEnergyPhase.Release || phase == SwordEnergyPhase.Impact || phase == SwordEnergyPhase.Dissipate)
-                    Emit(heavy ? 32 : 20, phase == SwordEnergyPhase.Dissipate ? 9 : heavy ? 24 : 16);
+                    Emit(phase == SwordEnergyPhase.Dissipate ? (heavy ? 2 : 1) : (heavy ? 4 : 2),
+                        phase == SwordEnergyPhase.Dissipate ? 1.2f : heavy ? 2.6f : 2.0f);
+            }
+            public void ConfigureVisual(Bounds bounds, Vector3 origin, float unitsPerPixel)
+            {
+                // Measure the unchanged SpriteRenderer, including its parent scale.
+                // Match Paint's authored core fractions; transparent margins are not blade width.
+                if (phase == SwordEnergyPhase.Charge) return;
+                Vector2 fraction = phase == SwordEnergyPhase.Flight
+                    ? (heavy ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f)) : new Vector2(0.74f, 0.74f);
+                electricSize = Vector2.Scale((Vector2)bounds.size, fraction);
+                electricOffset = (Vector2)(bounds.center - origin);
+                // Core spans 0.72 * width: target ~1.5/1.9 screen pixels,
+                // capped to 3.5% of blade height at unusually distant zooms.
+                electricWidth = Mathf.Min(electricSize.y * 0.035f,
+                    Mathf.Max(electricSize.y * (heavy ? 0.020f : 0.016f), unitsPerPixel * (heavy ? 2.65f : 2.1f)));
+            }
+            float CrackleFlicker(int line, int point)
+            {
+                uint tick = (uint)(age * 12 + line * 0.37f);
+                return Noise(arcSeed + (uint)(line * 199 + point * 31) + tick * 977) * 2 - 1;
+            }
+            Vector2 ElectricEdge(float t)
+            {
+                float y = t * 2 - 1;
+                return electricOffset + new Vector2(facing * electricSize.x * (0.395f - 0.54f * y * y),
+                    electricSize.y * y * 0.48f);
             }
             public void ConfigureRelease(Vector2 sword, float sweep)
             { swordOffset = sword - (Vector2)center; slashSign = sweep; }
@@ -329,7 +364,7 @@ namespace KarmaPrototype
                 // Explicit bounds avoid a scan over invisible buffer slots.
                 mesh.bounds = new Bounds(Vector3.zero, new Vector3(42, 34, 2));
             }
-            void Ribbon(float width, Color color, bool angular = false)
+            void Ribbon(float width, Color color, bool angular = false, float core = 0.16f)
             {
                 if (stroke >= Strokes) return;
                 int start = stroke++ * VerticesPerStroke;
@@ -342,7 +377,7 @@ namespace KarmaPrototype
                     float fade = Mathf.Sin(t * Mathf.PI);
                     for (int lane = 0; lane < Lanes; lane++)
                     {
-                        float offset = lane == 0 ? -1 : lane == 1 ? -0.16f : lane == 2 ? 0.16f : 1;
+                        float offset = lane == 0 ? -1 : lane == 1 ? -core : lane == 2 ? core : 1;
                         int v = start + p * Lanes + lane;
                         vertices[v] = path[p] + normal * offset;
                         colors[v] = new Color(color.r, color.g, color.b, lane == 0 || lane == 3 ? 0 : color.a * fade);
@@ -390,12 +425,14 @@ namespace KarmaPrototype
                     float joint = p / (float)(Points - 1) * 4;
                     int a = Mathf.Min((int)joint, 3), b = a + 1;
                     Vector2 start = from + delta * (a * 0.25f)
-                        + normal * (a == 0 ? 0 : Flicker(key, a) * kink);
+                        + normal * (a == 0 ? 0 : CrackleFlicker(key, a) * kink);
                     Vector2 end = from + delta * (b * 0.25f)
-                        + normal * (b == 4 ? 0 : Flicker(key, b) * kink);
+                        + normal * (b == 4 ? 0 : CrackleFlicker(key, b) * kink);
                     path[p] = Vector2.Lerp(start, end, joint - a);
                 }
-                ElectricRibbon(width, alpha);
+                // One restrained cyan fringe and a screen-readable white-blue core.
+                Ribbon(width * 1.6f, Alpha(new Color(0.10f, 0.85f, 1.15f), alpha * 0.32f));
+                Ribbon(width * 0.8f, Alpha(new Color(0.85f, 1.1f, 1.3f), alpha), core: 0.45f);
             }
             void Crescent(Vector2 offset, Vector2 footprint, float width, float alpha, bool white)
             {
@@ -463,21 +500,24 @@ namespace KarmaPrototype
                 // bolt, chip and speed cut stays close to that silhouette.
                 Crescent(Vector2.zero, size, 0.11f, power * 0.95f, true);
                 if (!heavy) StaggeredMantle();
-                int arcs = heavy ? 8 : 6;
+                // Three/four staggered branches remain visible while individual
+                // kinks change at 12 Hz. Never gate the entire electrical edge off.
+                int arcs = heavy ? 4 : 3;
+                float ignition = 1 + Mathf.Clamp01(1 - age / 0.10f) * 0.20f;
                 for (int a = 0; a < arcs; a++)
                 {
-                    float span = heavy ? 0.13f : 0.18f;
-                    float head = Mathf.Repeat(age * (3.1f + a * 0.11f) + a * 0.17f, 1 - span);
-                    Vector2 inset = Vector2.left * facing * (a % 2 == 0 ? 0 : size.x * 0.05f);
-                    Vector2 start = Edge(head) + inset, end = Edge(head + span) + inset;
-                    BladeBolt(start, end, heavy ? 0.17f : 0.115f,
-                        power * (0.82f + 0.18f * Flicker(a, 9)), heavy ? 0.18f : 0.12f, a + 1);
-                    if (a % 2 == 0)
-                    {
-                        Vector2 branch = (start + end) * 0.5f;
-                        BladeBolt(branch, branch + new Vector2(-facing * (heavy ? 0.55f : 0.4f), Flicker(a, 5) * 0.24f),
-                            heavy ? 0.10f : 0.075f, power * 0.8f, 0.09f, a + 11);
-                    }
+                    float span = heavy ? 0.14f : 0.105f;
+                    float head = 0.08f + a * (0.84f - span) / (arcs - 1);
+                    float pulse = 0.70f + 0.30f * Mathf.Sin(age * (15 + a * 1.7f) + a * 2.1f + Noise(arcSeed) * 6);
+                    BladeBolt(ElectricEdge(head), ElectricEdge(head + span), electricWidth,
+                        Mathf.Min(1, (heavy ? 0.95f : 0.80f) * pulse * ignition), electricSize.y * (heavy ? 0.018f : 0.013f), a + 1);
+                }
+                if (heavy)
+                {
+                    // A compact blade-local tail, no world-space history or sag.
+                    Vector2 tail = ElectricEdge(0.48f);
+                    BladeBolt(tail, tail + new Vector2(-facing * electricSize.x * 0.16f, electricSize.y * 0.025f),
+                        electricWidth * 0.7f, 0.48f, electricSize.y * 0.012f, 17);
                 }
                 // Short horizontal blades flash in place along the moving wave.
                 // They have no history buffer, curve, sag or expanding ghost arc.
@@ -498,7 +538,10 @@ namespace KarmaPrototype
                     ElectricRibbon(heavy ? 0.16f : 0.115f, power * pulse);
                 }
                 if (age >= nextSpark)
-                { Emit(heavy ? 7 : 5, heavy ? 12 : 9); nextSpark = age + (heavy ? 0.025f : 0.04f); }
+                {
+                    Emit(heavy ? 2 : 1, heavy ? 2.2f : 1.6f);
+                    nextSpark = age + (heavy ? 0.075f : 0.11f) + Sample() * 0.035f;
+                }
             }
             void StaggeredMantle()
             {
@@ -580,7 +623,8 @@ namespace KarmaPrototype
                                 heavy ? 0.23f : 0.16f, fade * (1 - u * 0.4f), true);
                         }
                         if (flash > 0)
-                            Lightning(swordOffset, Vector2.zero, heavy ? 0.22f : 0.14f, flash, 0.45f, 51);
+                            BladeBolt(electricOffset, electricOffset + new Vector2(facing * electricSize.x * 0.22f, electricSize.y * 0.12f),
+                                electricWidth, flash * (heavy ? 1.0f : 0.85f), electricSize.y * 0.025f, 51);
                     }
                 }
                 else
@@ -588,14 +632,18 @@ namespace KarmaPrototype
                     Ring(Mathf.Lerp(0.45f, heavy ? 2.8f : 2.0f, Mathf.Sqrt(t)), 0.72f, age * 5,
                         fade * power, heavy ? 0.14f : 0.10f, 3);
                 }
-                int arcs = heavy ? 8 : 5;
+                // Confirmed impact gets a compact sharp discharge; expiry has
+                // only a small after-spark. Existing contact routing owns the outcome.
+                int arcs = dissolve ? (heavy ? 2 : 1) : (heavy ? 5 : 3);
                 for (int a = 0; a < arcs; a++)
                 {
                     float angle = a * 2.39996f + Noise(seed + (uint)a) * 0.8f;
                     Vector2 axis = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                    float radius = (0.65f + Mathf.Sqrt(t) * (heavy ? 3.4f : 2.3f)) * (dissolve ? 0.8f : 1);
-                    Lightning(axis * radius * 0.15f, axis * radius, (heavy ? 0.14f : 0.10f) * (1 - t),
-                        fade * power, 0.45f * (1 - t), a + 30);
+                    float radius = Mathf.Min(electricSize.x, electricSize.y) * (0.12f + Mathf.Sqrt(t) * (heavy ? 0.25f : 0.20f))
+                        * (dissolve ? 0.45f : 1);
+                    BladeBolt(electricOffset + axis * radius * 0.25f, electricOffset + axis * radius,
+                        electricWidth * (1 - t) * (dissolve ? 0.6f : 1),
+                        fade * (heavy ? 1.0f : 0.85f) * (dissolve ? 0.55f : 1), radius * 0.16f * (1 - t), a + 30);
                 }
             }
             void Emit(int count, float speed)
@@ -608,12 +656,12 @@ namespace KarmaPrototype
                     // Flight chips use blade-local coordinates and a very short
                     // life, so rapid projectile travel cannot stretch them into
                     // a detached stream. Impact fragments remain in world space.
-                    Vector2 at = flying ? Edge(Sample()) : (Vector2)center + axis * 0.18f;
-                    Vector2 velocity = flying ? new Vector2(-facing * (4 + Sample() * speed * 0.35f), axis.y * speed * 0.18f)
+                    Vector2 at = flying ? ElectricEdge(0.08f + Sample() * 0.84f) : (Vector2)center + axis * 0.18f;
+                    Vector2 velocity = flying ? new Vector2(-facing * (0.3f + Sample() * speed * 0.35f), axis.y * speed * 0.18f)
                         : axis * speed * (0.35f + Sample() * 0.65f);
-                    motes[cursor] = new Mote { at = at, velocity = velocity, life = flying ? 0.055f + Sample() * 0.035f : 0.16f + Sample() * 0.15f,
-                        length = flying ? 0.22f + Sample() * 0.42f : 0.25f + Sample() * 0.6f,
-                        width = heavy ? 0.10f : 0.075f, spin = (Sample() - 0.5f) * 14 };
+                    motes[cursor] = new Mote { at = at, velocity = velocity, life = flying ? 0.11f + Sample() * 0.045f : 0.10f + Sample() * 0.06f,
+                        length = size.y * (0.035f + Sample() * (heavy ? 0.035f : 0.025f)),
+                        width = heavy ? 0.8f : 0.65f, spin = (Sample() - 0.5f) * 14 };
                     cursor = (cursor + 1) % MoteCount;
                 }
             }
@@ -634,8 +682,8 @@ namespace KarmaPrototype
                         axis = new Vector2(axis.x * Mathf.Cos(angle) - axis.y * Mathf.Sin(angle),
                             axis.x * Mathf.Sin(angle) + axis.y * Mathf.Cos(angle));
                     }
-                    Segment(at, at - axis * mote.length * fade, mote.width * fade,
-                        Alpha(i % 3 == 0 ? White : Cyan, fade * power), angular: flying && i % 3 == 0);
+                    BladeBolt(at, at - axis * mote.length * fade, electricWidth * mote.width * fade,
+                        fade * (heavy ? 0.85f : 0.70f), mote.length * 0.12f, i + 80);
                 }
             }
             public void Stop() { Active = false; Owner = null; if (node != null) node.SetActive(false); }

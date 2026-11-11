@@ -152,6 +152,7 @@ K4RMA/
 │       │       │       │   │   └── ReferencePoses.png
 │       │       │       │   └── Player/
 │       │       │       │       ├── Actions.png
+│       │       │       │       ├── ParrySuccess.png
 │       │       │       │       ├── Additional.png
 │       │       │       │       ├── Locomotion.png
 │       │       │       │       └── Poses.png
@@ -160,6 +161,7 @@ K4RMA/
 │       │       │       │   ├── Hit.png
 │       │       │       │   ├── Parry.png
 │       │       │       │   ├── Personalization.png
+│       │       │       │   ├── ParrySuccess.png
 │       │       │       │   └── Player.png
 │       │       │       ├── Environments/
 │       │       │       │   ├── MountainDojo/
@@ -242,6 +244,7 @@ K4RMA/
 │       │   └── KarmaTypes.cs
 │       ├── Editor/
 │       │   ├── KarmaBossPractice.cs
+│       │   ├── KarmaPlayerAnimationAssets.Parry.cs
 │       │   └── KarmaPlayerAnimationAssets.cs
 │       ├── Resources/
 │       │   ├── PlayerAnimation/
@@ -292,6 +295,7 @@ K4RMA/
 │       │   │   ├── Bosses/
 │       │   │   │   ├── Guard/
 │       │   │   │   │   ├── Editor/
+│       │   │   │   │   │   ├── KarmaGuardAirborneAssets.cs
 │       │   │   │   │   │   └── KarmaGuardPracticeMenu.cs
 │       │   │   │   │   ├── Patterns/
 │       │   │   │   │   │   ├── GD01.cs
@@ -307,6 +311,7 @@ K4RMA/
 │       │   │   │   │   │   │   └── BossArtwork/
 │       │   │   │   │   │   │       └── KarmaGuardBossSprites.asset
 │       │   │   │   │   │   ├── KarmaCharacterAnimator.Guard.cs
+│       │   │   │   │   │   ├── KarmaGuardAirborneHit.cs
 │       │   │   │   │   │   ├── KarmaGuardDome.cs
 │       │   │   │   │   │   └── KarmaHeavyStrikeMotion.cs
 │       │   │   │   │   ├── Settings/
@@ -420,6 +425,7 @@ K4RMA/
 │       │   │   ├── Animation/
 │       │   │   │   ├── KarmaCharacterAnimator.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Empowerment.cs
+│       │   │   │   ├── KarmaCharacterAnimator.Parry.cs
 │       │   │   │   ├── KarmaCharacterAnimator.Player.cs
 │       │   │   │   └── KarmaCharacterAnimator.Guardian.cs
 │       │   │   ├── Artwork/

@@ -150,6 +150,7 @@ namespace KarmaPrototype
                     // Ground damage bypasses counter consumption; Stun cancels player attacks before the physical launch.
                     player.Stun(Mathf.Max(0.1f, Settings.slamStunSeconds));
                     player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.up * Mathf.Max(0.1f, Settings.slamKnockUpSpeed);
+                    KarmaGuardAirborneHit.Play(owner.game, player);
                     KarmaCombatVFX.SpawnSprite(owner.effectsRoot, player.Position, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one), 0.18f);
                 }
                 return true;

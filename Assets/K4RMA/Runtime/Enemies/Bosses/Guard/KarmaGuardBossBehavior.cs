@@ -14,7 +14,7 @@ namespace KarmaPrototype
             public bool PracticeHold;
 #endif
             new KarmaGuardBossSettings Settings { get { return owner.Tuning.guard; } }
-            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("BossStun", "Ward") ?? base.StunSprite; } }
+            public override Sprite StunSprite { get { return KarmaArtwork.Sprite("GuardStunStars", "Frame00"); } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
@@ -41,6 +41,8 @@ namespace KarmaPrototype
                 owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
+                owner.gameObject.AddComponent<KarmaGuardStunStars>().Initialize(owner.game,
+                    owner.art.GetComponentInChildren<SpriteRenderer>(), () => owner.stunCue);
             }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             {

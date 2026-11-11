@@ -40,5 +40,5 @@ MonoBehaviour:
     slamHeight: 2.88
     slamFinalHeight: 8.64
     slamDamageMultiplier: 1
-    slamKnockUpSpeed: 18
+    slamKnockUpSpeed: 24
     slamStunSeconds: 0.8

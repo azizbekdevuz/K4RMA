@@ -21,7 +21,7 @@ namespace KarmaPrototype
         [Header("GD04 전방 지면강타")]
         [Min(0.1f)] public float slamRange = 12 * KarmaSpace.Scale, slamHeight = 1.44f * KarmaSpace.Scale;
         [Min(0.1f)] public float slamFinalHeight = 4.32f * KarmaSpace.Scale;
-        [Min(0.1f)] public float slamDamageMultiplier = 1, slamKnockUpSpeed = 9 * KarmaSpace.Scale;
+        [Min(0.1f)] public float slamDamageMultiplier = 1, slamKnockUpSpeed = 12 * KarmaSpace.Scale;
         [Min(0.1f)] public float slamStunSeconds = 0.8f;
         [Header("GD05 결계")]
         [Range(2, 25)] public float trialDuration = 9;

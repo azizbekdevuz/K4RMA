@@ -21,6 +21,7 @@ namespace KarmaPrototype
         void SamplePlayerClip(string name, bool restart = false)
         {
             if (picture == null) return;
+            if (name == "Riposte" && SampleParrySuccess(restart)) return;
             if (!playerClips.TryGetValue(name, out var clip) || !playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) { ShowPose(name); return; }
             if (restart || playerClip != name) { playerClip = name; playerClipAt = Time.time; }
             float elapsed = Mathf.Max(0, Time.time - playerClipAt);

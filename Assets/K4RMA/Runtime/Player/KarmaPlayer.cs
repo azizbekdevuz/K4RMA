@@ -59,6 +59,7 @@ namespace KarmaPrototype
             remnantHalo.enabled = techniques.CounterReady(Time.time);
             art.gameObject.SetActive(game.Phase == RunPhase.Transition || game.Phase == RunPhase.GuardianFallen
                 || game.Phase == RunPhase.PlayerFallen || game.Phase == RunPhase.Defeat
+                || animator.ParrySuccessVisible
                 || Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
             bool airborne = Airborne;
             Crouching = game.CanMove && !ControlLocked && !airborne && KarmaInput.Vertical < 0

@@ -93,11 +93,11 @@ namespace KarmaPrototype
             // The boss visibly receives the original power from offscreen before transforming.
             var entry = guardian ? new Vector2(0, radius * 1.8f) : new Vector2(0, radius * 0.85f);
             var orbPoint = Vector2.Lerp(entry, Vector2.zero, gather);
-            Show(orb, orbPoint, Mathf.Lerp(1.2f, 0.35f, gather) * (guardian ? 1.5f : 1), age * 12,
-                Color.white, (1 - Mathf.InverseLerp(0.45f, 0.6f, t)) * Mathf.Min(1, t * 8));
+            Show(orb, orbPoint, Mathf.Lerp(1.2f, 0.35f, gather) * (guardian ? 1.5f : 1), 0,
+                color, (1 - Mathf.InverseLerp(0.45f, 0.6f, t)) * Mathf.Min(1, t * 8));
             // Show one clear skill mark after the incoming power has been absorbed.
             Show(techniqueSymbol, Vector2.up * radius * 0.38f, radius * 0.55f, 0,
-                Color.white, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.6f, 0.68f, t)) * fade);
+                color, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.6f, 0.68f, t)) * fade);
         }
 
         void LateUpdate()

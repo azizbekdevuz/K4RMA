@@ -27,6 +27,7 @@ namespace KarmaPrototype
         public void NotifyUnique(Essence e)
         {
             lastProc[(int)e] = Time.time;
+            KarmaRemnantVFX.Proc(game, player.Position, player.Facing, e);
         }
         public bool JustTriggered(Essence e) { return Time.time - lastProc[(int)e] < 0.7f; }
         public IReadOnlyList<Essence> PersonalizationOrder { get { return progression.Order; } }

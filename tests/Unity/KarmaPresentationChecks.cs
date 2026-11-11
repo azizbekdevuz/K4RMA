@@ -112,9 +112,10 @@ public static class KarmaPresentationChecks
             foreach (Essence essence in Enum.GetValues(typeof(Essence)))
             {
                 symbolGame.Player.Essences.NotifyUnique(essence);
-                var proc = symbolGame.World.Find("Personalization symbol " + essence);
-                Check(proc == null && symbolGame.Player.Essences.JustTriggered(essence),
-                    "Skill use updates HUD feedback without an extra world symbol");
+                string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
+                var proc = symbolGame.World.Find("PersonalizationVFX/" + pose);
+                Check(proc != null && symbolGame.Player.Essences.JustTriggered(essence),
+                    "Original skill-use artwork and HUD feedback are restored");
                 await SymbolCapture("proc-" + essence);
             }
             var members = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
@@ -179,14 +180,40 @@ public static class KarmaPresentationChecks
                         if (t == 0.75f) check(symbol.color.a > 0.9f, "Skill mark is visible during awakening");
                         check(Mathf.Abs(symbol.transform.localScale.x - symbol.transform.localScale.y) < 0.001f,
                             "Skill mark preserves proportions");
+                        check(Quaternion.Angle(incoming.transform.rotation, Quaternion.identity) < 0.001f
+                            && Quaternion.Angle(symbol.transform.rotation, Quaternion.identity) < 0.001f,
+                            "Incoming and awakening marks stay upright throughout the ceremony");
+                        var sigil = pictures.Single(p => p.name == "Absorbed sigil");
+                        check(symbol.color.r == sigil.color.r && symbol.color.g == sigil.color.g && symbol.color.b == sigil.color.b
+                            && incoming.color.r == sigil.color.r && incoming.color.g == sigil.color.g && incoming.color.b == sigil.color.b,
+                            "Both marks match the original awakening effect color");
                     }
                 }
                 finally { UnityEngine.Object.DestroyImmediate(root.gameObject); }
                 int children = game.World.childCount;
                 game.Player.Essences.ResetTemporaryState();
-                for (int i = 0; i < 2; i++) game.Player.Essences.NotifyUnique(essence);
-                check(game.World.childCount == children && game.Player.Essences.JustTriggered(essence),
-                    "Repeated skill use emits no extra world effect and preserves HUD feedback");
+                try
+                {
+                    for (int i = 0; i < 2; i++) game.Player.Essences.NotifyUnique(essence);
+                    string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
+                    var expected = KarmaArtwork.Sprite("PersonalizationVFX", pose);
+                    check(game.World.childCount == children + 4 && game.Player.Essences.JustTriggered(essence),
+                        "Repeated skill use preserves the original two-part effect and HUD feedback");
+                    for (int i = children; i < game.World.childCount; i++)
+                    {
+                        var fx = game.World.GetChild(i);
+                        var sprites = fx.GetComponentsInChildren<SpriteRenderer>();
+                        check(sprites.All(p => p.sprite != KarmaArtwork.SkillIcon(essence)), "No selection symbol added to skill use");
+                        if (fx.GetComponent<KarmaCombatVFX>() != null)
+                            check(expected != null && sprites.Where(p => p.name != "Spark").All(p => p.sprite == expected),
+                                "Original skill artwork is used for core, light and echo");
+                    }
+                }
+                finally
+                {
+                    while (game.World.childCount > children)
+                        UnityEngine.Object.DestroyImmediate(game.World.GetChild(game.World.childCount - 1).gameObject);
+                }
             }
         }
         finally { UnityEngine.Object.DestroyImmediate(actor); }

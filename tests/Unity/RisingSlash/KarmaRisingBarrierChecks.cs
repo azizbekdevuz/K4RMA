@@ -44,15 +44,25 @@ public static class KarmaRisingBarrierChecks
         UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
+    [MenuItem("K4RMA/상승베기형/파편 속도와 패링 검사")]
+    public static void RunFragmentsInEditor()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before validation.");
+        SessionState.SetBool(Key + ".FragmentsOnly", true);
+        SessionState.SetBool(Key + ".Editor", true);
+        SessionState.SetBool(Key + ".Background", Application.runInBackground);
+        RunBatch();
+    }
     static void Render()
     {
         var camera = game.GameCamera; var previous = camera.targetTexture; var active = RenderTexture.active;
+        var rect = camera.rect;
         try
         {
-            camera.targetTexture = target; camera.Render(); RenderTexture.active = target;
+            camera.targetTexture = target; camera.rect = new Rect(0, 0, 1, 1); camera.Render(); RenderTexture.active = target;
             image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0); image.Apply();
         }
-        finally { camera.targetTexture = previous; RenderTexture.active = active; }
+        finally { camera.targetTexture = previous; camera.rect = rect; RenderTexture.active = active; }
     }
     static void Capture(string name)
     { Render(); File.WriteAllBytes(Output + "/" + name + ".png", image.EncodeToPNG()); }
@@ -81,6 +91,63 @@ public static class KarmaRisingBarrierChecks
         Call(enemy, "InterruptPattern"); Set(enemy, "selected", pattern); Set(enemy, "direction", 1f);
         Set(enemy, "running", true); Set(enemy, "patternStarted", enemy.FightSeconds);
         enemy.StartCoroutine((IEnumerator)Call(enemy, "RunPattern"));
+    }
+    static void Burst()
+    {
+        var type = typeof(KarmaEnemy).GetNestedType("UP04Pattern", BindingFlags.NonPublic);
+        Call(Activator.CreateInstance(type, F, null, new object[] { enemy }, null), "Burst", enemy.Position);
+    }
+    static async Task CheckFragmentTuning()
+    {
+        Reset(true); Set(Get(enemy, "behavior"), "PracticeHold", true); Burst();
+        var shots = Root.GetComponentsInChildren<KarmaRisingFragmentAttack>();
+        int left = 0, right = 0, upper = 0;
+        foreach (var shot in shots)
+        {
+            var v = (Vector2)Get(shot, "velocity");
+            Check(v.y > 0, "Every fragment keeps its upward motion");
+            if (v.y / Mathf.Max(0.001f, Mathf.Abs(v.x)) < Mathf.Tan(20 * Mathf.Deg2Rad))
+            { if (v.x < 0) left++; else right++; }
+            else upper++;
+            float life = (float)Get(shot, "outboundLife");
+            Check(Mathf.Abs(life - 1.5f) < 0.001f, "Stored tuning gives a 1.5-second outbound flight");
+            var end = (Vector2)shot.transform.position + v * life;
+            Check(Vector2.Distance(end, enemy.Position) <= 35.01f
+                && end.x >= KarmaStage.ArenaLeft + 0.79f && end.x <= KarmaStage.ArenaRight - 0.79f
+                && end.y <= KarmaSpace.Units(7.4f) + 0.01f, "Faster rays retain their original range and wall/height limits");
+        }
+        Check(shots.Length == 14 && left == 4 && right == 4 && upper == 6,
+            "Four rays pressure each flank while six retain the upper fan");
+        float at = Time.time;
+        await Until(() => Time.time - at >= 0.25f); Capture("faster-flank-flight");
+        game.TogglePause();
+        var position = shots[0].transform.position; await Task.Delay(100);
+        Check(shots[0].transform.position == position, "Pause freezes the faster flight"); game.TogglePause();
+        await Until(() => Array.TrueForAll(shots, s => s == null || !s.gameObject.activeSelf));
+        Check(Time.time - at >= 1.45f && Time.time - at < 1.7f, "Actual shards expire at the shorter travel duration");
+        foreach (int side in new[] { -1, 1 })
+        {
+            Reset(true); Set(Get(enemy, "behavior"), "PracticeHold", true);
+            var point = new Vector2(enemy.Position.x + side * 5, KarmaSpace.PlayerHalfHeight);
+            game.Player.GetComponent<Rigidbody2D>().position = point; game.Player.transform.position = point;
+            Set(game.Player, "invulnerableUntil", 0f);
+            float health = game.Player.Health; Burst();
+            await Until(() => game.Player.Health < health);
+            Check(game.Player.Health < health, "Fast low-angle fragment hits the standing player on flank " + side);
+            Call(enemy, "InterruptPattern");
+            Check(Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 0, "Interruption clears every faster fragment");
+        }
+        foreach (var pattern in new[] { EnemyAttack.UP01, EnemyAttack.UP02 })
+        {
+            Reset(true); Set(Get(enemy, "behavior"), "PracticeHold", true);
+            if (pattern == EnemyAttack.UP01) enemy.transform.position += Vector3.up * KarmaSpace.Units(4);
+            Force(pattern);
+            await Until(() => Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 14);
+            Capture(pattern + "-flank-burst");
+            Call(enemy, "InterruptPattern");
+            Check(Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 0,
+                "Empowered " + pattern + " emits and cancels the adjusted fan");
+        }
     }
     static async Task CheckReflectedFragment(bool protectedBoss)
     {
@@ -146,6 +213,9 @@ public static class KarmaRisingBarrierChecks
             Application.logMessageReceived += Log;
             target = new RenderTexture(1280, 720, 24);
             image = new Texture2D(1280, 720, TextureFormat.RGBA32, false);
+            if (SessionState.GetBool(Key + ".FragmentsOnly", false)) await CheckFragmentTuning();
+            else
+            {
             Reset(false); Force(EnemyAttack.UP02);
             bool unwanted = false;
             await Until(() => { unwanted |= Barrier != null; return !(bool)Get(enemy, "running"); });
@@ -248,10 +318,14 @@ public static class KarmaRisingBarrierChecks
             Check(Barrier == null, "Cancellation removes forming sphere");
             Reset(true); Force(EnemyAttack.UP05); enemy.CancelCombat();
             Check(Barrier == null && !enemy.Invulnerable, "Cancellation clears UP05 sphere and immunity");
+            }
             await CheckReflectedFragment(false);
             await CheckReflectedFragment(true);
             Check(runtimeError == null, "No gameplay exceptions: " + runtimeError);
-            verdict = "PASS: " + checks + " rising barrier, reflected-shard parry, cleanup and invulnerability assertions; existing attack-warning geometry messages: " + existingWarningCount;
+            string scope = SessionState.GetBool(Key + ".FragmentsOnly", false)
+                ? " faster fragment flight, flank distribution, left/right damage, empowered UP01/UP02, reflected parry, pause and cleanup checks"
+                : " rising barrier, reflected-shard parry, cleanup and invulnerability assertions";
+            verdict = "PASS: " + checks + scope + "; existing attack-warning geometry messages: " + existingWarningCount;
         }
         catch (Exception ex) { verdict = "FAIL: " + ex; Debug.LogException(ex); }
         finally
@@ -261,7 +335,15 @@ public static class KarmaRisingBarrierChecks
             Time.captureDeltaTime = 0;
         }
         Directory.CreateDirectory(Output); File.WriteAllText(Output + "/result.txt", verdict);
-        SessionState.SetBool(Key, false); Debug.Log(verdict); EditorApplication.Exit(verdict.StartsWith("PASS:") ? 0 : 1);
+        Application.logMessageReceived -= Log;
+        SessionState.SetBool(Key, false); Debug.Log(verdict);
+        if (SessionState.GetBool(Key + ".Editor", false))
+        {
+            Application.runInBackground = SessionState.GetBool(Key + ".Background", false);
+            SessionState.EraseBool(Key + ".Editor"); SessionState.EraseBool(Key + ".FragmentsOnly");
+            EditorApplication.ExitPlaymode();
+        }
+        else EditorApplication.Exit(verdict.StartsWith("PASS:") ? 0 : 1);
     }
 }
 #endif

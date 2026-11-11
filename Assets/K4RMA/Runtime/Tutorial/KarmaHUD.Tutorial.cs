@@ -11,7 +11,8 @@ namespace KarmaPrototype
             var t = game.Tutorial;
             if (game.Paused) return;
             string Key(KarmaAction action) => KarmaInput.BindingLabel(action);
-            if (t.Fade > 0) { Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, t.Fade)); return; }
+            // Skip enters Fade at alpha zero, before a lesson may have been selected.
+            if (t.Step == KarmaTutorialStep.Fade) { Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, t.Fade)); return; }
             if (t.WaitingForGuard)
             {
                 Fill(new Rect(0, 0, 1280, 720), new Color(0.01f, 0.02f, 0.04f, 0.4f));

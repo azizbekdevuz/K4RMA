@@ -79,9 +79,10 @@ namespace KarmaPrototype
         }
         public static void Proc(KarmaGame game, Vector2 p, int facing, Essence essence)
         {
-            string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
-            var procVisual = KarmaCombatVFX.SpawnSprite(game.World, p, "PersonalizationVFX", pose,
-                KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, essence == Essence.SwordWave && facing < 0 ? 180 : 0);
+            var icon = KarmaArtwork.SkillIcon(essence);
+            var procVisual = icon != null ? KarmaCombatVFX.Burst(game.World, p, icon,
+                "Personalization symbol " + essence, KarmaSpace.Units(new Vector2(2.5f, 2)),
+                0.35f, essence == Essence.SwordWave && facing < 0 ? 180 : 0, game.Config.ColorOf(essence)) : null;
             if (procVisual != null && essence != Essence.SwordWave)
                 procVisual.transform.parent.localScale = new Vector3(facing, 1, 1);
             Color color = game.Config.ColorOf(essence);

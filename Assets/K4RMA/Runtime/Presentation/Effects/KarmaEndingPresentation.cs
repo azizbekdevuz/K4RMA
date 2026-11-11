@@ -12,7 +12,8 @@ namespace KarmaPrototype
         readonly SpriteRenderer[] symbols = new SpriteRenderer[3];
         readonly SpriteRenderer[] particles = new SpriteRenderer[48];
         readonly Vector3[] particleOrigins = new Vector3[48];
-        SpriteRenderer master, aura, convergence;
+        SpriteRenderer master, aura;
+        readonly SpriteRenderer[] convergence = new SpriteRenderer[3];
         MaterialPropertyBlock dissolveBlock;
         bool seeded, guardianFinished;
 
@@ -33,16 +34,20 @@ namespace KarmaPrototype
             }
             for (int i = 0; i < 3; i++)
             {
-                string pose = i == 0 ? "Pierce" : "AirSlash";
                 ending.symbols[i] = ending.Layer("Completed technique " + (Essence)i,
-                    i == 2 ? KarmaArtwork.Sprite("PlayerVFX", "Barrier") : KarmaArtwork.Sprite("PersonalizationVFX", pose),
+                    KarmaArtwork.SkillIcon((Essence)i),
                     i == 2 ? 2.6f : i == 1 ? 2f : 1.8f, 18);
             }
             for (int i = 0; i < ending.particles.Length; i++)
                 ending.particles[i] = ending.Layer("Guardian light " + i,
                     KarmaArtwork.Sprite("PersonalizationVFX", "Core"), 0.16f + i % 3 * 0.04f, 19);
             ending.aura = ending.Layer("Completed aura", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 5.5f, 4);
-            ending.convergence = ending.Layer("Three techniques united", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 3.5f, 17);
+            var united = new GameObject("Three techniques united").transform; united.SetParent(root.transform, false);
+            for (int i = 0; i < ending.convergence.Length; i++)
+            {
+                ending.convergence[i] = ending.Layer("United " + (Essence)i, KarmaArtwork.SkillIcon((Essence)i), 3.5f, 17);
+                ending.convergence[i].transform.SetParent(united, false);
+            }
             ending.master = KarmaTutorialStage.Picture(root.transform, "Master", Vector2.zero, new Vector2(4.39f, 4.8f), 10);
             ending.master.color = Color.clear;
             return ending;
@@ -76,9 +81,12 @@ namespace KarmaPrototype
                 color.a = appear * (1 - absorb) * 0.85f; symbols[i].color = color;
             }
             float joined = Ease(16.2f, 17.7f, t) * (1 - Ease(19, 20.5f, t));
-            convergence.transform.position = center;
-            convergence.transform.localRotation = Quaternion.Euler(0, 0, t * 18);
-            convergence.color = new Color(1, 0.92f, 0.64f, joined * 0.65f);
+            foreach (var symbol in convergence)
+            {
+                symbol.transform.position = center;
+                symbol.transform.localRotation = Quaternion.Euler(0, 0, t * 18);
+                symbol.color = new Color(1, 0.92f, 0.64f, joined * 0.32f);
+            }
             float halo = Ease(17.5f, 19.3f, t) * (1 - Ease(20, 21, t));
             float finalPulse = Ease(32.5f, 32.9f, t) * (1 - Ease(33.3f, 34.5f, t));
             aura.transform.position = center;

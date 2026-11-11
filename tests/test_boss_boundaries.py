@@ -15,12 +15,60 @@ def code(path):
     return re.sub(r'//[^\n]*|/\*.*?\*/|@?"(?:""|\\.|[^"\\])*"', '', text, flags=re.S)
 
 
+def owned_type_names(text):
+    """Names reachable without first referring to another boss-owned type.
+
+    A helper such as KarmaSW05VFX.Clip requires its owning type (or a using
+    static directive naming that owner). Checking the owner protects that
+    boundary without confusing unrelated Clip methods or Kind fields.
+    Members of shared partial hosts still need their own boundary checks.
+    """
+    result, scopes = set(), []
+    pending = None
+    for token in re.finditer(r'\b(?:class|struct|enum|interface)\s+(\w+)|[{}]', text):
+        if token.group(1):
+            pending = token.group(1)
+            if all(scope is None or scope in SHARED_PARTIALS for scope in scopes):
+                result.add(pending)
+        elif token.group() == '{':
+            scopes.append(pending)
+            pending = None
+        elif scopes:
+            scopes.pop()
+    return result - SHARED_PARTIALS
+
+
+class BossTypeDiscovery(unittest.TestCase):
+    def test_nested_helpers_do_not_claim_unrelated_identifiers(self):
+        owned = owned_type_names('''namespace Game {
+            class KarmaSW05VFX { public enum Clip { Charge } enum Kind { Glow } }
+            class KarmaSwordWaveAnimation { struct Mote { } }
+        }''')
+        common = 'target.Kind; AudioClip Clip() { return null; } struct Mote {}'
+        self.assertFalse(set(re.findall(r'\b\w+\b', common)) & owned)
+        for reference in ('KarmaSW05VFX.Clip', 'using static KarmaSW05VFX;',
+                          'new KarmaSwordWaveAnimation()'):
+            self.assertTrue(set(re.findall(r'\b\w+\b', reference)) & owned)
+
+    def test_types_in_shared_partial_hosts_remain_protected(self):
+        owned = owned_type_names('''namespace Game {
+            partial class KarmaEnemy {
+                class GD05Pattern { struct Mote {} }
+            }
+            partial class KarmaCharacterAnimator { class SwordMotion {} }
+            class KarmaGuardDome {}
+        }''')
+        self.assertEqual(owned, {'GD05Pattern', 'SwordMotion', 'KarmaGuardDome'})
+        for reference in ('new GD05Pattern()', 'KarmaEnemy.GD05Pattern',
+                          'typeof(KarmaGuardDome)', 'SwordMotion motion;'):
+            self.assertTrue(set(re.findall(r'\b\w+\b', reference)) & owned)
+
+
 class BossBoundaries(unittest.TestCase):
     def test_common_code_has_no_concrete_boss_dependencies(self):
         owned_types = set()
         for path in BOSSES.rglob('*.cs'):
-            owned_types.update(re.findall(r'\b(?:class|struct|enum)\s+(\w+)', code(path)))
-        owned_types -= SHARED_PARTIALS
+            owned_types.update(owned_type_names(code(path)))
         for path in [*RUNTIME.rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Core').rglob('*.cs'), *(ROOT / 'Assets/K4RMA/Editor').rglob('*.cs')]:
             if BOSSES in path.parents:
                 continue
@@ -35,8 +83,7 @@ class BossBoundaries(unittest.TestCase):
         for owner in OWNERS:
             types[owner] = set()
             for path in (BOSSES / owner).rglob('*.cs'):
-                types[owner].update(re.findall(r'\b(?:class|struct|enum)\s+(\w+)', code(path)))
-            types[owner] -= SHARED_PARTIALS
+                types[owner].update(owned_type_names(code(path)))
         for owner in OWNERS:
             foreign = set().union(*(types[o] for o in OWNERS if o != owner)) - types[owner]
             for path in (BOSSES / owner).rglob('*.cs'):

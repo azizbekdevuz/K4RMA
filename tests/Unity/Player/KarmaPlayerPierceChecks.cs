@@ -18,7 +18,6 @@ public static class KarmaPlayerPierceChecks
     static KarmaPlayer player;
     static Rigidbody2D body;
     static KarmaPlayerPierceChecks() { EditorApplication.update += Pump; }
-    [MenuItem("K4RMA/Player/Validate original art and teleport slash")]
     public static void RunInEditor() { Begin(false); }
     public static void RunBatch() { Begin(true); }
     static void Begin(bool batch)

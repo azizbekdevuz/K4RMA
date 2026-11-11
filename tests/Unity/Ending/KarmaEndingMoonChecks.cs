@@ -6,6 +6,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using KarmaPrototype;
 
 [InitializeOnLoad]
@@ -14,7 +16,8 @@ public static class KarmaEndingMoonChecks
     const string Key = "K4RMA.EndingMoonChecks";
     const string Output = "output/validation/ending-moon";
     const BindingFlags F = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
-    static bool started;
+    static bool started, recordGD05;
+    static int captureIndex, lastCaptureFrame = -1;
     static int checks, knownWarnings;
     static string runtimeError;
     static KarmaGame game;
@@ -33,6 +36,15 @@ public static class KarmaEndingMoonChecks
         EditorApplication.QueuePlayerLoopUpdate();
         if (!started && EditorApplication.isPlaying && Time.frameCount > 2) { started = true; Run(); }
     }
+    [MenuItem("K4RMA/Artwork/Validate moon and camera zoom")]
+    public static void RunArtworkInEditor()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before validation.");
+        SessionState.SetBool(Key + ".ArtworkOnly", true);
+        SessionState.SetBool(Key + ".Editor", true);
+        SessionState.SetBool(Key + ".Background", Application.runInBackground);
+        RunBatch();
+    }
     public static void RunBatch()
     {
         SessionState.SetBool(Key + ".EndingOnly", false);
@@ -45,7 +57,20 @@ public static class KarmaEndingMoonChecks
     static async Task Until(Func<bool> done, float timeout = 90)
     {
         double end = EditorApplication.timeSinceStartup + timeout;
-        while (!done()) { if (EditorApplication.timeSinceStartup > end) throw new Exception("Ending/camera timeout"); await Task.Delay(10); }
+        while (!done())
+        {
+            if (EditorApplication.timeSinceStartup > end) throw new Exception("Ending/camera timeout");
+            if (SessionState.GetBool(Key + ".ArtworkOnly", false))
+            {
+                CheckCoverage();
+                if (recordGD05 && Time.frameCount != lastCaptureFrame && Time.frameCount % 3 == 0)
+                {
+                    lastCaptureFrame = Time.frameCount;
+                    Render("gd05-frames/" + (captureIndex++).ToString("D4"));
+                }
+            }
+            await Task.Delay(10);
+        }
     }
     static void Reset(Essence primary, int stage = 3)
     {
@@ -101,7 +126,35 @@ public static class KarmaEndingMoonChecks
         Debug.Log("MOON ratio=" + ratio + " size=" + (maxX - minX + 1) + "x" + (maxY - minY + 1));
         return ratio;
     }
-    static void SettleCamera() { for (int i = 0; i < 100; i++) Call(game, "LateUpdate"); }
+    static void SettleCamera()
+    {
+        for (int i = 0; i < 100; i++) { Call(game, "LateUpdate"); CheckCoverage(); }
+    }
+    static void CheckMoonExterior()
+    {
+        var moon = game.World.Find("Round moon").GetComponent<SpriteRenderer>();
+        var camera = game.GameCamera;
+        var view = camera.WorldToViewportPoint(moon.transform.position);
+        float cx = view.x * 1280, cy = view.y * 720;
+        float diskFraction = moon.sprite.rect.width == 87 ? 79f / 87 : Mathf.Sqrt((78f / 86) * (79f / 87));
+        float radius = Mathf.Sqrt(moon.bounds.size.x * moon.bounds.size.y) * diskFraction * 0.5f
+            / (camera.orthographicSize * 2) * 720;
+        Color32[] without;
+        try { moon.enabled = false; Render(); without = image.GetPixels32(); }
+        finally { moon.enabled = true; }
+        Render(); var with = image.GetPixels32(); int changed = 0, outside = 0;
+        for (int y = 0; y < 720; y++)
+        for (int x = 0; x < 1280; x++)
+        {
+            int i = y * 1280 + x;
+            if (without[i].Equals(with[i])) continue;
+            changed++;
+            if ((x + 0.5f - cx) * (x + 0.5f - cx) + (y + 0.5f - cy) * (y + 0.5f - cy)
+                > (radius + 2) * (radius + 2)) outside++;
+        }
+        Check(changed > 100, "Extracted moon contributes visible disk pixels");
+        Check(outside == 0, "Moon draws no halo, sky patch or residual pixels outside the disk: " + outside);
+    }
     static void CheckCoverage()
     {
         var bounds = Background.bounds; var camera = game.GameCamera;
@@ -141,8 +194,52 @@ public static class KarmaEndingMoonChecks
                 "Fragment artwork is fifty percent larger for a substantial silhouette");
         }
         Check(shots.Length == 14 && down == 0 && up == 14, "No downward rays; fourteen upper and flank fragments");
-        Check(flanks == 6, "Three additional low-angle fragments on each flank");
+        Check(flanks == 8, "Four low-angle fragments on each flank retain six upper rays");
         Call(enemy, "InterruptPattern");
+    }
+    static async Task CheckMountainTraversal()
+    {
+        var keyboard = InputSystem.AddDevice<Keyboard>();
+        var map = (InputActionMap)typeof(KarmaInput).GetField("map", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+        var devices = map.devices;
+        string bindings = map.SaveBindingOverridesAsJson();
+        bool enemyActive = enemy.gameObject.activeSelf;
+        try
+        {
+            map.devices = new[] { keyboard }; map.RemoveAllBindingOverrides();
+            enemy.gameObject.SetActive(false);
+            game.Player.ResetForRoom(new Vector2(KarmaStage.ArenaLeft + 2, KarmaSpace.PlayerHalfHeight + 0.05f), true);
+            Directory.CreateDirectory(Output + "/mountain-traverse");
+            int index = 0, previous = -1;
+            foreach (int direction in new[] { 1, -1 })
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(direction > 0
+                    ? UnityEngine.InputSystem.Key.D : UnityEngine.InputSystem.Key.A));
+                double deadline = EditorApplication.timeSinceStartup + 30;
+                float destination = direction > 0 ? KarmaStage.ArenaRight - 2 : KarmaStage.ArenaLeft + 2;
+                while (direction * (destination - game.Player.Position.x) > 0)
+                {
+                    if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Mountain traversal movement stopped");
+                    CheckCoverage();
+                    if (Time.frameCount != previous && Time.frameCount % 3 == 0)
+                    {
+                        previous = Time.frameCount; Render("mountain-traverse/" + (index++).ToString("D4"));
+                    }
+                    await Task.Delay(10);
+                }
+                Check(Mathf.Abs(game.Player.Position.y - KarmaSpace.PlayerHalfHeight) < 0.25f,
+                    "Player crosses the mountain arena on its original level collision floor");
+            }
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            await Task.Delay(50);
+        }
+        finally
+        {
+            map.devices = devices; map.LoadBindingOverridesFromJson(bindings);
+            InputSystem.RemoveDevice(keyboard); enemy.gameObject.SetActive(enemyActive);
+            game.Player.ResetForRoom(new Vector2(16, KarmaSpace.PlayerHalfHeight + 0.05f), true);
+            SettleCamera();
+        }
     }
     static async Task CheckMoonsAndCameras()
     {
@@ -153,11 +250,25 @@ public static class KarmaEndingMoonChecks
             Check(Mathf.Abs(rect.width / rect.height - 16f / 9) < 0.001f,
                 "4:3, 16:9 and ultrawide displays retain undistorted gameplay viewport");
         }
-        foreach (var primary in new[] { Essence.SwordWave, Essence.RisingSlash, Essence.Guard })
+        foreach (var primary in SessionState.GetBool(Key + ".ArtworkOnly", false) ? new[] { Essence.Guard } : new[] { Essence.SwordWave, Essence.RisingSlash, Essence.Guard })
         foreach (int stage in new[] { 0, 3 })
         {
             Reset(primary, stage); SettleCamera();
             var bg = Background; var before = bg.bounds; var frame = (Bounds)Get(game, "stageBackgroundBounds");
+            Check(bg.sprite.rect.width == 4682 && bg.sprite.rect.height == 1882
+                && bg.sprite.texture.width == 4682 && bg.sprite.texture.height == 1882,
+                "Expanded background imports at native 4682x1882 without downsampling");
+            Check(Mathf.Abs(bg.transform.localScale.x - bg.transform.localScale.y) < 0.0001f
+                && Mathf.Abs(bg.bounds.size.x / bg.bounds.size.y - 4682f / 1882) < 0.0001f,
+                "Background uses identical X/Y scale without stretching the artwork");
+            Check(bg.bounds.size.x >= 140 && Mathf.Abs(bg.bounds.size.y - 50 * 941f / 1672 * 2) < 0.001f,
+                "Background keeps native vertical detail and covers the original zoom range");
+            Check(bg.sharedMaterial == (game.Config.spriteMaterial != null ? game.Config.spriteMaterial : KarmaVisuals.DefaultMaterial) && !bg.HasPropertyBlock(),
+                "Moonless plate has no sky reconstruction material or property overrides");
+            var moonSprite = game.World.Find("Round moon").GetComponent<SpriteRenderer>().sprite;
+            Check(moonSprite == Resources.Load<Sprite>("K4RMAArtwork/Environments/" + (stage == 0 ? "MountainDojo" : "TrialHall") + "/Moon"),
+                "Moon uses the approved original-pixel extraction");
+            CheckMoonExterior();
             float normal = Mathf.Max(frame.extents.y, 25 / game.GameCamera.aspect);
             Check(Mathf.Abs(game.GameCamera.orthographicSize - normal) < 0.05f, "Original normal zoom preserved");
             var viewport = game.GameCamera.pixelRect;
@@ -168,8 +279,9 @@ public static class KarmaEndingMoonChecks
             Check(Mathf.Abs(MoonRatio(stage == 0, nativeViewport: true) - 1) < 0.04f,
                 "Moon remains round in the Editor's actual letterboxed viewport");
             CheckCoverage();
-            if (primary == Essence.SwordWave && stage == 0) Render("moon-mountain");
-            if (primary == Essence.SwordWave && stage == 3)
+            if ((primary == Essence.SwordWave || SessionState.GetBool(Key + ".ArtworkOnly", false)) && stage == 0) Render("moon-mountain");
+            if (stage == 0 && SessionState.GetBool(Key + ".ArtworkOnly", false)) await CheckMountainTraversal();
+            if ((primary == Essence.SwordWave || SessionState.GetBool(Key + ".ArtworkOnly", false)) && stage == 3)
             {
                 Check(game.World.Find("Round moon") != null, "Moon is isolated while approved background is preserved");
                 Check(bg.sprite == KarmaArtwork.Settings.dojoPanorama,
@@ -180,11 +292,34 @@ public static class KarmaEndingMoonChecks
             SettleCamera(); CheckCoverage();
             Check(Mathf.Abs(game.GameCamera.orthographicSize - normal * 0.75f) < 0.1f,
                 "Personalization preserves its original zoom-in even when moon is outside the frame");
+            foreach (float edge in new[] { KarmaStage.ArenaLeft + 1, KarmaStage.ArenaRight - 1 })
+            foreach (bool inheriting in new[] { false, true })
+            {
+                game.Player.ResetForRoom(new Vector2(edge, KarmaSpace.PlayerHalfHeight), true);
+                enemy.transform.position = new Vector3(edge, KarmaSpace.GuardianGroundY, 0);
+                Set(game, "guardianInheriting", inheriting);
+                SettleCamera(); CheckCoverage();
+                Check(Mathf.Abs(game.GameCamera.orthographicSize - normal * (inheriting ? 0.8f : 0.75f)) < 0.1f,
+                    "Original player/guardian zoom stays covered at arena edges");
+                Render("zoom-in-stage-" + stage + "-" + (inheriting ? "guardian" : "player") + "-" + edge);
+                typeof(KarmaGame).GetProperty("Phase").SetValue(game, RunPhase.Combat);
+                SettleCamera(); CheckCoverage();
+                // After real input traversal, Editor frames can be very short. Let the camera's
+                // unscaled-time blend actually finish rather than assuming 100 calls equal elapsed time.
+                await Until(() => Mathf.Abs(game.GameCamera.orthographicSize - normal) < 0.1f, 10);
+                Check(Mathf.Abs(game.GameCamera.orthographicSize - normal) < 0.1f, "Zoom-out returns to original combat size without black margins");
+                typeof(KarmaGame).GetProperty("Phase").SetValue(game, RunPhase.Transition);
+            }
+            Set(game, "guardianInheriting", false);
             Check(bg.bounds == before, "Moon correction never changes background geometry");
         }
         Reset(Essence.Guard); SettleCamera(); float baseline = game.GameCamera.orthographicSize;
         Set(Get(enemy, "behavior"), "PracticeHold", true);
         game.Player.ToggleTestInvincibility();
+        if (SessionState.GetBool(Key + ".ArtworkOnly", false))
+        {
+            Directory.CreateDirectory(Output + "/gd05-frames"); recordGD05 = true;
+        }
         Force(EnemyAttack.GD05);
         await Until(() => enemy.TrialActive);
         SettleCamera();
@@ -196,14 +331,16 @@ public static class KarmaEndingMoonChecks
         // GD05 dome crosses the moon. Exclude foreground renderers only for the pixel measurement.
         var foreground = Array.FindAll(game.World.GetComponentsInChildren<Renderer>(), r => r != Background && r.gameObject.name != "Round moon" && r.enabled);
         float moonRatio;
-        try { foreach (var renderer in foreground) renderer.enabled = false; moonRatio = MoonRatio(false); }
+        try { foreach (var renderer in foreground) renderer.enabled = false; moonRatio = MoonRatio(false); CheckMoonExterior(); }
         finally { foreach (var renderer in foreground) if (renderer != null) renderer.enabled = true; }
         Check(Mathf.Abs(moonRatio - 1) < 0.06f, "Moon remains round in GD05 zoom-out");
         CheckCoverage(); Render("gd05-zoom");
         await Until(() => !enemy.TrialActive && enemy.GetType().GetProperty("CameraFocus", F).GetValue(enemy) == null);
+        await Until(() => Mathf.Abs(game.GameCamera.orthographicSize - baseline) < 0.05f);
+        recordGD05 = false;
         SettleCamera();
         Check(Mathf.Abs(game.GameCamera.orthographicSize - baseline) < 0.1f, "GD05 camera returns after trial ends");
-        Call(enemy, "InterruptPattern"); SettleCamera(); CheckCoverage();
+        Call(enemy, "InterruptPattern"); SettleCamera(); CheckCoverage(); Render("gd05-return");
     }
     static async Task CheckEnding()
     {
@@ -286,12 +423,16 @@ public static class KarmaEndingMoonChecks
             Application.logMessageReceived += Log;
             if (!SessionState.GetBool(Key + ".EndingOnly", false))
             {
-                CheckFragmentRedistribution();
+                if (!SessionState.GetBool(Key + ".ArtworkOnly", false)) CheckFragmentRedistribution();
                 await CheckMoonsAndCameras();
             }
-            await CheckEnding();
+            if (!SessionState.GetBool(Key + ".ArtworkOnly", false)) await CheckEnding();
             Check(runtimeError == null, "No new gameplay error: " + runtimeError);
-            verdict = "PASS: " + checks + (SessionState.GetBool(Key + ".EndingOnly", false) ? " ending, restart and tutorial checks" : " ending, round-moon, GD05 camera, restart and tutorial checks") + "; pre-existing geometry messages=" + knownWarnings;
+            string scope = SessionState.GetBool(Key + ".ArtworkOnly", false)
+                ? " native background resolution, original moon, no-halo, camera coverage and zoom checks"
+                : SessionState.GetBool(Key + ".EndingOnly", false) ? " ending, restart and tutorial checks"
+                : " ending, round-moon, GD05 camera, restart and tutorial checks";
+            verdict = "PASS: " + checks + scope + "; pre-existing geometry messages=" + knownWarnings;
         }
         catch (Exception ex) { verdict = "FAIL: " + ex; Debug.LogException(ex); }
         finally
@@ -301,7 +442,15 @@ public static class KarmaEndingMoonChecks
             if (image != null) UnityEngine.Object.Destroy(image);
         }
         Directory.CreateDirectory(Output); File.WriteAllText(Output + "/result.txt", verdict);
-        SessionState.SetBool(Key, false); Debug.Log(verdict); EditorApplication.Exit(verdict.StartsWith("PASS:") ? 0 : 1);
+        Application.logMessageReceived -= Log;
+        SessionState.SetBool(Key, false); Debug.Log(verdict);
+        if (SessionState.GetBool(Key + ".Editor", false))
+        {
+            Application.runInBackground = SessionState.GetBool(Key + ".Background", false);
+            SessionState.EraseBool(Key + ".Editor"); SessionState.EraseBool(Key + ".ArtworkOnly");
+            EditorApplication.ExitPlaymode();
+        }
+        else EditorApplication.Exit(verdict.StartsWith("PASS:") ? 0 : 1);
     }
 }
 #endif

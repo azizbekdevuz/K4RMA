@@ -33,6 +33,7 @@ namespace KarmaPrototype
 
         [Header("Production UI / VFX")]
         public Texture2D menuBackground;
+        [Tooltip("고유화 선택·보유 HUD·발동·계승·엔딩 공통 문양: 검기, 상승베기, 방어 순서")]
         public Sprite[] skillIcons;
         public Sprite selectionCrescent;
         public Sprite hitEffect;

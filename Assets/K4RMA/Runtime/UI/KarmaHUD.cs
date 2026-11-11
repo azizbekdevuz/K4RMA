@@ -138,12 +138,6 @@ namespace KarmaPrototype
                 source.y / sprite.texture.height, source.width / sprite.texture.width, source.height / sprite.texture.height), true);
             GUI.color = old;
         }
-        static Sprite SkillIcon(Essence essence, bool unique)
-        {
-            var icons = KarmaArtwork.Settings.skillIcons;
-            int index = (int)essence + (unique ? 3 : 0);
-            return icons != null && index < icons.Length ? icons[index] : null;
-        }
         void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
         static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, 0.95f)); }

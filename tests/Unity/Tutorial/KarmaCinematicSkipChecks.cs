@@ -25,8 +25,14 @@ public static class KarmaCinematicSkipChecks
         EditorApplication.QueuePlayerLoopUpdate();
         if (!started && EditorApplication.isPlaying && Time.frameCount > 2) { started = true; Run(); }
     }; }
-    public static void RunBatch()
+    [MenuItem("K4RMA/Tutorial/Validate skip and practice recovery")]
+    public static void RunInEditor() { Begin(false); }
+    public static void RunBatch() { Begin(true); }
+    static void Begin(bool batch)
     {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before validation.");
+        SessionState.SetBool(Pending + ".Batch", batch);
+        SessionState.SetBool(Pending + ".Background", Application.runInBackground);
         SessionState.SetBool(Pending, true);
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
         UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/K4RMA/Scenes/KarmaPrototype.unity");
@@ -64,6 +70,38 @@ public static class KarmaCinematicSkipChecks
         typeof(KarmaGame).GetMethod("LoadRoom", Fields).Invoke(game, new object[] { true });
         game.Enemies[0].TakeDamage(game.Enemies[0].MaxHealth * 100);
         await Frames(); Check(game.Phase == RunPhase.Ending, "Lethal final boss contact starts real ending");
+    }
+    static async Task CheckEarlyTutorialSkip()
+    {
+        await Tutorial();
+        Check(game.Tutorial.Step == KarmaTutorialStep.Travel && game.Tutorial.Lesson == -1,
+            "Actual opening starts before the first lesson is selected");
+        await Keys(Key.F);
+        await Until(() => game.Tutorial != null && game.Tutorial.Step == KarmaTutorialStep.Fade,
+            "Early F hold never reaches fade");
+        Check(game.Tutorial.Lesson == -1, "Early fade renders safely without a lesson index");
+        await Until(() => game.Tutorial == null, "Early skip froze before reaching combat");
+        Check(game.Phase == RunPhase.Combat && Time.timeScale == 1 && !game.GameplayFrozen,
+            "Early F skip restores combat and time");
+        await Wait(0.25f); await Keys();
+        float x = game.Player.Position.x;
+        await Keys(Key.D); await Wait(0.25f); await Keys();
+        Check(game.Player.Position.x > x + 0.1f, "Player moves after skipping before the first lesson");
+    }
+    static async Task CheckPracticeRecovery()
+    {
+        await Keys();
+        EditorApplication.isPaused = true;
+        KarmaPrototype.EditorTools.KarmaBossPractice.Request(Essence.Guard,
+            KarmaPrototype.EditorTools.KarmaBossPractice.Mode.Single, 1);
+        Check(!EditorApplication.isPaused, "New practice request clears an inherited Editor pause immediately");
+        await Frames(3);
+        await Until(() => game.Phase == RunPhase.Combat && game.Enemies.Count == 1 && game.StageIndex == 1,
+            "Practice never resumes combat after Editor pause");
+        float x = game.Player.Position.x, fight = game.Enemies[0].FightSeconds;
+        await Keys(Key.D); await Wait(0.3f); await Keys();
+        Check(game.Player.Position.x > x + 0.1f && game.Enemies[0].FightSeconds > fight && Time.timeScale == 1,
+            "Practice player movement and boss clock advance after recovery");
     }
     static async Task CheckTutorialSkip()
     {
@@ -147,28 +185,35 @@ public static class KarmaCinematicSkipChecks
     static async void Run()
     {
         string result; InputActionMap map = null; string bindings = null;
+        Application.LogCallback log = null;
         try
         {
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>(); keyboard = InputSystem.AddDevice<Keyboard>();
             map = (InputActionMap)typeof(KarmaInput).GetField("map", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
             map.devices = new[] { keyboard }; bindings = map.SaveBindingOverridesAsJson(); map.RemoveAllBindingOverrides();
-            Application.logMessageReceived += (message, stack, type) => {
+            log = (message, stack, type) => {
                 if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/K4RMA/")
                     && !message.StartsWith("Not allowed to override geometry")) runtimeError = message;
             };
-            await CheckTutorialSkip(); await CheckEndingAndRestart();
+            Application.logMessageReceived += log;
+            await CheckEarlyTutorialSkip(); await CheckTutorialSkip(); await CheckEndingAndRestart();
+            await CheckPracticeRecovery();
             Check(runtimeError == null, "No new gameplay errors"); game.ReturnToTitle();
-            result = "PASS: " + checks + " real-input skip, frozen tutorial, pause, cleanup and tutorial-first restart checks";
+            result = "PASS: " + checks + " early F skip, frozen tutorial, pause recovery, movement and tutorial-first restart checks";
         }
         catch (Exception ex) { result = "FAIL: " + ex; Debug.LogException(ex); }
         finally
         {
             if (map != null) { map.devices = null; if (bindings != null) map.LoadBindingOverridesFromJson(bindings); }
             if (keyboard != null) InputSystem.RemoveDevice(keyboard);
+            if (log != null) Application.logMessageReceived -= log;
             Time.timeScale = 1; SessionState.SetBool(Pending, false);
+            Application.runInBackground = SessionState.GetBool(Pending + ".Background", false);
         }
         Directory.CreateDirectory("output/validation"); File.WriteAllText("output/validation/cinematic-skip.txt", result);
-        Debug.Log(result); EditorApplication.Exit(result.StartsWith("PASS:") ? 0 : 1);
+        Debug.Log(result);
+        if (SessionState.GetBool(Pending + ".Batch", false)) EditorApplication.Exit(result.StartsWith("PASS:") ? 0 : 1);
+        else EditorApplication.ExitPlaymode();
     }
 }
 #endif

@@ -33,8 +33,5 @@ MonoBehaviour:
   - {fileID: -765498871, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
   - {fileID: 2092113356, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
   - {fileID: 1707102628, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
-  - {fileID: 1238758093, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
-  - {fileID: 282029970, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
-  - {fileID: 525701880, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
   selectionCrescent: {fileID: 1744853837, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
   hitEffect: {fileID: 1818891179, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}

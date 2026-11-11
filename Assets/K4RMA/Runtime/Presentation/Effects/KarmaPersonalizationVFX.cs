@@ -25,15 +25,13 @@ namespace KarmaPrototype
             effect.color = essence == Essence.Guard ? new Color(1, 0.85f, 0.2f) : game.Config.ColorOf(essence);
             effect.radius = guardian ? 5.5f : 3.5f;
             effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
-            effect.sigil = effect.Layer("Absorbed sigil", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 16);
-            var icons = KarmaArtwork.Settings.skillIcons;
-            int icon = (int)essence + (guardian ? 0 : 3);
-            var iconSprite = icons != null && icons.Length > icon ? icons[icon] : null;
+            var iconSprite = KarmaArtwork.SkillIcon(essence);
+            effect.sigil = effect.Layer("Absorbed sigil", iconSprite, 16);
             effect.orb = effect.Layer("Inherited power", iconSprite, 25);
             for (int i = 0; i < effect.motes.Length; i++)
                 effect.motes[i] = effect.Layer("Absorbing fragment", KarmaArtwork.Sprite("PersonalizationVFX", "Core"), 23);
             for (int i = 0; i < effect.waves.Length; i++)
-                effect.waves[i] = effect.Layer("Awakening pulse", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 17);
+                effect.waves[i] = effect.Layer("Awakening pulse", iconSprite, 17);
             var animator = actor.GetComponentInChildren<KarmaCharacterAnimator>(true);
             if (animator != null) animator.Empower(essence, seconds, previousAppearance,
                 guardian && game.Player.Essences.Count == 1, previousForm);

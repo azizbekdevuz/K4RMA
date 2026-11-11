@@ -16,12 +16,12 @@ namespace KarmaPrototype
             public void Burst(Vector2 landing)
             {
                 Vector2 origin = landing + Vector2.up * KarmaSpace.Units(0.35f);
-                float life = Mathf.Max(Settings.fragmentLifetime, 2f);
+                float life = Mathf.Max(Settings.fragmentLifetime, 0.35f);
                 Transform root = ((RisingBossBehavior)owner.behavior).FragmentsRoot;
                 Vector2 shard = KarmaSpace.Units(new Vector2(1.05f, 0.675f));
                 KarmaRisingPolish.ShieldPlant(root, landing, KarmaSpace.Units(new Vector2(5.4f, 4.8f)));
                 if (owner.Active) KarmaRisingAudio.ShieldBurst();
-                const int upperCount = 8, sideCount = 6;
+                const int upperCount = 6, sideCount = 8;
                 for (int i = 0; i < upperCount + sideCount && owner.Active; i++)
                 {
                     // No downward rays: retain the upper fan and distribute the rest to both flanks.
@@ -34,7 +34,7 @@ namespace KarmaPrototype
                     else
                     {
                         int side = i - upperCount;
-                        float angle = 1f + (side / 2) * 6f + Random.Range(0.5f, 2.5f);
+                        float angle = 1f + (side / 2) * 4.5f + Random.Range(0.5f, 2.5f);
                         degrees = side % 2 == 0 ? angle : 180f - angle;
                     }
                     float rad = degrees * Mathf.Deg2Rad;

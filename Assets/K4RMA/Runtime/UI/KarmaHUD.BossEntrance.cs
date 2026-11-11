@@ -20,11 +20,24 @@ namespace KarmaPrototype
             entranceBoss = boss;
             entranceDuration = introducedBosses.Add(boss.PrimaryType.Value) ? 2.8f : 0.9f;
             entranceAt = Time.time + 0.2f;
-            entranceName = KarmaPatternCatalog.TypeName(game.Player.Essences.PersonalizationOrder);
-            entranceAccent = boss.PrimaryType == Essence.RisingSlash ? new Color(0.35f, 0.79f, 0.78f)
-                : boss.PrimaryType == Essence.SwordWave ? new Color(0.76f, 0.27f, 0.29f)
-                : new Color(0.78f, 0.61f, 0.35f);
+            var order = game.Player.Essences.PersonalizationOrder;
+            entranceName = KarmaPatternCatalog.TypeName(order);
+            entranceAccent = EntranceColor(boss.PrimaryType.Value);
+            if (order.Count > 1)
+            {
+                var inherited = new List<string>();
+                for (int i = 1; i < order.Count; i++)
+                {
+                    string name = KarmaPatternCatalog.Name(order[i]);
+                    inherited.Add(name);
+                }
+                entranceName += " : " + string.Join("·", inherited) + " 계승";
+            }
         }
+
+        static Color EntranceColor(Essence type) => type == Essence.SwordWave
+            ? new Color32(114, 191, 255, 255) : type == Essence.RisingSlash
+            ? new Color32(255, 119, 113, 255) : new Color32(242, 207, 99, 255);
 
         bool DrawBossEntrance()
         {

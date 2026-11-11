@@ -65,7 +65,6 @@ namespace KarmaPrototype.EditorTools
             return m;
         }
         static float Median(IEnumerable<float> values){var a=values.OrderBy(v=>v).ToArray();return a[a.Length/2];}
-        [MenuItem("K4RMA/Player/Rebuild authored 24 FPS")]
         public static void Rebuild()
         {
             foreach(var name in Names) if(!File.Exists(Art+name+".png"))throw new InvalidOperationException("Missing native action: "+name);

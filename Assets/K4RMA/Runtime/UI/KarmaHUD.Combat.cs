@@ -33,7 +33,7 @@ namespace KarmaPrototype
                 Color color = HudIvory;
                 color.a = cooling ? 0.35f : 1;
                 if (game.Player.Essences.JustTriggered(essence)) color = Color.white;
-                SpriteArt(r, SkillIcon(essence, true), color);
+                SpriteArt(r, KarmaArtwork.SkillIcon(essence), color);
 
             }
 

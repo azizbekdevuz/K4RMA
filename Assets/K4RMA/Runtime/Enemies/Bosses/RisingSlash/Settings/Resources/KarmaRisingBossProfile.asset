@@ -21,7 +21,7 @@ MonoBehaviour:
     landingDamageMultiplier: 1
     waveDamageMultiplier: 1.15
     fragmentDamageMultiplier: 0.85
-    fragmentLifetime: 0.92
+    fragmentLifetime: 1.5
     fragmentParryStunSeconds: 2
     riseHeight: 8
     groundBladeWidth: 10

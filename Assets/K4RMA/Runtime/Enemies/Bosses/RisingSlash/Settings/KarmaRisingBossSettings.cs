@@ -13,7 +13,8 @@ namespace KarmaPrototype
         [Min(0.1f)] public float preferredDistance = 2.05f * KarmaSpace.Scale, meleeReach = 4.1f * KarmaSpace.Scale;
         [Min(0.1f)] public float approachSpeedMultiplier = 1.55f, attackDecisionMultiplier = 0.58f;
         [Min(0.1f)] public float meleeDamageMultiplier = 0.8f, landingDamageMultiplier = 1, waveDamageMultiplier = 1.15f, fragmentDamageMultiplier = 0.85f;
-        [Min(0.1f)] public float fragmentLifetime = 0.92f, fragmentParryStunSeconds = 2;
+        [Min(0.35f)] public float fragmentLifetime = 1.5f;
+        [Min(0.1f)] public float fragmentParryStunSeconds = 2;
 
         [Min(1)] public float riseHeight = 4 * KarmaSpace.Scale;
         [Min(0.5f)] public float groundBladeWidth = 5 * KarmaSpace.Scale, groundBladeHeight = 6 * KarmaSpace.Scale;

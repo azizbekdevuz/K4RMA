@@ -65,6 +65,12 @@ namespace KarmaPrototype
             }
             return null;
         }
+        public static Sprite SkillIcon(Essence essence)
+        {
+            var icons = Settings.skillIcons;
+            int index = (int)essence;
+            return icons != null && index >= 0 && index < icons.Length ? icons[index] : null;
+        }
         public static Sprite[] Sprites(string sheet)
         {
             var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.All(sheet) : Array.Empty<Sprite>();
@@ -150,6 +156,10 @@ namespace KarmaPrototype
             // so its ground row stays at the original 0.74 vertical position.
             float floorFromTop = mountain ? 0.74f : 0.8f;
             float width = frameWidth * coverage, height = frameHeight * coverage;
+            // Fill the camera's existing coverage using one scale, preserving the painted proportions.
+            float scale = Mathf.Max(width / sprite.bounds.size.x, height / sprite.bounds.size.y);
+            width = sprite.bounds.size.x * scale;
+            height = sprite.bounds.size.y * scale;
             floorFromTop = (coverage - 1) / (2f * coverage) + floorFromTop / coverage;
             var center = new Vector3(20, 0, 0);
             var go = new GameObject(mountain ? "Mountain dojo artwork" : "Trial hall artwork");
@@ -157,7 +167,7 @@ namespace KarmaPrototype
             go.transform.localPosition = center + new Vector3(
                 (sprite.pivot.x / sprite.rect.width - 0.5f) * width,
                 (sprite.pivot.y / sprite.rect.height - (1 - floorFromTop)) * height, 0);
-            go.transform.localScale = new Vector3(width / sprite.bounds.size.x, height / sprite.bounds.size.y, 1);
+            go.transform.localScale = new Vector3(scale, scale, 1);
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite; renderer.sortingOrder = -20; KarmaVisuals.ApplyMaterial(renderer);
             KarmaMoonArtwork.Apply(renderer, mountain);

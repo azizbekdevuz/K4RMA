@@ -25,7 +25,7 @@ namespace KarmaPrototype
                 float centerX = 640 + (slot++ - (count - 1) * 0.5f) * 180;
                 bool selected = game.PendingChoice == e;
                 if (GUI.Button(new Rect(centerX - 80, 335, 160, 145), "", GUIStyle.none)) game.Choose(e);
-                SpriteArt(new Rect(centerX - 45, 340, 90, 80), SkillIcon(e, false));
+                SpriteArt(new Rect(centerX - 45, 340, 90, 80), KarmaArtwork.SkillIcon(e));
                 Label(centerX - 80, 430, 160, 35, (i + 1) + " · " + names[i], centered);
                 if (selected) SpriteArt(new Rect(centerX - 10, 480, 20, 25), KarmaArtwork.Settings.selectionCrescent);
                 SpriteArt(new Rect(centerX - 12, 312, 24, 24), KarmaArtwork.Sprite("UI", selected ? "FilledSlot" : "EmptySlot"));

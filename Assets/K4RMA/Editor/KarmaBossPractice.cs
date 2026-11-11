@@ -56,6 +56,8 @@ namespace KarmaPrototype.EditorTools
             if (!definitions.ContainsKey(kind)) throw new InvalidOperationException("Missing practice definition: " + kind);
             Stop();
             SessionState.SetString(RequestKey, JsonUtility.ToJson(new RequestData { kind = (int)kind, mode = (int)requestedMode, index = patternIndex }));
+            // A fresh practice request also resumes an Editor paused by a previous error.
+            if (EditorApplication.isPaused) EditorApplication.isPaused = false;
             if (!EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) { SessionState.EraseString(RequestKey); return; }

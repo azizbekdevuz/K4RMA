@@ -3,7 +3,7 @@ using UnityEngine;
 namespace KarmaPrototype
 {
     // A bounded set of reused sprites; nothing here can hit an actor or advance progression.
-    public sealed class KarmaEndingPresentation : MonoBehaviour
+    public sealed partial class KarmaEndingPresentation : MonoBehaviour
     {
         KarmaGame game;
         Transform fallen;
@@ -50,6 +50,7 @@ namespace KarmaPrototype
             }
             ending.master = KarmaTutorialStage.Picture(root.transform, "Master", Vector2.zero, new Vector2(4.39f, 4.8f), 10);
             ending.master.color = Color.clear;
+            if (game.IsEndingReview) ending.PrepareAlternative();
             return ending;
         }
         SpriteRenderer Layer(string name, Sprite sprite, float size, int order)
@@ -66,6 +67,11 @@ namespace KarmaPrototype
         {
             if (game == null || game.Player == null || game.Phase != RunPhase.Ending) return;
             float t = Mathf.Floor(game.EndingTime * 24f) / 24f;
+            if (game.IsEndingReview)
+            {
+                game.Player.PresentEndingAlternative(t);
+                DrawGuardian(t); DrawAlternative(t); return;
+            }
             game.Player.PresentEnding(t);
             DrawGuardian(t);
             var center = game.Player.Position + Vector2.up * 1.1f;

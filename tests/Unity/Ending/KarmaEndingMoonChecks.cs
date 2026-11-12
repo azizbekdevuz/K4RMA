@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.LowLevel;
 using KarmaPrototype;
 
 [InitializeOnLoad]
-public static class KarmaEndingMoonChecks
+public static partial class KarmaEndingMoonChecks
 {
     const string Key = "K4RMA.EndingMoonChecks";
     const string Output = "output/validation/ending-moon";
@@ -468,14 +468,16 @@ public static class KarmaEndingMoonChecks
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             target = new RenderTexture(1280, 720, 24); image = new Texture2D(1280, 720, TextureFormat.RGBA32, false);
             Application.logMessageReceived += Log;
-            if (!SessionState.GetBool(Key + ".EndingOnly", false))
+            if (SessionState.GetBool(Key + ".Alternatives", false)) await CheckAlternatives();
+            else if (!SessionState.GetBool(Key + ".EndingOnly", false))
             {
                 if (!SessionState.GetBool(Key + ".ArtworkOnly", false)) CheckFragmentRedistribution();
                 await CheckMoonsAndCameras();
             }
-            if (!SessionState.GetBool(Key + ".ArtworkOnly", false)) await CheckEnding();
+            if (!SessionState.GetBool(Key + ".ArtworkOnly", false) && !SessionState.GetBool(Key + ".Alternatives", false)) await CheckEnding();
             Check(runtimeError == null, "No new gameplay error: " + runtimeError);
-            string scope = SessionState.GetBool(Key + ".ArtworkOnly", false)
+            string scope = SessionState.GetBool(Key + ".Alternatives", false) ? " three ending alternatives, lifecycle and 24 FPS checks"
+                : SessionState.GetBool(Key + ".ArtworkOnly", false)
                 ? " native background resolution, original moon, no-halo, camera coverage and zoom checks"
                 : SessionState.GetBool(Key + ".EndingOnly", false) ? " ending, restart and tutorial checks"
                 : " ending, round-moon, GD05 camera, restart and tutorial checks";
@@ -491,6 +493,7 @@ public static class KarmaEndingMoonChecks
         Directory.CreateDirectory(Output); File.WriteAllText(Output + "/result.txt", verdict);
         Application.logMessageReceived -= Log;
         SessionState.SetBool(Key, false); Debug.Log(verdict);
+        SessionState.EraseBool(Key + ".Alternatives");
         if (SessionState.GetBool(Key + ".Editor", false))
         {
             Application.runInBackground = SessionState.GetBool(Key + ".Background", false);

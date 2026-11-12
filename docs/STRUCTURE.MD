@@ -203,68 +203,6 @@ K4RMA/
 │   │       │   ├── ParrySuccess.png
 │   │       │   └── Poses.png
 │   │       ├── RisingSlash/
-│   │       │   ├── Animation/
-│   │       │   │   ├── Rise_AirSlash.json
-│   │       │   │   ├── Rise_Dash.json
-│   │       │   │   ├── Rise_Dash.png
-│   │       │   │   ├── Rise_Fall.json
-│   │       │   │   ├── Rise_Hurt.json
-│   │       │   │   ├── Rise_Hurt.png
-│   │       │   │   ├── Rise_Idle.json
-│   │       │   │   ├── Rise_Idle.png
-│   │       │   │   ├── Rise_Landing.json
-│   │       │   │   ├── Rise_Landing.png
-│   │       │   │   ├── Rise_Rising.json
-│   │       │   │   ├── Rise_Rising.png
-│   │       │   │   ├── Rise_Slash.json
-│   │       │   │   ├── Rise_Slash.png
-│   │       │   │   ├── RiseFinal_AirSlash.json
-│   │       │   │   ├── RiseFinal_Dash.json
-│   │       │   │   ├── RiseFinal_Dash.png
-│   │       │   │   ├── RiseFinal_Fall.json
-│   │       │   │   ├── RiseFinal_Fall.png
-│   │       │   │   ├── RiseFinal_Hurt.json
-│   │       │   │   ├── RiseFinal_Hurt.png
-│   │       │   │   ├── RiseFinal_Idle.json
-│   │       │   │   ├── RiseFinal_Idle.png
-│   │       │   │   ├── RiseFinal_Landing.json
-│   │       │   │   ├── RiseFinal_Landing.png
-│   │       │   │   ├── RiseFinal_Rising.json
-│   │       │   │   ├── RiseFinal_Rising.png
-│   │       │   │   ├── RiseFinal_Slash.json
-│   │       │   │   ├── RiseFinal_Slash.png
-│   │       │   │   ├── RiseWard_AirSlash.json
-│   │       │   │   ├── RiseWard_AirSlash.png
-│   │       │   │   ├── RiseWard_Dash.json
-│   │       │   │   ├── RiseWard_Dash.png
-│   │       │   │   ├── RiseWard_Fall.json
-│   │       │   │   ├── RiseWard_Fall.png
-│   │       │   │   ├── RiseWard_Hurt.json
-│   │       │   │   ├── RiseWard_Hurt.png
-│   │       │   │   ├── RiseWard_Idle.json
-│   │       │   │   ├── RiseWard_Idle.png
-│   │       │   │   ├── RiseWard_Landing.json
-│   │       │   │   ├── RiseWard_Landing.png
-│   │       │   │   ├── RiseWard_Rising.json
-│   │       │   │   ├── RiseWard_Rising.png
-│   │       │   │   ├── RiseWard_Slash.json
-│   │       │   │   ├── RiseWard_Slash.png
-│   │       │   │   ├── RiseWave_AirSlash.json
-│   │       │   │   ├── RiseWave_AirSlash.png
-│   │       │   │   ├── RiseWave_Dash.json
-│   │       │   │   ├── RiseWave_Dash.png
-│   │       │   │   ├── RiseWave_Fall.json
-│   │       │   │   ├── RiseWave_Fall.png
-│   │       │   │   ├── RiseWave_Hurt.json
-│   │       │   │   ├── RiseWave_Hurt.png
-│   │       │   │   ├── RiseWave_Idle.json
-│   │       │   │   ├── RiseWave_Idle.png
-│   │       │   │   ├── RiseWave_Landing.json
-│   │       │   │   ├── RiseWave_Landing.png
-│   │       │   │   ├── RiseWave_Rising.json
-│   │       │   │   ├── RiseWave_Rising.png
-│   │       │   │   ├── RiseWave_Slash.json
-│   │       │   │   └── RiseWave_Slash.png
 │   │       │   ├── Effects/
 │   │       │   │   ├── Fragment0.png
 │   │       │   │   ├── Fragment1.png
@@ -600,7 +538,6 @@ K4RMA/
 │       │   ├── Visuals/
 │       │   │   ├── KarmaCharacterAnimator.Rising.cs
 │       │   │   ├── KarmaRisingArt.cs
-│       │   │   ├── KarmaRisingArticulatedMotion.cs
 │       │   │   ├── KarmaRisingAudio.cs
 │       │   │   ├── KarmaRisingBarrier.cs
 │       │   │   ├── KarmaRisingCharge.cs
@@ -732,7 +669,6 @@ K4RMA/
 │   │   │   ├── KarmaPlayerCrowdControlChecks.cs
 │   │   │   └── KarmaPlayerPierceChecks.cs
 │   │   ├── RisingSlash/
-│   │   │   ├── KarmaRisingAnimationChecks.cs
 │   │   │   ├── KarmaRisingBarrierChecks.cs
 │   │   │   ├── KarmaRisingOwnershipChecks.cs
 │   │   │   ├── KarmaRisingPlayChecks.cs
@@ -779,9 +715,6 @@ K4RMA/
 │   ├── test_optimize_images.py
 │   └── test_validation_runner.py
 ├── tools/
-│   ├── RisingSlash/
-│   │   ├── build-articulated.py
-│   │   └── rigs.json
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
 ├── AGENTS.md

@@ -3,7 +3,7 @@ using UnityEngine;
 namespace KarmaPrototype
 {
     // A bounded set of reused sprites; nothing here can hit an actor or advance progression.
-    public sealed partial class KarmaEndingPresentation : MonoBehaviour
+    public sealed class KarmaEndingPresentation : MonoBehaviour
     {
         KarmaGame game;
         Transform fallen;
@@ -12,7 +12,9 @@ namespace KarmaPrototype
         readonly SpriteRenderer[] symbols = new SpriteRenderer[3];
         readonly SpriteRenderer[] particles = new SpriteRenderer[48];
         readonly Vector3[] particleOrigins = new Vector3[48];
-        SpriteRenderer master, aura;
+        SpriteRenderer master, aura, finishedCut;
+        readonly SpriteRenderer[] techniques = new SpriteRenderer[3];
+        readonly int[] memoryOrder = { 0, 1, 2 };
         readonly SpriteRenderer[] convergence = new SpriteRenderer[3];
         MaterialPropertyBlock dissolveBlock;
         bool seeded, guardianFinished;
@@ -48,9 +50,15 @@ namespace KarmaPrototype
                 ending.convergence[i] = ending.Layer("United " + (Essence)i, KarmaArtwork.SkillIcon((Essence)i), 3.5f, 17);
                 ending.convergence[i].transform.SetParent(united, false);
             }
-            ending.master = KarmaTutorialStage.Picture(root.transform, "Master", Vector2.zero, new Vector2(4.39f, 4.8f), 10);
+            ending.techniques[0] = ending.Layer("Guard demonstration", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4.4f, 12);
+            ending.techniques[1] = ending.Layer("Rising demonstration", KarmaArtwork.Sprite("PlayerVFX", "Rising"), 5.4f, 13);
+            ending.techniques[2] = ending.Layer("Wave demonstration", KarmaArtwork.Sprite("PlayerVFX", "Wave"), 5.8f, 14);
+            ending.finishedCut = ending.Layer("Completed technique release", KarmaArtwork.Sprite("PlayerVFX", "Wave"), 8.2f, 15);
+            var acquired = game.Player.Essences.PersonalizationOrder;
+            for (int i = 0; i < acquired.Count; i++) ending.memoryOrder[(int)acquired[i]] = i;
+            ending.master = KarmaTutorialStage.Picture(root.transform, "Master",
+                new Vector2(KarmaGame.EndingMasterX, KarmaTutorialStage.MasterGroundCenter(4.8f)), new Vector2(4.39f, 4.8f), 10);
             ending.master.color = Color.clear;
-            if (game.IsEndingReview) ending.PrepareAlternative();
             return ending;
         }
         SpriteRenderer Layer(string name, Sprite sprite, float size, int order)
@@ -66,40 +74,58 @@ namespace KarmaPrototype
         void LateUpdate()
         {
             if (game == null || game.Player == null || game.Phase != RunPhase.Ending) return;
-            float t = Mathf.Floor(game.EndingTime * 24f) / 24f;
-            if (game.IsEndingReview)
-            {
-                game.Player.PresentEndingAlternative(t);
-                DrawGuardian(t); DrawAlternative(t); return;
-            }
+            float t = Mathf.Floor(game.EndingTime * 24f + 0.001f) / 24f;
             game.Player.PresentEnding(t);
             DrawGuardian(t);
-            var center = game.Player.Position + Vector2.up * 1.1f;
-            float absorb = Ease(16, 19, t);
+
+            var center = game.Player.Position + Vector2.up * 1.05f;
+            float absorb = Ease(KarmaGame.EndingWaveAt + 0.32f, KarmaGame.EndingUnionAt, t);
             for (int i = 0; i < symbols.Length; i++)
             {
-                float appear = Ease(9.5f + i * 2, 10.4f + i * 2, t);
-                float angle = (t - 9.5f) * 0.8f + i * Mathf.PI * 2 / 3;
-                float radius = 3.3f * (1 - absorb);
-                symbols[i].transform.position = center + new Vector2(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius * 0.72f);
-                symbols[i].transform.localRotation = Quaternion.Euler(0, 0, i == 0 ? Mathf.Sin(angle) * 20 : 0);
-                var color = i == 2 ? new Color(1, 0.85f, 0.2f) : game.Config.ColorOf((Essence)i);
-                color.a = appear * (1 - absorb) * 0.85f; symbols[i].color = color;
+                int order = memoryOrder[i];
+                float reveal = KarmaGame.EndingMasterAt + 0.65f + order * 1.6f;
+                Vector2 memory = center + new Vector2((order - 1) * 3.1f, order == 1 ? 3.6f : 3.15f);
+                symbols[i].transform.position = Vector2.Lerp(memory, center + Vector2.right * 0.5f, absorb);
+                var color = game.Config.ColorOf((Essence)i);
+                color.a = Ease(reveal, reveal + 0.6f, t) * (1 - absorb) * 0.9f;
+                symbols[i].color = color;
             }
-            float joined = Ease(16.2f, 17.7f, t) * (1 - Ease(19, 20.5f, t));
-            foreach (var symbol in convergence)
+
+            float guardAge = t - (KarmaGame.EndingGuardAt + KarmaGame.EndingRelease);
+            float liftAge = t - (KarmaGame.EndingLiftAt + KarmaGame.EndingRelease);
+            float waveAge = t - (KarmaGame.EndingWaveAt + KarmaGame.EndingRelease);
+            ShowTechnique(techniques[0], center + Vector2.right * 1.25f, game.Config.ColorOf(Essence.Guard), guardAge, 0.58f);
+            ShowTechnique(techniques[1], center + new Vector2(1.5f, 0.2f + 2.4f * Mathf.Clamp01(liftAge / 0.5f)),
+                game.Config.ColorOf(Essence.RisingSlash), liftAge, 0.56f);
+            ShowTechnique(techniques[2], center + Vector2.right * (1.9f + 5.5f * Mathf.Clamp01(waveAge / 0.7f)),
+                game.Config.ColorOf(Essence.SwordWave), waveAge, 0.72f);
+
+            // Let each inherited color remain legible before the united release.
+            float unionAge = t - KarmaGame.EndingUnionAt;
+            float joined = Ease(-0.55f, 0.16f, unionAge) * (1 - Ease(0.25f, 1.28f, unionAge));
+            for (int i = 0; i < convergence.Length; i++)
             {
-                symbol.transform.position = center;
-                symbol.transform.localRotation = Quaternion.Euler(0, 0, t * 18);
-                symbol.color = new Color(1, 0.92f, 0.64f, joined * 0.32f);
+                float spread = 1 - Ease(-0.55f, 0.12f, unionAge);
+                convergence[i].transform.position = center + new Vector2(0.5f + (i - 1) * spread * 1.6f, 0.4f + spread * (2 - i * 0.45f));
+                var color = Color.Lerp(game.Config.ColorOf((Essence)i), new Color(1, 0.92f, 0.64f), 1 - spread);
+                color.a = joined * 0.37f;
+                convergence[i].color = color;
             }
-            float halo = Ease(17.5f, 19.3f, t) * (1 - Ease(20, 21, t));
-            float finalPulse = Ease(32.5f, 32.9f, t) * (1 - Ease(33.3f, 34.5f, t));
+            ShowTechnique(finishedCut, center + Vector2.right * (1.4f + 8.2f * Mathf.Clamp01(unionAge / 1.25f)),
+                new Color(1, 0.91f, 0.63f), unionAge, 1.25f);
+            float halo = Ease(-0.3f, 0.55f, unionAge) * (1 - Ease(0.8f, 2.4f, unionAge));
             aura.transform.position = center;
-            aura.color = new Color(1, 0.91f, 0.57f, Mathf.Max(halo * 0.28f, finalPulse * 0.4f));
-            float memory = Ease(20.5f, 21.5f, t) * (1 - Ease(28.5f, 30, t));
-            master.transform.position = new Vector2(game.Player.Position.x - 5.2f, KarmaTutorialStage.MasterGroundCenter(4.8f));
-            master.color = new Color(0.65f, 0.76f, 0.92f, memory * 0.38f);
+            aura.color = new Color(1, 0.91f, 0.57f, halo * 0.42f);
+
+            float memoryPresence = Ease(KarmaGame.EndingMasterAt, 11.8f, t) * (1 - Ease(34, 37.2f, t));
+            master.color = new Color(0.83f, 0.89f, 1, memoryPresence * 0.84f);
+        }
+
+        static void ShowTechnique(SpriteRenderer renderer, Vector2 position, Color color, float age, float duration)
+        {
+            renderer.transform.position = position;
+            color.a = Ease(0, 0.08f, age) * (1 - Ease(duration * 0.42f, duration, age)) * 0.9f;
+            renderer.color = color;
         }
         void DrawGuardian(float t)
         {

@@ -447,8 +447,7 @@ K4RMA/
 │       │   └── KarmaTypes.cs
 │       ├── Game/
 │       │   ├── Editor/
-│       │   │   ├── KarmaBossPractice.cs
-│       │   │   └── KarmaEndingReview.cs
+│       │   │   └── KarmaBossPractice.cs
 │       │   ├── KarmaBootstrap.cs
 │       │   ├── KarmaBossBalance.cs
 │       │   ├── KarmaBossTuning.cs
@@ -457,7 +456,6 @@ K4RMA/
 │       │   ├── KarmaGame.CinematicSkip.cs
 │       │   ├── KarmaGame.cs
 │       │   ├── KarmaGame.Ending.cs
-│       │   ├── KarmaGame.EndingReview.cs
 │       │   ├── KarmaGame.Progression.cs
 │       │   ├── KarmaGame.Settings.cs
 │       │   ├── KarmaInput.cs
@@ -517,7 +515,6 @@ K4RMA/
 │       │   ├── KarmaCharacterAnimator.PlayerStatus.cs
 │       │   ├── KarmaCombatVFX.cs
 │       │   ├── KarmaEffect.cs
-│       │   ├── KarmaEndingAlternatives.cs
 │       │   ├── KarmaEndingPresentation.cs
 │       │   ├── KarmaMoonArtwork.cs
 │       │   ├── KarmaMoonProjection.cs
@@ -653,8 +650,7 @@ K4RMA/
 │   │   │   ├── KarmaSfxCompletionChecks.cs
 │   │   │   └── KarmaSfxCompletionChecks.Sunday.cs
 │   │   ├── Ending/
-│   │   │   ├── KarmaEndingMoonChecks.cs
-│   │   │   └── KarmaEndingMoonChecks.Alternatives.cs
+│   │   │   └── KarmaEndingMoonChecks.cs
 │   │   ├── Guard/
 │   │   │   ├── KarmaGuardBasicDodgeChecks.cs
 │   │   │   ├── KarmaGuardCameraChecks.cs

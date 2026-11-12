@@ -59,6 +59,18 @@ namespace KarmaPrototype
         GdHeavySwing,
         GdHeavyHit,
         SwElectricDischarge,
+        SwAscensionIgnition,
+        SwSummoningEnergy,
+        SwFinalExplosion,
+        GdShieldLaunch,
+        GdShieldFlight,
+        GdGroundRise,
+        GdDomeSuccess,
+        GdDomeFailure,
+        MenuMainTheme,
+        MenuFourGuardiansA,
+        MenuGuardians,
+        MenuFourGuardiansB,
         Count
     }
 
@@ -77,18 +89,20 @@ namespace KarmaPrototype
             public int Priority, MaxVoices;
             public KarmaSfxBus Bus;
             public string Slot;
+            public bool Loop;
         }
 
         sealed class Voice
         {
             public AudioSource Source;
-            public Behaviour LifetimeOwner;
+            public Component LifetimeOwner;
             public KarmaSfxId Id;
             public KarmaSfxBus Bus;
             public string Slot;
             public float Gain, Life;
             public int Priority, StartedFrame;
             public bool Live, Held;
+            public float Envelope, FadeOut;
         }
 
         static readonly Cue[] cues = Build();
@@ -103,6 +117,9 @@ namespace KarmaPrototype
         static bool loadedLibrary, inheriting, haveLevels;
         static float nextGameSearch, effects, music;
         static float endingAmbience = 1;
+        static int menuTrackOverride = -1;
+        static int endingMusic = -1;
+        public static void SetEndingMusic(int menuTrack) { endingMusic = menuTrack; }
         public static void SetEndingAmbience(float level) { endingAmbience = Mathf.Clamp01(level); }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -145,16 +162,22 @@ namespace KarmaPrototype
             loadedLibrary = inheriting = haveLevels = false;
             phase = RunPhase.Title;
             endingAmbience = 1;
+            menuTrackOverride = -1;
+            endingMusic = -1;
             nextGameSearch = 0f;
             effects = KarmaPreferences.EffectsVolume;
             music = KarmaPreferences.MusicVolume;
         }
 
-        public static void Play(KarmaSfxId id, float window = 0f, Behaviour lifetimeOwner = null)
+        public static void Play(KarmaSfxId id, float window = 0f, Component lifetimeOwner = null)
         {
             if (!Application.isPlaying || id < 0 || id >= KarmaSfxId.Count) return;
             if (LifetimeEnded(lifetimeOwner)) return;
             var cue = cues[(int)id];
+            if (cue.Loop)
+                foreach (var current in voices)
+                    if (current != null && current.Live && current.Id == id
+                        && current.LifetimeOwner == lifetimeOwner && current.FadeOut <= 0) return;
             float now = cue.Bus == KarmaSfxBus.Ui ? Time.unscaledTime : Time.time;
             if (now < readyAt[(int)id]) return;
             var clip = Clip(id);
@@ -184,24 +207,54 @@ namespace KarmaPrototype
             voice.Priority = cue.Priority;
             voice.StartedFrame = Time.frameCount;
             voice.Live = true;
+            voice.Envelope = cue.Loop || cue.Bus == KarmaSfxBus.Ambience ? 0f : 1f;
+            voice.FadeOut = 0;
             voice.Held = ShouldPause(cue.Bus);
             var source = voice.Source;
             source.clip = clip;
             source.pitch = pitch;
             source.priority = 128 - cue.Priority;
-            source.loop = cue.Bus == KarmaSfxBus.Ambience;
-            source.volume = cue.Gain * BusLevel(cue.Bus);
+            source.loop = cue.Loop || cue.Bus == KarmaSfxBus.Ambience;
+            source.volume = cue.Gain * BusLevel(cue.Bus) * voice.Envelope;
             source.Play();
             if (voice.Held) source.Pause();
         }
 
         // A slot groups cues for explicit cancellation. Group members may overlap.
-        public static void StopSlot(string slot)
+        public static void StopSlot(string slot, float fadeSeconds = 0f)
         {
             if (string.IsNullOrEmpty(slot)) return;
             foreach (var voice in voices)
-                if (voice != null && voice.Live && voice.Slot == slot) Release(voice);
+                if (voice != null && voice.Live && voice.Slot == slot) StopVoice(voice, fadeSeconds);
         }
+
+        static void StopVoice(Voice voice, float fadeSeconds)
+        {
+            if (fadeSeconds <= 0 || voice.Held) Release(voice);
+            else if (voice.FadeOut <= 0) voice.FadeOut = fadeSeconds;
+        }
+
+        // Audio-only ownership; SpriteRenderers can own flight loops without a new component.
+        public static void StopOwned(Component owner, float fadeSeconds = 0f)
+        {
+            if (ReferenceEquals(owner, null)) return;
+            foreach (var voice in voices)
+                if (voice != null && voice.Live && ReferenceEquals(voice.LifetimeOwner, owner))
+                    StopVoice(voice, fadeSeconds);
+        }
+
+#if UNITY_EDITOR
+        public static void ReviewMenuTrack(int index)
+        {
+            menuTrackOverride = Mathf.Clamp(index, 0, 3);
+            StopBus(KarmaSfxBus.Ambience);
+            if (game != null && game.Phase == RunPhase.Title) Play(MenuCue(menuTrackOverride));
+        }
+        public static void EndMenuReview()
+        { menuTrackOverride = -1; StopBus(KarmaSfxBus.Ambience); }
+#endif
+
+        static KarmaSfxId MenuCue(int index) => (KarmaSfxId)((int)KarmaSfxId.MenuMainTheme + Mathf.Clamp(index, 0, 3));
 
         public static void StopBus(KarmaSfxBus bus)
         {
@@ -227,8 +280,18 @@ namespace KarmaPrototype
             {
                 if (voice == null || !voice.Live || voice.Source == null) continue;
                 var source = voice.Source;
-                source.volume = voice.Gain * BusLevel(voice.Bus) * (voice.Bus == KarmaSfxBus.Ambience ? ambienceDuck * endingAmbience : 1f);
                 bool hold = ShouldPause(voice.Bus);
+                if (!hold)
+                {
+                    float dt = voice.Bus == KarmaSfxBus.Ui || voice.Bus == KarmaSfxBus.Ambience
+                        ? Time.unscaledDeltaTime : Time.deltaTime;
+                    voice.Envelope = voice.FadeOut > 0
+                        ? Mathf.Max(0, voice.Envelope - dt / voice.FadeOut)
+                        : Mathf.Min(1, voice.Envelope + dt / 0.18f);
+                    if (voice.FadeOut > 0 && voice.Envelope <= 0) { Release(voice); continue; }
+                }
+                source.volume = voice.Gain * BusLevel(voice.Bus) * voice.Envelope
+                    * (voice.Bus == KarmaSfxBus.Ambience ? ambienceDuck * endingAmbience : 1f);
                 if (hold != voice.Held)
                 {
                     voice.Held = hold;
@@ -302,10 +365,20 @@ namespace KarmaPrototype
             phase = nextPhase;
             inheriting = nextInheriting;
 
-            bool wantBed = game.SettingsOpen || phase != RunPhase.Title;
-            bool bedLive = HasVoice(KarmaSfxBus.Ambience);
-            if (wantBed && !bedLive) Play(KarmaSfxId.AmbArenaLoop);
-            if (!wantBed && bedLive) StopBus(KarmaSfxBus.Ambience);
+            // The same ambience voice serves title music and the existing combat bed.
+            // Fade out before replacing it; never run two candidate tracks together.
+            if (!loadedLibrary) Clip(KarmaSfxId.AmbArenaLoop);
+            var desired = phase == RunPhase.Title
+                ? MenuCue(menuTrackOverride >= 0 ? menuTrackOverride : library != null ? library.DefaultMenuTrack : 1)
+                : phase == RunPhase.Ending && endingMusic >= 0 ? MenuCue(endingMusic) : KarmaSfxId.AmbArenaLoop;
+            bool bedLive = false;
+            foreach (var voice in voices)
+                if (voice != null && voice.Live && voice.Bus == KarmaSfxBus.Ambience)
+                {
+                    bedLive = true;
+                    if (voice.Id != desired) StopVoice(voice, 0.25f);
+                }
+            if (!bedLive) Play(desired);
         }
 
         static bool ShouldPause(KarmaSfxBus bus)
@@ -336,8 +409,9 @@ namespace KarmaPrototype
             }
         }
 
-        static bool LifetimeEnded(Behaviour owner)
-        { return !ReferenceEquals(owner, null) && (owner == null || !owner.isActiveAndEnabled); }
+        static bool LifetimeEnded(Component owner)
+        { return !ReferenceEquals(owner, null) && (owner == null || !owner.gameObject.activeInHierarchy
+            || owner is Behaviour behaviour && !behaviour.enabled); }
 
         static Voice Claim(KarmaSfxId id, Cue cue)
         {
@@ -362,8 +436,9 @@ namespace KarmaPrototype
                     if (sameCueVictim == null || Remaining(voice) < Remaining(sameCueVictim))
                         sameCueVictim = voice;
                 }
-                if (victim == null || voice.Priority < victim.Priority ||
-                    (voice.Priority == victim.Priority && Remaining(voice) < Remaining(victim)))
+                // A channel loop must not disappear midway through its owning effect.
+                if (!voice.Source.loop && (victim == null || voice.Priority < victim.Priority ||
+                    (voice.Priority == victim.Priority && Remaining(voice) < Remaining(victim))))
                     victim = voice;
             }
             if (cue.MaxVoices > 0 && matching >= cue.MaxVoices) return sameCueVictim;
@@ -481,7 +556,7 @@ namespace KarmaPrototype
             Add(KarmaSfxId.CombatBladeHit, "Combat/Combat_Blade_Hit.wav", 0.48f, 0f, 0.39f, 78, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatPerfectParry, "Combat/Combat_Perfect_Parry.wav", 0.5f, 0f, 0.84f, 92, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatGuardBlock, "Combat/Combat_Guard_Block.wav", 0.5f, 0.08f, 0.49f, 70, KarmaSfxBus.Gameplay);
-            Add(KarmaSfxId.CombatBossStagger, "Combat/Combat_Boss_Stagger.wav", 0.4f, 0f, 0.36f, 86, KarmaSfxBus.Gameplay);
+            Add(KarmaSfxId.CombatBossStagger, "Combat/Boss_Stun.wav", 0.4f, 0f, 0f, 86, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.CombatBossDefeat, "Combat/Combat_Boss_Defeat.wav", 0.66f, 0.4f, 1.12f, 96, KarmaSfxBus.Stinger);
             Add(KarmaSfxId.UiMove, "UI/UI_Move.wav", 0.7f, 0.05f, 0.33f, 20, KarmaSfxBus.Ui, "ui-input");
             Add(KarmaSfxId.UiConfirm, "UI/UI_Confirm.wav", 0.42f, 0.05f, 0.25f, 24, KarmaSfxBus.Ui, "ui-input");
@@ -494,8 +569,23 @@ namespace KarmaPrototype
             AddBoss(KarmaSfxId.GdBasicSwing, "Guard/GD_Basic_Swing.wav", 0.42f, 0f, 0f, 60, "gd-pattern");
             AddBoss(KarmaSfxId.GdBasicHit, "Guard/GD_Basic_Hit.wav", 0.44f, 0f, 0f, 80);
             AddBoss(KarmaSfxId.GdHeavySwing, "Guard/GD02_Heavy_Swing.wav", 0.45f, 0f, 0f, 68, "gd-pattern");
-            AddBoss(KarmaSfxId.GdHeavyHit, "Guard/GD02_Heavy_Hit.wav", 0.48f, 0f, 0f, 84);
+            AddBoss(KarmaSfxId.GdHeavyHit, "Guard/GD02_Heavy_Hit_v2.wav", 0.48f, 0f, 0f, 84);
             AddBoss(KarmaSfxId.SwElectricDischarge, "SwordWave/SW_Electric_Discharge.wav", 0.42f, 0f, 0f, 64, "sw-wave");
+            AddBoss(KarmaSfxId.SwAscensionIgnition, "SwordWave/SW05_Ascension_Ignition.wav", 0.5f, 0f, 0f, 76, "sw-ascension");
+            AddBoss(KarmaSfxId.SwSummoningEnergy, "SwordWave/SW05_Summoning_Energy.wav", 0.10f, 0f, 0f, 50, "sw-summon");
+            AddBoss(KarmaSfxId.SwFinalExplosion, "SwordWave/SW05_Final_Explosion.wav", 0.64f, 0f, 0f, 94, "sw-detonation");
+            AddBoss(KarmaSfxId.GdShieldLaunch, "Guard/GD03_Shield_Launch.wav", 0.42f, 0f, 0f, 66, "gd-pattern");
+            AddBoss(KarmaSfxId.GdShieldFlight, "Guard/GD03_Shield_Flight.wav", 0.065f, 0f, 0f, 45, "gd-flight");
+            AddBoss(KarmaSfxId.GdGroundRise, "Guard/GD04_Ground_Rise.wav", 0.24f, 0f, 0f, 70, "gd-pattern");
+            AddBoss(KarmaSfxId.GdDomeSuccess, "Guard/GD05_Dome_Success.wav", 0.5f, 0f, 0f, 88, "gd-pattern");
+            AddBoss(KarmaSfxId.GdDomeFailure, "Guard/GD05_Dome_Failure.wav", 0.58f, 0f, 0f, 94, "gd-pattern");
+            foreach (var id in new[] { KarmaSfxId.SwSummoningEnergy, KarmaSfxId.GdShieldFlight })
+            { table[(int)id].Loop = true; table[(int)id].MaxVoices = 1; }
+            table[(int)KarmaSfxId.GdGroundRise].MaxVoices = 3;
+            Add(KarmaSfxId.MenuMainTheme, "Music/K4RMA_Main_Theme_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
+            Add(KarmaSfxId.MenuFourGuardiansA, "Music/Four_Guardians_A_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
+            Add(KarmaSfxId.MenuGuardians, "Music/Guardians_of_K4RMA_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
+            Add(KarmaSfxId.MenuFourGuardiansB, "Music/Four_Guardians_B_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
             return table;
         }
     }

@@ -213,7 +213,6 @@ namespace KarmaPrototype
             {
                 if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position);
             }
-            public override void OnParried() { KarmaRisingAudio.Stagger(); }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {

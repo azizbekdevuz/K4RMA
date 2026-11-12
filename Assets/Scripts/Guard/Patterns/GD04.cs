@@ -100,6 +100,8 @@ namespace KarmaPrototype
                     for (int i = 0; i < count; i++)
                     {
                         float beginsAt = travelSeconds * i / (count - 1);
+                        if (elapsed >= beginsAt && previousElapsed < beginsAt)
+                            KarmaAudio.Play(KarmaSfxId.GdGroundRise, lifetimeOwner: slabs[i]);
                         float age = elapsed - beginsAt;
                         var slab = slabs[i];
                         slab.enabled = age >= 0 && fall < 1;

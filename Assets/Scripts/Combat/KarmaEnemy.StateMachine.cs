@@ -120,6 +120,7 @@ namespace KarmaPrototype
             KarmaVisuals.ApplyMaterial(mark);
             float fit = KarmaSpace.Units(2.1f) / Mathf.Max(0.01f, sprite.bounds.size.y);
             stunCue.localScale = Vector3.one * fit;
+            KarmaAudio.Play(KarmaSfxId.CombatBossStagger, lifetimeOwner: stunCue);
         }
         void HideStunCue()
         {

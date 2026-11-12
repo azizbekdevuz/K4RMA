@@ -11,7 +11,7 @@ using UnityEngine;
 
 // Install under Assets/Editor only while running this focused Play Mode check.
 [InitializeOnLoad]
-public static class KarmaSfxCompletionChecks
+public static partial class KarmaSfxCompletionChecks
 {
     const string Key = "K4RMA.SfxCompletion";
     const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
@@ -118,14 +118,14 @@ public static class KarmaSfxCompletionChecks
         landingsByFrame.Clear();
         peakThunderVoices = 0;
     }
-    static async Task Prepare(Essence kind)
+    static async Task Prepare(Essence kind, int stage = 3)
     {
         game.StartRun();
         game.Player.Essences.Preview(kind);
         game.Player.Essences.Confirm(out _);
         foreach (Essence extra in Enum.GetValues(typeof(Essence)))
             if (extra != kind) { game.Player.Essences.Preview(extra); game.Player.Essences.Confirm(out _); }
-        typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, 3);
+        typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, stage);
         Call(game, "LoadRoom", true);
         enemy = game.Enemies[0];
         typeof(KarmaPlayer).GetProperty("Health").SetValue(game.Player, 10000f);
@@ -303,7 +303,7 @@ public static class KarmaSfxCompletionChecks
         Check(game.Player.ParryCount > parries, "GD03 actual reflection; parries=" + game.Player.ParryCount + " observed=" + string.Join(",", observed));
         Check(observed.Contains("GD_Shield_Break"), "GD03 breaks active shield; active=" + enemy.AutoShieldActive + " observed=" + string.Join(",", observed));
         await Wait(2);
-        Check(observed.Contains("Combat_Boss_Stagger"), "Reflected shield actually stuns Guard");
+        Check(observed.Contains("Boss_Stun"), "Reflected shield actually stuns Guard");
         Check(Count(KarmaSfxId.GdShieldBreak) == 1 && Count(KarmaSfxId.CombatBossStagger) == 1
             && Count(KarmaSfxId.CombatPerfectParry) == 1, "Reflection has one shield break, one delayed stagger and one parry");
     }
@@ -330,6 +330,18 @@ public static class KarmaSfxCompletionChecks
         {
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             Check(game != null, "Game exists in Play Mode");
+            if (SessionState.GetBool(Key + ".SundayContacts", false))
+            {
+                await CheckSundayContacts();
+                Finish("PASS: " + assertions + " Sunday impact and shared stun assertions; no subjective listening verdict.", 0);
+                return;
+            }
+            if (SessionState.GetBool(Key + ".Sunday", false))
+            {
+                await CheckSunday();
+                Finish("PASS: " + assertions + " Sunday audio assertions; playback observed, subjective listening not approved.", 0);
+                return;
+            }
             if (SessionState.GetBool(Key + ".Release", false))
             {
                 await CheckReleases();
@@ -414,7 +426,7 @@ public static class KarmaSfxCompletionChecks
             typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
             foreach (var attack in new[] { EnemyAttack.GroundStrike, EnemyAttack.GD02 })
             {
-                string hit = attack == EnemyAttack.GD02 ? "GD02_Heavy_Hit" : "GD_Basic_Hit";
+                string hit = attack == EnemyAttack.GD02 ? "GD02_Heavy_Hit_v2" : "GD_Basic_Hit";
                 Clear();
                 Set(game.Player, "invulnerableUntil", 0f);
                 Set(game.Player, "guardUntil", 0f);
@@ -451,7 +463,7 @@ public static class KarmaSfxCompletionChecks
             Check(Playing("UI_Move"), "UI works during pause");
             game.TogglePause();
             game.ReturnToTitle();
-            await Wait(0.2f);
+            await Wait(0.45f); // Allow the intentional 0.25-second bed transition.
             Check(!Playing("Amb_Arena_Loop"), "Title stops ambience");
             game.StartRun();
             enemy = game.Enemies[0];
@@ -498,11 +510,14 @@ public static class KarmaSfxCompletionChecks
     static void Finish(string result, int exit)
     {
         Application.logMessageReceived -= CaptureError;
+        bool contacts = SessionState.GetBool(Key + ".SundayContacts", false);
+        SessionState.EraseBool(Key + ".SundayContacts");
         SessionState.EraseBool(Key + ".Followup");
         SessionState.EraseBool(Key + ".Release");
+        SessionState.EraseBool(Key + ".Sunday");
         SessionState.SetBool(Key, false);
         Directory.CreateDirectory("output/validation");
-        File.WriteAllText("output/validation/sfx-completion.txt", result);
+        File.WriteAllText("output/validation/" + (contacts ? "sfx-sunday-contacts.txt" : "sfx-completion.txt"), result);
         Debug.Log(result);
         EditorApplication.Exit(exit);
     }

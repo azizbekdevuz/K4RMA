@@ -519,7 +519,13 @@ public static partial class KarmaSfxCompletionChecks
         Directory.CreateDirectory("output/validation");
         File.WriteAllText("output/validation/" + (contacts ? "sfx-sunday-contacts.txt" : "sfx-completion.txt"), result);
         Debug.Log(result);
-        EditorApplication.Exit(exit);
+        if (SessionState.GetBool(Key + ".Editor", false))
+        {
+            SessionState.EraseBool(Key + ".Editor");
+            Application.runInBackground = SessionState.GetBool(Key + ".Background", false);
+            EditorApplication.ExitPlaymode();
+        }
+        else EditorApplication.Exit(exit);
     }
 }
 #endif

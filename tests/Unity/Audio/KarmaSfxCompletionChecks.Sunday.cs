@@ -14,6 +14,44 @@ public static partial class KarmaSfxCompletionChecks
     public static void RunSundayContactsBatch()
     { SessionState.SetBool(Key + ".SundayContacts", true); RunBatch(); }
 
+    [MenuItem("K4RMA/Validation/Stun and menu audio")]
+    public static void RunStunAudioInEditor()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before validation.");
+        SessionState.SetBool(Key + ".Editor", true);
+        SessionState.SetBool(Key + ".Background", Application.runInBackground);
+        RunSundayContactsBatch();
+    }
+
+    static async Task CheckMixerSignal(AudioSource isolated, string label)
+    {
+        Check(isolated != null && isolated.isPlaying && !isolated.mute && isolated.volume > 0
+            && AudioListener.volume > 0, label + " has a live unmuted source");
+        var other = Array.FindAll(Sources(), source => source != isolated && !source.mute);
+        var samples = new float[1024];
+        float peak = 0;
+        try
+        {
+            foreach (var source in other) source.mute = true;
+            await Wait(0.08f);
+            for (int i = 0; i < 6; i++)
+            {
+                AudioListener.GetOutputData(samples, 0);
+                foreach (float sample in samples) peak = Mathf.Max(peak, Mathf.Abs(sample));
+                await Wait(0.027f);
+            }
+        }
+        finally
+        {
+            foreach (var source in other)
+                if (source != null) source.mute = false;
+        }
+        Check(peak > 0.001f, label + " reached Unity's mixed audio output");
+        string report = label + " listener output peak " + (20 * Mathf.Log10(peak)).ToString("F1") + " dBFS";
+        Debug.Log(report);
+        System.IO.Directory.CreateDirectory("output/validation");
+        System.IO.File.AppendAllText("output/validation/stun-mixer.txt", report + Environment.NewLine);
+    }
     static async Task CheckSundayContacts()
     {
         await Prepare(Essence.Guard);
@@ -65,7 +103,28 @@ public static partial class KarmaSfxCompletionChecks
                 kind + " stars and one stun sound");
             Call(enemy, "ShowStunCue"); Sample();
             Check(Count(KarmaSfxId.CombatBossStagger) == 1, kind + " repeated visual request stays silent");
+            if (kind == Essence.Guard)
+            {
+                System.IO.Directory.CreateDirectory("output/validation");
+                ScreenCapture.CaptureScreenshot("output/validation/stun-stars.png");
+                await Wait(0.07f);
+                var stun = Source(KarmaSfxId.CombatBossStagger);
+                Call(enemy, "HideStunCue");
+                await CheckMixerSignal(stun, "Guard stun after stars are removed");
+            }
         }
+        await Prepare(Essence.SwordWave, 2);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+        point = game.Player.GetComponent<Collider2D>().bounds.center;
+        game.Player.BeginCounter();
+        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(), 0, sourcePattern: EnemyAttack.SW04);
+        await Until(() => enemy.Stunned, 2, "SW04 electrical parry stun");
+        Check(Get(enemy, "stunCue") == null && Count(KarmaSfxId.CombatBossStagger) == 1,
+            "Electrical feedback uses no stars sprite but plays one stun cue");
+        Call(enemy, "ShowStunCue"); Sample();
+        Check(Count(KarmaSfxId.CombatBossStagger) == 1, "Electrical stun also deduplicates without a sprite");
+        await CheckMixerSignal(Source(KarmaSfxId.CombatBossStagger), "SwordWave electrical stun");
         await Prepare(Essence.SwordWave);
         PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
         point = game.Player.GetComponent<Collider2D>().bounds.center;
@@ -75,6 +134,12 @@ public static partial class KarmaSfxCompletionChecks
         await Wait(.15f);
         Check(game.Player.ParryCount == parries + 1 && !enemy.Stunned
             && Count(KarmaSfxId.CombatBossStagger) == 0, "Final SwordWave parry resistance has no false stun cue");
+        game.ReturnToTitle();
+        var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
+        var menu = (KarmaSfxId)((int)KarmaSfxId.MenuMainTheme + library.DefaultMenuTrack);
+        await Until(() => Live(menu), 2, "default title track");
+        Check(Source(menu).loop, "Title track remains a loop");
+        await CheckMixerSignal(Source(menu), "Default title music");
     }
 
     static AudioSource Source(KarmaSfxId id)

@@ -106,6 +106,57 @@ public static class KarmaRisingPlayChecks
         }
         finally { director.StartRun(); }
     }
+    static async Task CheckBaseStrike()
+    {
+        game.StartRun();
+        game.Player.Essences.Preview(Essence.RisingSlash);
+        game.Player.Essences.Confirm(out _);
+        typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, 1);
+        Call(game, "LoadRoom", true);
+        enemy = game.Enemies[0];
+        enemy.transform.position = new Vector3(24, KarmaSpace.GuardianGroundY, 0);
+        var body = game.Player.GetComponent<Rigidbody2D>();
+        body.bodyType = RigidbodyType2D.Kinematic;
+        body.position = game.Player.transform.position = new Vector2(18, KarmaSpace.PlayerHalfHeight);
+        Set(game.Player, "invulnerableUntil", Time.time + 1000);
+        Set(enemy, "engaged", true);
+        Set(enemy, "timer", float.MaxValue);
+        var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
+        var renderer = (SpriteRenderer)Get(animator, "picture");
+        var frames = (Sprite[])Get(animator, "risingBasicStrike");
+        Check(frames != null && frames.Length == 6, "Base strike loads six authored sprites");
+        for (int i = 0; i < frames.Length; i++)
+        {
+            Check(frames[i].name == $"Strike{i:00}", "Strike frames import in order");
+            Check(frames[i].pixelsPerUnit == 125 && frames[i].pivot == new Vector2(270, 20),
+                "Strike preserves canonical PPU and a fixed pivot");
+        }
+        bool first = false, second = false, dash = false;
+        var observed = new System.Collections.Generic.HashSet<Sprite>();
+        double lastStrike = -1;
+        Force(EnemyAttack.GroundStrike);
+        await Until(() =>
+        {
+            double strikeAt = (double)Get(animator, "risingStrikeAt");
+            dash |= animator.CurrentPose == "Dash" && strikeAt < 0;
+            if (strikeAt >= 0 && animator.CurrentPose == "Slash" && renderer.sprite == frames[0])
+            {
+                if (!first) { first = true; lastStrike = strikeAt; }
+                else second |= strikeAt > lastStrike;
+            }
+            if (Array.IndexOf(frames, renderer.sprite) >= 0) observed.Add(renderer.sprite);
+            return !(bool)Get(enemy, "running");
+        });
+        Check(dash && first && second, "A visible dash precedes the two actual strike starts");
+        Check(observed.Count == 6, "All six strike frames appear during the basic combo");
+        Check(((Transform)Get(enemy, "art")).localScale.x < 0, "The existing facing mirrors the new frames");
+        Force(EnemyAttack.GroundStrike);
+        await Until(() => (double)Get(animator, "risingStrikeAt") >= 0);
+        Call(enemy, "InterruptPattern");
+        Check((double)Get(animator, "risingStrikeAt") < 0, "Interrupt clears strike playback");
+        animator.GuardianPose("Stunned", EnemyAttack.GroundStrike, false, false);
+        Check(renderer.sprite.name == "Hurt", "Stun overrides strike playback");
+    }
     static EnemyAttack SelectAttack(float distance)
     {
         var behavior = Get(enemy, "behavior");
@@ -148,6 +199,7 @@ public static class KarmaRisingPlayChecks
             var config = UnityEngine.Object.Instantiate(game.Config); config.playerHealth = 1000000; Set(game, "config", config);
             Application.logMessageReceived += Capture;
             Debug.Log(CheckPoseConnections());
+            await CheckBaseStrike();
             CheckAttackMix();
             foreach (var pattern in new[] { EnemyAttack.GroundStrike, EnemyAttack.UP01, EnemyAttack.UP02, EnemyAttack.UP03, EnemyAttack.UP04, EnemyAttack.UP05 })
             {

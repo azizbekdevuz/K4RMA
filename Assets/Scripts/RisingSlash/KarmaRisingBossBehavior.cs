@@ -51,6 +51,7 @@ namespace KarmaPrototype
             public override void Interrupt(bool preservePressure)
             {
                 base.Interrupt(preservePressure);
+                owner.animator.ClearRisingBasicStrike();
                 ClearBarrier();
                 ClearFragments();
                 motionContact = null;

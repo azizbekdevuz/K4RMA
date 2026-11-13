@@ -47,13 +47,32 @@ namespace KarmaPrototype
         internal void PresentEndingPose(string name, float elapsed, bool loop, float glow)
         {
             if (picture == null) return;
-            if (endingFrames.TryGetValue(name, out var sequence))
+            bool draw = name == "Draw";
+            bool sheathe = name == "Sheathe";
+            if (endingFrames.TryGetValue(draw || sheathe ? "Recovery" : name, out var sequence))
             {
-                int frame = Mathf.FloorToInt(Mathf.Max(0, elapsed) * 24f);
-                picture.sprite = sequence[loop ? frame % sequence.Length : Mathf.Min(frame, sequence.Length - 1)];
+                int last = sequence.Length - 1;
+                int frame;
+                if (draw)
+                {
+                    // Reverse the authored return to stance to raise the sword from the scabbard.
+                    frame = Mathf.RoundToInt(last * (1 - Mathf.Clamp01(elapsed)));
+                }
+                else if (sheathe)
+                {
+                    // The follow-through already leaves the blade low, so continue from there.
+                    frame = Mathf.RoundToInt(Mathf.Lerp(Mathf.Min(1, last), last, elapsed));
+                }
+                else
+                {
+                    float sampleTime = name == "Attack" ? elapsed * 0.68f : elapsed;
+                    frame = Mathf.FloorToInt(Mathf.Max(0, sampleTime) * 24f + 0.0001f);
+                    frame = loop ? frame % sequence.Length : Mathf.Min(frame, last);
+                }
+                picture.sprite = sequence[frame];
                 CurrentPose = name;
             }
-            else ShowPose(name);
+            else ShowPose(draw || sheathe ? "Idle" : name);
             picture.flipX = false;
             picture.transform.localScale = pictureScale;
             picture.transform.localPosition = pictureHome;

@@ -319,7 +319,11 @@ K4RMA/
 │   │       │   └── TrainingDummy.png
 │   │       └── UI/
 │   │           ├── Components.png
-│   │           └── MenuBackground.png
+│   │           ├── GuardianTrialMap.png
+│   │           ├── MenuBackground.png
+│   │           ├── TechniqueIcons.png
+│   │           ├── UIFrames.png
+│   │           └── UIOrnaments.png
 │   ├── Audio/
 │   │   ├── Ambience/
 │   │   │   └── Amb_Arena_Loop.wav
@@ -603,7 +607,8 @@ K4RMA/
 │       │   ├── KarmaHUD.cs
 │       │   ├── KarmaHUD.Ending.cs
 │       │   ├── KarmaHUD.Screens.cs
-│       │   └── KarmaHUD.Settings.cs
+│       │   ├── KarmaHUD.Settings.cs
+│       │   └── KarmaHUD.Theme.cs
 │       └── World/
 │           ├── KarmaPhysicsQueries.cs
 │           ├── KarmaSpace.cs

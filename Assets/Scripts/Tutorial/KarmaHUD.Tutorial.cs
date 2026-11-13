@@ -16,18 +16,19 @@ namespace KarmaPrototype
             if (t.WaitingForGuard)
             {
                 Fill(new Rect(0, 0, 1280, 720), new Color(0.01f, 0.02f, 0.04f, 0.4f));
-                Panel(new Rect(250, 540, 780, 150));
-                Label(275, 550, 730, 50, "공격이 닿기 전, 보호의 힘을 펼쳐라.", centered);
+                ThemePanel(new Rect(250, 540, 780, 150));
+                ThemeLabel(new Rect(275, 554, 730, 45), "공격이 닿기 전, 보호의 힘을 펼쳐라.", centered, Ivory);
                 float pulse = 0.8f + Mathf.Sin(Time.unscaledTime * 5) * 0.2f;
-                var old = GUI.color; GUI.color = new Color(1, 0.9f, 0.6f, pulse);
-                Label(275, 615, 730, 55, "[ " + Key(KarmaAction.Guard) + " ] 를 새로 눌러 막으세요", heading); GUI.color = old;
+                BrushRule(438, 603, 404, Alpha(Gold, 0.52f));
+                ThemeLabel(new Rect(275, 610, 730, 57), Keyed("새로 눌러 막기", KarmaAction.Guard), actionText, Alpha(Gold, pulse));
             }
             if (!string.IsNullOrEmpty(t.Speech))
             {
-                Panel(new Rect(210, 550, 860, 140));
-                Label(235, 560, 810, 25, t.Step == KarmaTutorialStep.Complete ? tutorialLabels[t.Lesson] + " 3/3 · 수련 완료" : t.SpeechTitle, small);
-                Label(235, 588, 810, 65, t.Speech, text);
-                if (t.Step != KarmaTutorialStep.Complete) Label(235, 655, 810, 25, "[ " + Key(KarmaAction.DialogueConfirm) + " ] 계속", small);
+                ThemePanel(new Rect(210, 550, 860, 140));
+                ThemeLabel(new Rect(235, 556, 810, 32), t.Step == KarmaTutorialStep.Complete ? tutorialLabels[t.Lesson] + " 3/3 · 수련 완료" : t.SpeechTitle, mapLabel, Gold);
+                BrushRule(235, 590, 810, Alpha(Gold, 0.34f));
+                ThemeLabel(new Rect(235, 599, 810, 53), t.Speech, text, Ivory);
+                if (t.Step != KarmaTutorialStep.Complete) ThemeLabel(new Rect(235, 652, 810, 27), Keyed("계속", KarmaAction.DialogueConfirm), mapLabel, Gold);
                 return;
             }
             string objective;
@@ -52,10 +53,11 @@ namespace KarmaPrototype
             if (t.WaitingForGuard) return;
             if (!string.IsNullOrEmpty(t.BlockedMessage))
             {
-                Panel(new Rect(210, 120, 860, 70));
-                Label(230, 130, 820, 50, t.BlockedMessage, centered);
+                ThemePanel(new Rect(210, 120, 860, 70));
+                ThemeLabel(new Rect(230, 130, 820, 50), t.BlockedMessage, centered, Gold);
             }
-            Panel(new Rect(210, 615, 860, 65)); Label(230, 630, 820, 42, objective, centered);
+            ThemePanel(new Rect(210, 615, 860, 65));
+            ThemeLabel(new Rect(230, 625, 820, 44), objective, centered, Ivory);
         }
     }
 }

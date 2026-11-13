@@ -8,7 +8,7 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD : MonoBehaviour
     {
         KarmaGame game;
-        GUIStyle title, heading, text, small, menuButton, centered, keyButton;
+        GUIStyle title, text, centered;
         Font runtimeFont;
         readonly string[] names = { "검기", "상승베기", "방어" };
         public void Initialize(KarmaGame director) { game = director; }
@@ -42,16 +42,11 @@ namespace KarmaPrototype
             if (title != null) return;
             Font font = ResolveFont();
             title = new GUIStyle(GUI.skin.label) { fontSize = 36, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-            heading = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, wordWrap = true };
             text = new GUIStyle(GUI.skin.label) { fontSize = 18, wordWrap = true };
-            small = new GUIStyle(GUI.skin.label) { fontSize = 14, wordWrap = true };
-            menuButton = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
-            menuButton.normal.textColor = new Color(0.92f, 0.9f, 0.82f);
-            menuButton.hover.textColor = Color.white;
-            keyButton = new GUIStyle(menuButton) { fontSize = 18 };
             centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
-            foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
-            foreach (var s in new[] { title, heading, text, small, menuButton, centered, keyButton }) if (font != null) s.font = font;
+            foreach (var s in new[] { title, text }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
+            foreach (var s in new[] { title, text, centered }) if (font != null) s.font = font;
+            ThemeStyles(font);
         }
         void OnGUI()
         {
@@ -62,40 +57,46 @@ namespace KarmaPrototype
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0),
                 Quaternion.identity, new Vector3(scale, scale, 1));
+            UpdateHudView();
             if (game.Phase == RunPhase.Title)
-                Art(new Rect(0, 0, 1280, 720), "MenuBackground");
-            if (game.SettingsOpen)
+                Art(FullView, "MenuBackground");
+            if (hudView == HudView.Settings)
             {
                 SettingsScreen(); GUI.matrix = saved; return;
             }
-            if (game.Phase == RunPhase.Ending || game.EndingCompleted)
-            { EndingScreen(); CinematicSkipHint(); GUI.matrix = saved; return; }
-            if (game.Phase == RunPhase.Title) TitleScreen();
+            if (hudView == HudView.Results)
+            {
+                EndScreen(game.Phase == RunPhase.Victory || game.EndingCompleted);
+                FadeIntoMenu();
+                GUI.matrix = saved; return;
+            }
+            if (game.Phase == RunPhase.Ending)
+            {
+                EndingScreen(); CinematicSkipHint(); GUI.matrix = saved; return;
+            }
+            if (hudView == HudView.Title) TitleScreen();
+            else if (hudView == HudView.Choice) ChoiceScreen();
             else
             {
                 if (game.Tutorial != null) TutorialScreen(); else TopBar();
-                if (game.Paused || game.Phase == RunPhase.Choosing
-                    || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory)
-                    FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
-                if (game.Paused) PauseScreen();
+                if (hudView == HudView.Pause) PauseScreen();
                 else switch (game.Phase)
                 {
-                    case RunPhase.Choosing: ChoiceScreen(); break;
                     case RunPhase.Transition: StageTransitionScreen(); break;
-                    case RunPhase.Defeat: EndScreen(false); break;
-                    case RunPhase.Victory: EndScreen(true); break;
                     case RunPhase.Gate:
-                        Panel(new Rect(300, 525, 680, 110));
-                        Label(325, 539, 640, 35, "시험 통과", heading);
-                        Label(325, 578, 640, 44, "오른쪽 수련문으로 이동한 뒤 F를 눌러 고유화할 기술을 고르세요.", text);
+                        ThemePanel(new Rect(300, 525, 680, 110));
+                        ThemeLabel(new Rect(325, 534, 640, 37), "시험 통과", rowText, Gold);
+                        ThemeLabel(new Rect(325, 573, 640, 44), "오른쪽 수련문에서 " + Keyed("상호작용", KarmaAction.Interact) + "으로 고유화할 기술을 고르세요.", text, Ivory);
                         break;
                 }
             }
+            if (hudView == HudView.Title || hudView == HudView.Choice) FadeIntoMenu();
             if (!string.IsNullOrEmpty(game.OpeningArrivalSpeech) && game.OpeningArrivalFade < 0.45f)
             {
-                Panel(new Rect(230, 550, 820, 140));
-                Label(255, 565, 770, 75, game.OpeningArrivalSpeech, text);
-                Label(255, 655, 770, 25, "[ " + KarmaInput.BindingLabel(KarmaAction.DialogueConfirm) + " ] 계속", small);
+                ThemePanel(new Rect(230, 550, 820, 140));
+                BrushRule(252, 561, 775, Alpha(Gold, 0.62f));
+                ThemeLabel(new Rect(255, 582, 770, 61), game.OpeningArrivalSpeech, text, Ivory);
+                ThemeLabel(new Rect(255, 650, 770, 26), Keyed("계속", KarmaAction.DialogueConfirm), mapLabel, Gold);
             }
             if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
             CinematicSkipHint();
@@ -105,6 +106,7 @@ namespace KarmaPrototype
         void OnDestroy()
         {
             if (runtimeFont != null) Destroy(runtimeFont);
+            ReleaseTheme();
         }
 
         static void Art(Rect bounds, string name, Rect? source = null)
@@ -138,9 +140,7 @@ namespace KarmaPrototype
                 source.y / sprite.texture.height, source.width / sprite.texture.width, source.height / sprite.texture.height), true);
             GUI.color = old;
         }
-        void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
-        static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, 0.95f)); }
         static void DrawViewportBorders()
         {
             Matrix4x4 saved = GUI.matrix;

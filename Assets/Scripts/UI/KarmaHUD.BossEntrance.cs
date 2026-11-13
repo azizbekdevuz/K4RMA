@@ -52,8 +52,8 @@ namespace KarmaPrototype
             float alpha = reveal * (1 - Ease((t - 2.2f) / 0.6f));
             if (entranceTitle == null)
             {
-                entranceTitle = new GUIStyle(title) { fontSize = 48, alignment = TextAnchor.MiddleLeft, wordWrap = false };
-                entranceLabel = new GUIStyle(small) { fontSize = 11, alignment = TextAnchor.MiddleLeft, wordWrap = false };
+                entranceTitle = new GUIStyle(displayText) { fontSize = 48, alignment = TextAnchor.MiddleLeft, wordWrap = false };
+                entranceLabel = new GUIStyle(mapLabel) { fontSize = 14, alignment = TextAnchor.MiddleLeft, wordWrap = false };
             }
             Fill(new Rect(0, 0, 1280, 720), new Color(0.008f, 0.012f, 0.018f, 0.10f * frame));
             Fill(new Rect(0, 0, 1280, 12 * frame), new Color(0.008f, 0.01f, 0.014f, 0.96f));
@@ -64,47 +64,24 @@ namespace KarmaPrototype
             Color old = GUI.color;
             GUI.color = new Color(1, 1, 1, alpha);
             entranceLabel.normal.textColor = entranceAccent;
-            GUI.Label(new Rect(148, 513, 900, 24), "B O S S   /   E N C O U N T E R", entranceLabel);
-            entranceTitle.normal.textColor = new Color(0.94f, 0.93f, 0.87f);
+            GUI.Label(new Rect(148, 513, 900, 24), "수호자 등장", entranceLabel);
+            entranceTitle.normal.textColor = Ivory;
             // A clipped reveal and small settling movement leave the canonical name intact.
             GUI.BeginGroup(new Rect(148, 542, 970 * reveal, 76));
             GUI.Label(new Rect(18 * (1 - reveal), -12 * (1 - reveal), 950, 72), entranceName, entranceTitle);
             GUI.EndGroup();
             GUI.color = old;
             Color accent = entranceAccent; accent.a = alpha;
-            Fill(new Rect(148, 629, 680 * reveal, 1), new Color(accent.r, accent.g, accent.b, alpha * 0.35f));
-            Fill(new Rect(148, 628, 112 * reveal, 2), accent);
+            BrushRule(148, 629, 680 * reveal, Alpha(accent, 0.35f));
+            BrushRule(148, 628, 112 * reveal, accent);
             float flourish = Ease((t - 0.4f) / 0.45f);
             Vector2 center = new Vector2(105, 580);
-            if (entranceBoss.PrimaryType == Essence.RisingSlash)
-            {
-                EntranceLine(center + new Vector2(-18, 30), center + new Vector2(-18, 30) + new Vector2(36, -64) * flourish, 2, accent);
-                EntranceLine(center + new Vector2(-8, 30), center + new Vector2(-8, 30) + new Vector2(24, -42) * flourish, 1, accent * 0.6f);
-            }
-            else if (entranceBoss.PrimaryType == Essence.SwordWave)
-            {
-                EntranceLine(center + new Vector2(-36, 8), center + new Vector2(-36, 8) + new Vector2(72, -16) * flourish, 2, accent);
-                EntranceLine(center + new Vector2(-24, 14), center + new Vector2(-24, 14) + new Vector2(48, -10) * flourish, 1, accent * 0.6f);
-            }
-            else
-            {
-                float gap = 14 * (1 - flourish);
-                EntranceLine(center + new Vector2(-24-gap, -25), center + new Vector2(-24-gap, 12), 2, accent);
-                EntranceLine(center + new Vector2(24+gap, -25), center + new Vector2(24+gap, 12), 2, accent);
-                EntranceLine(center + new Vector2(-24-gap, 12), center + new Vector2(0, 28), 1, accent);
-                EntranceLine(center + new Vector2(24+gap, 12), center + new Vector2(0, 28), 1, accent);
-            }
+            if (entranceBoss.PrimaryType is Essence type)
+                TechniqueIcon(new Rect(center.x - 36, center.y - 27, 72, 54), type, alpha * flourish);
             float glint = Mathf.Clamp01((t - 0.9f) / 0.35f);
             Fill(new Rect(148 + 680 * glint, 628, 12, 2), new Color(1, 0.96f, 0.83f, Mathf.Sin(glint * Mathf.PI) * alpha));
             return true;
         }
         static float Ease(float t) { t = Mathf.Clamp01(t); return t * t * (3 - 2 * t); }
-        static void EntranceLine(Vector2 start, Vector2 end, float width, Color color)
-        {
-            Matrix4x4 matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(end.y-start.y, end.x-start.x) * Mathf.Rad2Deg, start);
-            Fill(new Rect(start.x, start.y-width/2, Vector2.Distance(start, end), width), color);
-            GUI.matrix = matrix;
-        }
     }
 }

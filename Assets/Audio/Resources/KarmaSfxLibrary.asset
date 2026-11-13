@@ -77,4 +77,5 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 13cf942badea46309900b065d8146f2e, type: 3}
   - {fileID: 8300000, guid: 4d8d27dacbf944abbccc04386c817329, type: 3}
   - {fileID: 8300000, guid: f8124907a56745feb106a8e692de144a, type: 3}
+  - {fileID: 8300000, guid: b7805da9d2a94e9bbba6ea97b7e104ba, type: 3}
   DefaultMenuTrack: 1

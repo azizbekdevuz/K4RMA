@@ -101,8 +101,17 @@ public static partial class KarmaSfxCompletionChecks
             await Until(() => enemy.Stunned, 2, kind + " real parry stun");
             Check(Get(enemy, "stunCue") != null && Count(KarmaSfxId.CombatBossStagger) == 1,
                 kind + " stars and one stun sound");
+            if (kind == Essence.Guard || kind == Essence.RisingSlash)
+            {
+                await Until(() => Live(KarmaSfxId.CombatBossSpinningStars), 1, kind + " animated stars audio");
+                var stars = Source(KarmaSfxId.CombatBossSpinningStars);
+                Check(stars.loop && Count(KarmaSfxId.CombatBossSpinningStars) == 1, kind + " spins with one looping cue");
+                await CheckMixerSignal(stars, kind + " spinning stars");
+            }
+            else Check(!Live(KarmaSfxId.CombatBossSpinningStars), kind + " keeps its existing stun sound");
             Call(enemy, "ShowStunCue"); Sample();
             Check(Count(KarmaSfxId.CombatBossStagger) == 1, kind + " repeated visual request stays silent");
+            Check(Count(KarmaSfxId.CombatBossSpinningStars) <= 1, kind + " repeated visual request does not restart stars audio");
             if (kind == Essence.Guard)
             {
                 System.IO.Directory.CreateDirectory("output/validation");
@@ -110,7 +119,9 @@ public static partial class KarmaSfxCompletionChecks
                 await Wait(0.07f);
                 var stun = Source(KarmaSfxId.CombatBossStagger);
                 Call(enemy, "HideStunCue");
-                await CheckMixerSignal(stun, "Guard stun after stars are removed");
+                Check(stun != null && stun.isPlaying, "Initial stun impact is still live after stars are removed");
+                await Wait(0.12f);
+                Check(!Live(KarmaSfxId.CombatBossSpinningStars), "Star removal stops its loop without cutting off the initial stun cue");
             }
         }
         await Prepare(Essence.SwordWave, 2);
@@ -152,7 +163,8 @@ public static partial class KarmaSfxCompletionChecks
     static async Task CheckSunday()
     {
         var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
-        Check(library != null && library.Clips.Length == (int)KarmaSfxId.Count, "64 registered IDs/clips");
+        Check(library != null && library.Clips.Length == (int)KarmaSfxId.Count, "Catalog matches registered IDs");
+        Check(library.Clips[(int)KarmaSfxId.CombatBossSpinningStars].name == "Boss_Spinning_Stars", "Animated stars loop registered");
         Check(library.Clips.All(c => c != null), "All clips loaded in Unity");
         Check(library.Clips[(int)KarmaSfxId.GdHeavyHit].name == "GD02_Heavy_Hit_v2", "Heavy impact v2 registered");
         Check(library.Clips[(int)KarmaSfxId.CombatBossStagger].name == "Boss_Stun", "New stun registered at stable ID");
@@ -184,6 +196,8 @@ public static partial class KarmaSfxCompletionChecks
         Check(Source(KarmaSfxId.SwSummoningEnergy).timeSamples > sample, "Channel resumes without restart");
         await Until(() => Count(KarmaSfxId.SwFinalExplosion) > 0, 35, "SW05 actual detonation");
         Check(rainSeen.Count > 0 && rainSeen.All(b => b == null || b.Landed), "Detonation after all rain lands");
+        Check(Source(KarmaSfxId.SwFinalExplosion).volume >= 0.55f * KarmaPreferences.EffectsVolume,
+            "Final explosion has the raised gain");
         await Until(() => !(bool)Get(enemy, "running"), 15, "SW05 completion");
         watchRain = false;
         Check(Count(KarmaSfxId.SwFinalExplosion) == 1 && Count(KarmaSfxId.SwAscensionIgnition) == 1, "One ignition and final explosion");
@@ -198,7 +212,11 @@ public static partial class KarmaSfxCompletionChecks
         await Prepare(Essence.Guard);
         Pattern(EnemyAttack.GD03);
         await Until(() => Live(KarmaSfxId.GdShieldFlight), 5, "Shield flight");
-        Check(Count(KarmaSfxId.GdShieldLaunch) == 1 && Source(KarmaSfxId.GdShieldFlight).loop, "One launch, controlled flight loop");
+        var flight = Source(KarmaSfxId.GdShieldFlight);
+        Check(Count(KarmaSfxId.GdShieldLaunch) == 1 && flight.loop, "One launch, controlled flight loop");
+        await Until(() => flight.isPlaying && flight.volume >= 0.14f * KarmaPreferences.EffectsVolume,
+            1, "shield flight reaches raised gain after fade-in");
+        await CheckMixerSignal(flight, "Guard shield flight");
         await Until(() => !(bool)Get(enemy, "running"), 15, "Shield normal return");
         await Wait(.2f);
         Check(Count(KarmaSfxId.GdShieldFlight) == 1 && !Live(KarmaSfxId.GdShieldFlight), "Return does not restart; catch stops");

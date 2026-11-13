@@ -133,6 +133,7 @@ namespace KarmaPrototype
         {
             stunCueSoundStarted = false;
             if (stunCue == null) return;
+            KarmaAudio.StopOwned(stunCue, 0.045f);
             Destroy(stunCue.gameObject);
             stunCue = null;
         }

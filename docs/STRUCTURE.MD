@@ -324,6 +324,7 @@ K4RMA/
 │   │   ├── Ambience/
 │   │   │   └── Amb_Arena_Loop.wav
 │   │   ├── Combat/
+│   │   │   ├── Boss_Spinning_Stars.wav
 │   │   │   ├── Boss_Stun.wav
 │   │   │   ├── Combat_Blade_Hit.wav
 │   │   │   ├── Combat_Boss_Defeat.wav

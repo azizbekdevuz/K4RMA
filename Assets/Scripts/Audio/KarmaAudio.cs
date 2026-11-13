@@ -71,6 +71,7 @@ namespace KarmaPrototype
         MenuFourGuardiansA,
         MenuGuardians,
         MenuFourGuardiansB,
+        CombatBossSpinningStars,
         Count
     }
 
@@ -403,7 +404,7 @@ namespace KarmaPrototype
                 var voice = voices[i];
                 if (voice == null) continue;
                 if (voice.Source == null) voices[i] = null;
-                else if (voice.Live && (LifetimeEnded(voice.LifetimeOwner) ||
+                else if (voice.Live && ((voice.FadeOut <= 0 && LifetimeEnded(voice.LifetimeOwner)) ||
                     (!voice.Held && voice.StartedFrame != Time.frameCount && !voice.Source.isPlaying)))
                     Release(voice);
             }
@@ -568,17 +569,17 @@ namespace KarmaPrototype
             table[(int)KarmaSfxId.SwPerSwordThunder].MaxVoices = 3;
             AddBoss(KarmaSfxId.GdBasicSwing, "Guard/GD_Basic_Swing.wav", 0.42f, 0f, 0f, 60, "gd-pattern");
             AddBoss(KarmaSfxId.GdBasicHit, "Guard/GD_Basic_Hit.wav", 0.44f, 0f, 0f, 80);
-            AddBoss(KarmaSfxId.GdHeavySwing, "Guard/GD02_Heavy_Swing.wav", 0.45f, 0f, 0f, 68, "gd-pattern");
+            AddBoss(KarmaSfxId.GdHeavySwing, "Guard/GD02_Heavy_Swing.wav", 0.57f, 0f, 0f, 68, "gd-pattern");
             AddBoss(KarmaSfxId.GdHeavyHit, "Guard/GD02_Heavy_Hit_v2.wav", 0.48f, 0f, 0f, 84);
             AddBoss(KarmaSfxId.SwElectricDischarge, "SwordWave/SW_Electric_Discharge.wav", 0.42f, 0f, 0f, 64, "sw-wave");
             AddBoss(KarmaSfxId.SwAscensionIgnition, "SwordWave/SW05_Ascension_Ignition.wav", 0.5f, 0f, 0f, 76, "sw-ascension");
             AddBoss(KarmaSfxId.SwSummoningEnergy, "SwordWave/SW05_Summoning_Energy.wav", 0.10f, 0f, 0f, 50, "sw-summon");
-            AddBoss(KarmaSfxId.SwFinalExplosion, "SwordWave/SW05_Final_Explosion.wav", 0.64f, 0f, 0f, 94, "sw-detonation");
+            AddBoss(KarmaSfxId.SwFinalExplosion, "SwordWave/SW05_Final_Explosion.wav", 0.88f, 0f, 0f, 94, "sw-detonation");
             AddBoss(KarmaSfxId.GdShieldLaunch, "Guard/GD03_Shield_Launch.wav", 0.42f, 0f, 0f, 66, "gd-pattern");
-            AddBoss(KarmaSfxId.GdShieldFlight, "Guard/GD03_Shield_Flight.wav", 0.065f, 0f, 0f, 45, "gd-flight");
-            AddBoss(KarmaSfxId.GdGroundRise, "Guard/GD04_Ground_Rise.wav", 0.24f, 0f, 0f, 70, "gd-pattern");
+            AddBoss(KarmaSfxId.GdShieldFlight, "Guard/GD03_Shield_Flight.wav", 0.24f, 0f, 0f, 62, "gd-flight");
+            AddBoss(KarmaSfxId.GdGroundRise, "Guard/GD04_Ground_Rise.wav", 0.44f, 0f, 0f, 70, "gd-pattern");
             AddBoss(KarmaSfxId.GdDomeSuccess, "Guard/GD05_Dome_Success.wav", 0.5f, 0f, 0f, 88, "gd-pattern");
-            AddBoss(KarmaSfxId.GdDomeFailure, "Guard/GD05_Dome_Failure.wav", 0.58f, 0f, 0f, 94, "gd-pattern");
+            AddBoss(KarmaSfxId.GdDomeFailure, "Guard/GD05_Dome_Failure.wav", 0.55f, 0f, 0f, 94, "gd-pattern");
             foreach (var id in new[] { KarmaSfxId.SwSummoningEnergy, KarmaSfxId.GdShieldFlight })
             { table[(int)id].Loop = true; table[(int)id].MaxVoices = 1; }
             table[(int)KarmaSfxId.GdGroundRise].MaxVoices = 3;
@@ -586,6 +587,9 @@ namespace KarmaPrototype
             Add(KarmaSfxId.MenuFourGuardiansA, "Music/Four_Guardians_A_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
             Add(KarmaSfxId.MenuGuardians, "Music/Guardians_of_K4RMA_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
             Add(KarmaSfxId.MenuFourGuardiansB, "Music/Four_Guardians_B_Loop.wav", 0.22f, 0f, 0f, 1, KarmaSfxBus.Ambience);
+            Add(KarmaSfxId.CombatBossSpinningStars, "Combat/Boss_Spinning_Stars.wav", 0.29f, 0f, 0f, 77, KarmaSfxBus.Gameplay);
+            table[(int)KarmaSfxId.CombatBossSpinningStars].Loop = true;
+            table[(int)KarmaSfxId.CombatBossSpinningStars].MaxVoices = 1;
             return table;
         }
     }

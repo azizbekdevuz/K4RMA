@@ -63,6 +63,7 @@ namespace KarmaPrototype
                                 KarmaCombatVFX.SpawnSprite(owner.effectsRoot, to, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one * 2.2f), 0.25f);
                                 owner.game.SwordHitFeedback();
                                 owner.game.PresentationShake(0.2f, 0.22f);
+                                KarmaAudio.StopOwned(shield, 0.08f);
                                 shield.gameObject.SetActive(false); Destroy(shield.gameObject);
                                 owner.animator.SetGuardThrownShield(null);
                                 owner.TakeDamage(owner.game.Config.Techniques.counterDamage, before);

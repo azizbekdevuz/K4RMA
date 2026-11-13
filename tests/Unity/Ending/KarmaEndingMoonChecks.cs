@@ -403,22 +403,7 @@ public static class KarmaEndingMoonChecks
         CheckCoverage();
         ScreenCapture.CaptureScreenshot(Output + "/campaign-" + shot + ".png");
     }
-    const string EndingLocaleKey = "K4RMA.Options.Language";
-
     static async Task CheckEnding()
-    {
-        bool hadLocale = PlayerPrefs.HasKey(EndingLocaleKey);
-        string previousLocale = PlayerPrefs.GetString(EndingLocaleKey);
-        PlayerPrefs.SetString(EndingLocaleKey, " qqq-Latn ");
-        try { await CheckEndingWithMissingLocale(); }
-        finally
-        {
-            if (hadLocale) PlayerPrefs.SetString(EndingLocaleKey, previousLocale);
-            else PlayerPrefs.DeleteKey(EndingLocaleKey);
-        }
-    }
-
-    static async Task CheckEndingWithMissingLocale()
     {
         Reset(Essence.SwordWave);
         game.Player.ResetForRoom(new Vector2(12, KarmaSpace.PlayerHalfHeight + 0.05f), true);
@@ -429,26 +414,16 @@ public static class KarmaEndingMoonChecks
         enemy.TakeDamage(enemy.MaxHealth * 100);
         Check(game.Phase == RunPhase.Ending && !game.EndingCompleted, "Final kill starts ending, not ordinary victory");
         Check(!game.AllowsPlayerActions && !game.CanMove && game.Projectiles.Count == 0, "Ending blocks combat and clears projectiles");
-        var dialogue = (AudioSource)Get(game, "endingDialogueSource");
-        Check(dialogue != null && !dialogue.playOnAwake && dialogue.spatialBlend == 0,
-            "Ending owns a single 2D dialogue source");
-        var voiceClips = (AudioClip[])Get(game, "endingVoiceClips");
-        Check(voiceClips.Length == 6 && Array.TrueForAll(voiceClips, clip =>
-            clip != null && clip.channels == 1 && clip.frequency == 44100),
-            "Unknown locale falls back to all six original mono Korean recordings");
-        await CheckDialoguePlayback(dialogue, voiceClips[0]);
-
         var clips = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary").Clips;
-        foreach (var cue in new[] { KarmaSfxId.CombatBossDefeat, KarmaSfxId.GdShieldActivate, KarmaSfxId.PlRisingSlash,
-            KarmaSfxId.SwWaveLaunch, KarmaSfxId.GameAbilityInherit, KarmaSfxId.MenuMainTheme })
+        foreach (var cue in new[] { KarmaSfxId.CombatBossDefeat, KarmaSfxId.CombatPerfectParry, KarmaSfxId.PlSwordSwing,
+            KarmaSfxId.PlDash, KarmaSfxId.GameAbilityInherit, KarmaSfxId.MenuMainTheme })
             Check(clips[(int)cue] != null, "Ending audio asset exists: " + cue);
         float musicPreference = KarmaPreferences.MusicVolume;
         float time = game.EndingTime; game.EnemyDefeated(enemy);
         Check(game.EndingTime == time, "Duplicate defeat notification cannot restart ending");
         await CaptureEnding(3.4f, "01-fallen-guardian");
-        Check(game.EndingSpeaker == "제자" && game.EndingLine.Contains("수호자")
-            && dialogue.clip == voiceClips[0],
-            "Unknown locale falls back to the Korean apprentice caption");
+        Check(game.EndingSpeaker == "제자" && game.EndingLine.Contains("수호자"),
+            "The apprentice reacts in a written caption");
         await Until(() => game.EndingTime >= 7);
         Check((float)typeof(KarmaAudio).GetField("endingAmbience", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null) == 0,
             "Battle ambience gives way to a quiet interval");
@@ -467,8 +442,8 @@ public static class KarmaEndingMoonChecks
         var lessonPose = masterMesh.vertices;
         Check(masterRenderer.enabled && masterRenderer.bounds.size.y > 4f, "Master performance is visible in the lesson");
         Check(game.GameCamera.orthographicSize < 3.2f, "Master lesson is framed in a close shot");
-        Check(dialogue.clip == voiceClips[1] && game.EndingLine.StartsWith("배운 것을"),
-            "The master lesson has the correct take and subtitle");
+        Check(game.EndingLine.Contains("원형"),
+            "The master acknowledges the original techniques were relinquished");
         await Until(() => game.EndingTime >= 13.85f);
         var restPose = masterMesh.vertices;
         Check(Mathf.Abs(lessonPose[lessonPose.Length / 2].x - restPose[restPose.Length / 2].x) < 0.02f
@@ -482,12 +457,12 @@ public static class KarmaEndingMoonChecks
         Check(presentation != null && game.EndingSpeaker == "스승" && game.EndingMemoryDim > 0.1f,
             "Master memory and teaching share the same shot");
         Check(animator.CurrentPose == "Kneel" && picture.sprite.name.StartsWith("Kneel_"), "Approved Native24 kneeling frames are active");
-        Check(dialogue.clip == voiceClips[2] && game.EndingLine == "막아 내고, 일으키고, 흘려보내라.",
-            "The instruction take opens with the three techniques");
+        Check(game.EndingLine.Contains("네 검에 남아 있다"),
+            "The lesson recognizes what the apprentice retained");
         Check(Array.Exists(UnityEngine.Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None),
             s => s.isPlaying && s.clip == clips[(int)KarmaSfxId.MenuMainTheme]), "Campaign theme plays in the memory shot");
         for (int i = 0; i < 3; i++)
-            Check(presentation.Find("Completed technique " + (Essence)i).GetComponent<SpriteRenderer>().sprite != null,
+            Check(presentation.Find("Personalized technique " + (Essence)i).GetComponent<SpriteRenderer>().sprite != null,
                 "Each remembered technique uses a connected sprite");
 
         float health = game.Player.Health; game.Player.TakeDamage(10000);
@@ -498,15 +473,32 @@ public static class KarmaEndingMoonChecks
         game.TogglePause();
 
         await Until(() => game.EndingTime >= 18.55f);
-        Check(dialogue.clip == voiceClips[2] && game.EndingLine == "그다음은 네가 정할 차례다.",
-            "The second instruction subtitle switches within the same voice take");
+        Check(game.EndingLine == "어떻게 네 것이 되었는지 보여 다오.", "The master invites the apprentice to demonstrate");
 
-        await CaptureEnding(21.73f, "04-guard");
-        Check(animator.CurrentPose == "Guard" && picture.sprite.name.StartsWith("Guard_"), "Guard is performed with native frames");
-        await CaptureEnding(22.81f, "05-rising");
-        Check(animator.CurrentPose == "Rising" && picture.sprite.name.StartsWith("Rising_"), "Rising is performed with native frames");
-        await CaptureEnding(23.90f, "06-wave");
-        Check(animator.CurrentPose == "SwordWave" && picture.sprite.name.StartsWith("SwordWave_"), "Wave is performed with native frames");
+        var skillSymbols = new SpriteRenderer[3];
+        for (int i = 0; i < skillSymbols.Length; i++)
+            skillSymbols[i] = presentation.Find("Personalized technique " + (Essence)i).GetComponent<SpriteRenderer>();
+        void CheckSkill(Essence essence, string pose)
+        {
+            Check(game.EndingLine == KarmaPatternCatalog.UniqueName(essence), "The caption names " + essence + " personalization");
+            Check(animator.CurrentPose == pose && picture.sprite.name.StartsWith(pose + "_"),
+                "The apprentice performs " + pose + " with Native24 frames");
+            for (int i = 0; i < skillSymbols.Length; i++)
+                Check(i == (int)essence ? skillSymbols[i].color.a > 0.4f : skillSymbols[i].color.a < 0.01f,
+                    "Only the current skill mark is visible");
+        }
+
+        await CaptureEnding(21.73f, "04-counter");
+        CheckSkill(Essence.Guard, "Riposte");
+        await CaptureEnding(22.81f, "05-aerial-slash");
+        CheckSkill(Essence.RisingSlash, "AirDiagonal");
+        Check((float)typeof(KarmaPlayer).GetProperty("EndingAirHeight", F).GetValue(game.Player) > 1,
+            "The apprentice changes height during the aerial slash");
+        float pierceStart = game.Player.Position.x;
+        await CaptureEnding(23.90f, "06-pierce");
+        CheckSkill(Essence.SwordWave, "Pierce");
+        Check(game.Player.Position.x > pierceStart + 3 && game.Projectiles.Count == 0,
+            "Pierce moves the apprentice and sends no sword wave");
         await Until(() => game.EndingTime >= 24.95f);
         var earlyDraw = picture.sprite;
         Check(animator.CurrentPose == "Draw" && earlyDraw.name.StartsWith("Recovery_"), "The apprentice begins a staged sword draw");
@@ -530,38 +522,36 @@ public static class KarmaEndingMoonChecks
         Check(game.Projectiles.Count == 0, "Cinematic techniques create no gameplay projectiles");
 
         await Until(() => game.EndingTime >= 27.3f);
-        Check(dialogue.clip == voiceClips[3] && game.EndingLine.StartsWith("방금"),
-            "The master question uses the correct take and subtitle");
+        Check(game.EndingLine == "이제 그 기술들은 누구의 것이냐?",
+            "The master asks the question from the campaign story");
         await CaptureEnding(31.35f, "09-apprentice-answer");
-        Check(game.EndingSpeaker == "제자" && game.Player.Facing < 0 && dialogue.clip == voiceClips[4]
-            && game.EndingLine == "시작은 스승님께 배웠습니다.", "Apprentice answers the master while facing him");
+        Check(game.EndingSpeaker == "제자" && game.Player.Facing < 0
+            && game.EndingLine == "스승님께 배웠습니다.", "Apprentice answers the master while facing him");
         await Until(() => game.EndingTime >= 34.4f);
-        Check(dialogue.clip == voiceClips[4] && game.EndingLine == "마지막은 제가 이었습니다.",
-            "The apprentice's second subtitle appears on the second phrase without restarting the voice");
+        Check(game.EndingLine == "하지만 이제는 제 방식으로 쓸 수 있습니다.",
+            "The apprentice explains how the techniques became his own");
         await CaptureEnding(37.27f, "10-salute");
-        Check(dialogue.clip == voiceClips[5] && game.EndingLine == "그럼 가거라.", "The master farewell starts on the salute");
+        Check(game.EndingLine == "그렇다면 수련은 헛되지 않았구나.", "The master farewell starts on the salute");
         Check(animator.CurrentPose == "Salute", "Apprentice salutes before departure");
         await CaptureEnding(38.13f, "10b-master-returns-salute");
         var bow = masterMesh.vertices;
         Check(Vector3.Distance(restPose[restPose.Length - 13], bow[bow.Length - 13]) > 0.48f,
             "The master's farewell bow is stronger than his teaching gesture");
         await Until(() => game.EndingTime >= 38.6f);
-        Check(dialogue.clip == voiceClips[5] && game.EndingLine == "다음 길도 네가 정해라.",
+        Check(game.EndingLine == "이제 네 길을 가거라.",
             "The farewell finishes on the second subtitle page");
         float beforeWalk = game.Player.Position.x;
         await CaptureEnding(43.93f, "11-departure");
-        Check(!dialogue.isPlaying && game.EndingLine == null, "The farewell ends before the departure");
+        Check(game.EndingLine == null, "The farewell ends before the departure");
         Check(game.Player.Position.x > beforeWalk + 7, "Apprentice actually walks toward the exit");
         await Until(() => game.EndingCompleted);
         Check((int)Get(game, "endingSoundStage") == 4, "Each technique beat cues audio once");
         Check(KarmaPreferences.MusicVolume == musicPreference, "Ending never changes user's music preference");
         Check(game.Phase == RunPhase.Victory && game.EndingFade == 1 && game.EndingTime == KarmaGame.EndingDuration,
-            "The voiced ending reaches its scheduled fade");
+            "The ending reaches its scheduled fade");
         await Task.Yield();
         Check(game.World.Find("Ending presentation") == null && !(bool)Get(animator, "presentingEnding"),
             "Ending effects clean up and renderer is restored");
-        Check(Get(game, "endingDialogueSource") == null && Array.TrueForAll(voiceClips, clip => clip == null),
-            "Completion clears the dialogue source and loaded voices");
         Check(arena.color == originalColor, "Arena tint is restored after ending");
         game.RestartSession();
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial != null && !game.EndingCompleted && game.EndingTime == 0, "Restart begins tutorial and clears ending state");
@@ -572,13 +562,11 @@ public static class KarmaEndingMoonChecks
             Check(game.Phase == RunPhase.Ending, primary + " final form dissolves without breaking ending");
             if (primary == Essence.Guard)
             {
-                var activeVoice = (AudioSource)Get(game, "endingDialogueSource");
-                Check(activeVoice.isPlaying, "Skip is tested during an active voice take");
+                Check(game.EndingLine != null, "Skip is tested during an active caption");
                 Call(game, "SkipEnding");
                 await Until(() => game.EndingCompleted);
                 Check(game.Phase == RunPhase.Victory && game.EndingFade == 1
                     && game.World.Find("Ending presentation") == null, "Skip fades and cleans up the campaign ending");
-                Check(Get(game, "endingDialogueSource") == null, "Skip releases the dialogue source");
             }
             game.RestartSession(); await Task.Yield();
             Check(!game.EndingCompleted && game.World.Find("Ending presentation") == null, "Mid-ending restart removes all presentation objects");
@@ -589,78 +577,13 @@ public static class KarmaEndingMoonChecks
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial != null, "Tutorial still starts after ending restart");
         game.ReturnToTitle();
     }
-    static async Task CheckDialoguePlayback(AudioSource dialogue, AudioClip clip)
+    static async Task CheckCampaignPreview()
     {
-        await Until(() => game.EndingTime >= 1.78f);
-        Check(dialogue.clip == clip && dialogue.isPlaying, "The imported apprentice voice starts with its subtitle");
-        var samples = new float[4096];
-        Check(clip.GetData(samples, clip.frequency / 3) && Array.Exists(samples, value => Mathf.Abs(value) > 0.001f),
-            "The imported WAV decodes to non-silent samples");
-        Check(Mathf.Abs(dialogue.volume - KarmaPreferences.EffectsVolume * 0.94f) < 0.01f,
-            "Dialogue respects the Effects volume without applying master twice");
-        float effects = KarmaPreferences.EffectsVolume;
-        bool muted = KarmaPreferences.Muted;
-        try
-        {
-            KarmaPreferences.EffectsVolume = 1;
-            KarmaPreferences.Muted = false;
-            Check((float)Call(game, "EndingDialogueGain") < 0.6f, "Music ducks during voiced dialogue");
-            KarmaPreferences.Muted = true;
-            Check((float)Call(game, "EndingDialogueGain") == 1f, "Muted dialogue does not duck music");
-        }
-        finally
-        {
-            KarmaPreferences.Muted = muted;
-            KarmaPreferences.EffectsVolume = effects;
-        }
-
-        game.TogglePause();
-        await Until(() => !dialogue.isPlaying);
-        int pausedSample = dialogue.timeSamples;
-        await Task.Delay(120);
-        Check(dialogue.timeSamples == pausedSample, "Pause holds the same dialogue sample");
-        game.TogglePause();
-        await Until(() => dialogue.isPlaying && dialogue.timeSamples > pausedSample);
-        Check(dialogue.clip == clip, "Resume continues the same imported clip");
-    }
-
-    static async Task CheckEndingV0()
-    {
-        Check(EditorApplication.ExecuteMenuItem("K4RMA/엔딩/Ending v0"), "Ending v0 is available in the Editor menu");
-        await Until(() => game.Phase == RunPhase.Ending, 10);
-        var dialogue = (AudioSource)Get(game, "endingDialogueSource");
-        var clips = (AudioClip[])Get(game, "endingVoiceClips");
-        Check(Array.TrueForAll(clips, clip => clip != null && clip.channels == 1 && clip.frequency == 44100
-            && AssetDatabase.GetAssetPath(clip).StartsWith("Assets/Audio/Editor/EndingV0/")),
-            "Ending v0 uses six imported Editor-only recordings");
-
-        var cues = new[] {
-            (1.83f, 0, "손이 아직도 떨리네."),
-            (12.53f, 1, "근데 이 개판은 누가 치우냐?"),
-            (17.52f, 2, "마루를 뜯으랬냐"),
-            (30.30f, 3, "그건 누구한테 배웠냐?"),
-            (35.11f, 4, "마루 박살 낸 건 제 재능입니다."),
-            (39.91f, 5, "씨발, 마루값은 내고 가라.")
-        };
-        foreach (var (time, index, subtitle) in cues)
-        {
-            await Until(() => game.EndingTime >= time);
-            Check(dialogue.isPlaying && dialogue.clip == clips[index] && game.EndingLine.Contains(subtitle),
-                "Ending v0 voice and subtitle match cue " + index);
-            Check(dialogue.pitch == 1f, "Ending v0 preserves the performance speed");
-        }
-        await Until(() => game.EndingCompleted);
-        Check(game.EndingTime > KarmaGame.EndingDuration && Get(game, "endingDialogueSource") == null,
-            "The alternate timing reaches victory and cleans up dialogue");
-
-        Check(EditorApplication.ExecuteMenuItem("K4RMA/엔딩/캠페인 엔딩 미리보기"),
-            "The original preview stays available after Ending v0");
-        await Until(() => game.Phase == RunPhase.Ending && game.EndingTime >= 1.83f && game.EndingTime < 4f, 10);
-        dialogue = (AudioSource)Get(game, "endingDialogueSource");
-        Check(dialogue.isPlaying && AssetDatabase.GetAssetPath(dialogue.clip).StartsWith("Assets/Audio/Resources/EndingDialogue/ko/")
-            && game.EndingLine.Contains("제 검은"), "Switching back restores the serious recording and subtitle");
+        Check(EditorApplication.ExecuteMenuItem("K4RMA/엔딩/캠페인 엔딩 미리보기"), "The campaign ending preview is available");
+        await Until(() => game.Phase == RunPhase.Ending && game.EndingTime >= 1.83f, 10);
+        Check(game.EndingSpeaker == "제자" && game.EndingLine.Contains("수호자"), "Preview uses the campaign caption sequence");
         game.ReturnToTitle();
-        Check(Get(game, "endingDialogueSource") == null, "Returning to title releases preview audio");
+        Check(game.Phase == RunPhase.Title && Get(game, "endingPresentation") == null, "Returning to title cleans up the preview");
     }
 
     static async void Run()
@@ -681,7 +604,7 @@ public static class KarmaEndingMoonChecks
             if (!SessionState.GetBool(Key + ".ArtworkOnly", false))
             {
                 await CheckEnding();
-                if (SessionState.GetBool(Key + ".Editor", false)) await CheckEndingV0();
+                if (SessionState.GetBool(Key + ".Editor", false)) await CheckCampaignPreview();
             }
             Check(runtimeError == null, "No new gameplay error: " + runtimeError);
             string scope = SessionState.GetBool(Key + ".ArtworkOnly", false)

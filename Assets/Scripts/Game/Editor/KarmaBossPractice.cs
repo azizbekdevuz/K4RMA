@@ -12,7 +12,7 @@ namespace KarmaPrototype.EditorTools
     [InitializeOnLoad]
     public static class KarmaBossPractice
     {
-        public enum Mode { Combat, Single, Sequence, Ending, EndingV0 }
+        public enum Mode { Combat, Single, Sequence, Ending }
         public sealed class Pattern
         {
             public readonly EnemyAttack Attack;
@@ -54,14 +54,6 @@ namespace KarmaPrototype.EditorTools
         [MenuItem("K4RMA/엔딩/캠페인 엔딩 미리보기", false, 1000)]
         public static void PreviewCampaignEnding() => Request(Essence.SwordWave, Mode.Ending);
 
-        [MenuItem("K4RMA/엔딩/Ending v0", false, 1001)]
-        public static void PreviewEndingV0() => Request(Essence.SwordWave, Mode.EndingV0);
-
-        static readonly string[] endingV0ClipIds = {
-            "apprentice_aftermath", "master_lesson", "master_techniques",
-            "master_question", "apprentice_answer", "master_farewell"
-        };
-
         public static void Register(Definition definition) { definitions[definition.Kind] = definition; }
         public static void Request(Essence kind, Mode requestedMode, int patternIndex = 0)
         {
@@ -85,7 +77,7 @@ namespace KarmaPrototype.EditorTools
             if (game == null) return;
             active = definition; mode = (Mode)request.mode;
             index = mode == Mode.Sequence ? 0 : Mathf.Clamp(request.index, 0, active.Patterns.Length - 1);
-            bool endingPreview = mode == Mode.Ending || mode == Mode.EndingV0;
+            bool endingPreview = mode == Mode.Ending;
             if (endingPreview && game.SettingsOpen) game.CloseSettings();
             game.StartRun();
             var order = new List<Essence> { active.Kind };
@@ -99,9 +91,8 @@ namespace KarmaPrototype.EditorTools
             {
                 SessionState.EraseString(RequestKey);
                 var director = game;
-                bool alternateDialogue = mode == Mode.EndingV0;
                 Stop();
-                roomEnemy.StartCoroutine(EnterCampaignEnding(director, roomEnemy, alternateDialogue));
+                roomEnemy.StartCoroutine(EnterCampaignEnding(director, roomEnemy));
                 return;
             }
             enemy = roomEnemy;
@@ -112,18 +103,12 @@ namespace KarmaPrototype.EditorTools
             if (mode == Mode.Combat) Report(active.Name + " · 전체 패턴 연습");
             else StartPattern();
         }
-        static IEnumerator EnterCampaignEnding(KarmaGame director, KarmaEnemy target, bool alternateDialogue)
+        static IEnumerator EnterCampaignEnding(KarmaGame director, KarmaEnemy target)
         {
             // Allow a frame for the new run's audio host state to settle before the defeat cue.
             yield return null;
             yield return null;
             if (target == null || !target.isActiveAndEnabled || !director.IsCombat) yield break;
-            if (alternateDialogue)
-            {
-                var clips = Array.ConvertAll(endingV0ClipIds, id =>
-                    AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Editor/EndingV0/" + id + ".wav"));
-                Invoke(director, "QueueEndingV0Preview", (object)clips);
-            }
             target.TakeDamage(target.MaxHealth * 100);
             if (director.Phase != RunPhase.Ending)
                 Debug.LogError("K4RMA: Campaign ending preview could not start.");

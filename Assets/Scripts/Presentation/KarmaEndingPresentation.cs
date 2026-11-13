@@ -16,7 +16,7 @@ namespace KarmaPrototype
         const int MasterColumns = 24, MasterRows = 28;
         static readonly Color MasterMoonlight = new Color(0.84f, 0.9f, 1f);
         static readonly Color MasterWarmLight = new Color(1f, 0.94f, 0.78f);
-        static readonly string[] effectNames = { "Wave", "Rise", "Ward", "Union" };
+        static readonly string[] uniqueEffectNames = { "Pierce", "AirSlash", "Counter" };
         static readonly string[] masterPoseNames = { "MasterLift", "MasterTeach", "MasterNod" };
         static readonly float[] masterFootPixels = { 16, 9, 15 };
         readonly SpriteRenderer[] memories = new SpriteRenderer[3];
@@ -35,7 +35,7 @@ namespace KarmaPrototype
         bool originalBackdrop;
         readonly Vector3[] techniqueSizes = new Vector3[4];
         readonly SpriteRenderer[] techniques = new SpriteRenderer[3];
-        readonly int[] memoryOrder = { 0, 1, 2 };
+        SpriteRenderer counterSpark;
         const int RibbonPoints = 28;
         readonly LineRenderer[] oathRibbons = new LineRenderer[3];
         readonly Vector3[] ribbonPoints = new Vector3[RibbonPoints];
@@ -60,14 +60,13 @@ namespace KarmaPrototype
                 ending.dissolveBlock = new MaterialPropertyBlock();
             }
             var effectSprites = Resources.LoadAll<Sprite>("Ending/TechniqueOath");
-            var orbitSprite = Resources.Load<Sprite>("Ending/OathOrbit") ?? KarmaArtwork.SkillIcon(Essence.Guard);
+            var orbitSprite = Resources.Load<Sprite>("Ending/OathOrbit") ?? KarmaArtwork.Sprite("PersonalizationVFX", "Core");
             var mistSprite = Resources.Load<Sprite>("Ending/MoonMist");
             for (int i = 0; i < 3; i++)
             {
                 ending.orbits[i] = ending.Layer("Oath orbit " + i, orbitSprite, 4.1f + i * 0.8f, 2 + i);
-                ending.symbols[i] = ending.Layer("Completed technique " + (Essence)i,
-                    KarmaArtwork.SkillIcon((Essence)i),
-                    i == 2 ? 2.6f : i == 1 ? 2f : 1.8f, 18);
+                ending.symbols[i] = ending.Layer("Personalized technique " + (Essence)i,
+                    KarmaArtwork.Sprite("PersonalizationVFX", uniqueEffectNames[i]), 1.7f, 18);
             }
             for (int i = 0; i < ending.particles.Length; i++)
                 ending.particles[i] = ending.Layer("Guardian light " + i,
@@ -75,18 +74,18 @@ namespace KarmaPrototype
             ending.aura = ending.Layer("Completed aura", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 5.5f, 4);
             for (int i = 0; i < ending.oathRibbons.Length; i++)
                 ending.oathRibbons[i] = ending.CreateOathRibbon((Essence)i);
-            ending.techniques[(int)Essence.Guard] = ending.Layer("Guard demonstration",
-                FindSprite(effectSprites, effectNames[(int)Essence.Guard]) ?? KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 5f, 12);
-            ending.techniques[(int)Essence.RisingSlash] = ending.Layer("Rising demonstration",
-                FindSprite(effectSprites, effectNames[(int)Essence.RisingSlash]) ?? KarmaArtwork.Sprite("PlayerVFX", "Rising"), 6.4f, 13);
-            ending.techniques[(int)Essence.SwordWave] = ending.Layer("Wave demonstration",
-                FindSprite(effectSprites, effectNames[(int)Essence.SwordWave]) ?? KarmaArtwork.Sprite("PlayerVFX", "Wave"), 7.5f, 14);
+            ending.counterSpark = ending.Layer("Counter contact spark", KarmaArtwork.Sprite("HitVFX", "Burst"), 1.35f, 17);
+            ending.techniques[(int)Essence.Guard] = ending.Layer("Counter demonstration",
+                KarmaArtwork.Sprite("PersonalizationVFX", "Counter"), 3.1f, 12);
+            ending.techniques[(int)Essence.RisingSlash] = ending.Layer("Aerial slash demonstration",
+                KarmaArtwork.Sprite("PlayerVFX", "AirSlash"), 3.6f, 13);
+            ending.techniques[(int)Essence.SwordWave] = ending.Layer("Pierce trail demonstration",
+                KarmaArtwork.Sprite("PlayerVFX", "PierceTrail"), 5.4f, 14);
             ending.finishedCut = ending.Layer("Completed technique release",
-                FindSprite(effectSprites, effectNames[3]) ?? KarmaArtwork.Sprite("PlayerVFX", "Wave"), 13f, 15);
+                FindSprite(effectSprites, "Union") ?? KarmaArtwork.Sprite("PersonalizationVFX", "Fusion"), 13f, 15);
             for (int i = 0; i < ending.techniques.Length; i++) ending.techniqueSizes[i] = ending.techniques[i].transform.localScale;
             ending.techniqueSizes[3] = ending.finishedCut.transform.localScale;
             var acquired = game.Player.Essences.PersonalizationOrder;
-            for (int i = 0; i < acquired.Count; i++) ending.memoryOrder[(int)acquired[i]] = i;
             ending.memories[0] = ending.Layer("Memory of the first guardian", KarmaArtwork.Sprite("Neutral", "Death"), 5f, 1);
             if (acquired.Count >= 1)
             {
@@ -213,32 +212,19 @@ namespace KarmaPrototype
             DrawAir(t);
 
             var center = game.Player.Position + Vector2.up * 1.05f;
-            float absorb = Ease(KarmaGame.EndingWaveAt + 0.32f, KarmaGame.EndingUnionAt, t);
-            for (int i = 0; i < symbols.Length; i++)
-            {
-                int order = memoryOrder[i];
-                float reveal = KarmaGame.EndingMasterCloseEnd + 0.12f + order * 0.46f;
-                Vector2 memory = center + new Vector2((order - 1) * 3.1f, order == 1 ? 3.6f : 3.15f);
-                float raise = Ease(reveal, reveal + 0.7f, t);
-                memory += new Vector2(Mathf.Sin(t * 1.6f + i * 2f) * 0.12f, (raise - 1) * 0.64f);
-                symbols[i].transform.position = Vector2.Lerp(memory, center + Vector2.right * 0.5f, absorb);
-                symbols[i].transform.localRotation = Quaternion.Euler(0, 0, (order - 1) * (1 - raise) * 18f);
-                var color = game.Config.ColorOf((Essence)i);
-                float drawFocus = 1 - Ease(KarmaGame.EndingDrawShotAt - 0.28f, KarmaGame.EndingDrawShotAt + 0.28f, t);
-                color.a = raise * (1 - absorb) * drawFocus * 0.78f;
-                symbols[i].color = color;
-            }
+            ShowTechniqueSymbol(Essence.Guard, center, t, KarmaGame.EndingCounterAt - 0.16f, KarmaGame.EndingAirJumpAt - 0.04f);
+            ShowTechniqueSymbol(Essence.RisingSlash, center, t, KarmaGame.EndingAirJumpAt, KarmaGame.EndingPierceAt - 0.12f);
+            ShowTechniqueSymbol(Essence.SwordWave, center, t, KarmaGame.EndingPierceAt - 0.08f, KarmaGame.EndingDrawShotAt);
 
-            float guardAge = t - (KarmaGame.EndingGuardAt + KarmaGame.EndingRelease);
-            float liftAge = t - (KarmaGame.EndingLiftAt + KarmaGame.EndingRelease);
-            float waveAge = t - (KarmaGame.EndingWaveAt + KarmaGame.EndingRelease);
-            float lift = Ease(0, 0.76f, liftAge);
-            float travel = 1 - Mathf.Pow(1 - Mathf.Clamp01(waveAge / 0.94f), 2);
-            ShowTechnique((int)Essence.Guard, center + new Vector2(1.7f, 1), guardAge, 0.96f, 6f);
-            ShowTechnique((int)Essence.RisingSlash, center + new Vector2(1.5f + lift, 0.65f + 3.4f * lift),
-                liftAge, 0.9f, -16f);
-            ShowTechnique((int)Essence.SwordWave, center + new Vector2(1.8f + 8f * travel, 0.45f),
-                waveAge, 0.94f, 4f);
+            float counterAge = t - (KarmaGame.EndingCounterAt + KarmaGame.EndingRelease);
+            counterSpark.transform.position = center + new Vector2(Mathf.Lerp(3.9f, 1.2f, Ease(-0.26f, 0, counterAge)), 0.6f);
+            counterSpark.color = new Color(1, 0.84f, 0.62f, Ease(-0.26f, 0, counterAge) * (1 - Ease(0, 0.13f, counterAge)));
+            ShowTechnique((int)Essence.Guard, center + new Vector2(1.35f, 0.55f), counterAge, 0.5f, 0);
+            ShowTechnique((int)Essence.RisingSlash, center + new Vector2(1.18f, game.Player.EndingAirHeight + 0.7f),
+                t - (KarmaGame.EndingAirSlashAt + KarmaGame.EndingRelease), 0.39f, 24f);
+            float pierceAge = t - KarmaGame.EndingPierceReleaseAt;
+            var dashPath = new Vector2((game.Player.EndingPierceStartX + center.x) * 0.5f, center.y + 0.35f);
+            ShowTechnique((int)Essence.SwordWave, dashPath, pierceAge, 0.32f, 0);
 
             float unionAge = t - KarmaGame.EndingUnionAt;
             var plantedBlade = game.Player.Position + new Vector2(0.58f, 1.98f - KarmaSpace.PlayerHalfHeight);
@@ -257,7 +243,7 @@ namespace KarmaPrototype
         void DrawAtmosphere(float t)
         {
             float mood = Ease(0, 5.5f, t);
-            float release = Ease(KarmaGame.EndingTurnAt, KarmaGame.EndingDuration - 0.2f, t - game.EndingDepartureTimeOffset);
+            float release = Ease(KarmaGame.EndingTurnAt, KarmaGame.EndingDuration - 0.2f, t);
             float draw = Ease(KarmaGame.EndingDrawShotAt, KarmaGame.EndingUnionAt - 0.12f, t)
                 * (1 - Ease(KarmaGame.EndingUnionAt, KarmaGame.EndingUnionAt + 0.3f, t));
             var moonlit = Color.Lerp(new Color(0.73f, 0.8f, 0.99f), new Color(0.43f, 0.52f, 0.72f), draw);
@@ -296,7 +282,7 @@ namespace KarmaPrototype
             if (t == lastMasterFrame) return;
             lastMasterFrame = t;
             float presence = Ease(KarmaGame.EndingMasterAt, 11.8f, t) * (1 - Ease(KarmaGame.EndingDepartAt + 0.1f,
-                KarmaGame.EndingDepartAt + 2.7f, t - game.EndingDepartureTimeOffset));
+                KarmaGame.EndingDepartAt + 2.7f, t));
             masterMotion.enabled = presence > 0;
             if (!masterMotion.enabled) return;
 
@@ -307,7 +293,7 @@ namespace KarmaPrototype
             float recoil = Gesture(KarmaGame.EndingUnionAt, KarmaGame.EndingUnionAt + 0.23f,
                 KarmaGame.EndingUnionAt + 0.35f, KarmaGame.EndingUnionAt + 1.18f, t) * -8f;
             float reply = Gesture(27.24f, 27.78f, 28.06f, 28.85f, t) * 10f;
-            float farewell = t - game.ActiveEndingFarewellAt;
+            float farewell = t - KarmaGame.EndingFarewellAt;
             float salute = Gesture(0.27f, 1.01f, 1.45f, 2.34f, farewell) * 19f;
             float angle = (lesson + recoil + reply + salute) * Mathf.Deg2Rad;
             float breath = Mathf.Sin(t * 2.15f) * 0.022f;
@@ -357,7 +343,7 @@ namespace KarmaPrototype
             float impact = Gesture(0, 0.10f, 0.32f, 1.7f, age);
             float ambient = Ease(4.7f, 9f, t)
                 * (1 - Ease(KarmaGame.EndingDuration - 1.8f, KarmaGame.EndingDuration - 0.3f,
-                    t - game.EndingDepartureTimeOffset));
+                    t));
             float origin = game.Player.Position.x + 2.1f;
             for (int i = 0; i < driftingLights.Length; i++)
             {
@@ -431,6 +417,15 @@ namespace KarmaPrototype
             }
         }
 
+        void ShowTechniqueSymbol(Essence essence, Vector2 center, float t, float start, float end)
+        {
+            var symbol = symbols[(int)essence];
+            float enter = Ease(start, start + 0.15f, t);
+            float alpha = enter * (1 - Ease(end - 0.18f, end, t));
+            symbol.transform.position = center + new Vector2(-1.65f, 2.6f + 0.38f * enter);
+            symbol.color = new Color(1, 1, 1, alpha * 0.88f);
+        }
+
         void ShowTechnique(int index, Vector2 position, float age, float duration, float sweep)
         {
             var renderer = index == 3 ? finishedCut : techniques[index];
@@ -441,8 +436,8 @@ namespace KarmaPrototype
                 : Mathf.Lerp(0.68f, 1.14f, growth));
             renderer.transform.localRotation = Quaternion.Euler(0, 0, sweep * (1 - growth));
             float alpha = Ease(0, 0.105f, age) * (1 - Ease(duration * 0.45f, duration, age));
-            var color = renderer.sprite != null && renderer.sprite.name == effectNames[index] ? Color.white
-                : index == 3 ? new Color(1, 0.91f, 0.63f) : game.Config.ColorOf((Essence)index);
+            var color = index == 3 && renderer.sprite != null && renderer.sprite.name == "Fusion"
+                ? new Color(1, 0.91f, 0.63f) : Color.white;
             color.a = alpha * 0.94f;
             renderer.color = color;
         }

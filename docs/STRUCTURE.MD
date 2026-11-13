@@ -331,14 +331,6 @@ K4RMA/
 │   │   │   ├── Combat_Boss_Stagger.wav
 │   │   │   ├── Combat_Guard_Block.wav
 │   │   │   └── Combat_Perfect_Parry.wav
-│   │   ├── Editor/
-│   │   │   └── EndingV0/
-│   │   │       ├── apprentice_aftermath.wav
-│   │   │       ├── apprentice_answer.wav
-│   │   │       ├── master_farewell.wav
-│   │   │       ├── master_lesson.wav
-│   │   │       ├── master_question.wav
-│   │   │       └── master_techniques.wav
 │   │   ├── Guard/
 │   │   │   ├── GD02_Heavy_Hit_v2.wav
 │   │   │   ├── GD03_Shield_Launch.wav
@@ -372,14 +364,6 @@ K4RMA/
 │   │   │   ├── Game_Ability_Inherit.wav
 │   │   │   └── Game_Boss_Intro.wav
 │   │   ├── Resources/
-│   │   │   ├── EndingDialogue/
-│   │   │   │   └── ko/
-│   │   │   │       ├── apprentice_aftermath.wav
-│   │   │   │       ├── apprentice_answer.wav
-│   │   │   │       ├── master_farewell.wav
-│   │   │   │       ├── master_lesson.wav
-│   │   │   │       ├── master_question.wav
-│   │   │   │       └── master_techniques.wav
 │   │   │   └── KarmaSfxLibrary.asset
 │   │   ├── RisingSlash/
 │   │   │   ├── RS_Dash_Impact.wav

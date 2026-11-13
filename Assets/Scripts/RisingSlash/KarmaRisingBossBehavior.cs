@@ -51,7 +51,7 @@ namespace KarmaPrototype
             public override void Interrupt(bool preservePressure)
             {
                 base.Interrupt(preservePressure);
-                owner.animator.ClearRisingBasicStrike();
+                owner.animator.ClearRisingAttackFrames();
                 ClearBarrier();
                 ClearFragments();
                 motionContact = null;
@@ -94,7 +94,7 @@ namespace KarmaPrototype
             }
             public override void Initialize()
             {
-                owner.animator.ConfigureRisingPresentation();
+                owner.animator.ConfigureRisingPresentation(KarmaArtwork.GuardianFormName(owner.game.Player.Essences.PersonalizationOrder));
                 // The rising boss uses its golden sphere instead of the shared white halo.
                 owner.shieldHalo.gameObject.SetActive(false);
                 owner.gameObject.AddComponent<KarmaRisingStunStars>().Initialize(owner.game,

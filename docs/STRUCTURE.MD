@@ -218,6 +218,7 @@ K4RMA/
 │   │       │   │   └── WaveEcho.png
 │   │       │   ├── Forms/
 │   │       │   │   ├── Rise.png
+│   │       │   │   ├── RiseBasicStrike.png
 │   │       │   │   ├── RiseFinal.png
 │   │       │   │   ├── RiseWard.png
 │   │       │   │   └── RiseWave.png

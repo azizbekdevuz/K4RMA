@@ -400,6 +400,8 @@ public static class KarmaEndingMoonChecks
     static async Task CaptureEnding(float time, string shot)
     {
         await Until(() => game.EndingTime >= time);
+        // Capture after the presentation has consumed the new timeline position.
+        await Task.Yield();
         CheckCoverage();
         Render("campaign-" + shot);
     }
@@ -421,21 +423,29 @@ public static class KarmaEndingMoonChecks
         float musicPreference = KarmaPreferences.MusicVolume;
         float time = game.EndingTime; game.EnemyDefeated(enemy);
         Check(game.EndingTime == time, "Duplicate defeat notification cannot restart ending");
-        await CaptureEnding(2.25f, "01-four-fallen-guardians");
         var presentation = game.World.Find("Ending presentation");
-        for (int i = 1; i <= 3; i++)
-        {
-            var guardian = presentation.Find("Fallen guardian " + i).GetComponent<SpriteRenderer>();
-            var viewport = game.GameCamera.WorldToViewportPoint(guardian.bounds.center);
-            Check(guardian.sprite != null && guardian.enabled && guardian.color.a > 0.9f
-                && viewport.x > 0.08f && viewport.x < 0.92f, "Earlier fallen guardian is visible in the opening shot: " + i);
-        }
+        var echoes = new SpriteRenderer[3];
+        for (int i = 0; i < echoes.Length; i++)
+            echoes[i] = presentation.Find("Fallen guardian " + (i + 1)).GetComponent<SpriteRenderer>();
         var final = (Transform)Get(game, "fallenGuardian");
         var finalPicture = final.GetComponentInChildren<SpriteRenderer>();
-        Check(final.gameObject.activeInHierarchy
+        for (int i = 0; i < echoes.Length; i++)
+        {
+            await CaptureEnding(1.1f + 0.98f * i, "01-guardian-echo-" + (i + 1));
+            var guardian = echoes[i];
+            var viewport = game.GameCamera.WorldToViewportPoint(guardian.bounds.center);
+            Check(guardian.sprite != null && guardian.enabled && guardian.color.a > 0.9f
+                && viewport.x > 0.08f && viewport.x < 0.92f, "Current guardian echo is visible: " + i);
+            for (int other = 0; other < echoes.Length; other++)
+                if (other != i) Check(!echoes[other].enabled, "Earlier guardian echoes have separate beats");
+            Check(!finalPicture.enabled, "The final guardian does not overlap an earlier echo");
+        }
+        await CaptureEnding(4.05f, "01-guardian-echo-4");
+        Check(final.gameObject.activeInHierarchy && finalPicture.enabled && finalPicture.color.a > 0.9f
+            && Array.TrueForAll(echoes, echo => !echo.enabled)
             && game.GameCamera.WorldToViewportPoint(finalPicture.bounds.min).x >= 0
             && game.GameCamera.WorldToViewportPoint(finalPicture.bounds.max).x <= 1,
-            "The final guardian's full sprite fits in the opening shot");
+            "The full final guardian sprite appears alone after the previous three");
         Check(game.EndingSpeaker == "제자" && game.EndingLine.Contains("수호자"),
             "The apprentice reacts in a written caption");
         await Until(() => game.EndingTime >= 7);
@@ -533,20 +543,32 @@ public static class KarmaEndingMoonChecks
         CheckSkill(Essence.SwordWave, "Pierce");
         Check(game.Player.Position.x > pierceStart + 3 && game.Projectiles.Count == 0,
             "Pierce moves the apprentice and sends no sword wave");
-        await CaptureEnding(22.81f, "05-leap-slash");
+        await CaptureEnding(22.74f, "05-leap-slash");
         CheckSkill(Essence.RisingSlash, "AirDiagonal");
         Check((float)typeof(KarmaPlayer).GetProperty("EndingAirHeight", F).GetValue(game.Player) > 1,
             "The apprentice changes height during the leap slash");
         await CaptureEnding(23.90f, "06-counter");
         CheckSkill(Essence.Guard, "Riposte");
 
-        await CaptureEnding(24.82f, "07-emblems-arrive");
-        var center = game.Player.Position + Vector2.up * 1.05f;
-        float[] distances = Array.ConvertAll(skillSymbols, symbol => Vector2.Distance(center, symbol.transform.position));
-        Check(Array.TrueForAll(skillSymbols, symbol => symbol.color.a > 0.8f), "All three acquired emblems are readable");
-        await CaptureEnding(25.36f, "08-emblems-converge");
+        await CaptureEnding(24.63f, "07-emblems-arrive");
+        var chest = game.Player.Position + Vector2.up * 1.05f;
+        var orbitCenter = chest + Vector2.up * 1.48f;
         for (int i = 0; i < skillSymbols.Length; i++)
-            Check(Vector2.Distance(center, skillSymbols[i].transform.position) < distances[i], "An emblem converges on the apprentice");
+        {
+            Vector2 fromCenter = (Vector2)skillSymbols[i].transform.position - orbitCenter;
+            float angle = Mathf.Atan2(fromCenter.y, fromCenter.x) * Mathf.Rad2Deg;
+            Check(skillSymbols[i].color.a > 0.8f && Mathf.Abs(Mathf.DeltaAngle(angle, 120f * i)) < 5,
+                "The emblems begin in Pierce, Leap, Counter order at 0, 120 and 240 degrees");
+        }
+        Vector2 originalAxis = skillSymbols[1].transform.position - skillSymbols[0].transform.position;
+        await CaptureEnding(25.13f, "08-emblems-turn");
+        Vector2 turnedAxis = skillSymbols[1].transform.position - skillSymbols[0].transform.position;
+        Check(Vector2.Angle(originalAxis, turnedAxis) > 50 && turnedAxis.magnitude < originalAxis.magnitude,
+            "The emblems rotate and close in together");
+        await CaptureEnding(25.55f, "08a-emblems-merge");
+        var core = presentation.Find("Merged emblem light").GetComponent<SpriteRenderer>();
+        Check(core.color.a > 0.5f && Vector2.Distance(core.transform.position, chest) < 0.1f,
+            "One light remains at the apprentice's chest after convergence");
         await CaptureEnding(25.90f, "08b-emblems-absorbed");
         Check(Array.TrueForAll(skillSymbols, symbol => symbol.color.a < 0.01f)
             && presentation.Find("Completed aura").GetComponent<SpriteRenderer>().color.a > 0.17f,

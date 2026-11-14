@@ -11,8 +11,9 @@ namespace KarmaPrototype
             new(2, 2, 76, 72), new(102, 2, 92, 62), new(202, 2, 96, 48),
             new(302, 2, 92, 85), new(402, 2, 54, 94)
         };
-        static readonly Color keycapInk = new Color(1f, 0.91f, 0.73f);
-        static readonly Color keycapPressed = new Color(1.3f, 1.04f, 0.74f);
+        static readonly Color keycapInk = new Color(0.97f, 0.93f, 0.85f);
+        static readonly Color keycapIdle = new Color(0.72f, 0.83f, 1f);
+        static readonly Color keycapPressed = new Color(1.03f, 0.94f, 0.79f);
         readonly GUIContent promptContent = new GUIContent();
         Texture2D keycapAtlas;
         GUIStyle keycapLegend, promptText;
@@ -89,9 +90,10 @@ namespace KarmaPrototype
             if (!GUI.enabled) GUI.color = new Color(color.r, color.g, color.b, color.a * 0.42f);
             if (pressed && GUI.enabled)
             {
-                GUI.color *= keycapPressed;
                 rect.y += 1.5f;
             }
+            Color legendTint = GUI.color;
+            GUI.color *= pressed && GUI.enabled ? keycapPressed : keycapIdle;
             if (keycapAtlas != null)
             {
                 var region = keycapRegions[(int)cap.Shape];
@@ -114,6 +116,7 @@ namespace KarmaPrototype
             if (cap.Shape == KeycapShape.Enter) rect.y += rect.height * 0.11f;
             else rect.y -= rect.height * 0.045f;
             promptContent.text = cap.Legend;
+            GUI.color = legendTint;
             GUI.Label(rect, promptContent, keycapLegend);
             GUI.color = color;
         }

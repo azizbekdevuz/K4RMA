@@ -61,50 +61,55 @@ namespace KarmaPrototype
         }
         void StageTransitionScreen()
         {
-            if (DrawBossEntrance()) return;
             if (!game.GuardianInheriting)
             {
-                PersonalizationGuide(game.LastPersonalizedEssence);
+                Fill(new Rect(280, 590, 720, 82), new Color(0.015f, 0.025f, 0.07f, 0.72f));
+                Label(300, 609, 680, 44,
+                    "고유화 · " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence), centered);
                 return;
             }
-
-            // A low caption keeps the actual actors and their transformation visible.
-            Fill(new Rect(280, 578, 720, 112), new Color(0.015f, 0.025f, 0.07f, 0.72f));
-            SpriteArt(new Rect(460, 578, 360, 12), KarmaArtwork.Sprite("UI", "LongRule"));
-            string guardian = game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자";
-            Label(300, 594, 680, 35, "원형 계승 · " + guardian, centered);
-            Label(300, 638, 680, 28, "내려놓은 원형의 힘이 다음 수호자에게 이어집니다.", centered);
+            if (game.CurrentEncounterPrompt == KarmaGame.EncounterPrompt.BossName)
+            {
+                if (!DrawBossEntrance())
+                {
+                    string guardian = game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자";
+                    Label(300, 594, 680, 35, guardian, centered);
+                    if (game.EncounterPromptReady)
+                        KeyPrompt(new Rect(300, 645, 680, 30), 16, true, KarmaAction.DialogueConfirm, "  계속");
+                }
+                return;
+            }
+            PersonalizationGuide(game.LastPersonalizedEssence);
         }
         void PersonalizationGuide(Essence essence)
         {
-            string input, effect, difference;
-            KarmaAction action;
+            Fill(new Rect(190, 515, 900, 174), new Color(0.015f, 0.025f, 0.07f, 0.92f));
+            SpriteArt(new Rect(214, 549, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
+            Label(310, 530, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
+            Label(310, 572, 750, 64, PersonalizationGuideText(essence), text);
+            KeyPrompt(new Rect(310, 644, 750, 30), 16, false, KarmaAction.DialogueConfirm, "  전투 시작");
+        }
+
+        static string PersonalizationGuideText(Essence essence)
+        {
             switch (essence)
             {
                 case Essence.SwordWave:
-                    input = "방향을 잡고  ";
-                    action = KarmaAction.Pierce;
-                    effect = "적을 꿰뚫으며 돌진";
-                    difference = "원형 검기의 원거리 발사가 이동 공격으로 바뀝니다.";
-                    break;
+                    string pierce = KarmaInput.BindingLabel(KarmaAction.Pierce);
+                    string pierceKey = pierce == "L" ? "L을" : pierce + " 키를";
+                    return "방향키와 " + pierceKey
+                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있다.";
                 case Essence.RisingSlash:
-                    input = "공중에서 방향 +  ";
-                    action = KarmaAction.Attack;
-                    effect = "한 번 더 도약하며 베기";
-                    difference = "지상에서 올려 베던 원형이 공중 방향 전환 공격으로 바뀝니다.";
-                    break;
+                    string attack = KarmaInput.BindingLabel(KarmaAction.Attack);
+                    string attackKey = attack == "J" ? "J를" : attack + " 키를";
+                    return "공중에서 방향키와 " + attackKey
+                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있다. 아래 방향을 선택하면 잠시 체공할 수 있다.";
                 default:
-                    input = "공격이 닿기 직전에  ";
-                    action = KarmaAction.Counter;
-                    effect = "막고 즉시 반격";
-                    difference = "원형 방어의 보호막 대신, 타이밍을 맞춰 반격 피해를 줍니다.";
-                    break;
+                    string counter = KarmaInput.BindingLabel(KarmaAction.Counter);
+                    string counterKey = counter == "K" ? "K를" : counter + " 키를";
+                    return "적의 공격이 닿는 순간 " + counterKey
+                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있다.";
             }
-            Fill(new Rect(210, 558, 860, 126), new Color(0.015f, 0.025f, 0.07f, 0.88f));
-            SpriteArt(new Rect(236, 588, 62, 62), KarmaArtwork.SkillIcon(essence), HudIvory);
-            Label(320, 564, 720, 35, "고유화 완료 · " + KarmaPatternCatalog.UniqueName(essence), heading);
-            KeyPrompt(new Rect(320, 605, 720, 30), 18, false, input, action, "  ·  " + effect);
-            Label(320, 641, 720, 25, difference, small);
         }
 
         void EndScreen(bool victory)

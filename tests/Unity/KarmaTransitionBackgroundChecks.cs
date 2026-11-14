@@ -115,7 +115,7 @@ public static class KarmaTransitionBackgroundChecks
             if (step == 2)
             {
                 CaptureAt(3.2f, "guardian");
-                if (game.Phase == RunPhase.Combat)
+                if ((bool)typeof(KarmaGame).GetProperty("EncounterPromptReady", F).GetValue(game))
                 {
                     Check(samples == 3, "Missing guardian samples");
                     scenario++;

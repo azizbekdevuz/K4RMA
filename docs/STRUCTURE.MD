@@ -319,6 +319,7 @@ K4RMA/
 │   │       │   └── TrainingDummy.png
 │   │       └── UI/
 │   │           ├── Components.png
+│   │           ├── KeyboardKeycaps.png
 │   │           └── MenuBackground.png
 │   ├── Audio/
 │   │   ├── Ambience/
@@ -602,6 +603,7 @@ K4RMA/
 │       │   ├── KarmaHUD.Combat.cs
 │       │   ├── KarmaHUD.cs
 │       │   ├── KarmaHUD.Ending.cs
+│       │   ├── KarmaHUD.Keycaps.cs
 │       │   ├── KarmaHUD.Screens.cs
 │       │   └── KarmaHUD.Settings.cs
 │       └── World/

@@ -8,7 +8,7 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD : MonoBehaviour
     {
         KarmaGame game;
-        GUIStyle title, heading, text, small, menuButton, centered, keyButton;
+        GUIStyle title, heading, text, small, menuButton, centered;
         Font runtimeFont;
         readonly string[] names = { "검기", "상승베기", "방어" };
         public void Initialize(KarmaGame director) { game = director; }
@@ -48,10 +48,9 @@ namespace KarmaPrototype
             menuButton = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
             menuButton.normal.textColor = new Color(0.92f, 0.9f, 0.82f);
             menuButton.hover.textColor = Color.white;
-            keyButton = new GUIStyle(menuButton) { fontSize = 18 };
             centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
             foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
-            foreach (var s in new[] { title, heading, text, small, menuButton, centered, keyButton }) if (font != null) s.font = font;
+            foreach (var s in new[] { title, heading, text, small, menuButton, centered }) if (font != null) s.font = font;
         }
         void OnGUI()
         {
@@ -87,7 +86,8 @@ namespace KarmaPrototype
                     case RunPhase.Gate:
                         Panel(new Rect(300, 525, 680, 110));
                         Label(325, 539, 640, 35, "시험 통과", heading);
-                        Label(325, 578, 640, 44, "오른쪽 수련문으로 이동한 뒤 F를 눌러 고유화할 기술을 고르세요.", text);
+                        KeyPrompt(new Rect(325, 578, 640, 44), 18, false,
+                            "오른쪽 수련문 앞에서  ", KarmaAction.Interact, "  고유화 선택");
                         break;
                 }
             }
@@ -95,7 +95,7 @@ namespace KarmaPrototype
             {
                 Panel(new Rect(230, 550, 820, 140));
                 Label(255, 565, 770, 75, game.OpeningArrivalSpeech, text);
-                Label(255, 655, 770, 25, "[ " + KarmaInput.BindingLabel(KarmaAction.DialogueConfirm) + " ] 계속", small);
+                KeyPrompt(new Rect(255, 655, 770, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
             }
             if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
             CinematicSkipHint();

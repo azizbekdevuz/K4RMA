@@ -12,7 +12,6 @@ namespace KarmaPrototype
         {
             var t = game.Tutorial;
             if (game.Paused) return;
-            string Key(KarmaAction action) => KarmaInput.BindingLabel(action);
             // Skip enters Fade at alpha zero, before a lesson may have been selected.
             if (t.Step == KarmaTutorialStep.Fade) { Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, t.Fade)); return; }
             if (t.WaitingForGuard)
@@ -22,46 +21,53 @@ namespace KarmaPrototype
                 Label(275, 550, 730, 50, "공격이 닿기 전, 보호의 힘을 펼쳐라.", centered);
                 float pulse = 0.8f + Mathf.Sin(Time.unscaledTime * 5) * 0.2f;
                 var old = GUI.color; GUI.color = new Color(1, 0.9f, 0.6f, pulse);
-                Label(275, 615, 730, 55, "[ " + Key(KarmaAction.Guard) + " ] 를 새로 눌러 막으세요", heading); GUI.color = old;
+                KeyPrompt(new Rect(275, 615, 730, 55), 23, true, KarmaAction.Guard, "  새로 눌러 막으세요"); GUI.color = old;
+                return;
             }
             if (!string.IsNullOrEmpty(t.Speech))
             {
                 Panel(new Rect(210, 550, 860, 140));
                 Label(235, 560, 810, 25, t.Step == KarmaTutorialStep.Complete ? tutorialLabels[t.Lesson] + " 3/3 · 수련 완료" : t.SpeechTitle, small);
                 Label(235, 588, 810, 65, t.Speech, text);
-                if (t.Step != KarmaTutorialStep.Complete) Label(235, 655, 810, 25, "[ " + Key(KarmaAction.DialogueConfirm) + " ] 계속", small);
+                if (t.Step != KarmaTutorialStep.Complete)
+                    KeyPrompt(new Rect(235, 655, 810, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
                 return;
             }
-            string objective;
+            bool outsideGate = t.Step == KarmaTutorialStep.Gate && Mathf.Abs(game.Player.Position.x - KarmaTutorialStage.FinalGate) > 5;
             if (t.Step == KarmaTutorialStep.Travel)
                 DrawTutorialRouteArrow(KarmaTutorial.Stations[t.Lesson + 1]);
-            else if (t.Step == KarmaTutorialStep.Gate && Mathf.Abs(game.Player.Position.x - KarmaTutorialStage.FinalGate) > 5)
-                DrawTutorialRouteArrow(KarmaTutorialStage.FinalGate);
-            if (t.Step == KarmaTutorialStep.Gate && Mathf.Abs(game.Player.Position.x - KarmaTutorialStage.FinalGate) > 5) objective = "모든 훈련을 마쳤다. 관문으로 이동하세요.";
-            else if (t.Step == KarmaTutorialStep.Gate) objective = "관문 앞에서 [" + Key(KarmaAction.Interact) + "]를 눌러 다음 보스 스테이지로 이동";
-            else if (t.Step == KarmaTutorialStep.Complete && t.Lesson < 3) objective = tutorialTrainingNames[t.Lesson] + " 훈련을 마쳤다. 다음 훈련을 시작하자.";
-            else if (t.Step == KarmaTutorialStep.Travel) objective = t.Lesson < 0
-                ? Key(KarmaAction.Left) + " / " + Key(KarmaAction.Right) + " 이동 · " + Key(KarmaAction.Down) + " 앉기 · " + Key(KarmaAction.Jump) + " 점프"
-                : tutorialTrainingNames[t.Lesson] + " 훈련을 마쳤다.";
-            else
-            {
-                objective = tutorialLabels[t.Lesson] + " " + t.Successes + "/3  ·  [ " + Key(tutorialKeys[t.Lesson]) + " ]";
-                if (t.Lesson == 1) objective += "  ·  표적에서 거리를 두고 발사";
-                if (t.Lesson == 2) objective += "  ·  허수아비 가까이에서 올려베기";
-                if (t.Lesson > 0)
-                {
-                    Essence essence = t.Lesson == 1 ? Essence.SwordWave : t.Lesson == 2 ? Essence.RisingSlash : Essence.Guard;
-                    float cooldown = game.Player.Essences.Cooldown(essence);
-                    if (cooldown > 0) objective += "  ·  재사용 대기 " + cooldown.ToString("0.0") + "초";
-                }
-            }
-            if (t.WaitingForGuard) return;
-            if (!string.IsNullOrEmpty(t.BlockedMessage))
+            else if (outsideGate) DrawTutorialRouteArrow(KarmaTutorialStage.FinalGate);
+
+            string blockedMessage = t.BlockedMessage;
+            if (!string.IsNullOrEmpty(blockedMessage))
             {
                 Panel(new Rect(210, 120, 860, 70));
-                Label(230, 130, 820, 50, t.BlockedMessage, centered);
+                Label(230, 130, 820, 50, blockedMessage, centered);
             }
-            Panel(new Rect(210, 615, 860, 65)); Label(230, 630, 820, 42, objective, centered);
+            Panel(new Rect(210, 615, 860, 65));
+            var objective = new Rect(230, 630, 820, 42);
+            if (outsideGate)
+                GUI.Label(objective, "모든 훈련을 마쳤다. 관문으로 이동하세요.", centered);
+            else if (t.Step == KarmaTutorialStep.Gate)
+                KeyPrompt(objective, 18, true, "관문 앞에서  ", KarmaAction.Interact, "  다음 보스 스테이지로 이동");
+            else if (t.Step == KarmaTutorialStep.Travel && t.Lesson < 0)
+                KeyPrompt(objective, 18, true, KarmaAction.Left, " / ", KarmaAction.Right, "  이동   ·   ",
+                    KarmaAction.Down, "  앉기   ·   ", KarmaAction.Jump, "  점프");
+            else if (t.Step == KarmaTutorialStep.Complete && t.Lesson < 3)
+                GUI.Label(objective, tutorialTrainingNames[t.Lesson] + " 훈련을 마쳤다. 다음 훈련을 시작하자.", centered);
+            else if (t.Step == KarmaTutorialStep.Travel)
+                GUI.Label(objective, tutorialTrainingNames[t.Lesson] + " 훈련을 마쳤다.", centered);
+            else
+            {
+                string detail = t.Lesson == 1 ? "  ·  표적에서 거리를 두고 발사"
+                    : t.Lesson == 2 ? "  ·  허수아비 가까이에서 올려베기" : "";
+                if (t.Lesson > 0)
+                {
+                    float cooldown = game.Player.Essences.Cooldown((Essence)(t.Lesson - 1));
+                    if (cooldown > 0) detail += "  ·  재사용 대기 " + cooldown.ToString("0.0") + "초";
+                }
+                KeyPrompt(objective, 18, true, tutorialLabels[t.Lesson] + " " + t.Successes + "/3  ·  ", tutorialKeys[t.Lesson], detail);
+            }
         }
 
         void DrawTutorialRouteArrow(float destination)

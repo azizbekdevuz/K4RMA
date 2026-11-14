@@ -218,6 +218,7 @@ K4RMA/
 │   │       │   │   └── WaveEcho.png
 │   │       │   ├── Forms/
 │   │       │   │   ├── Rise.png
+│   │       │   │   ├── RiseBasicStrike.png
 │   │       │   │   ├── RiseFinal.png
 │   │       │   │   ├── RiseWard.png
 │   │       │   │   └── RiseWave.png
@@ -323,12 +324,20 @@ K4RMA/
 │   │   ├── Ambience/
 │   │   │   └── Amb_Arena_Loop.wav
 │   │   ├── Combat/
+│   │   │   ├── Boss_Spinning_Stars.wav
+│   │   │   ├── Boss_Stun.wav
 │   │   │   ├── Combat_Blade_Hit.wav
 │   │   │   ├── Combat_Boss_Defeat.wav
 │   │   │   ├── Combat_Boss_Stagger.wav
 │   │   │   ├── Combat_Guard_Block.wav
 │   │   │   └── Combat_Perfect_Parry.wav
 │   │   ├── Guard/
+│   │   │   ├── GD02_Heavy_Hit_v2.wav
+│   │   │   ├── GD03_Shield_Launch.wav
+│   │   │   ├── GD03_Shield_Flight.wav
+│   │   │   ├── GD04_Ground_Rise.wav
+│   │   │   ├── GD05_Dome_Success.wav
+│   │   │   ├── GD05_Dome_Failure.wav
 │   │   │   ├── GD02_Heavy_Hit.wav
 │   │   │   ├── GD02_Heavy_Swing.wav
 │   │   │   ├── GD_Basic_Hit.wav
@@ -340,6 +349,11 @@ K4RMA/
 │   │   │   ├── GD_Shield_Break.wav
 │   │   │   ├── GD_Shield_Hit.wav
 │   │   │   └── GD_Ultimate.wav
+│   │   ├── Music/
+│   │   │   ├── K4RMA_Main_Theme_Loop.wav
+│   │   │   ├── Four_Guardians_A_Loop.wav
+│   │   │   ├── Guardians_of_K4RMA_Loop.wav
+│   │   │   └── Four_Guardians_B_Loop.wav
 │   │   ├── Player/
 │   │   │   ├── PL_Damage.wav
 │   │   │   ├── PL_Dash.wav
@@ -369,6 +383,9 @@ K4RMA/
 │   │   │   ├── RS_UP05_Crossing.wav
 │   │   │   └── RS_UP05_Final.wav
 │   │   ├── SwordWave/
+│   │   │   ├── SW05_Ascension_Ignition.wav
+│   │   │   ├── SW05_Summoning_Energy.wav
+│   │   │   ├── SW05_Final_Explosion.wav
 │   │   │   ├── SW05_PerSword_Thunder.wav
 │   │   │   ├── SW_Crossing_Blades.wav
 │   │   │   ├── SW_Electric_Discharge.wav
@@ -406,6 +423,8 @@ K4RMA/
 │   │   └── KarmaPrototype.unity
 │   └── Scripts/
 │       ├── Audio/
+│       │   ├── Editor/
+│       │   │   └── KarmaAudioReview.cs
 │       │   ├── KarmaAudio.cs
 │       │   ├── KarmaAudioHost.cs
 │       │   └── KarmaSfxLibrary.cs
@@ -630,7 +649,8 @@ K4RMA/
 │   │   └── SwordWavePlanner.csproj
 │   ├── Unity/
 │   │   ├── Audio/
-│   │   │   └── KarmaSfxCompletionChecks.cs
+│   │   │   ├── KarmaSfxCompletionChecks.cs
+│   │   │   └── KarmaSfxCompletionChecks.Sunday.cs
 │   │   ├── Ending/
 │   │   │   └── KarmaEndingMoonChecks.cs
 │   │   ├── Guard/

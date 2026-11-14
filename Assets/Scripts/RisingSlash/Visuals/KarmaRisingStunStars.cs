@@ -46,6 +46,7 @@ namespace KarmaPrototype
                 cue = current;
                 mark = cue.GetComponent<SpriteRenderer>();
                 elapsed = 0; displayedFrame = -1;
+                KarmaAudio.Play(KarmaSfxId.CombatBossSpinningStars, lifetimeOwner: cue);
             }
             else if (game != null && !game.Paused)
                 elapsed = (elapsed + Time.deltaTime) % (FrameCount / FramesPerSecond);

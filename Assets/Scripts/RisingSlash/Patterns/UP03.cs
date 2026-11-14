@@ -36,11 +36,16 @@ namespace KarmaPrototype
                 var wave = owner.Attack(center, Vector2.zero, size, 0.42f, Settings.waveDamageMultiplier, null, 0f, visualPose: "Wave");
                 if (wave != null)
                 {
-                    if (owner.Active) KarmaRisingAudio.Wave();
+                    if (owner.Active)
+                    {
+                        owner.animator.StartRisingWave();
+                        KarmaRisingAudio.Wave();
+                    }
                     wave.Repaint(KarmaRisingArt.Get("Wave"), true);
                     if (wave.Visual != null) wave.Visual.flipX = owner.direction < 0;
                 }
                 yield return owner.Wait(0.48f);
+                owner.animator.EndRisingMotion();
                 yield return owner.Recovery(1.15f);
             }
 

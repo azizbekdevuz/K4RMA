@@ -57,11 +57,16 @@ namespace KarmaPrototype
                     yield return owner.Wait(0.08f);
                     if (mark != null) Destroy(mark.gameObject);
                     float duration = DashSeconds(target, ultimate: true);
-                    if (owner.Active) KarmaRisingAudio.Crossing();
+                    if (owner.Active)
+                    {
+                        owner.animator.StartRisingCrossing();
+                        KarmaRisingAudio.Crossing();
+                    }
                     if (i == points.Length - 2)
                         yield return ((RisingBossBehavior)owner.behavior).MotionWithImpact(target, duration, slash, trail, KarmaSfxId.RsUp05Final);
                     else
                         yield return owner.Motion(target, duration, slash, null, trail);
+                    owner.animator.EndRisingMotion();
                 }
                 var returnPoint = new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground);
                 yield return owner.Motion(returnPoint, DashSeconds(returnPoint, ultimate: true), Vector2.zero);

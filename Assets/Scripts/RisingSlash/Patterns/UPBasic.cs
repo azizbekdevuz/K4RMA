@@ -36,6 +36,7 @@ namespace KarmaPrototype
                         Mathf.Abs(player.y - center.y) > size.y / 2 + KarmaSpace.PlayerHalfHeight) break;
                     owner.state = ActionState.Attack;
                     owner.animator.Attack(Vector2.right * owner.direction);
+                    owner.animator.StartRisingBasicStrike();
                     KarmaRisingAudio.Slash(i);
                     var slash = owner.Attack(center, Vector2.zero, size, 0.09f, Settings.meleeDamageMultiplier, null, 0f, visualPose: "Cleave");
                     if (slash != null) slash.Repaint(KarmaRisingArt.Get("Slash"), true);

@@ -1,0 +1,251 @@
+#if UNITY_EDITOR
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using KarmaPrototype;
+using UnityEditor;
+using UnityEngine;
+
+// Reuses the existing focused runner. No test hooks are installed in runtime code.
+public static partial class KarmaSfxCompletionChecks
+{
+    public static void RunSundayBatch()
+    { SessionState.SetBool(Key + ".Sunday", true); RunBatch(); }
+    public static void RunSundayContactsBatch()
+    { SessionState.SetBool(Key + ".SundayContacts", true); RunBatch(); }
+
+    [MenuItem("K4RMA/Validation/Stun and menu audio")]
+    public static void RunStunAudioInEditor()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before validation.");
+        SessionState.SetBool(Key + ".Editor", true);
+        SessionState.SetBool(Key + ".Background", Application.runInBackground);
+        RunSundayContactsBatch();
+    }
+
+    static async Task CheckMixerSignal(AudioSource isolated, string label)
+    {
+        Check(isolated != null && isolated.isPlaying && !isolated.mute && isolated.volume > 0
+            && AudioListener.volume > 0, label + " has a live unmuted source");
+        var other = Array.FindAll(Sources(), source => source != isolated && !source.mute);
+        var samples = new float[1024];
+        float peak = 0;
+        try
+        {
+            foreach (var source in other) source.mute = true;
+            await Wait(0.08f);
+            for (int i = 0; i < 6; i++)
+            {
+                AudioListener.GetOutputData(samples, 0);
+                foreach (float sample in samples) peak = Mathf.Max(peak, Mathf.Abs(sample));
+                await Wait(0.027f);
+            }
+        }
+        finally
+        {
+            foreach (var source in other)
+                if (source != null) source.mute = false;
+        }
+        Check(peak > 0.001f, label + " reached Unity's mixed audio output");
+        string report = label + " listener output peak " + (20 * Mathf.Log10(peak)).ToString("F1") + " dBFS";
+        Debug.Log(report);
+        System.IO.Directory.CreateDirectory("output/validation");
+        System.IO.File.AppendAllText("output/validation/stun-mixer.txt", report + Environment.NewLine);
+    }
+    static async Task CheckSundayContacts()
+    {
+        await Prepare(Essence.Guard);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+        Pattern(EnemyAttack.GD02);
+        await Until(() => !(bool)Get(enemy, "running"), 12, "GD02 full attack");
+        Check(Count(KarmaSfxId.GdHeavySwing) == 1 && Count(KarmaSfxId.GdHeavyHit) == 1
+            && Count(KarmaSfxId.PlDamage) == 1, "GD02 release and real damaging contact once");
+        Check(observed.Contains("GD02_Heavy_Hit_v2"), "Actual v2 AudioSource playback");
+
+        await Prepare(Essence.Guard);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+        var point = (Vector2)game.Player.GetComponent<Collider2D>().bounds.center;
+        Set(game.Player, "invulnerableUntil", 0f);
+        float health = game.Player.Health;
+        enemy.TryAttackHit(point + Vector2.up * 20, point + Vector2.up * 20,
+            Vector2.one, 1, new KarmaAttackContact(), 0, sourcePattern: EnemyAttack.GD02);
+        Check(game.Player.Health == health && !Live(KarmaSfxId.GdHeavyHit), "Miss has no heavy damage cue");
+        game.Player.BeginGuard(1);
+        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(), 0, sourcePattern: EnemyAttack.GD02);
+        Check(game.Player.Health == health && Live(KarmaSfxId.CombatGuardBlock) && !Live(KarmaSfxId.GdHeavyHit), "Block has block feedback only");
+        Set(game.Player, "guardUntil", 0f);
+        game.Player.BeginCounter();
+        int parries = game.Player.ParryCount;
+        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(), 0, sourcePattern: EnemyAttack.GD02);
+        Check(game.Player.ParryCount == parries + 1 && !Live(KarmaSfxId.GdHeavyHit), "Parry has no heavy damage cue");
+        Set(game.Player, "invulnerableUntil", 0f);
+        var contact = new KarmaAttackContact();
+        enemy.TryAttackHit(point, point, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.GD02);
+        Check(game.Player.Health < health && Live(KarmaSfxId.GdHeavyHit), "Accepted damage plays v2");
+        KarmaAudio.StopBus(KarmaSfxBus.Gameplay);
+        enemy.TryAttackHit(point, point, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.GD02);
+        Check(!Live(KarmaSfxId.GdHeavyHit), "Consumed contact cannot play twice");
+
+        foreach (Essence kind in Enum.GetValues(typeof(Essence)))
+        {
+            // Final-stage SwordWave deliberately resists stun; use its earlier-stage contract.
+            await Prepare(kind, kind == Essence.SwordWave ? 2 : 3);
+            typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+            PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+            point = game.Player.GetComponent<Collider2D>().bounds.center;
+            game.Player.BeginCounter();
+            enemy.TryAttackHit(point, point, Vector2.one, 1,
+                new KarmaAttackContact(breaksShieldOnParry: true), 0);
+            await Until(() => enemy.Stunned, 2, kind + " real parry stun");
+            Check(Get(enemy, "stunCue") != null && Count(KarmaSfxId.CombatBossStagger) == 1,
+                kind + " stars and one stun sound");
+            if (kind == Essence.Guard || kind == Essence.RisingSlash)
+            {
+                await Until(() => Live(KarmaSfxId.CombatBossSpinningStars), 1, kind + " animated stars audio");
+                var stars = Source(KarmaSfxId.CombatBossSpinningStars);
+                Check(stars.loop && Count(KarmaSfxId.CombatBossSpinningStars) == 1, kind + " spins with one looping cue");
+                await CheckMixerSignal(stars, kind + " spinning stars");
+            }
+            else Check(!Live(KarmaSfxId.CombatBossSpinningStars), kind + " keeps its existing stun sound");
+            Call(enemy, "ShowStunCue"); Sample();
+            Check(Count(KarmaSfxId.CombatBossStagger) == 1, kind + " repeated visual request stays silent");
+            Check(Count(KarmaSfxId.CombatBossSpinningStars) <= 1, kind + " repeated visual request does not restart stars audio");
+            if (kind == Essence.Guard)
+            {
+                System.IO.Directory.CreateDirectory("output/validation");
+                ScreenCapture.CaptureScreenshot("output/validation/stun-stars.png");
+                await Wait(0.07f);
+                var stun = Source(KarmaSfxId.CombatBossStagger);
+                Call(enemy, "HideStunCue");
+                Check(stun != null && stun.isPlaying, "Initial stun impact is still live after stars are removed");
+                await Wait(0.12f);
+                Check(!Live(KarmaSfxId.CombatBossSpinningStars), "Star removal stops its loop without cutting off the initial stun cue");
+            }
+        }
+        await Prepare(Essence.SwordWave, 2);
+        typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+        PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+        point = game.Player.GetComponent<Collider2D>().bounds.center;
+        game.Player.BeginCounter();
+        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(), 0, sourcePattern: EnemyAttack.SW04);
+        await Until(() => enemy.Stunned, 2, "SW04 electrical parry stun");
+        Check(Get(enemy, "stunCue") == null && Count(KarmaSfxId.CombatBossStagger) == 1,
+            "Electrical feedback uses no stars sprite but plays one stun cue");
+        Call(enemy, "ShowStunCue"); Sample();
+        Check(Count(KarmaSfxId.CombatBossStagger) == 1, "Electrical stun also deduplicates without a sprite");
+        await CheckMixerSignal(Source(KarmaSfxId.CombatBossStagger), "SwordWave electrical stun");
+        await Prepare(Essence.SwordWave);
+        PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+        point = game.Player.GetComponent<Collider2D>().bounds.center;
+        game.Player.BeginCounter();
+        parries = game.Player.ParryCount;
+        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(breaksShieldOnParry: true), 0);
+        await Wait(.15f);
+        Check(game.Player.ParryCount == parries + 1 && !enemy.Stunned
+            && Count(KarmaSfxId.CombatBossStagger) == 0, "Final SwordWave parry resistance has no false stun cue");
+        game.ReturnToTitle();
+        var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
+        var menu = (KarmaSfxId)((int)KarmaSfxId.MenuMainTheme + library.DefaultMenuTrack);
+        await Until(() => Live(menu), 2, "default title track");
+        Check(Source(menu).loop, "Title track remains a loop");
+        await CheckMixerSignal(Source(menu), "Default title music");
+    }
+
+    static AudioSource Source(KarmaSfxId id)
+    {
+        var clip = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary").Clips[(int)id];
+        return Array.Find(Sources(), s => s.clip == clip);
+    }
+    static bool Live(KarmaSfxId id) => Source(id) != null && Source(id).isPlaying;
+
+    static async Task CheckSunday()
+    {
+        var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
+        Check(library != null && library.Clips.Length == (int)KarmaSfxId.Count, "Catalog matches registered IDs");
+        Check(library.Clips[(int)KarmaSfxId.CombatBossSpinningStars].name == "Boss_Spinning_Stars", "Animated stars loop registered");
+        Check(library.Clips.All(c => c != null), "All clips loaded in Unity");
+        Check(library.Clips[(int)KarmaSfxId.GdHeavyHit].name == "GD02_Heavy_Hit_v2", "Heavy impact v2 registered");
+        Check(library.Clips[(int)KarmaSfxId.CombatBossStagger].name == "Boss_Stun", "New stun registered at stable ID");
+
+        game.ReturnToTitle();
+        for (int i = 0; i < 4; i++)
+        {
+            KarmaAudio.ReviewMenuTrack(i); await Wait(.45f);
+            var id = (KarmaSfxId)((int)KarmaSfxId.MenuMainTheme + i);
+            Check(Live(id) && Source(id).loop, "Title candidate loops " + i);
+            Check(Sources().Count(s => s.isPlaying && s.loop) == 1, "One music source " + i);
+            Check(Mathf.Abs(Source(id).volume - .22f * KarmaPreferences.MusicVolume) < .002f, "Music preference " + i);
+            Source(id).time = Source(id).clip.length - .12f;
+            await Wait(.3f);
+            Check(Source(id).time < 1 && Source(id).isPlaying, "Candidate crosses loop boundary " + i);
+        }
+        KarmaAudio.EndMenuReview();
+        await Prepare(Essence.SwordWave); await Wait(.35f);
+        Check(Live(KarmaSfxId.AmbArenaLoop), "Gameplay retains existing bed");
+        Pattern(EnemyAttack.SW05); watchRain = true;
+        await Until(() => Count(KarmaSfxId.SwAscensionIgnition) == 1, 5, "SW05 ascent ignition");
+        Check(enemy.Position.y > KarmaSpace.GuardianGroundY, "Ignition accompanies actual ascent");
+        await Until(() => Live(KarmaSfxId.SwSummoningEnergy), 5, "SW05 channel loop");
+        game.TogglePause(); await Wait(.12f);
+        int sample = Source(KarmaSfxId.SwSummoningEnergy).timeSamples;
+        await Wait(.2f);
+        Check(Source(KarmaSfxId.SwSummoningEnergy).timeSamples == sample, "Channel playhead held while paused");
+        game.TogglePause(); await Wait(.15f);
+        Check(Source(KarmaSfxId.SwSummoningEnergy).timeSamples > sample, "Channel resumes without restart");
+        await Until(() => Count(KarmaSfxId.SwFinalExplosion) > 0, 35, "SW05 actual detonation");
+        Check(rainSeen.Count > 0 && rainSeen.All(b => b == null || b.Landed), "Detonation after all rain lands");
+        Check(Source(KarmaSfxId.SwFinalExplosion).volume >= 0.55f * KarmaPreferences.EffectsVolume,
+            "Final explosion has the raised gain");
+        await Until(() => !(bool)Get(enemy, "running"), 15, "SW05 completion");
+        watchRain = false;
+        Check(Count(KarmaSfxId.SwFinalExplosion) == 1 && Count(KarmaSfxId.SwAscensionIgnition) == 1, "One ignition and final explosion");
+        Check(Count(KarmaSfxId.SwSummoningEnergy) == 1, "No restart per volley");
+        Check(Count(KarmaSfxId.SwPerSwordThunder) > 0 && peakThunderVoices <= 3, "Individual rain feedback retains cap");
+        Check(!Live(KarmaSfxId.SwSummoningEnergy), "No channel after descent");
+        Clear(); Pattern(EnemyAttack.SW05);
+        await Until(() => Live(KarmaSfxId.SwSummoningEnergy), 6, "Second cast channel");
+        Call(enemy, "InterruptPattern"); await Wait(.1f);
+        Check(!Live(KarmaSfxId.SwSummoningEnergy), "Interruption cancels channel");
+
+        await Prepare(Essence.Guard);
+        Pattern(EnemyAttack.GD03);
+        await Until(() => Live(KarmaSfxId.GdShieldFlight), 5, "Shield flight");
+        var flight = Source(KarmaSfxId.GdShieldFlight);
+        Check(Count(KarmaSfxId.GdShieldLaunch) == 1 && flight.loop, "One launch, controlled flight loop");
+        await Until(() => flight.isPlaying && flight.volume >= 0.14f * KarmaPreferences.EffectsVolume,
+            1, "shield flight reaches raised gain after fade-in");
+        await CheckMixerSignal(flight, "Guard shield flight");
+        await Until(() => !(bool)Get(enemy, "running"), 15, "Shield normal return");
+        await Wait(.2f);
+        Check(Count(KarmaSfxId.GdShieldFlight) == 1 && !Live(KarmaSfxId.GdShieldFlight), "Return does not restart; catch stops");
+        Pattern(EnemyAttack.GD03);
+        await Until(() => Live(KarmaSfxId.GdShieldFlight), 5, "Second shield flight");
+        Call(enemy, "InterruptPattern"); await Wait(.1f);
+        Check(!Live(KarmaSfxId.GdShieldFlight), "Shield interruption cleanup");
+        await CheckReflection();
+        Check(!Live(KarmaSfxId.GdShieldFlight), "Reflected shield removed its loop");
+
+        await Prepare(Essence.Guard); Pattern(EnemyAttack.GD04);
+        await Until(() => !(bool)Get(enemy, "running"), 10, "Three ground eruptions");
+        Check(Count(KarmaSfxId.GdGroundRise) == 3 && Count(KarmaSfxId.GdHeavySlam) == 1, "Three individual rises and one original slam");
+        foreach (bool pass in new[] { true, false })
+        {
+            await Prepare(Essence.Guard); Pattern(EnemyAttack.GD05);
+            var dome = Get(Get(enemy, "behavior"), "Dome");
+            await Until(() => (bool)dome.GetType().GetProperty("Active").GetValue(dome), 8, "Dome trial active");
+            if (!pass)
+                for (int i = 0; i < 20; i++) Call(dome, "RecordHit");
+            var expected = pass ? KarmaSfxId.GdDomeSuccess : KarmaSfxId.GdDomeFailure;
+            await Until(() => Count(expected) == 1, 35, "Actual dome outcome " + pass);
+            await Wait(.6f);
+            Check(Count(pass ? KarmaSfxId.GdDomeFailure : KarmaSfxId.GdDomeSuccess) == 0, "Mutually exclusive dome audio");
+            Check(Count(expected) == 1, "Dome outcome once");
+        }
+        game.ReturnToTitle(); await Wait(.45f);
+        Check(!Live(KarmaSfxId.SwSummoningEnergy) && !Live(KarmaSfxId.GdShieldFlight), "Title removes combat loops");
+        await CheckLifecycle();
+    }
+}
+#endif

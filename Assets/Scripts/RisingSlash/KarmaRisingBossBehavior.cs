@@ -51,6 +51,7 @@ namespace KarmaPrototype
             public override void Interrupt(bool preservePressure)
             {
                 base.Interrupt(preservePressure);
+                owner.animator.ClearRisingAttackFrames();
                 ClearBarrier();
                 ClearFragments();
                 motionContact = null;
@@ -93,7 +94,7 @@ namespace KarmaPrototype
             }
             public override void Initialize()
             {
-                owner.animator.ConfigureRisingPresentation();
+                owner.animator.ConfigureRisingPresentation(KarmaArtwork.GuardianFormName(owner.game.Player.Essences.PersonalizationOrder));
                 // The rising boss uses its golden sphere instead of the shared white halo.
                 owner.shieldHalo.gameObject.SetActive(false);
                 owner.gameObject.AddComponent<KarmaRisingStunStars>().Initialize(owner.game,
@@ -212,7 +213,6 @@ namespace KarmaPrototype
             {
                 if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position);
             }
-            public override void OnParried() { KarmaRisingAudio.Stagger(); }
             public override float ParryStunSeconds { get { return Settings.fragmentParryStunSeconds; } }
             public override bool TickMovement(float dt, float dx)
             {

@@ -275,7 +275,6 @@ namespace KarmaPrototype
                 KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
                 KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
             }
-            public override void OnParried() { KarmaAudio.Play(KarmaSfxId.CombatBossStagger); }
             public override Color ShieldColor { get { return owner.fullShield ? Color.white
                 : counter.Guarding ? new Color(0.42f, 0.68f, 1) : base.ShieldColor; } }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
@@ -389,6 +388,9 @@ namespace KarmaPrototype
                 KarmaAudio.StopSlot("sw-pattern");
                 KarmaAudio.StopSlot("sw-rain");
                 KarmaAudio.StopSlot("sw-rain-impact");
+                KarmaAudio.StopSlot("sw-summon");
+                KarmaAudio.StopSlot("sw-ascension");
+                KarmaAudio.StopSlot("sw-detonation");
                 skillAfterRetreat = false;
                 if (persistentRoot == null) return;
                 foreach (Transform child in persistentRoot)

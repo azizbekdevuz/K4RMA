@@ -13,7 +13,6 @@ namespace KarmaPrototype
         public static void Crossing() { KarmaAudio.Play(KarmaSfxId.RsUp05Crossing); }
         public static void Slash(int index) { KarmaAudio.Play(index == 0 ? KarmaSfxId.RsSlash01 : KarmaSfxId.RsSlash02); }
         public static void Knockback() { KarmaAudio.Play(KarmaSfxId.RsUp04Knockback); }
-        public static void Stagger() { KarmaAudio.Play(KarmaSfxId.CombatBossStagger); }
 
         public static void Landing()
         {

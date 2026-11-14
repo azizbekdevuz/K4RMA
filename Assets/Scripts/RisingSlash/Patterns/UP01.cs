@@ -29,14 +29,21 @@ namespace KarmaPrototype
                 if (zone != null) Destroy(zone.gameObject);
                 var contact = new KarmaAttackContact();
                 float fallTime = Mathf.Clamp(Mathf.Abs(start.y - landing.y) / KarmaSpace.Units(8f), 0.38f, 0.62f);
-                if (owner.Active && start.y > landing.y) KarmaRisingAudio.Descent(fallTime);
+                if (owner.Active && start.y > landing.y)
+                {
+                    owner.animator.StartRisingDescent(fallTime);
+                    KarmaRisingAudio.Descent(fallTime);
+                }
                 yield return owner.Motion(landing, fallTime, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
                 // The shards burst from the impact point when the downward strike lands.
                 rising.ClearBarrier();
                 if (empowered && owner.Active) new UP04Pattern(owner).Burst(landing);
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 if (owner.Active && start.y > landing.y && Mathf.Approximately(owner.Position.y, landing.y))
+                {
+                    owner.animator.LandRisingDescent();
                     KarmaRisingAudio.Landing();
+                }
                 var blast = owner.Attack(impact, Vector2.zero, area, 0.18f, Settings.landingDamageMultiplier,
                     contact, 0f, visualPose: "GroundRing");
                 if (blast != null) blast.Repaint(KarmaRisingArt.Get("Impact"), true);

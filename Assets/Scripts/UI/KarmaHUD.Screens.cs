@@ -41,8 +41,9 @@ namespace KarmaPrototype
             GUI.enabled = true;
             if (GUI.Button(new Rect(490, 625, 300, 40), "선택 취소 [Esc]", menuButton)) game.CancelChoice();
         }
-        void PauseScreen()
+        void DrawPauseOverlay()
         {
+            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
             Label(280, 245, 720, 55, "일시정지", title);
             SpriteArt(new Rect(460, 315, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
             if (GUI.Button(new Rect(440, 350, 400, 55), "계속하기 [Esc]", menuButton)) game.TogglePause();

@@ -6,18 +6,14 @@ namespace KarmaPrototype
     {
         public const float EndingDuration = EndingDepartAt + 5.5f;
         internal const float EndingApproachAt = 5.4f, EndingKneelAt = 10f, EndingMasterAt = 10.6f;
-        internal const float EndingStandAt = 20.5f, EndingCounterAt = 21.45f, EndingAirSlashAt = 22.53f, EndingPierceAt = 23.62f;
+        internal const float EndingStandAt = 20.5f, EndingPierceAt = 21.45f, EndingAirSlashAt = 22.53f, EndingCounterAt = 23.62f;
         internal const float EndingAirJumpAt = EndingAirSlashAt - 0.20f, EndingAirLandAt = EndingAirSlashAt + 0.72f;
         internal const float EndingPierceReleaseAt = EndingPierceAt + EndingRelease;
-        internal const float EndingUnionAt = 25.55f;
+        internal const float EndingGatherAt = 24.28f, EndingAbsorbAt = 25.62f;
         internal const float EndingSaluteAt = EndingFarewellAt + 0.1f;
-        internal const float EndingDepartAt = EndingFarewellAt + 3.72f, EndingTurnAt = EndingDepartAt - 0.25f;
-        internal const float EndingTurnToMasterAt = EndingUnionAt + 1.25f;
+        internal const float EndingDepartAt = EndingFarewellAt + 3.72f;
+        internal const float EndingTurnToMasterAt = 26.74f;
         internal const float EndingMasterCloseAt = 12f, EndingMasterCloseEnd = 20.48f;
-        internal const float EndingDrawShotAt = 24.15f;
-        internal const float EndingDrawAt = EndingUnionAt - 0.79f;
-        internal const float EndingSheatheAt = EndingUnionAt + 0.61f;
-        internal const float EndingSheatheDuration = 0.49f;
         internal const float EndingMasterReplyAt = 27.1f, EndingApprenticeReplyAt = 31.02f;
         internal const float EndingFarewellAt = 36.91f;
         internal const float EndingMasterX = KarmaStage.ArenaCenter - 5.2f;
@@ -31,9 +27,9 @@ namespace KarmaPrototype
         public float EndingMemoryDim => Phase == RunPhase.Ending
             ? 0.22f * EndingEase(EndingMasterAt, 12, EndingTime) * (1 - EndingEase(EndingMasterCloseEnd - 0.8f, EndingStandAt, EndingTime)) : 0;
 
-        public float EndingImpactLight => Phase == RunPhase.Ending
-            ? EndingEase(EndingUnionAt, EndingUnionAt + 0.08f, EndingTime)
-                * (1 - EndingEase(EndingUnionAt + 0.10f, EndingUnionAt + 0.72f, EndingTime))
+        internal float EndingAbsorbLight => Phase == RunPhase.Ending
+            ? EndingEase(EndingAbsorbAt - 0.12f, EndingAbsorbAt + 0.11f, EndingTime)
+                * (1 - EndingEase(EndingAbsorbAt + 0.17f, EndingAbsorbAt + 0.85f, EndingTime))
             : 0;
 
         readonly struct EndingCaption
@@ -50,9 +46,9 @@ namespace KarmaPrototype
             new EndingCaption(10.84f, 14.85f, "스승", "내게 배운 세 기술의 원형은 이제 네 손에 없구나."),
             new EndingCaption(14.91f, 18.35f, "스승", "그래도 그 가르침은 네 검에 남아 있다."),
             new EndingCaption(18.45f, 20.84f, "스승", "어떻게 네 것이 되었는지 보여 다오."),
-            new EndingCaption(EndingCounterAt - 0.18f, EndingAirJumpAt - 0.04f, "고유화", KarmaPatternCatalog.UniqueName(Essence.Guard)),
-            new EndingCaption(EndingAirJumpAt, EndingPierceAt - 0.12f, "고유화", KarmaPatternCatalog.UniqueName(Essence.RisingSlash)),
-            new EndingCaption(EndingPierceAt - 0.08f, EndingDrawShotAt, "고유화", KarmaPatternCatalog.UniqueName(Essence.SwordWave)),
+            new EndingCaption(EndingPierceAt - 0.08f, EndingAirJumpAt - 0.04f, "고유화", KarmaPatternCatalog.UniqueName(Essence.SwordWave)),
+            new EndingCaption(EndingAirJumpAt, EndingCounterAt - 0.18f, "고유화", KarmaPatternCatalog.UniqueName(Essence.RisingSlash)),
+            new EndingCaption(EndingCounterAt - 0.18f, EndingGatherAt, "고유화", KarmaPatternCatalog.UniqueName(Essence.Guard)),
             new EndingCaption(EndingMasterReplyAt, 30.95f, "스승", "이제 그 기술들은 누구의 것이냐?"),
             new EndingCaption(EndingApprenticeReplyAt, 34.15f, "제자", "스승님께 배웠습니다."),
             new EndingCaption(34.25f, 36.80f, "제자", "하지만 이제는 제 방식으로 쓸 수 있습니다."),
@@ -86,10 +82,10 @@ namespace KarmaPrototype
         int endingSoundStage;
         bool endingSkipping;
         float endingSkipTime, endingSkipStartFade, endingAmbienceLevel = 1;
-        static readonly KarmaSfxId[] endingCues = { KarmaSfxId.CombatPerfectParry, KarmaSfxId.PlSwordSwing,
-            KarmaSfxId.PlDash, KarmaSfxId.GameAbilityInherit };
-        static readonly float[] endingCueTimes = { EndingCounterAt + EndingRelease, EndingAirSlashAt + EndingRelease,
-            EndingPierceReleaseAt, EndingUnionAt };
+        static readonly KarmaSfxId[] endingCues = { KarmaSfxId.PlDash, KarmaSfxId.PlSwordSwing,
+            KarmaSfxId.CombatPerfectParry, KarmaSfxId.GameAbilityInherit };
+        static readonly float[] endingCueTimes = { EndingPierceReleaseAt, EndingAirSlashAt + EndingRelease,
+            EndingCounterAt + EndingRelease, EndingAbsorbAt };
 
         internal static float EndingEase(float start, float end, float time)
             => Mathf.SmoothStep(0, 1, Mathf.InverseLerp(start, end, time));
@@ -110,7 +106,7 @@ namespace KarmaPrototype
             var background = World.Find("Trial hall artwork") ?? World.Find("Mountain dojo artwork");
             endingBackground = background != null ? background.GetComponent<SpriteRenderer>().bounds
                 : new Bounds(new Vector3(20, 8, 0), new Vector3(140, 56, 1));
-            endingPresentation = KarmaEndingPresentation.Create(this, World, fallenGuardian, fallenGuardianPosition);
+            endingPresentation = KarmaEndingPresentation.Create(this, World, fallenGuardian, fallenGuardianPosition, defeatedGuardianSprites);
             KarmaAudio.StopBus(KarmaSfxBus.Gameplay);
             KarmaAudio.StopBus(KarmaSfxBus.Stinger);
             KarmaAudio.Play(KarmaSfxId.CombatBossDefeat, lifetimeOwner: endingPresentation);
@@ -135,7 +131,7 @@ namespace KarmaPrototype
                 Player.EndingWalkTo(KarmaStage.ArenaCenter, Mathf.Clamp(distance / Mathf.Max(0.18f, 9.55f - t), 2.4f, 11f));
             }
             else if (t >= EndingDepartAt)
-                Player.EndingWalkTo(KarmaStage.Gate.x + 2, 4.8f);
+                Player.EndingWalkTo(KarmaStage.ArenaRight - 2, 4.8f);
             else
                 Player.EndingWalkTo(Player.Position.x, 0);
 
@@ -144,11 +140,10 @@ namespace KarmaPrototype
             endingAmbienceLevel = t < EndingMasterAt
                 ? 1 - EndingEase(0.7f, 5.8f, t)
                 : EndingEase(EndingMasterAt + 0.3f, 14.5f, t)
-                    * Mathf.Lerp(0.58f, 0.88f, EndingEase(16.4f, EndingUnionAt + 1f, t));
-            // Leave a short pocket for the draw before the release cue and wide shot.
-            float drawHush = EndingEase(EndingDrawShotAt, EndingDrawAt, t)
-                * (1 - EndingEase(EndingUnionAt, EndingUnionAt + 0.66f, t));
-            KarmaAudio.SetEndingAmbience(endingAmbienceLevel * (1 - EndingFade) * (1 - 0.24f * drawHush));
+                    * Mathf.Lerp(0.58f, 0.88f, EndingEase(16.4f, EndingAbsorbAt + 1f, t));
+            float gatherHush = EndingEase(EndingGatherAt, EndingAbsorbAt - 0.45f, t)
+                * (1 - EndingEase(EndingAbsorbAt, EndingAbsorbAt + 0.66f, t));
+            KarmaAudio.SetEndingAmbience(endingAmbienceLevel * (1 - EndingFade) * (1 - 0.24f * gatherHush));
 
             if (previous < EndingPierceReleaseAt && t >= EndingPierceReleaseAt) Player.EndingPierce();
 
@@ -186,30 +181,28 @@ namespace KarmaPrototype
             float size;
             if (t < EndingApproachAt)
             {
-                float bothActors = Mathf.Max(8.8f, Mathf.Abs(playerX - fallenGuardianPosition.x) / (2 * GameCamera.aspect) + 3);
-                float settle = EndingEase(0, 3.5f, t);
-                var fallenFocus = new Vector3(Mathf.Lerp(playerX, fallenGuardianPosition.x, 0.5f), 3.8f, -10);
+                Vector2 shotLimits = endingPresentation.FallenShotLimits(playerX);
+                float lineupSize = Mathf.Max(5.7f, (shotLimits.y - shotLimits.x) / (2 * GameCamera.aspect));
+                float settle = EndingEase(0, 1.15f, t);
+                var fallenFocus = new Vector3((shotLimits.x + shotLimits.y) * 0.5f, 3.5f, -10);
                 focus = Vector3.Lerp(endingCameraStart, fallenFocus, settle);
-                size = Mathf.Lerp(endingCameraSize, bothActors, settle);
+                size = Mathf.Lerp(endingCameraSize, lineupSize, settle);
             }
             else
             {
                 float lesson = EndingEase(8.5f, 11.4f, t);
-                float demonstration = EndingEase(EndingStandAt, EndingCounterAt, t)
-                    * (1 - EndingEase(EndingUnionAt + 0.8f, EndingUnionAt + 1.55f, t));
+                float demonstration = EndingEase(EndingStandAt, EndingPierceAt, t)
+                    * (1 - EndingEase(EndingAbsorbAt + 0.66f, EndingMasterReplyAt, t));
                 float departure = EndingEase(EndingDepartAt, EndingDuration - 0.4f, t);
-                float follow = EndingEase(EndingUnionAt, EndingUnionAt + 0.66f, t)
-                    * (1 - EndingEase(EndingUnionAt + 0.86f, EndingMasterReplyAt, t));
                 float conversationX = Mathf.Lerp(playerX, (playerX + EndingMasterX) * 0.5f, lesson);
-                float focusX = Mathf.Lerp(conversationX, playerX + 3.15f + follow * 3.45f, demonstration);
-                focusX = Mathf.Lerp(focusX, KarmaStage.Gate.x + 2, departure);
+                float focusX = Mathf.Lerp(conversationX, playerX + 0.85f, demonstration);
+                focusX = Mathf.Lerp(focusX, playerX + 3f, departure);
                 focus = new Vector3(focusX, Mathf.Lerp(3.55f + demonstration * 0.55f, 7.1f, departure), -10);
-                size = Mathf.Lerp(Mathf.Lerp(8.1f, 4.9f, lesson), 6.65f + follow * 1.25f, demonstration);
+                size = Mathf.Lerp(Mathf.Lerp(8.1f, 4.9f, lesson), 5.75f, demonstration);
                 size = Mathf.Lerp(size, Mathf.Max(endingCameraSize, 13.6f), departure);
             }
 
-            // Cut on the teacher's gesture, the draw, and the exchange after the strike.
-            // These shots share the same screen direction and the same world-space actors.
+            // Keep the same screen direction through the teacher's close-up and the apprentice's reply.
             int shot = 0;
             if (t >= EndingMasterCloseAt && t < EndingMasterCloseEnd
                 || t >= EndingMasterReplyAt && t < EndingApprenticeReplyAt)
@@ -220,16 +213,14 @@ namespace KarmaPrototype
                 focus = new Vector3(EndingMasterX + 1.05f, Mathf.Lerp(2.95f, 3.2f, push), -10);
                 size = Mathf.Lerp(3.05f, 2.63f, push);
             }
-            else if (t >= EndingMasterCloseEnd && t < EndingDrawShotAt) shot = 2;
-            else if (t >= EndingDrawShotAt && t < EndingUnionAt)
+            else if (t >= EndingMasterCloseEnd && t < EndingMasterReplyAt)
             {
-                shot = 3;
-                float draw = EndingEase(EndingDrawShotAt, EndingUnionAt - 0.13f, t);
-                focus = new Vector3(playerX + Mathf.Lerp(0.7f, 1.8f, draw), Mathf.Lerp(2.48f, 2.8f, draw), -10);
-                // The medium shot keeps the full stance in frame and limits sprite enlargement.
-                size = Mathf.Lerp(5.05f, 4.45f, draw);
+                shot = 2;
+                float gather = EndingEase(EndingGatherAt, EndingAbsorbAt, t)
+                    * (1 - EndingEase(EndingAbsorbAt + 0.4f, EndingMasterReplyAt, t));
+                focus = Vector3.Lerp(focus, new Vector3(playerX, 3.2f, -10), gather);
+                size = Mathf.Lerp(size, 4.75f, gather);
             }
-            else if (t >= EndingUnionAt && t < EndingMasterReplyAt) shot = 4;
             else if (t >= EndingApprenticeReplyAt && t < EndingFarewellAt)
             {
                 shot = 6;
@@ -244,7 +235,7 @@ namespace KarmaPrototype
             float width = size * aspect;
             focus.x = Mathf.Clamp(focus.x, endingBackground.min.x + width, endingBackground.max.x - width);
             focus.y = Mathf.Clamp(focus.y, endingBackground.min.y + size, endingBackground.max.y - size);
-            float blend = shot != endingShot ? 1 : 1 - Mathf.Exp(-5f * Time.deltaTime);
+            float blend = shot != endingShot || t < EndingApproachAt ? 1 : 1 - Mathf.Exp(-5f * Time.deltaTime);
             endingShot = shot;
             GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize, size, blend);
             GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position, focus, blend);

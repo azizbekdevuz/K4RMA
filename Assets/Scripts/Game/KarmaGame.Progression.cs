@@ -10,6 +10,7 @@ namespace KarmaPrototype
         bool playerFallSettled;
         bool guardianInheriting;
         Transform fallenGuardian;
+        readonly Sprite[] defeatedGuardianSprites = new Sprite[3];
         Vector3 fallenGuardianPosition;
         Vector3 fallenGuardianScale;
         bool ceremonySpacingStarted, ceremonySpacingFinished;
@@ -21,6 +22,7 @@ namespace KarmaPrototype
             KarmaAudio.Play(KarmaSfxId.UiConfirm);
             guardianInheriting = false;
             fallenGuardian = null;
+            System.Array.Clear(defeatedGuardianSprites, 0, defeatedGuardianSprites.Length);
             ResetHitFeedback();
             Paused = false; Time.timeScale = 1;
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
@@ -64,6 +66,8 @@ namespace KarmaPrototype
             fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
             guardianInheriting = false;
             if (StageIndex == 3) { BeginEnding(); return; }
+            var defeatedPicture = fallenArt != null ? fallenArt.GetComponentInChildren<SpriteRenderer>() : null;
+            defeatedGuardianSprites[StageIndex] = defeatedPicture != null ? defeatedPicture.sprite : null;
             Phase = RunPhase.GuardianFallen;
             ceremonySpacingStarted = ceremonySpacingFinished = false;
             transitionLeft = GuardianFallDuration;

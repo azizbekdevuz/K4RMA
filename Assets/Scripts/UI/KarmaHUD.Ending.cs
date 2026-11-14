@@ -27,7 +27,7 @@ namespace KarmaPrototype
                 if (GUI.Button(new Rect(410, 580, 460, 40), "다시 수련하기 [R]", menuButton)) game.RestartSession();
                 if (GUI.Button(new Rect(410, 630, 460, 40), "타이틀 [T]", menuButton)) game.ReturnToTitle();
             }
-            else if (game.Paused) PauseScreen();
+            else if (game.Paused) DrawPauseOverlay();
         }
     }
 }

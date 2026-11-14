@@ -74,10 +74,10 @@ namespace KarmaPrototype
             else
             {
                 if (game.Tutorial != null) TutorialScreen(); else TopBar();
-                if (game.Paused || game.Phase == RunPhase.Choosing
-                    || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory)
+                if (!game.Paused && (game.Phase == RunPhase.Choosing
+                    || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory))
                     FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
-                if (game.Paused) PauseScreen();
+                if (game.Paused) DrawPauseOverlay();
                 else switch (game.Phase)
                 {
                     case RunPhase.Choosing: ChoiceScreen(); break;

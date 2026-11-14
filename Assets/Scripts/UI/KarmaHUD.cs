@@ -105,6 +105,7 @@ namespace KarmaPrototype
         void OnDestroy()
         {
             if (runtimeFont != null) Destroy(runtimeFont);
+            if (tutorialRouteArrow != null) Destroy(tutorialRouteArrow);
         }
 
         static void Art(Rect bounds, string name, Rect? source = null)

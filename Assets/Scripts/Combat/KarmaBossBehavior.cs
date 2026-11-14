@@ -90,7 +90,6 @@ namespace KarmaPrototype
             public virtual void DamageFeedback(Vector2 point)
             {
                 owner.animator.Hurt();
-                KarmaVisuals.Flash(owner.game.World, owner.Position, Vector2.one * KarmaSpace.Units(0.7f), Color.white, 0.1f);
             }
             public virtual bool CustomHitVisual(EnemyAttack pattern) { return false; }
             // Opt in per contact; the damage-inclusive player API still decides

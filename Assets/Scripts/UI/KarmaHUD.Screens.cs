@@ -15,6 +15,8 @@ namespace KarmaPrototype
         void ChoiceScreen()
         {
             Label(280, 265, 720, 45, "시련 완료 · 고유화", title);
+            if (game.StageIndex == 0)
+                Label(210, 217, 860, 40, "첫 고유화 선택에 따라 다음 수호자의 유형이 달라집니다.", centered);
             int count = 0;
             for (int i = 0; i < 3; i++) if (game.Player.Essences.HasActive((Essence)i)) count++;
             int slot = 0;
@@ -33,7 +35,9 @@ namespace KarmaPrototype
             if (game.PendingChoice.HasValue)
             {
                 var e = game.PendingChoice.Value;
-                Label(280, 520, 720, 35, names[(int)e] + " → " + KarmaPatternCatalog.UniqueName(e), centered);
+                string preview = names[(int)e] + " → " + KarmaPatternCatalog.UniqueName(e);
+                if (game.StageIndex == 0) preview += "   ·   다음 상대  " + names[(int)e] + "형 수호자";
+                Label(280, 520, 720, 35, preview, centered);
             }
             else Label(280, 520, 720, 35, "다음 시련에 남길 원형을 선택하세요.", centered);
             GUI.enabled = game.PendingChoice.HasValue;
@@ -54,17 +58,47 @@ namespace KarmaPrototype
         void StageTransitionScreen()
         {
             if (DrawBossEntrance()) return;
+            if (!game.GuardianInheriting)
+            {
+                PersonalizationGuide(game.LastPersonalizedEssence);
+                return;
+            }
+
             // A low caption keeps the actual actors and their transformation visible.
             Fill(new Rect(280, 578, 720, 112), new Color(0.015f, 0.025f, 0.07f, 0.72f));
             SpriteArt(new Rect(460, 578, 360, 12), KarmaArtwork.Sprite("UI", "LongRule"));
-            string caption = game.GuardianInheriting
-                ? "원형 계승 · " + (game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자")
-                : "고유화 · " + names[(int)game.LastPersonalizedEssence] + " → " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence);
-            Label(300, 594, 680, 35, caption, centered);
-            Label(300, 638, 680, 28, game.GuardianInheriting
-                ? "내려놓은 원형의 힘이 다음 수호자에게 이어집니다."
-                : "배운 원형이 제자의 동작으로 깨어납니다.", centered);
+            string guardian = game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자";
+            Label(300, 594, 680, 35, "원형 계승 · " + guardian, centered);
+            Label(300, 638, 680, 28, "내려놓은 원형의 힘이 다음 수호자에게 이어집니다.", centered);
         }
+        void PersonalizationGuide(Essence essence)
+        {
+            string input, effect, difference;
+            switch (essence)
+            {
+                case Essence.SwordWave:
+                    input = "방향을 잡고 [" + KarmaInput.BindingLabel(KarmaAction.Pierce) + "]";
+                    effect = "적을 꿰뚫으며 돌진";
+                    difference = "원형 검기의 원거리 발사가 이동 공격으로 바뀝니다.";
+                    break;
+                case Essence.RisingSlash:
+                    input = "공중에서 방향 + [" + KarmaInput.BindingLabel(KarmaAction.Attack) + "]";
+                    effect = "한 번 더 도약하며 베기";
+                    difference = "지상에서 올려 베던 원형이 공중 방향 전환 공격으로 바뀝니다.";
+                    break;
+                default:
+                    input = "공격이 닿기 직전에 [" + KarmaInput.BindingLabel(KarmaAction.Counter) + "]";
+                    effect = "막고 즉시 반격";
+                    difference = "원형 방어의 보호막 대신, 타이밍을 맞춰 반격 피해를 줍니다.";
+                    break;
+            }
+            Fill(new Rect(210, 558, 860, 126), new Color(0.015f, 0.025f, 0.07f, 0.88f));
+            SpriteArt(new Rect(236, 588, 62, 62), KarmaArtwork.SkillIcon(essence), HudIvory);
+            Label(320, 564, 720, 35, "고유화 완료 · " + KarmaPatternCatalog.UniqueName(essence), heading);
+            Label(320, 605, 720, 30, input + "  ·  " + effect, text);
+            Label(320, 641, 720, 25, difference, small);
+        }
+
         void EndScreen(bool victory)
         {
             if (victory)

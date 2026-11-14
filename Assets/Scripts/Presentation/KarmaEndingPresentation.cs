@@ -21,6 +21,7 @@ namespace KarmaPrototype
         readonly SpriteRenderer[] fallenLineup = new SpriteRenderer[3];
         readonly Vector3[] symbolSizes = new Vector3[3];
         const float EmblemRadius = 3.2f;
+        const float FallenGuardianSize = 5.3f;
         const float GuardianEchoStart = 0.75f, GuardianEchoBeat = 1.15f;
         const float FinalGuardianEcho = GuardianEchoStart + 3 * GuardianEchoBeat;
         readonly SpriteRenderer[] mist = new SpriteRenderer[2];
@@ -45,8 +46,6 @@ namespace KarmaPrototype
         static readonly Color OathLight = new Color(1f, 0.85f, 0.57f);
         MaterialPropertyBlock dissolveBlock;
         bool seeded, guardianFinished;
-
-        const float FallenSpacing = 6.5f, FinalGuardianGap = 9f;
 
         internal Vector2 FallenShotLimits(float playerX)
         {
@@ -78,6 +77,15 @@ namespace KarmaPrototype
                 fallen.position = origin;
                 ending.fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
                 ending.fallenPictures = fallen.GetComponentsInChildren<SpriteRenderer>();
+                // Fit the ending artwork using the defeated pose before the hit reaction replaces it.
+                float defeatedSize = 0f;
+                foreach (var picture in ending.fallenPictures)
+                {
+                    if (!picture.enabled || picture.sprite == null) continue;
+                    var size = picture.bounds.size;
+                    defeatedSize = Mathf.Max(defeatedSize, size.x, size.y);
+                }
+                if (defeatedSize > 0f) fallen.localScale *= FallenGuardianSize / defeatedSize;
                 ending.fallenAnimator?.PresentEndingDefeat(0);
                 var material = Resources.Load<Material>("Shared/Rendering/KarmaEndingDissolve");
                 if (material != null) foreach (var picture in ending.fallenPictures) picture.sharedMaterial = material;
@@ -116,11 +124,10 @@ namespace KarmaPrototype
                 Sprite sprite = defeated[i] ?? (previous.Count < 2
                     ? KarmaArtwork.Sprite(form, "Death")
                     : FindSprite(KarmaArtwork.InheritedPoses(form), "Death")) ?? KarmaArtwork.GuardianPreview(previous);
-                var image = ending.Layer("Fallen guardian " + (i + 1), sprite, 5.3f, 4);
-                float x = origin.x;
+                var image = ending.Layer("Fallen guardian " + (i + 1), sprite, FallenGuardianSize, 4);
                 image.flipX = direction < 0;
                 if (sprite != null)
-                    image.transform.localPosition = new Vector3(x - direction * sprite.bounds.center.x * image.transform.localScale.x,
+                    image.transform.localPosition = new Vector3(origin.x - direction * sprite.bounds.center.x * image.transform.localScale.x,
                         0.12f - sprite.bounds.min.y * image.transform.localScale.y, 0);
                 ending.fallenLineup[i] = image;
                 if (i < acquired.Count) previous.Add(acquired[i]);

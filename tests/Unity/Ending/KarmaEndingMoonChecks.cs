@@ -429,10 +429,13 @@ public static class KarmaEndingMoonChecks
             echoes[i] = presentation.Find("Fallen guardian " + (i + 1)).GetComponent<SpriteRenderer>();
         var final = (Transform)Get(game, "fallenGuardian");
         var finalPicture = final.GetComponentInChildren<SpriteRenderer>();
+        const float originalEchoSize = 5.3f;
         for (int i = 0; i < echoes.Length; i++)
         {
-            await CaptureEnding(1.1f + 0.98f * i, "01-guardian-echo-" + (i + 1));
+            await CaptureEnding(1.1f + 1.15f * i, "01-guardian-echo-" + (i + 1));
             var guardian = echoes[i];
+            Check(Mathf.Abs(Mathf.Max(guardian.bounds.size.x, guardian.bounds.size.y) - originalEchoSize) < 0.05f,
+                "The guardian echo retains its original small size: " + i);
             var viewport = game.GameCamera.WorldToViewportPoint(guardian.bounds.center);
             Check(guardian.sprite != null && guardian.enabled && guardian.color.a > 0.9f
                 && viewport.x > 0.08f && viewport.x < 0.92f, "Current guardian echo is visible: " + i);
@@ -440,7 +443,9 @@ public static class KarmaEndingMoonChecks
                 if (other != i) Check(!echoes[other].enabled, "Earlier guardian echoes have separate beats");
             Check(!finalPicture.enabled, "The final guardian does not overlap an earlier echo");
         }
-        await CaptureEnding(4.05f, "01-guardian-echo-4");
+        await CaptureEnding(4.56f, "01-guardian-echo-4");
+        float finalSize = Mathf.Max(finalPicture.bounds.size.x, finalPicture.bounds.size.y);
+        Check(Mathf.Abs(finalSize - originalEchoSize) < 0.05f, "The final guardian matches the smaller echoes");
         Check(final.gameObject.activeInHierarchy && finalPicture.enabled && finalPicture.color.a > 0.9f
             && Array.TrueForAll(echoes, echo => !echo.enabled)
             && game.GameCamera.WorldToViewportPoint(finalPicture.bounds.min).x >= 0

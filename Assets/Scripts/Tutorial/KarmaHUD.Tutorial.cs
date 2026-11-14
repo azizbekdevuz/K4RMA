@@ -77,10 +77,10 @@ namespace KarmaPrototype
 
             var player = game.Player.Position;
             bool pointsLeft = destination < player.x;
-            float wave = Mathf.Sin(Time.time * 4f);
-            float nudge = wave * (pointsLeft ? -3f : 3f);
+            float wave = Mathf.Sin(Time.time * 5f);
+            float nudge = wave * (pointsLeft ? -4f : 4f);
             var anchor = game.GameCamera.WorldToViewportPoint(player + Vector2.up * (KarmaSpace.PlayerHalfHeight + 0.8f));
-            const float width = 72, height = 31.5f;
+            const float width = 76, height = 33.25f;
             var rect = new Rect(Mathf.Clamp(anchor.x * 1280 + nudge - width * 0.5f, 8, 1272 - width),
                 Mathf.Clamp((1 - anchor.y) * 720 - height - 3 * wave, 10, 590 - height), width, height);
             var uv = pointsLeft ? new Rect(1, 0, -1, 1) : new Rect(0, 0, 1, 1);
@@ -90,27 +90,26 @@ namespace KarmaPrototype
         static Texture2D CreateTutorialRouteArrow()
         {
             const int width = 128, height = 56;
-            // A dark ink outline keeps the aged brass legible against the lantern-lit courtyard.
+            // A single beveled silhouette in the HUD's gold and ink palette.
             Vector2[] outline = {
-                new(9, 21), new(25, 19), new(75, 19), new(72, 8), new(120, 28),
-                new(72, 48), new(75, 37), new(25, 37), new(9, 35), new(17, 28)
+                new(10, 22), new(20, 18), new(76, 18), new(76, 7), new(119, 29),
+                new(76, 50), new(76, 39), new(20, 39), new(10, 35)
             };
-            Color ink = new Color32(33, 26, 17, 255);
-            Color brassShadow = new Color32(100, 72, 27, 255);
-            Color brassFace = new Color32(162, 123, 48, 255);
-            Color bronze = new Color32(146, 105, 36, 255);
-            Color goldEdge = new Color32(211, 171, 81, 255);
+            Color ink = new Color32(37, 26, 22, 255);
+            Color bronze = new Color32(177, 115, 53, 255);
+            Color gold = new Color32(244, 196, 103, 255);
+            Color ivory = new Color32(255, 231, 165, 255);
             var pixels = new Color32[width * height];
             for (int y = 0; y < height; y++)
             {
                 float bevel = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(12, 45, y));
-                Color face = Color.Lerp(brassShadow, brassFace, bevel);
+                Color face = Color.Lerp(bronze, gold, bevel);
                 for (int x = 0; x < width; x++)
                 {
                     var point = new Vector2(x + 0.5f, y + 0.5f);
                     float distance = ArrowOutlineDistance(point, outline);
-                    Color color = Color.Lerp(ink, Color.Lerp(bronze, goldEdge, bevel), Mathf.Clamp01(distance - 1.5f));
-                    color = Color.Lerp(color, face, Mathf.Clamp01(distance - 4f));
+                    Color color = Color.Lerp(ink, Color.Lerp(gold, ivory, bevel), Mathf.Clamp01(distance - 1));
+                    color = Color.Lerp(color, face, Mathf.Clamp01(distance - 3.3f));
                     color.a = Mathf.Clamp01(distance + 1.5f);
                     pixels[y * width + x] = color;
                 }

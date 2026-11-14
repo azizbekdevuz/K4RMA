@@ -132,7 +132,8 @@ namespace KarmaPrototype
             shortcutButton ??= new GUIStyle(menuButton)
             {
                 clipping = TextClipping.Clip,
-                padding = new RectOffset(12, shortcutColumn, 0, 0)
+                // Reserve equal side gutters so the text stays centered and clears the keycap.
+                padding = new RectOffset(shortcutColumn, shortcutColumn, 0, 0)
             };
             bool clicked = GUI.Button(bounds, label, shortcutButton);
             if (Event.current.type == EventType.Repaint)

@@ -18,12 +18,9 @@ namespace KarmaPrototype
         static readonly Color MasterWarmLight = new Color(1f, 0.94f, 0.78f);
         static readonly string[] masterPoseNames = { "MasterLift", "MasterTeach" };
         static readonly float[] masterFootPixels = { 16, 9 };
-        readonly SpriteRenderer[] fallenLineup = new SpriteRenderer[3];
+        readonly SpriteRenderer[] memories = new SpriteRenderer[KarmaGame.EndingMemoryCount];
         readonly Vector3[] symbolSizes = new Vector3[3];
         const float EmblemRadius = 3.2f;
-        const float FallenGuardianSize = 5.3f;
-        const float GuardianEchoStart = 0.75f, GuardianEchoBeat = 1.15f;
-        const float FinalGuardianEcho = GuardianEchoStart + 3 * GuardianEchoBeat;
         readonly SpriteRenderer[] mist = new SpriteRenderer[2];
         readonly Sprite[] masterPoses = new Sprite[masterPoseNames.Length];
         SpriteRenderer master, aura, backdrop, emblemCore;
@@ -47,45 +44,19 @@ namespace KarmaPrototype
         MaterialPropertyBlock dissolveBlock;
         bool seeded, guardianFinished;
 
-        internal Vector2 FallenShotLimits(float playerX)
-        {
-            float left = playerX - 2f;
-            float right = playerX + 2f;
-            foreach (var image in fallenLineup)
-            {
-                if (image.sprite == null) continue;
-                left = Mathf.Min(left, image.bounds.min.x);
-                right = Mathf.Max(right, image.bounds.max.x);
-            }
-            if (fallen != null && fallenPictures != null)
-                foreach (var image in fallenPictures)
-                {
-                    left = Mathf.Min(left, image.bounds.min.x);
-                    right = Mathf.Max(right, image.bounds.max.x);
-                }
-            return new Vector2(left - 1.4f, right + 1.4f);
-        }
-
         public static KarmaEndingPresentation Create(KarmaGame game, Transform world, Transform fallen, Vector3 origin,
             Sprite[] defeated)
         {
             var root = new GameObject("Ending presentation"); root.transform.SetParent(world, false);
             var ending = root.AddComponent<KarmaEndingPresentation>();
             ending.game = game; ending.fallen = fallen;
+            Sprite finalDefeat = null;
             if (fallen != null)
             {
                 fallen.position = origin;
                 ending.fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
                 ending.fallenPictures = fallen.GetComponentsInChildren<SpriteRenderer>();
-                // Fit the ending artwork using the defeated pose before the hit reaction replaces it.
-                float defeatedSize = 0f;
-                foreach (var picture in ending.fallenPictures)
-                {
-                    if (!picture.enabled || picture.sprite == null) continue;
-                    var size = picture.bounds.size;
-                    defeatedSize = Mathf.Max(defeatedSize, size.x, size.y);
-                }
-                if (defeatedSize > 0f) fallen.localScale *= FallenGuardianSize / defeatedSize;
+                if (ending.fallenPictures.Length > 0) finalDefeat = ending.fallenPictures[0].sprite;
                 ending.fallenAnimator?.PresentEndingDefeat(0);
                 var material = Resources.Load<Material>("Shared/Rendering/KarmaEndingDissolve");
                 if (material != null) foreach (var picture in ending.fallenPictures) picture.sharedMaterial = material;
@@ -115,23 +86,21 @@ namespace KarmaPrototype
                 KarmaArtwork.Sprite("PlayerVFX", "PierceTrail"), 5.4f, 14);
             for (int i = 0; i < ending.techniques.Length; i++) ending.techniqueSizes[i] = ending.techniques[i].transform.localScale;
             var acquired = game.Player.Essences.PersonalizationOrder;
-            // The editor preview jumps to the final trial, so it has no previous defeat snapshots.
-            float direction = origin.x < KarmaStage.ArenaCenter ? 1 : -1;
-            var previous = new System.Collections.Generic.List<Essence>();
-            for (int i = 0; i < ending.fallenLineup.Length; i++)
+            ending.memories[0] = ending.Layer("Memory of the first guardian", KarmaArtwork.Sprite("Neutral", "Death") ?? defeated[0], 5f, 1);
+            if (acquired.Count >= 1)
             {
-                string form = KarmaArtwork.GuardianFormName(previous);
-                Sprite sprite = defeated[i] ?? (previous.Count < 2
-                    ? KarmaArtwork.Sprite(form, "Death")
-                    : FindSprite(KarmaArtwork.InheritedPoses(form), "Death")) ?? KarmaArtwork.GuardianPreview(previous);
-                var image = ending.Layer("Fallen guardian " + (i + 1), sprite, FallenGuardianSize, 4);
-                image.flipX = direction < 0;
-                if (sprite != null)
-                    image.transform.localPosition = new Vector3(origin.x - direction * sprite.bounds.center.x * image.transform.localScale.x,
-                        0.12f - sprite.bounds.min.y * image.transform.localScale.y, 0);
-                ending.fallenLineup[i] = image;
-                if (i < acquired.Count) previous.Add(acquired[i]);
+                var baseForm = KarmaArtwork.GuardianFormName(new[] { acquired[0] });
+                ending.memories[1] = ending.Layer("Memory of the second guardian", KarmaArtwork.Sprite(baseForm, "Death") ?? defeated[1], 5f, 1);
             }
+            if (acquired.Count >= 2)
+            {
+                var inheritedForm = KarmaArtwork.GuardianFormName(new[] { acquired[0], acquired[1] });
+                ending.memories[2] = ending.Layer("Memory of the third guardian",
+                    FindSprite(KarmaArtwork.InheritedPoses(inheritedForm), "Death") ?? defeated[2], 5f, 1);
+            }
+            string finalForm = KarmaArtwork.GuardianFormName(acquired);
+            ending.memories[3] = ending.Layer("Memory of the final guardian",
+                FindSprite(KarmaArtwork.InheritedPoses(finalForm), "Death") ?? finalDefeat, 5f, 1);
             for (int i = 0; i < ending.mist.Length; i++)
                 ending.mist[i] = ending.Layer("Ending ground mist " + i, mistSprite, i == 0 ? 42f : 30f, -7 + i);
             var background = world.Find("Trial hall artwork") ?? world.Find("Mountain dojo artwork");
@@ -241,7 +210,7 @@ namespace KarmaPrototype
             game.Player.PresentEnding(t);
             DrawGuardian(t);
             DrawAtmosphere(t);
-            DrawFallenGuardians(t);
+            DrawMemories(game.EndingMemoryTime);
             DrawMaster(poseTime);
             DrawAir(t);
 
@@ -292,15 +261,18 @@ namespace KarmaPrototype
             }
         }
 
-        void DrawFallenGuardians(float t)
+        void DrawMemories(float time)
         {
-            for (int i = 0; i < fallenLineup.Length; i++)
+            for (int i = 0; i < memories.Length; i++)
             {
-                float age = t - (GuardianEchoStart + i * GuardianEchoBeat);
-                float alpha = Ease(0f, 0.23f, age) * (1 - Ease(0.60f, GuardianEchoBeat, age));
-                var image = fallenLineup[i];
-                image.enabled = alpha > 0;
-                image.color = new Color(0.69f, 0.78f, 0.92f, alpha);
+                var image = memories[i];
+                if (image == null || image.sprite == null) continue;
+                float age = time - (KarmaGame.EndingMemoryDelay + i * KarmaGame.EndingMemoryBeat);
+                float presence = Ease(0, 0.33f, age) * (1 - Ease(0.7f, KarmaGame.EndingMemoryBeat, age));
+                float x = KarmaGame.EndingMasterX - 0.7f + i * 0.42f;
+                float floor = 0.3f + Ease(0, 1.4f, age) * 0.45f;
+                image.transform.position = new Vector3(x, floor - image.sprite.bounds.min.y * image.transform.localScale.y, 0);
+                image.color = new Color(0.72f, 0.80f, 1f, presence * 0.58f);
             }
         }
 
@@ -376,8 +348,9 @@ namespace KarmaPrototype
 
         static Vector2 EmblemOrbitPosition(int index, float time)
         {
-            float spin = 185f * Ease(KarmaGame.EndingGatherAt + 0.39f, KarmaGame.EndingAbsorbAt - 0.06f, time);
-            float pull = Ease(KarmaGame.EndingGatherAt + 0.48f, KarmaGame.EndingAbsorbAt - 0.06f, time);
+            float arrive = KarmaGame.EndingAbsorbAt + 0.28f;
+            float spin = 185f * Ease(KarmaGame.EndingGatherAt + 0.54f, arrive, time);
+            float pull = Ease(KarmaGame.EndingGatherAt + 0.61f, arrive, time);
             float angle = (index * 120f + spin) * Mathf.Deg2Rad;
             // Center the formation above the chest, then bring all three emblems into it.
             return Vector2.up * (1.48f * (1 - pull))
@@ -386,20 +359,20 @@ namespace KarmaPrototype
 
         void DrawEmblemAbsorption(Vector2 center, float t)
         {
-            float merge = Ease(KarmaGame.EndingAbsorbAt + 1.35f, KarmaGame.EndingAbsorbAt + 1.65f, t);
+            float merge = Ease(KarmaGame.EndingAbsorbAt + 1.15f, KarmaGame.EndingAbsorbAt + 1.65f, t);
             float absorb = Ease(KarmaGame.EndingAbsorbAt + 1.65f, KarmaGame.EndingAbsorbAt + 2.0f, t);
             for (int i = 0; i < symbols.Length; i++)
             {
                 var symbol = symbols[i];
-                float start = KarmaGame.EndingGatherAt + i * 0.12f;
-                float appear = Ease(start, start + 0.14f, t);
+                float start = KarmaGame.EndingGatherAt + i * 0.17f;
+                float appear = Ease(start, start + 0.19f, t);
                 float alpha = appear * (1 - merge);
                 symbol.transform.position = center + EmblemOrbitPosition(i, t);
                 symbol.transform.localScale = symbolSizes[i] * Mathf.Lerp(1.05f, 0.44f, merge);
                 symbol.color = new Color(1, 1, 1, alpha);
 
                 var ribbon = oathRibbons[i];
-                float trailAlpha = alpha * Ease(KarmaGame.EndingGatherAt + 0.40f, KarmaGame.EndingGatherAt + 0.65f, t);
+                float trailAlpha = alpha * Ease(KarmaGame.EndingGatherAt + 0.54f, KarmaGame.EndingGatherAt + 0.79f, t);
                 ribbon.enabled = trailAlpha > 0.001f;
                 if (!ribbon.enabled) continue;
                 var tint = Color.Lerp(game.Config.ColorOf((Essence)i), OathLight, 0.35f);
@@ -454,7 +427,7 @@ namespace KarmaPrototype
             if (fallen != null && t < 6)
             {
                 fallenAnimator?.PresentEndingDefeat(t);
-                if (!seeded && t >= FinalGuardianEcho)
+                if (!seeded && t >= 1)
                 {
                     var bounds = fallenPictures != null && fallenPictures.Length > 0 ? fallenPictures[0].bounds
                         : new Bounds(fallen.position, new Vector3(5, 4, 1));
@@ -467,26 +440,19 @@ namespace KarmaPrototype
                     }
                     seeded = true;
                 }
-                float alpha = t < GuardianEchoStart ? 1 - Ease(0.18f, 0.68f, t)
-                    : Ease(FinalGuardianEcho, FinalGuardianEcho + 0.28f, t);
                 if (fallenPictures != null)
                     foreach (var picture in fallenPictures)
                     {
-                        picture.enabled = alpha > 0;
-                        if (!picture.enabled) continue;
-                        var color = picture.color;
-                        color.a = alpha;
-                        picture.color = color;
                         picture.GetPropertyBlock(dissolveBlock);
-                        dissolveBlock.SetFloat("_Progress", Ease(FinalGuardianEcho + 0.5f, 5.35f, t));
+                        dissolveBlock.SetFloat("_Progress", Ease(1.1f, 5.2f, t));
                         picture.SetPropertyBlock(dissolveBlock);
                     }
             }
             if (fallen != null && t >= 5.5f) { fallen.gameObject.SetActive(false); Destroy(fallen.gameObject); fallen = null; }
             for (int i = 0; i < particles.Length; i++)
             {
-                float age = t - (FinalGuardianEcho + 0.48f) - i * 0.012f;
-                float visible = seeded && age >= 0 && age < 0.92f ? Mathf.Sin(age / 0.92f * Mathf.PI) : 0;
+                float age = t - 1.2f - i * 0.055f;
+                float visible = age >= 0 && age < 1.65f ? Mathf.Sin(Mathf.Clamp01(age / 1.65f) * Mathf.PI) : 0;
                 particles[i].transform.position = particleOrigins[i]
                     + new Vector3(Mathf.Sin(i * 2.4f) * age * 0.65f, age * (1.4f + i % 4 * 0.25f), 0);
                 particles[i].color = new Color(1, 0.91f, 0.63f, visible * 0.8f);

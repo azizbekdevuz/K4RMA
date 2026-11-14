@@ -424,40 +424,62 @@ public static class KarmaEndingMoonChecks
         float time = game.EndingTime; game.EnemyDefeated(enemy);
         Check(game.EndingTime == time, "Duplicate defeat notification cannot restart ending");
         var presentation = game.World.Find("Ending presentation");
-        var echoes = new SpriteRenderer[3];
-        for (int i = 0; i < echoes.Length; i++)
-            echoes[i] = presentation.Find("Fallen guardian " + (i + 1)).GetComponent<SpriteRenderer>();
+        var echoes = Array.ConvertAll(new[] { "first", "second", "third", "final" },
+            ordinal => presentation.Find("Memory of the " + ordinal + " guardian").GetComponent<SpriteRenderer>());
         var final = (Transform)Get(game, "fallenGuardian");
         var finalPicture = final.GetComponentInChildren<SpriteRenderer>();
-        const float originalEchoSize = 5.3f;
-        for (int i = 0; i < echoes.Length; i++)
-        {
-            await CaptureEnding(1.1f + 1.15f * i, "01-guardian-echo-" + (i + 1));
-            var guardian = echoes[i];
-            Check(Mathf.Abs(Mathf.Max(guardian.bounds.size.x, guardian.bounds.size.y) - originalEchoSize) < 0.05f,
-                "The guardian echo retains its original small size: " + i);
-            var viewport = game.GameCamera.WorldToViewportPoint(guardian.bounds.center);
-            Check(guardian.sprite != null && guardian.enabled && guardian.color.a > 0.9f
-                && viewport.x > 0.08f && viewport.x < 0.92f, "Current guardian echo is visible: " + i);
-            for (int other = 0; other < echoes.Length; other++)
-                if (other != i) Check(!echoes[other].enabled, "Earlier guardian echoes have separate beats");
-            Check(!finalPicture.enabled, "The final guardian does not overlap an earlier echo");
-        }
-        await CaptureEnding(4.56f, "01-guardian-echo-4");
-        float finalSize = Mathf.Max(finalPicture.bounds.size.x, finalPicture.bounds.size.y);
-        Check(Mathf.Abs(finalSize - originalEchoSize) < 0.05f, "The final guardian matches the smaller echoes");
-        Check(final.gameObject.activeInHierarchy && finalPicture.enabled && finalPicture.color.a > 0.9f
-            && Array.TrueForAll(echoes, echo => !echo.enabled)
-            && game.GameCamera.WorldToViewportPoint(finalPicture.bounds.min).x >= 0
-            && game.GameCamera.WorldToViewportPoint(finalPicture.bounds.max).x <= 1,
-            "The full final guardian sprite appears alone after the previous three");
+        var dissolve = new MaterialPropertyBlock();
+        float startX = game.Player.Position.x;
+
+        await CaptureEnding(0.45f, "01-guardian-final");
+        finalPicture.GetPropertyBlock(dissolve);
+        Check(finalPicture.enabled && Mathf.Approximately(dissolve.GetFloat("_Progress"), 0)
+            && Array.TrueForAll(echoes, echo => echo.color.a == 0), "The final guardian appears before any dissolve or echoes");
+
+        await CaptureEnding(3.4f, "01-guardian-final-dissolve");
+        finalPicture.GetPropertyBlock(dissolve);
+        float expectedProgress = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(1.1f, 5.2f, game.EndingTime));
+        Check(finalPicture.enabled && Mathf.Abs(dissolve.GetFloat("_Progress") - expectedProgress) < 0.03f,
+            "The final guardian uses the original 1.1 to 5.2 second dissolve");
         Check(game.EndingSpeaker == "제자" && game.EndingLine.Contains("수호자"),
             "The apprentice reacts in a written caption");
-        await Until(() => game.EndingTime >= 7);
+
+        await CaptureEnding(5.9f, "02-apprentice-walk");
+        Check(final == null && game.Player.Position.x > startX
+            && Array.TrueForAll(echoes, echo => echo.color.a == 0), "The apprentice walks right before the first memory");
+
+        var memoryTime = typeof(KarmaGame).GetProperty("EndingMemoryTime", F);
+        float TimeInMemories() => (float)memoryTime.GetValue(game);
+        await Until(() => TimeInMemories() >= 0.12f);
+        var playerAnimator = game.Player.GetComponentInChildren<KarmaCharacterAnimator>();
+        Check(Mathf.Abs(game.Player.Position.x - KarmaStage.ArenaCenter) <= 0.05f
+            && playerAnimator.CurrentPose == "Idle" && Array.TrueForAll(echoes, echo => echo.color.a == 0),
+            "The apprentice reaches center and waits before the memories");
+        string finalForm = KarmaArtwork.GuardianFormName(game.Player.Essences.PersonalizationOrder);
+        var finalDeath = Array.Find(KarmaArtwork.InheritedPoses(finalForm), sprite => sprite.name == "Death");
+        Check(finalDeath != null && echoes[3].sprite == finalDeath, "The fourth memory uses the final guardian for this route");
+
+        for (int i = 0; i < echoes.Length; i++)
+        {
+            float sample = 0.88f + 1.4f * i;
+            await Until(() => TimeInMemories() >= sample);
+            await Task.Yield();
+            CheckCoverage();
+            Render("campaign-02-guardian-memory-" + (i + 1));
+            var guardian = echoes[i];
+            var viewport = game.GameCamera.WorldToViewportPoint(guardian.bounds.center);
+            Check(guardian.sprite != null && Mathf.Abs(guardian.color.a - 0.58f) < 0.01f
+                && viewport.x > 0 && viewport.x < 1 && guardian.bounds.center.x < game.Player.Position.x,
+                "The current guardian memory appears on the left in defeat order: " + i);
+            for (int other = 0; other < echoes.Length; other++)
+                if (other != i) Check(echoes[other].color.a < 0.01f, "Guardian memories take separate beats");
+        }
+        await CaptureEnding(10.44f, "02-before-master");
+        Check(Array.TrueForAll(echoes, echo => echo.color.a == 0)
+            && !presentation.Find("Master performance").GetComponent<MeshRenderer>().enabled,
+            "All memories clear before the master appears");
         Check((float)typeof(KarmaAudio).GetField("endingAmbience", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null) == 0,
             "Battle ambience gives way to a quiet interval");
-        Check(!Array.Exists(game.World.GetComponentsInChildren<KarmaCharacterAnimator>(), a => a.CurrentPose == "Death"),
-            "Boss vanishes before techniques appear");
 
         await CaptureEnding(12.32f, "03-master-lesson");
         var master = presentation.Find("Master performance");
@@ -555,7 +577,7 @@ public static class KarmaEndingMoonChecks
         await CaptureEnding(23.90f, "06-counter");
         CheckSkill(Essence.Guard, "Riposte");
 
-        await CaptureEnding(24.63f, "07-emblems-arrive");
+        await CaptureEnding(24.79f, "07-emblems-arrive");
         var chest = game.Player.Position + Vector2.up * 1.05f;
         var orbitCenter = chest + Vector2.up * 1.48f;
         for (int i = 0; i < skillSymbols.Length; i++)
@@ -566,18 +588,20 @@ public static class KarmaEndingMoonChecks
                 "The emblems begin in Pierce, Leap, Counter order at 0, 120 and 240 degrees");
         }
         Vector2 originalAxis = skillSymbols[1].transform.position - skillSymbols[0].transform.position;
-        await CaptureEnding(25.13f, "08-emblems-turn");
+        await CaptureEnding(25.40f, "08-emblems-turn");
         Vector2 turnedAxis = skillSymbols[1].transform.position - skillSymbols[0].transform.position;
         Check(Vector2.Angle(originalAxis, turnedAxis) > 50 && turnedAxis.magnitude < originalAxis.magnitude,
             "The emblems rotate and close in together");
-        await CaptureEnding(25.55f, "08a-emblems-merge");
+        await CaptureEnding(25.95f, "08a-emblem-aura");
+        Check(presentation.Find("Completed aura").GetComponent<SpriteRenderer>().color.a > 0.17f,
+            "The apprentice lights briefly as the emblems converge");
+        await CaptureEnding(27.22f, "08b-emblems-merge");
         var core = presentation.Find("Merged emblem light").GetComponent<SpriteRenderer>();
         Check(core.color.a > 0.5f && Vector2.Distance(core.transform.position, chest) < 0.1f,
             "One light remains at the apprentice's chest after convergence");
-        await CaptureEnding(25.90f, "08b-emblems-absorbed");
-        Check(Array.TrueForAll(skillSymbols, symbol => symbol.color.a < 0.01f)
-            && presentation.Find("Completed aura").GetComponent<SpriteRenderer>().color.a > 0.17f,
-            "The apprentice absorbs the emblems and lights briefly");
+        await CaptureEnding(27.65f, "08c-emblems-absorbed");
+        Check(Array.TrueForAll(skillSymbols, symbol => symbol.color.a < 0.01f) && core.color.a < 0.01f,
+            "The apprentice absorbs the merged light");
         Check(animator.CurrentPose == "Idle" && game.Projectiles.Count == 0, "Absorption uses no swing or emitted projectiles");
 
         await Until(() => game.EndingTime >= 27.3f);

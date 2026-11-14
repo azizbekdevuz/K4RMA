@@ -6,6 +6,10 @@ namespace KarmaPrototype
     {
         public const float EndingDuration = EndingDepartAt + 5.5f;
         internal const float EndingApproachAt = 5.4f, EndingKneelAt = 10f, EndingMasterAt = 10.6f;
+        const float EndingMemoryPauseAt = EndingKneelAt - 0.01f;
+        internal const int EndingMemoryCount = 4;
+        internal const float EndingMemoryDelay = 0.4f, EndingMemoryBeat = 1.4f;
+        const float EndingMemoryDuration = EndingMemoryDelay + EndingMemoryCount * EndingMemoryBeat;
         internal const float EndingStandAt = 20.5f, EndingPierceAt = 21.45f, EndingAirSlashAt = 22.53f, EndingCounterAt = 23.62f;
         internal const float EndingAirJumpAt = EndingAirSlashAt - 0.20f, EndingAirLandAt = EndingAirSlashAt + 0.72f;
         internal const float EndingPierceReleaseAt = EndingPierceAt + EndingRelease;
@@ -77,6 +81,7 @@ namespace KarmaPrototype
         KarmaEndingPresentation endingPresentation;
         Vector3 endingCameraStart;
         float endingCameraSize;
+        internal float EndingMemoryTime { get; private set; }
         int endingShot;
         Bounds endingBackground;
         int endingSoundStage;
@@ -94,7 +99,7 @@ namespace KarmaPrototype
         {
             if (Phase == RunPhase.Ending || EndingCompleted) return;
             ResetHitFeedback();
-            Phase = RunPhase.Ending; EndingTime = 0; endingSoundStage = 0;
+            Phase = RunPhase.Ending; EndingTime = 0; EndingMemoryTime = 0; endingSoundStage = 0;
             endingSkipping = false; endingSkipTime = 0; endingAmbienceLevel = 1;
             ResetCinematicSkip();
             EndingCompleted = false;
@@ -123,13 +128,25 @@ namespace KarmaPrototype
             }
 
             float previous = EndingTime;
-            EndingTime = Mathf.Min(EndingDuration, EndingTime + Time.deltaTime);
-            float t = EndingTime;
-            if (t >= EndingApproachAt && t < EndingKneelAt)
+            float elapsed = Time.deltaTime;
+            float distance = Mathf.Abs(Player.Position.x - KarmaStage.ArenaCenter);
+            float untilMemories = Mathf.Max(0, EndingMemoryPauseAt - previous);
+            if (EndingMemoryTime < EndingMemoryDuration && elapsed > untilMemories)
             {
-                float distance = Mathf.Abs(Player.Position.x - KarmaStage.ArenaCenter);
-                Player.EndingWalkTo(KarmaStage.ArenaCenter, Mathf.Clamp(distance / Mathf.Max(0.18f, 9.55f - t), 2.4f, 11f));
+                // Hold the pre-kneel shot until the apprentice arrives and all four memories finish.
+                float available = elapsed - untilMemories;
+                if (distance > 0.05f) elapsed = untilMemories;
+                else
+                {
+                    float hold = Mathf.Min(available, EndingMemoryDuration - EndingMemoryTime);
+                    EndingMemoryTime += hold;
+                    elapsed -= hold;
+                }
             }
+            EndingTime = Mathf.Min(EndingDuration, previous + elapsed);
+            float t = EndingTime;
+            if (t >= EndingApproachAt && t < EndingKneelAt && EndingMemoryTime == 0)
+                Player.EndingWalkTo(KarmaStage.ArenaCenter, Mathf.Clamp(distance / Mathf.Max(0.18f, 9.55f - t), 2.4f, 11f));
             else if (t >= EndingDepartAt)
                 Player.EndingWalkTo(KarmaStage.ArenaRight - 2, 4.8f);
             else
@@ -181,12 +198,11 @@ namespace KarmaPrototype
             float size;
             if (t < EndingApproachAt)
             {
-                Vector2 shotLimits = endingPresentation.FallenShotLimits(playerX);
-                float lineupSize = Mathf.Max(5.7f, (shotLimits.y - shotLimits.x) / (2 * GameCamera.aspect));
-                float settle = EndingEase(0, 1.15f, t);
-                var fallenFocus = new Vector3((shotLimits.x + shotLimits.y) * 0.5f, 3.5f, -10);
+                float bothActors = Mathf.Max(8.8f, Mathf.Abs(playerX - fallenGuardianPosition.x) / (2 * GameCamera.aspect) + 3);
+                float settle = EndingEase(0, 3.5f, t);
+                var fallenFocus = new Vector3(Mathf.Lerp(playerX, fallenGuardianPosition.x, 0.5f), 3.8f, -10);
                 focus = Vector3.Lerp(endingCameraStart, fallenFocus, settle);
-                size = Mathf.Lerp(endingCameraSize, lineupSize, settle);
+                size = Mathf.Lerp(endingCameraSize, bothActors, settle);
             }
             else
             {
@@ -235,7 +251,7 @@ namespace KarmaPrototype
             float width = size * aspect;
             focus.x = Mathf.Clamp(focus.x, endingBackground.min.x + width, endingBackground.max.x - width);
             focus.y = Mathf.Clamp(focus.y, endingBackground.min.y + size, endingBackground.max.y - size);
-            float blend = shot != endingShot || t < EndingApproachAt ? 1 : 1 - Mathf.Exp(-5f * Time.deltaTime);
+            float blend = shot != endingShot ? 1 : 1 - Mathf.Exp(-5f * Time.deltaTime);
             endingShot = shot;
             GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize, size, blend);
             GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position, focus, blend);
@@ -246,7 +262,7 @@ namespace KarmaPrototype
         {
             if (Player != null) Player.EndEndingPresentation();
             if (endingPresentation != null) { endingPresentation.gameObject.SetActive(false); Destroy(endingPresentation.gameObject); }
-            endingPresentation = null; EndingTime = 0; EndingCompleted = false;
+            endingPresentation = null; EndingTime = 0; EndingMemoryTime = 0; EndingCompleted = false;
             endingSkipping = false; endingSkipTime = 0; endingAmbienceLevel = 1;
             ResetCinematicSkip();
             KarmaAudio.SetEndingAmbience(1);

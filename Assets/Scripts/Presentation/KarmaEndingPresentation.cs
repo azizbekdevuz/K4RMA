@@ -21,7 +21,7 @@ namespace KarmaPrototype
         readonly SpriteRenderer[] fallenLineup = new SpriteRenderer[3];
         readonly Vector3[] symbolSizes = new Vector3[3];
         const float EmblemRadius = 3.2f;
-        const float GuardianEchoStart = 0.75f, GuardianEchoBeat = 0.98f;
+        const float GuardianEchoStart = 0.75f, GuardianEchoBeat = 1.15f;
         const float FinalGuardianEcho = GuardianEchoStart + 3 * GuardianEchoBeat;
         readonly SpriteRenderer[] mist = new SpriteRenderer[2];
         readonly Sprite[] masterPoses = new Sprite[masterPoseNames.Length];
@@ -117,7 +117,7 @@ namespace KarmaPrototype
                     ? KarmaArtwork.Sprite(form, "Death")
                     : FindSprite(KarmaArtwork.InheritedPoses(form), "Death")) ?? KarmaArtwork.GuardianPreview(previous);
                 var image = ending.Layer("Fallen guardian " + (i + 1), sprite, 5.3f, 4);
-                float x = origin.x + (FinalGuardianGap + (2 - i) * FallenSpacing) * direction;
+                float x = origin.x;
                 image.flipX = direction < 0;
                 if (sprite != null)
                     image.transform.localPosition = new Vector3(x - direction * sprite.bounds.center.x * image.transform.localScale.x,
@@ -379,8 +379,8 @@ namespace KarmaPrototype
 
         void DrawEmblemAbsorption(Vector2 center, float t)
         {
-            float merge = Ease(KarmaGame.EndingAbsorbAt - 0.19f, KarmaGame.EndingAbsorbAt - 0.06f, t);
-            float absorb = Ease(KarmaGame.EndingAbsorbAt - 0.05f, KarmaGame.EndingAbsorbAt + 0.15f, t);
+            float merge = Ease(KarmaGame.EndingAbsorbAt + 1.35f, KarmaGame.EndingAbsorbAt + 1.65f, t);
+            float absorb = Ease(KarmaGame.EndingAbsorbAt + 1.65f, KarmaGame.EndingAbsorbAt + 2.0f, t);
             for (int i = 0; i < symbols.Length; i++)
             {
                 var symbol = symbols[i];

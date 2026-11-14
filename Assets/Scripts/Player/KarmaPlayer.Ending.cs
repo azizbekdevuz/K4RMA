@@ -101,8 +101,6 @@ namespace KarmaPrototype
                 { pose = "Land"; since = t - KarmaGame.EndingAirLandAt; }
                 else if (t >= KarmaGame.EndingTurnToMasterAt && t < KarmaGame.EndingTurnToMasterAt + 0.25f)
                 { pose = "Turn"; since = t - KarmaGame.EndingTurnToMasterAt; }
-                else if (t >= KarmaGame.EndingSaluteAt && t < KarmaGame.EndingSaluteAt + 0.8f)
-                { pose = "Salute"; since = t - (KarmaGame.EndingSaluteAt); }
 
                 loop = pose == "Idle";
                 if (t >= KarmaGame.EndingKneelAt && t < KarmaGame.EndingPierceAt

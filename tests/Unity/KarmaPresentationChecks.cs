@@ -102,7 +102,6 @@ public static class KarmaPresentationChecks
                 await SymbolsUntil(() => symbolGame.GuardianInheriting);
                 CheckCeremony(true, essence);
                 await Task.Delay(350); await SymbolCapture("inherit-" + essence);
-                await SymbolsUntil(() => symbolGame.IsCombat);
                 symbolGame.ReturnToTitle();
             }
             symbolGame.StartRun();
@@ -126,12 +125,11 @@ public static class KarmaPresentationChecks
             var ending = symbolGame.World.Find("Ending presentation");
             for (int i = 0; i < 3; i++)
             {
-                var symbol = ending.Find("Completed technique " + (Essence)i).GetComponent<SpriteRenderer>();
-                var united = ending.Find("Three techniques united/United " + (Essence)i).GetComponent<SpriteRenderer>();
-                Check(symbol.sprite == icons[i] && united.sprite == icons[i], "Ending and convergence retain the same selection symbol");
+                var symbol = ending.Find("Personalized technique " + (Essence)i).GetComponent<SpriteRenderer>();
+                Check(symbol.sprite == icons[i], "The ending reuses the canonical selection symbol");
             }
-            await SymbolsUntil(() => symbolGame.EndingTime >= 14.5f); await SymbolCapture("ending-symbols");
-            await SymbolsUntil(() => symbolGame.EndingTime >= 17.7f); await SymbolCapture("ending-united");
+            await SymbolsUntil(() => symbolGame.EndingTime >= 24.71f); await SymbolCapture("ending-orbit");
+            await SymbolsUntil(() => symbolGame.EndingTime >= 25.58f); await SymbolCapture("ending-united");
             symbolGame.ReturnToTitle(); await Task.Delay(100);
             Check(!UnityEngine.Object.FindAnyObjectByType<KarmaPersonalizationVFX>() && !UnityEngine.Object.FindAnyObjectByType<KarmaEndingPresentation>(),
                 "Return to title removes ceremony and ending symbols");

@@ -9,7 +9,10 @@ namespace KarmaPrototype
         const float PlayerFallDuration = 1.8f;
         bool playerFallSettled;
         bool guardianInheriting;
+        internal enum EncounterPrompt { None, BossName, SkillGuide, WaitForRelease }
+        internal EncounterPrompt CurrentEncounterPrompt { get; private set; }
         Transform fallenGuardian;
+        readonly Sprite[] defeatedGuardianSprites = new Sprite[3];
         Vector3 fallenGuardianPosition;
         Vector3 fallenGuardianScale;
         bool ceremonySpacingStarted, ceremonySpacingFinished;
@@ -21,6 +24,7 @@ namespace KarmaPrototype
             KarmaAudio.Play(KarmaSfxId.UiConfirm);
             guardianInheriting = false;
             fallenGuardian = null;
+            System.Array.Clear(defeatedGuardianSprites, 0, defeatedGuardianSprites.Length);
             ResetHitFeedback();
             Paused = false; Time.timeScale = 1;
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
@@ -36,6 +40,7 @@ namespace KarmaPrototype
         void LoadRoom(bool fullHealth)
         {
             ResetHitFeedback();
+            CurrentEncounterPrompt = EncounterPrompt.None;
             if (World != null) { World.gameObject.SetActive(false); Destroy(World.gameObject); }
             Enemies.Clear(); Projectiles.Clear();
             World = new GameObject("Stage " + (StageIndex + 1)).transform;
@@ -64,6 +69,8 @@ namespace KarmaPrototype
             fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
             guardianInheriting = false;
             if (StageIndex == 3) { BeginEnding(); return; }
+            var defeatedPicture = fallenArt != null ? fallenArt.GetComponentInChildren<SpriteRenderer>() : null;
+            defeatedGuardianSprites[StageIndex] = defeatedPicture != null ? defeatedPicture.sprite : null;
             Phase = RunPhase.GuardianFallen;
             ceremonySpacingStarted = ceremonySpacingFinished = false;
             transitionLeft = GuardianFallDuration;
@@ -114,12 +121,20 @@ namespace KarmaPrototype
             LastPersonalizedEssence = essence;
             Player.Heal(config.healAfterPersonalization);
             guardianInheriting = false;
+            CurrentEncounterPrompt = EncounterPrompt.None;
             Phase = RunPhase.Transition; transitionLeft = PersonalizationDuration;
             KarmaPersonalizationVFX.Play(this, Player.transform, essence, PersonalizationDuration, false);
         }
         void UpdatePersonalization()
         {
-            transitionLeft -= Time.deltaTime;
+            if (EncounterPromptReady)
+            {
+                // Update already counted this frame as transition time.
+                Elapsed -= Time.deltaTime;
+                AdvanceEncounterPrompt();
+                return;
+            }
+            transitionLeft = Mathf.Max(0, transitionLeft - Time.deltaTime);
             if (transitionLeft > 0) return;
             if (!guardianInheriting)
             {
@@ -140,6 +155,7 @@ namespace KarmaPrototype
                 // The new guardian exists, but its AI stays idle until the inheritance finishes.
                 Phase = RunPhase.Transition;
                 guardianInheriting = true;
+                CurrentEncounterPrompt = EncounterPrompt.BossName;
                 transitionLeft = InheritanceDuration;
                 GetComponent<KarmaHUD>().BeginBossEntrance(Enemies[0]);
                 var previous = new List<Essence>(Player.Essences.PersonalizationOrder);
@@ -148,12 +164,27 @@ namespace KarmaPrototype
                     InheritanceDuration, true, fallenAppearance != null ? fallenAppearance : KarmaArtwork.GuardianPreview(previous),
                     KarmaArtwork.GuardianFormName(previous));
             }
-            else
+        }
+
+        internal bool EncounterPromptReady => GuardianInheriting && transitionLeft <= 0;
+
+        void AdvanceEncounterPrompt()
+        {
+            // DialogueConfirm shares Space with Jump. Keep combat idle through key release.
+            if (CurrentEncounterPrompt == EncounterPrompt.WaitForRelease)
             {
+                if (KarmaInput.Held(KarmaAction.DialogueConfirm)) return;
+                CurrentEncounterPrompt = EncounterPrompt.None;
                 guardianInheriting = false;
                 Phase = RunPhase.Combat;
+                return;
             }
+            if (!KarmaInput.Pressed(KarmaAction.DialogueConfirm)) return;
+            KarmaAudio.Play(KarmaSfxId.UiConfirm);
+            CurrentEncounterPrompt = CurrentEncounterPrompt == EncounterPrompt.BossName
+                ? EncounterPrompt.SkillGuide : EncounterPrompt.WaitForRelease;
         }
+
         public void PlayerDied()
         {
             if (Player == null || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat || Phase == RunPhase.Victory || Phase == RunPhase.Ending) return;
@@ -198,6 +229,7 @@ namespace KarmaPrototype
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }
             runRoot = null; World = null; Player = null; Enemies.Clear();
             guardianInheriting = false; fallenGuardian = null;
+            CurrentEncounterPrompt = EncounterPrompt.None;
             Phase = RunPhase.Title;
         }
         public void TogglePause()

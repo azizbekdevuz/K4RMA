@@ -148,9 +148,16 @@ public static partial class KarmaSfxCompletionChecks
         game.ReturnToTitle();
         var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
         var menu = (KarmaSfxId)((int)KarmaSfxId.MenuMainTheme + library.DefaultMenuTrack);
-        await Until(() => Live(menu), 2, "default title track");
-        Check(Source(menu).loop, "Title track remains a loop");
-        await CheckMixerSignal(Source(menu), "Default title music");
+        float previousMusicVolume = KarmaPreferences.MusicVolume;
+        try
+        {
+            // The user's saved setting may intentionally mute music.
+            KarmaPreferences.MusicVolume = 0.8f;
+            await Until(() => Live(menu) && Source(menu).volume > 0, 2, "default title track fade-in");
+            Check(Source(menu).loop, "Title track remains a loop");
+            await CheckMixerSignal(Source(menu), "Default title music");
+        }
+        finally { KarmaPreferences.MusicVolume = previousMusicVolume; }
     }
 
     static AudioSource Source(KarmaSfxId id)

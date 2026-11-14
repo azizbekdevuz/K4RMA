@@ -21,7 +21,7 @@ namespace KarmaPrototype
             {
                 var action = KarmaInput.ConfigurableActions[i]; float y = 185 + i * 34;
                 Label(100, y, 360, 31, bindingNames[i], text);
-                if (GUI.Button(new Rect(490, y, 210, 31), "〈 " + KarmaInput.BindingLabel(action) + " 〉", keyButton)) KarmaInput.BeginRebinding(action);
+                if (KeyBindingButton(new Rect(490, y, 210, 31), action)) KarmaInput.BeginRebinding(action);
             }
             if (GUI.Button(new Rect(110, 595, 570, 40), "키 기본값 복원", menuButton)) KarmaInput.ResetBindings();
             GUI.enabled = true;
@@ -36,9 +36,14 @@ namespace KarmaPrototype
                 VolumeRow("화면 흔들림", 440, KarmaPreferences.ScreenShake, v => KarmaPreferences.ScreenShake = v);
                 if (GUI.Button(new Rect(795, 525, 360, 40), KarmaPreferences.Muted ? "◆ 음소거 켜짐" : "◇ 음소거 꺼짐", menuButton)) KarmaPreferences.Muted = !KarmaPreferences.Muted;
             }
-            Label(790, 580, 390, 42, KarmaInput.RebindMessage ?? "변경할 키를 선택한 뒤 새 키를 누르세요.", small);
-            if (GUI.Button(new Rect(790, 635, 390, 45), "저장하고 돌아가기 [Esc]", menuButton)) game.CloseSettings();
-            Label(100, 650, 620, 28, "Esc : 돌아가기 / 키 변경 취소", small);
+            if (KarmaInput.Rebinding)
+            {
+                Label(790, 574, 390, 23, "새 키를 누르세요.", small);
+                KeyPrompt(new Rect(790, 597, 390, 25), 14, false, KarmaAction.Pause, "  키 변경 취소");
+            }
+            else Label(790, 580, 390, 42, KarmaInput.RebindMessage ?? "변경할 키를 선택한 뒤 새 키를 누르세요.", small);
+            if (ShortcutButton(new Rect(790, 635, 390, 45), "저장하고 돌아가기", KarmaAction.Pause)) game.CloseSettings();
+            KeyPrompt(new Rect(100, 650, 620, 28), 14, false, KarmaAction.Pause, "  돌아가기 / 키 변경 취소");
         }
         static string DisplayModeName(FullScreenMode mode)
         {
@@ -69,7 +74,7 @@ namespace KarmaPrototype
             Label(280, 310, 720, 65,
                 Mathf.CeilToInt(game.DisplayConfirmationSeconds) + "초 뒤 이전 설정으로 돌아갑니다.", centered);
             if (GUI.Button(new Rect(300, 430, 300, 55), "유지", menuButton)) game.KeepDisplaySettings();
-            if (GUI.Button(new Rect(680, 430, 300, 55), "되돌리기 [Esc]", menuButton)) game.RevertDisplaySettings();
+            if (ShortcutButton(new Rect(680, 430, 300, 55), "되돌리기", KarmaAction.Pause)) game.RevertDisplaySettings();
         }
         void VolumeRow(string label, float y, float value, System.Action<float> set)
         {

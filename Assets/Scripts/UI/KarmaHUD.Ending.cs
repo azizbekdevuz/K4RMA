@@ -24,10 +24,10 @@ namespace KarmaPrototype
             if (game.EndingFade > 0) FillScreen(new Color(0, 0, 0, game.EndingFade));
             if (game.EndingCompleted)
             {
-                if (GUI.Button(new Rect(410, 580, 460, 40), "다시 수련하기 [R]", menuButton)) game.RestartSession();
-                if (GUI.Button(new Rect(410, 630, 460, 40), "타이틀 [T]", menuButton)) game.ReturnToTitle();
+                if (ShortcutButton(new Rect(410, 580, 460, 40), "다시 수련하기", KarmaAction.Restart)) game.RestartSession();
+                if (ShortcutButton(new Rect(410, 630, 460, 40), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
             }
-            else if (game.Paused) PauseScreen();
+            else if (game.Paused) DrawPauseOverlay();
         }
     }
 }

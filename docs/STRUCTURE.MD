@@ -318,6 +318,7 @@ K4RMA/
 │   │       │   ├── Master.png
 │   │       │   └── TrainingDummy.png
 │   │       └── UI/
+│   │           ├── CautionIcon.png
 │   │           ├── Components.png
 │   │           ├── KeyboardKeycaps.png
 │   │           └── MenuBackground.png

@@ -16,11 +16,14 @@ namespace KarmaPrototype
             KarmaAction.ChooseSwordWave, KarmaAction.ChooseRisingSlash, KarmaAction.ChooseGuard
         };
 
+        static readonly Color choiceWarningColor = new Color32(255, 155, 143, 255);
+        GUIStyle choiceWarningText;
+        Texture2D choiceWarningIcon;
+
         void ChoiceScreen()
         {
             Label(280, 265, 720, 45, "시련 완료 · 고유화", title);
-            if (game.StageIndex == 0)
-                Label(210, 217, 860, 40, "첫 고유화 선택에 따라 다음 수호자의 유형이 달라집니다.", centered);
+            if (game.StageIndex == 0) DrawFirstChoiceWarning();
             int count = 0;
             for (int i = 0; i < 3; i++) if (game.Player.Essences.HasActive((Essence)i)) count++;
             int slot = 0;
@@ -47,8 +50,36 @@ namespace KarmaPrototype
             GUI.enabled = game.PendingChoice.HasValue;
             if (ShortcutButton(new Rect(440, 570, 400, 45), "고유화", KarmaAction.Confirm)) game.ConfirmChoice();
             GUI.enabled = true;
-            if (ShortcutButton(new Rect(490, 625, 300, 40), "선택 취소", KarmaAction.Pause)) game.CancelChoice();
+            if (ShortcutButton(new Rect(440, 625, 400, 40), "선택 취소", KarmaAction.Pause)) game.CancelChoice();
         }
+        void DrawFirstChoiceWarning()
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (choiceWarningText == null)
+            {
+                choiceWarningText = new GUIStyle(centered) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold };
+                choiceWarningText.normal.textColor = choiceWarningColor;
+                choiceWarningIcon = Resources.Load<Texture2D>("UI/CautionIcon");
+            }
+            const string warning = "첫 고유화 선택에 따라 다음 수호자의 유형이 달라집니다.";
+            promptContent.text = warning;
+            float width = Mathf.Min(800, choiceWarningText.CalcSize(promptContent).x + 63);
+            var banner = new Rect(640 - width * 0.5f, 209, width, 43);
+            Fill(banner, new Color(0.103f, 0.047f, 0.066f, 0.94f));
+            if (choiceWarningIcon != null)
+            {
+                Color previous = GUI.color;
+                GUI.color = Color.white;
+                GUI.DrawTexture(new Rect(banner.x + 9, banner.center.y - 13, 26, 26),
+                    choiceWarningIcon, ScaleMode.ScaleToFit);
+                GUI.color = previous;
+            }
+            choiceWarningText.Draw(new Rect(banner.x + 47, banner.y, banner.width - 63, banner.height),
+                promptContent, false, false, false, false);
+            SpriteArt(new Rect(513, banner.yMax - 3, 254, 6), KarmaArtwork.Sprite("UI", "LongRule"),
+                new Color(choiceWarningColor.r, choiceWarningColor.g, choiceWarningColor.b, 0.45f));
+        }
+
         void DrawPauseOverlay()
         {
             FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));

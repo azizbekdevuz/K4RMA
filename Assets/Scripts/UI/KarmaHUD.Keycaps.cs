@@ -16,7 +16,7 @@ namespace KarmaPrototype
         static readonly Color keycapPressed = new Color(1.03f, 0.94f, 0.79f);
         readonly GUIContent promptContent = new GUIContent();
         Texture2D keycapAtlas;
-        GUIStyle keycapLegend, promptText;
+        GUIStyle keycapLegend, promptText, shortcutButton;
         bool keycapAtlasLoaded;
 
         enum KeycapShape { Square, Wide, Spacebar, Enter, Tall }
@@ -128,14 +128,20 @@ namespace KarmaPrototype
 
         bool ShortcutButton(Rect bounds, string label, KarmaAction action)
         {
-            bool clicked = GUI.Button(bounds, label, menuButton);
+            const int shortcutColumn = 86;
+            shortcutButton ??= new GUIStyle(menuButton)
+            {
+                clipping = TextClipping.Clip,
+                padding = new RectOffset(12, shortcutColumn, 0, 0)
+            };
+            bool clicked = GUI.Button(bounds, label, shortcutButton);
             if (Event.current.type == EventType.Repaint)
             {
                 KeycapStyles();
                 var cap = new Keycap(KarmaInput.BindingLabel(action));
-                var size = KeycapSize(cap, Mathf.Min(34, bounds.height - 8));
-                DrawKeycap(new Rect(bounds.xMax - 15 - size.x, bounds.center.y - size.y * 0.5f, size.x, size.y),
-                    cap, KarmaInput.Held(action));
+                var size = KeycapSize(cap, Mathf.Min(32, bounds.height - 8));
+                var center = new Vector2(bounds.xMax - shortcutColumn * 0.5f, bounds.center.y);
+                DrawKeycap(new Rect(center - size * 0.5f, size), cap, KarmaInput.Held(action));
             }
             return clicked;
         }

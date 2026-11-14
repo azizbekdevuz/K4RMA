@@ -320,6 +320,7 @@ K4RMA/
 │   │       └── UI/
 │   │           ├── Components.png
 │   │           ├── GuardianTrialMap.png
+│   │           ├── KeyboardKeycaps.png
 │   │           ├── MenuBackground.png
 │   │           ├── TechniqueIcons.png
 │   │           ├── UIFrames.png
@@ -606,6 +607,7 @@ K4RMA/
 │       │   ├── KarmaHUD.Combat.cs
 │       │   ├── KarmaHUD.cs
 │       │   ├── KarmaHUD.Ending.cs
+│       │   ├── KarmaHUD.Keycaps.cs
 │       │   ├── KarmaHUD.Screens.cs
 │       │   ├── KarmaHUD.Settings.cs
 │       │   └── KarmaHUD.Theme.cs

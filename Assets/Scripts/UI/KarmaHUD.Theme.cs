@@ -345,9 +345,6 @@ namespace KarmaPrototype
         void InkPanel(float left)
             => Frame(new Rect(left - 160, -4, 1280 - left + 169, 728), UiFrame.PauseInk, Color.white);
 
-        static string Keyed(string label, KarmaAction action)
-            => label + " [" + KarmaInput.BindingLabel(action) + "]";
-
         float HoverAmount(Rect bounds, bool enabled = true)
         {
             if (!enabled || !bounds.Contains(Event.current.mousePosition)) return 0;
@@ -362,7 +359,16 @@ namespace KarmaPrototype
         static bool PointerDown(float hover)
             => hover > 0 && GUIUtility.hotControl != 0 && Mouse.current != null && Mouse.current.leftButton.isPressed;
 
-        bool ThemeButton(Rect bounds, string label, bool primary = false, bool enabled = true, bool compact = false, bool textOnly = false, bool large = false)
+        bool ThemeButton(Rect bounds, string label, bool primary = false, bool enabled = true,
+            bool compact = false, bool textOnly = false, bool large = false)
+            => ThemeButtonFace(bounds, label, null, primary, enabled, compact, textOnly, large);
+
+        bool ThemeButton(Rect bounds, string label, KarmaAction shortcut, bool primary = false, bool enabled = true,
+            bool compact = false, bool textOnly = false, bool large = false)
+            => ThemeButtonFace(bounds, label, shortcut, primary, enabled, compact, textOnly, large);
+
+        bool ThemeButtonFace(Rect bounds, string label, KarmaAction? shortcut, bool primary, bool enabled,
+            bool compact, bool textOnly, bool large)
         {
             float hover = HoverAmount(bounds, enabled);
             bool pressed = PointerDown(hover);
@@ -373,7 +379,10 @@ namespace KarmaPrototype
             else if (!textOnly || hover > 0)
                 Frame(face, UiFrame.Control, Alpha(Color.Lerp(SoftIvory, Color.white, hover), enabled ? 0.83f + 0.17f * hover : 0.52f));
             GUIStyle buttonText = compact ? mapNumber : large ? largeAction : actionText;
-            ThemeLabel(face, label, buttonText, primary && enabled ? DeepInk : Alpha(Ivory, enabled ? 1 : 0.45f));
+            Color labelColor = primary && enabled ? DeepInk : Alpha(Ivory, enabled ? 1 : 0.45f);
+            if (shortcut.HasValue)
+                KeyPrompt(face, buttonText, labelColor, true, label.Length == 0 ? "" : label + "  ", shortcut.Value);
+            else ThemeLabel(face, label, buttonText, labelColor);
             bool wasEnabled = GUI.enabled;
             GUI.enabled = wasEnabled && enabled;
             bool clicked = GUI.Button(bounds, GUIContent.none, GUIStyle.none);

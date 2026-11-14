@@ -33,7 +33,7 @@ namespace KarmaPrototype
                 float y = 198 + i * 35;
                 if ((i & 1) == 0) BrushRule(109, y + 32, 542, Alpha(Ivory, 0.19f));
                 ThemeLabel(new Rect(113, y, 374, 31), BindingNames[i], mapLabel, Ivory);
-                if (ThemeButton(new Rect(475, y + 2, 172, 27), KarmaInput.BindingLabel(action), enabled: canRebind, compact: true))
+                if (ThemeButton(new Rect(475, y + 2, 172, 27), "", action, enabled: canRebind, compact: true))
                     KarmaInput.BeginRebinding(action);
             }
             if (ThemeButton(new Rect(109, 593, 239, 40), "키 기본값 복원", enabled: canRebind, compact: true))
@@ -65,9 +65,13 @@ namespace KarmaPrototype
                 }
             }
 
-            string notice = KarmaInput.RebindMessage ?? "변경할 키를 선택한 뒤 새 키를 누르세요.";
-            ThemeLabel(new Rect(111, 668, 647, 34), notice, mapLabel, KarmaInput.Rebinding ? Gold : SoftIvory);
-            if (ThemeButton(new Rect(737, 591, 441, 45), Keyed("저장하고 돌아가기", KarmaAction.Pause), true))
+            if (KarmaInput.Rebinding)
+                KeyPrompt(new Rect(111, 668, 647, 34), mapLabel, Gold, false,
+                    "새 키를 누르세요.  ", KarmaAction.Pause, "  취소");
+            else
+                ThemeLabel(new Rect(111, 668, 647, 34),
+                    KarmaInput.RebindMessage ?? "변경할 키를 선택한 뒤 새 키를 누르세요.", mapLabel, SoftIvory);
+            if (ThemeButton(new Rect(737, 591, 441, 45), "저장하고 돌아가기", KarmaAction.Pause, true))
                 game.CloseSettings();
             FadeIntoMenu();
         }
@@ -115,7 +119,7 @@ namespace KarmaPrototype
             ProgressTrack(new Rect(388, 365, 504, 3), Mathf.Clamp01(seconds / 15f));
 
             if (ThemeButton(new Rect(359, 415, 254, 58), "유지", true)) game.KeepDisplaySettings();
-            if (ThemeButton(new Rect(667, 415, 254, 58), Keyed("되돌리기", KarmaAction.Pause))) game.RevertDisplaySettings();
+            if (ThemeButton(new Rect(667, 415, 254, 58), "되돌리기", KarmaAction.Pause)) game.RevertDisplaySettings();
         }
 
         float VolumeRow(string label, float y, float value)

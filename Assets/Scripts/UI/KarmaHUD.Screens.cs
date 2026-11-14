@@ -13,8 +13,8 @@ namespace KarmaPrototype
             BrushRule(173, 279, 359 * reveal, Alpha(Ivory, 0.85f));
             ThemeLabel(new Rect(179, 293, 470, 39), "네 수호자 · 세 번의 고유화", titleSubtitle, Ivory);
             SelectionPointer(new Vector2(158, 409), Ivory);
-            if (ThemeButton(new Rect(173, 375, 285, 67), Keyed("시작", KarmaAction.Confirm), true, large: true)) game.StartOpening();
-            if (ThemeButton(new Rect(173, 454, 285, 48), Keyed("환경설정", KarmaAction.Settings), textOnly: true, large: true)) game.OpenSettings();
+            if (ThemeButton(new Rect(173, 375, 285, 67), "시작", KarmaAction.Confirm, true, large: true)) game.StartOpening();
+            if (ThemeButton(new Rect(173, 454, 285, 48), "환경설정", KarmaAction.Settings, textOnly: true, large: true)) game.OpenSettings();
         }
 
         void ChoiceScreen()
@@ -25,7 +25,6 @@ namespace KarmaPrototype
             BrushRule(43, 48, 163 * ScreenReveal, Alpha(Ivory, 0.85f));
             BrushDivider(new Rect(21, 10, 12, 78), Color.white);
             ThemeLabel(new Rect(44, 54, 340, 35), "고유화", rowText, Ivory);
-
             if (game.StageIndex == 0)
                 ThemeLabel(new Rect(755, 18, 490, 60), "첫 고유화 선택에 따라 다음 수호자의 유형이 달라집니다.",
                     centered, Ivory);
@@ -56,8 +55,7 @@ namespace KarmaPrototype
 
                 float offset = pressed ? 2 : 0;
                 Rect key = new Rect(bounds.x + 31, bounds.y + 35 + offset, 33, 33);
-                Frame(key, UiFrame.Parchment, Alpha(Color.white, 0.94f));
-                ThemeLabel(key, KarmaInput.BindingLabel(TechniqueKeys[i]), mapNumber, DeepInk);
+                KeycapAt(key, TechniqueKeys[i], pressed);
                 BrushDivider(new Rect(bounds.x + 81, bounds.y + 19, 3, 66), Alpha(Color.white, 0.75f));
                 TechniqueIcon(new Rect(bounds.x + 87, bounds.y + 10 + offset, 134, 84), essence);
                 BrushDivider(new Rect(bounds.x + 227, bounds.y + 19, 3, 66), Alpha(Color.white, 0.47f));
@@ -77,9 +75,9 @@ namespace KarmaPrototype
             }
             else ThemeLabel(new Rect(754, 482, 499, 59), preview, rowText, Alpha(Ivory, textFade));
             BrushRule(738, 545, 521, Alpha(Ivory, 0.56f));
-            if (ThemeButton(new Rect(722, 596, 321, 69), Keyed("고유화", KarmaAction.Confirm), true, pending.HasValue, large: true))
+            if (ThemeButton(new Rect(722, 596, 321, 69), "고유화", KarmaAction.Confirm, true, pending.HasValue, large: true))
                 game.ConfirmChoice();
-            if (ThemeButton(new Rect(1061, 602, 198, 59), Keyed("선택 취소", KarmaAction.Pause), textOnly: true, large: true))
+            if (ThemeButton(new Rect(1061, 602, 198, 59), "선택 취소", KarmaAction.Pause, textOnly: true, large: true))
                 game.CancelChoice();
         }
 
@@ -91,13 +89,13 @@ namespace KarmaPrototype
             InkPanel(x - 14);
             ThemeLabel(new Rect(x, 76, 375, 80), "일시정지", modalTitle, Ivory);
             BrushRule(x + 18, 161, 344 * reveal, Alpha(Ivory, 0.84f));
-            if (ThemeButton(new Rect(x, 210, 375, 87), Keyed("계속하기", KarmaAction.Pause), true, large: true))
+            if (ThemeButton(new Rect(x, 210, 375, 87), "계속하기", KarmaAction.Pause, true, large: true))
                 game.TogglePause();
-            if (ThemeButton(new Rect(x, 318, 375, 77), Keyed("처음부터", KarmaAction.Restart), large: true))
+            if (ThemeButton(new Rect(x, 318, 375, 77), "처음부터", KarmaAction.Restart, large: true))
                 game.RestartSession();
-            if (ThemeButton(new Rect(x, 416, 375, 77), Keyed("타이틀", KarmaAction.Title), large: true))
+            if (ThemeButton(new Rect(x, 416, 375, 77), "타이틀", KarmaAction.Title, large: true))
                 game.ReturnToTitle();
-            if (ThemeButton(new Rect(x, 514, 375, 77), Keyed("환경설정", KarmaAction.Settings), large: true))
+            if (ThemeButton(new Rect(x, 514, 375, 77), "환경설정", KarmaAction.Settings, large: true))
                 game.OpenSettings();
         }
 
@@ -123,20 +121,24 @@ namespace KarmaPrototype
         void PersonalizationGuide(Essence essence)
         {
             string input, effect, difference;
+            KarmaAction action;
             switch (essence)
             {
                 case Essence.SwordWave:
-                    input = Keyed("방향을 잡고", KarmaAction.Pierce);
+                    input = "방향을 잡고  ";
+                    action = KarmaAction.Pierce;
                     effect = "적을 꿰뚫으며 돌진";
                     difference = "원형 검기의 원거리 발사가 이동 공격으로 바뀝니다.";
                     break;
                 case Essence.RisingSlash:
-                    input = Keyed("공중에서 방향 +", KarmaAction.Attack);
+                    input = "공중에서 방향 +  ";
+                    action = KarmaAction.Attack;
                     effect = "한 번 더 도약하며 베기";
                     difference = "지상에서 올려 베던 원형이 공중 방향 전환 공격으로 바뀝니다.";
                     break;
                 default:
-                    input = Keyed("공격이 닿기 직전에", KarmaAction.Counter);
+                    input = "공격이 닿기 직전에  ";
+                    action = KarmaAction.Counter;
                     effect = "막고 즉시 반격";
                     difference = "원형 방어의 보호막 대신, 타이밍을 맞춰 반격 피해를 줍니다.";
                     break;
@@ -145,7 +147,7 @@ namespace KarmaPrototype
             BrushRule(485, 567, 310, Alpha(Gold, 0.64f));
             TechniqueIcon(new Rect(332, 580, 78, 78), essence);
             ThemeLabel(new Rect(423, 575, 527, 33), "고유화 완료 · " + KarmaPatternCatalog.UniqueName(essence), rowText, Ivory);
-            ThemeLabel(new Rect(423, 613, 527, 28), input + "  ·  " + effect, text, Ivory);
+            KeyPrompt(new Rect(423, 613, 527, 28), text, Ivory, false, input, action, "  ·  " + effect);
             ThemeLabel(new Rect(423, 645, 527, 25), difference, mapLabel, SoftIvory);
         }
 
@@ -186,9 +188,9 @@ namespace KarmaPrototype
 
             if (!victory)
                 ThemeLabel(new Rect(739, 537, 492, 43), "첫 번째 시련부터 다시 도전합니다.", mapLabel, SoftIvory);
-            if (ThemeButton(new Rect(722, 590, 349, 72), Keyed(victory ? "다시 수련하기" : "다시 도전", KarmaAction.Restart), true, large: true))
+            if (ThemeButton(new Rect(722, 590, 349, 72), victory ? "다시 수련하기" : "다시 도전", KarmaAction.Restart, true, large: true))
                 game.RestartSession();
-            if (ThemeButton(new Rect(1087, 600, 160, 51), Keyed("타이틀", KarmaAction.Title), textOnly: true))
+            if (ThemeButton(new Rect(1087, 600, 160, 51), "타이틀", KarmaAction.Title, textOnly: true))
                 game.ReturnToTitle();
         }
     }

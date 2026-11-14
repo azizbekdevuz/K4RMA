@@ -86,7 +86,8 @@ namespace KarmaPrototype
                     case RunPhase.Gate:
                         ThemePanel(new Rect(300, 525, 680, 110));
                         ThemeLabel(new Rect(325, 534, 640, 37), "시험 통과", rowText, Gold);
-                        ThemeLabel(new Rect(325, 573, 640, 44), "오른쪽 수련문에서 " + Keyed("상호작용", KarmaAction.Interact) + "으로 고유화할 기술을 고르세요.", text, Ivory);
+                        KeyPrompt(new Rect(325, 573, 640, 44), text, Ivory, false,
+                            "오른쪽 수련문 앞에서  ", KarmaAction.Interact, "  고유화 선택");
                         break;
                 }
             }
@@ -96,7 +97,7 @@ namespace KarmaPrototype
                 ThemePanel(new Rect(230, 550, 820, 140));
                 BrushRule(252, 561, 775, Alpha(Gold, 0.62f));
                 ThemeLabel(new Rect(255, 582, 770, 61), game.OpeningArrivalSpeech, text, Ivory);
-                ThemeLabel(new Rect(255, 650, 770, 26), Keyed("계속", KarmaAction.DialogueConfirm), mapLabel, Gold);
+                KeyPrompt(new Rect(255, 650, 770, 26), mapLabel, Gold, false, KarmaAction.DialogueConfirm, "  계속");
             }
             if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
             CinematicSkipHint();

@@ -26,6 +26,10 @@ namespace KarmaPrototype
             BrushDivider(new Rect(21, 10, 12, 78), Color.white);
             ThemeLabel(new Rect(44, 54, 340, 35), "고유화", rowText, Ivory);
 
+            if (game.StageIndex == 0)
+                ThemeLabel(new Rect(755, 18, 490, 60), "첫 고유화 선택에 따라 다음 수호자의 유형이 달라집니다.",
+                    centered, Ivory);
+
             var essences = game.Player.Essences;
             int count = 0;
             for (int i = 0; i < names.Length; i++)
@@ -65,7 +69,13 @@ namespace KarmaPrototype
             BrushRule(738, 476, 521, Alpha(Ivory, 0.65f));
             string preview = pending.HasValue ? TechniquePreviews[(int)pending.Value] : "고유화할 기술을 선택하세요.";
             float textFade = pending.HasValue ? Mathf.Lerp(0.55f, 1, Ease((Time.unscaledTime - selectionAt) / 0.15f)) : 1;
-            ThemeLabel(new Rect(754, 482, 499, 59), preview, rowText, Alpha(Ivory, textFade));
+            if (game.StageIndex == 0 && pending.HasValue)
+            {
+                ThemeLabel(new Rect(754, 481, 499, 30), preview, mapLabel, Alpha(Ivory, textFade));
+                ThemeLabel(new Rect(754, 512, 499, 25), "다음 상대 · " + names[(int)pending.Value] + "형 수호자",
+                    mapLabel, Alpha(Gold, textFade));
+            }
+            else ThemeLabel(new Rect(754, 482, 499, 59), preview, rowText, Alpha(Ivory, textFade));
             BrushRule(738, 545, 521, Alpha(Ivory, 0.56f));
             if (ThemeButton(new Rect(722, 596, 321, 69), Keyed("고유화", KarmaAction.Confirm), true, pending.HasValue, large: true))
                 game.ConfirmChoice();
@@ -94,17 +104,49 @@ namespace KarmaPrototype
         void StageTransitionScreen()
         {
             if (DrawBossEntrance()) return;
+            if (!game.GuardianInheriting)
+            {
+                PersonalizationGuide(game.LastPersonalizedEssence);
+                DrawChoiceExit();
+                return;
+            }
+
             // Keep the actors and the original inheritance caption visible.
             ThemePanel(new Rect(308, 577, 664, 108), 0.82f);
             BrushRule(485, 588, 310, Alpha(Gold, 0.64f));
-            string caption = game.GuardianInheriting
-                ? "원형 계승 · " + (game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자")
-                : "고유화 · " + names[(int)game.LastPersonalizedEssence] + " → " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence);
-            ThemeLabel(new Rect(321, 594, 638, 37), caption, actionText, Ivory);
-            ThemeLabel(new Rect(321, 636, 638, 31), game.GuardianInheriting
-                ? "내려놓은 원형의 힘이 다음 수호자에게 이어집니다."
-                : "배운 원형이 제자의 동작으로 깨어납니다.", centered, SoftIvory);
+            string guardian = game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자";
+            ThemeLabel(new Rect(321, 594, 638, 37), "원형 계승 · " + guardian, actionText, Ivory);
+            ThemeLabel(new Rect(321, 636, 638, 31), "내려놓은 원형의 힘이 다음 수호자에게 이어집니다.", centered, SoftIvory);
             DrawChoiceExit();
+        }
+
+        void PersonalizationGuide(Essence essence)
+        {
+            string input, effect, difference;
+            switch (essence)
+            {
+                case Essence.SwordWave:
+                    input = Keyed("방향을 잡고", KarmaAction.Pierce);
+                    effect = "적을 꿰뚫으며 돌진";
+                    difference = "원형 검기의 원거리 발사가 이동 공격으로 바뀝니다.";
+                    break;
+                case Essence.RisingSlash:
+                    input = Keyed("공중에서 방향 +", KarmaAction.Attack);
+                    effect = "한 번 더 도약하며 베기";
+                    difference = "지상에서 올려 베던 원형이 공중 방향 전환 공격으로 바뀝니다.";
+                    break;
+                default:
+                    input = Keyed("공격이 닿기 직전에", KarmaAction.Counter);
+                    effect = "막고 즉시 반격";
+                    difference = "원형 방어의 보호막 대신, 타이밍을 맞춰 반격 피해를 줍니다.";
+                    break;
+            }
+            ThemePanel(new Rect(308, 554, 664, 131), 0.9f);
+            BrushRule(485, 567, 310, Alpha(Gold, 0.64f));
+            TechniqueIcon(new Rect(332, 580, 78, 78), essence);
+            ThemeLabel(new Rect(423, 575, 527, 33), "고유화 완료 · " + KarmaPatternCatalog.UniqueName(essence), rowText, Ivory);
+            ThemeLabel(new Rect(423, 613, 527, 28), input + "  ·  " + effect, text, Ivory);
+            ThemeLabel(new Rect(423, 645, 527, 25), difference, mapLabel, SoftIvory);
         }
 
         void EndScreen(bool victory)

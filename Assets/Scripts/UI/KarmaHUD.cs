@@ -106,6 +106,7 @@ namespace KarmaPrototype
         void OnDestroy()
         {
             if (runtimeFont != null) Destroy(runtimeFont);
+            if (tutorialRouteArrow != null) Destroy(tutorialRouteArrow);
             ReleaseTheme();
         }
 

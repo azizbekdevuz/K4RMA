@@ -105,9 +105,9 @@ public static class KarmaBossEntranceChecks
         string markedKey = binding == defaultKey ? binding + (essence == Essence.SwordWave ? "을" : "를") : binding + " 키를";
         string expectedGuide = essence switch
         {
-            Essence.SwordWave => $"검기를 고유화해 관통베기를 얻었다. 방향키와 {markedKey} 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있다.",
-            Essence.RisingSlash => $"상승베기를 고유화해 도약베기를 얻었다. 공중에서 방향키와 {markedKey} 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있다. 아래 방향을 선택하면 잠시 체공할 수 있다.",
-            _ => $"방어를 고유화해 반격을 얻었다. 적의 공격이 닿는 순간 {markedKey} 눌러 받아내면 그 힘을 되돌려줄 수 있다."
+            Essence.SwordWave => $"방향키와 {markedKey} 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있다.",
+            Essence.RisingSlash => $"공중에서 방향키와 {markedKey} 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있다. 아래 방향을 선택하면 잠시 체공할 수 있다.",
+            _ => $"적의 공격이 닿는 순간 {markedKey} 눌러 받아내면 그 힘을 되돌려줄 수 있다."
         };
         Check(guide == expectedGuide, "Skill guide shows the agreed Korean copy and bound key");
         Check(((GUIStyle)Get(hud, "text")).CalcHeight(new GUIContent(guide), 750) <= 64, "Skill guide fits the panel");

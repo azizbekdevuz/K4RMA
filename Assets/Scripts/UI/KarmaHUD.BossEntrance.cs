@@ -63,6 +63,10 @@ namespace KarmaPrototype
             Color old = GUI.color;
             GUI.color = new Color(1, 1, 1, alpha);
             entranceLabel.normal.textColor = entranceAccent;
+            entranceLabel.hover.textColor = entranceAccent;
+            entranceLabel.active.textColor = entranceAccent;
+            entranceLabel.focused.textColor = entranceAccent;
+
             GUI.Label(new Rect(148, 513, 900, 24), "B O S S   /   E N C O U N T E R", entranceLabel);
             entranceTitle.normal.textColor = new Color(0.94f, 0.93f, 0.87f);
             // A clipped reveal and small settling movement leave the canonical name intact.

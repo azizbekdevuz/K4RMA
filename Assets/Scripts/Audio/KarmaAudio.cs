@@ -385,7 +385,7 @@ namespace KarmaPrototype
         static bool ShouldPause(KarmaSfxBus bus)
         {
             return game != null && game.Paused && bus != KarmaSfxBus.Ui
-                && (bus != KarmaSfxBus.Ambience || !game.SettingsOpen);
+                && (bus != KarmaSfxBus.Ambience || !game.SettingsOpen || game.Phase == RunPhase.Ending);
         }
 
         static float BusLevel(KarmaSfxBus bus) { return bus == KarmaSfxBus.Ambience ? music : effects; }

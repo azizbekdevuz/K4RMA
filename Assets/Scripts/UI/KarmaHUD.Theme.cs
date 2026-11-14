@@ -214,22 +214,44 @@ namespace KarmaPrototype
             Ornament(bounds, UiOrnament.GoldStroke, Color.Lerp(Color.white, Ivory, flash), fraction);
         }
 
-        void TechniqueIcon(Rect bounds, Essence essence, float opacity = 1)
+        Texture2D TechniqueAtlas()
         {
             if (!atlasLoaded)
             {
                 techniqueAtlas = Resources.Load<Texture2D>("UI/TechniqueIcons");
                 atlasLoaded = true;
             }
-            if (techniqueAtlas == null)
+            return techniqueAtlas;
+        }
+
+        static Rect TechniqueIconUv(Essence essence) => new Rect((int)essence / 3f, 0.13f, 1f / 3, 0.74f);
+
+        void TechniqueIcon(Rect bounds, Essence essence, float opacity = 1)
+        {
+            var atlas = TechniqueAtlas();
+            if (atlas == null)
             {
                 SpriteArt(bounds, KarmaArtwork.SkillIcon(essence), Alpha(TechniqueColors[(int)essence], opacity));
                 return;
             }
             var saved = GUI.color;
             GUI.color = Alpha(Color.white, opacity);
-            GUI.DrawTextureWithTexCoords(bounds, techniqueAtlas, new Rect((int)essence / 3f, 0.13f, 1f / 3, 0.74f), true);
+            GUI.DrawTextureWithTexCoords(bounds, atlas, TechniqueIconUv(essence), true);
             GUI.color = saved;
+        }
+
+        // The ending owns these runtime sprites. The HUD draws the same atlas regions directly.
+        internal Sprite CreateEndingTechniqueIcon(Essence essence)
+        {
+            var atlas = TechniqueAtlas();
+            if (atlas == null) return null;
+            var region = TechniqueIconUv(essence);
+            int left = Mathf.RoundToInt(region.xMin * atlas.width);
+            int right = Mathf.RoundToInt(region.xMax * atlas.width);
+            int bottom = Mathf.RoundToInt(region.yMin * atlas.height);
+            int top = Mathf.RoundToInt(region.yMax * atlas.height);
+            return Sprite.Create(atlas, new Rect(left, bottom, right - left, top - bottom),
+                Vector2.one * 0.5f, 100, 0, SpriteMeshType.FullRect, Vector4.zero, false);
         }
 
         void ReleaseTheme()

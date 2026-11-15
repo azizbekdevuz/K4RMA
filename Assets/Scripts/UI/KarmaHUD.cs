@@ -142,7 +142,8 @@ namespace KarmaPrototype
         }
         void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
-        static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, 0.95f)); }
+        const float DialoguePanelOpacity = 0.7f;
+        static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, DialoguePanelOpacity)); }
         static void DrawViewportBorders()
         {
             Matrix4x4 saved = GUI.matrix;

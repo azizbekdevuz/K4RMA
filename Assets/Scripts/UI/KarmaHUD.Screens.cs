@@ -94,7 +94,7 @@ namespace KarmaPrototype
         {
             if (!game.GuardianInheriting)
             {
-                Fill(new Rect(280, 590, 720, 82), new Color(0.015f, 0.025f, 0.07f, 0.72f));
+                Fill(new Rect(280, 590, 720, 82), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
                 Label(300, 609, 680, 44,
                     "고유화 · " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence), centered);
                 return;
@@ -114,7 +114,7 @@ namespace KarmaPrototype
         }
         void PersonalizationGuide(Essence essence)
         {
-            Fill(new Rect(190, 515, 900, 174), new Color(0.015f, 0.025f, 0.07f, 0.92f));
+            Fill(new Rect(190, 515, 900, 174), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
             SpriteArt(new Rect(214, 549, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
             Label(310, 530, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
             Label(310, 572, 750, 64, PersonalizationGuideText(essence), text);

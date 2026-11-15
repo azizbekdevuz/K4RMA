@@ -139,6 +139,7 @@ public static class KarmaCinematicSkipChecks
     }
     static async Task CheckTutorialSkip()
     {
+        Check(Mathf.Approximately(KarmaGame.CinematicSkipHoldSeconds, 1f), "Skip hold takes one second");
         await Tutorial(); FreezeLesson(); await Frames();
         await Keys(Key.Space); await Wait(0.25f);
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial.Step == KarmaTutorialStep.Practice,
@@ -161,6 +162,9 @@ public static class KarmaCinematicSkipChecks
         await Keys(Key.F); await Frames();
         Check(game.Tutorial.Step == KarmaTutorialStep.Lesson, "F does not confirm teacher dialogue");
         Check(Time.timeScale == 0, "Frozen dialogue uses unscaled hold time");
+        await Wait(0.8f);
+        Check(game.Phase == RunPhase.Tutorial && game.CinematicSkipProgress >= 0.8f,
+            "Hold gauge advances before the one-second threshold");
         await Until(() => game.Tutorial == null, "Frozen tutorial never skips");
         Check(game.Phase == RunPhase.Combat, "Skip fades into first stage");
         Check(game.StageIndex == 0 && game.Player.Essences.Count == 0 && game.Player.Health == game.Config.playerHealth,

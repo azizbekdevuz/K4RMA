@@ -10,7 +10,7 @@ namespace KarmaPrototype
             float captionAlpha = game.EndingLineAlpha;
             float bottomBar = 46 * bars + 52 * captionAlpha;
             Fill(new Rect(0, 0, 1280, 46 * bars), Color.black);
-            Fill(new Rect(0, 720 - bottomBar, 1280, bottomBar), Color.black);
+            Fill(new Rect(0, 720 - bottomBar, 1280, bottomBar), new Color(0, 0, 0, DialoguePanelOpacity));
             if (game.EndingMemoryDim > 0) FillScreen(new Color(0.025f, 0.035f, 0.07f, game.EndingMemoryDim));
             if (captionAlpha > 0)
             {

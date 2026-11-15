@@ -18,12 +18,15 @@ namespace KarmaPrototype
 
         static readonly Color choiceWarningColor = new Color32(255, 155, 143, 255);
         GUIStyle choiceWarningText;
+        GUIStyle choiceProgressText;
         Texture2D choiceWarningIcon;
 
         void ChoiceScreen()
         {
-            Label(280, 265, 720, 45, "시련 완료 · 고유화", title);
-            if (game.StageIndex == 0) DrawFirstChoiceWarning();
+            DrawChoiceProgress();
+            bool firstChoice = game.StageIndex == 0;
+            Label(280, firstChoice ? 152 : 180, 720, 48, "시련 완료 · 고유화", title);
+            if (firstChoice) DrawFirstChoiceWarning();
             int count = 0;
             for (int i = 0; i < 3; i++) if (game.Player.Essences.HasActive((Essence)i)) count++;
             int slot = 0;
@@ -43,15 +46,44 @@ namespace KarmaPrototype
             {
                 var e = game.PendingChoice.Value;
                 string preview = names[(int)e] + " → " + KarmaPatternCatalog.UniqueName(e);
-                if (game.StageIndex == 0) preview += "   ·   다음 상대  " + names[(int)e] + "형 수호자";
+                if (firstChoice) preview += "   ·   다음 상대  " + names[(int)e] + "형 수호자";
                 Label(280, 520, 720, 35, preview, centered);
             }
             else Label(280, 520, 720, 35, "다음 시련에 남길 원형을 선택하세요.", centered);
             GUI.enabled = game.PendingChoice.HasValue;
-            if (ShortcutButton(new Rect(440, 570, 400, 45), "고유화", KarmaAction.Confirm)) game.ConfirmChoice();
+            if (ShortcutButton(new Rect(440, 568, 400, 45), "고유화", KarmaAction.Confirm)) game.ConfirmChoice();
             GUI.enabled = true;
-            if (ShortcutButton(new Rect(440, 625, 400, 40), "선택 취소", KarmaAction.Pause)) game.CancelChoice();
+            if (ShortcutButton(new Rect(440, 626, 400, 40), "선택 취소", KarmaAction.Pause)) game.CancelChoice();
         }
+        void DrawChoiceProgress()
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (choiceProgressText == null)
+                choiceProgressText = new GUIStyle(centered) { fontSize = 16 };
+
+            const float centerX = 640, nodeY = 84, spacing = 110, diameter = 16;
+            int stageCount = game.BossSplits.Length;
+            // Choosing begins after the guardian falls, so the current stage is cleared too.
+            int clearedCount = game.StageIndex + 1;
+            float firstX = centerX - (stageCount - 1) * spacing * 0.5f;
+            var muted = new Color(HudIvory.r, HudIvory.g, HudIvory.b, 0.42f);
+            for (int i = 0; i < stageCount; i++)
+            {
+                float x = firstX + i * spacing;
+                bool cleared = i < clearedCount;
+                if (i + 1 < stageCount)
+                    Fill(new Rect(x + diameter * 0.5f, nodeY - 1, spacing - diameter, 2),
+                        i + 1 < clearedCount ? HudIvory : muted);
+
+                var node = new Rect(x - diameter * 0.5f, nodeY - diameter * 0.5f, diameter, diameter);
+                GUI.DrawTexture(node, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0,
+                    cleared ? HudIvory : muted, cleared ? 0 : 2, diameter * 0.5f);
+
+                choiceProgressText.normal.textColor = cleared ? HudIvory : muted;
+                Label(x - spacing * 0.5f, nodeY + 14, spacing, 26, "시련 " + (i + 1), choiceProgressText);
+            }
+        }
+
         void DrawFirstChoiceWarning()
         {
             if (Event.current.type != EventType.Repaint) return;
@@ -61,10 +93,10 @@ namespace KarmaPrototype
                 choiceWarningText.normal.textColor = choiceWarningColor;
                 choiceWarningIcon = Resources.Load<Texture2D>("UI/CautionIcon");
             }
-            const string warning = "첫 고유화 선택에 따라 다음 수호자의 유형이 달라집니다.";
+            const string warning = "첫 고유화 선택에 따라 이후 수호자의 유형이 결정됩니다.";
             promptContent.text = warning;
             float width = Mathf.Min(800, choiceWarningText.CalcSize(promptContent).x + 63);
-            var banner = new Rect(640 - width * 0.5f, 209, width, 43);
+            var banner = new Rect(640 - width * 0.5f, 221, width, 43);
             Fill(banner, new Color(0.103f, 0.047f, 0.066f, 0.94f));
             if (choiceWarningIcon != null)
             {

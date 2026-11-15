@@ -63,6 +63,10 @@ namespace KarmaPrototype
                     body.gravityScale = airSlashHoverLeft > 0 ? 0 : game.Config.gravityScale;
                 }
                 else body.gravityScale = game.Config.gravityScale;
+                bool jumpQueued = jumpBufferedUntil > Time.time && Time.time - lastGrounded < 0.1f;
+                // Keep the last movement direction through takeoff and landing.
+                if (game.DialogueLocksPlayerInput && grounded && body.linearVelocity.y <= 0.1f && !jumpQueued)
+                    move = 0;
                 float horizontal = move * game.Config.moveSpeed;
                 if (airRecoveryLeft > 0)
                 {
@@ -72,7 +76,7 @@ namespace KarmaPrototype
                     airRecoveryLeft = Mathf.Max(0, airRecoveryLeft - Time.fixedDeltaTime);
                 }
                 body.linearVelocity = new Vector2(horizontal, body.linearVelocity.y);
-                if (jumpBufferedUntil > Time.time && Time.time - lastGrounded < 0.1f)
+                if (jumpQueued)
                 {
                     body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.jumpSpeed);
                     jumpBufferedUntil = 0;
@@ -82,6 +86,8 @@ namespace KarmaPrototype
             if (Position.y < KarmaSpace.Units(-8)) game.PlayerDied();
         }
         public bool ReadyForPersonalization => Grounded() && Mathf.Abs(body.linearVelocity.y) < 0.1f;
+        internal bool ReadyToAdvanceTrainingDialogue => ReadyForPersonalization && !airSlashRunning
+            && jumpBufferedUntil <= Time.time && !animator.PlayerActionPlaying;
         public bool ReadyForDefeat => ReadyForPersonalization || Position.y < KarmaSpace.Units(-8);
         public void BeginDefeat()
         {

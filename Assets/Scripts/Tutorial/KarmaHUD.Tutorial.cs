@@ -4,7 +4,6 @@ namespace KarmaPrototype
     public sealed partial class KarmaHUD
     {
         static readonly string[] tutorialLabels = { "기본 공격", "검기 명중", "상승베기 명중", "방어 성공" };
-        static readonly string[] tutorialTrainingNames = { "기본 공격", "검기", "상승베기", "방어" };
         static readonly KarmaAction[] tutorialKeys = { KarmaAction.Attack, KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard };
         Texture2D tutorialRouteArrow;
 
@@ -29,8 +28,7 @@ namespace KarmaPrototype
                 Panel(new Rect(210, 550, 860, 140));
                 Label(235, 560, 810, 25, t.Step == KarmaTutorialStep.Complete ? tutorialLabels[t.Lesson] + " 3/3 · 수련 완료" : t.SpeechTitle, small);
                 Label(235, 588, 810, 65, t.Speech, text);
-                if (t.Step != KarmaTutorialStep.Complete)
-                    KeyPrompt(new Rect(235, 655, 810, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
+                KeyPrompt(new Rect(235, 655, 810, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
                 return;
             }
             bool outsideGate = t.Step == KarmaTutorialStep.Gate && Mathf.Abs(game.Player.Position.x - KarmaTutorialStage.FinalGate) > 5;
@@ -53,10 +51,8 @@ namespace KarmaPrototype
             else if (t.Step == KarmaTutorialStep.Travel && t.Lesson < 0)
                 KeyPrompt(objective, 18, true, KarmaAction.Left, " / ", KarmaAction.Right, "  이동   ·   ",
                     KarmaAction.Down, "  앉기   ·   ", KarmaAction.Jump, "  점프");
-            else if (t.Step == KarmaTutorialStep.Complete && t.Lesson < 3)
-                GUI.Label(objective, tutorialTrainingNames[t.Lesson] + " 훈련을 마쳤다. 다음 훈련을 시작하자.", centered);
             else if (t.Step == KarmaTutorialStep.Travel)
-                GUI.Label(objective, tutorialTrainingNames[t.Lesson] + " 훈련을 마쳤다.", centered);
+                GUI.Label(objective, "다음 훈련 장소로 이동하세요.", centered);
             else
             {
                 string detail = t.Lesson == 1 ? "  ·  표적에서 거리를 두고 발사"

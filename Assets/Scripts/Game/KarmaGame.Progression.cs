@@ -49,7 +49,7 @@ namespace KarmaPrototype
             var spawn = KarmaStage.Spawn;
             if (OpeningArrivalSpeech != null) spawn.y = KarmaSpace.PlayerHalfHeight;
             Player.ResetForRoom(spawn, fullHealth);
-            // Arrival dialogue freezes physics before the new floor gets a simulation step.
+            // Make the new floor available to the initial grounding query.
             if (OpeningArrivalSpeech != null) Physics2D.SyncTransforms();
             var enemyObject = new GameObject(StageIndex == 3 ? "마지막 수호자" : "수호자");
             enemyObject.transform.SetParent(World, false);
@@ -64,6 +64,7 @@ namespace KarmaPrototype
             BossSplits[StageIndex] = enemy.FightSeconds;
             Enemies.Remove(enemy);
             if (Enemies.Count != 0) return;
+            OpeningArrivalSpeech = null;
             fallenGuardian = fallenArt;
             fallenGuardianPosition = enemy.transform.position;
             fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
@@ -223,7 +224,7 @@ namespace KarmaPrototype
         {
             CancelEnding();
             if (Phase != RunPhase.Title) KarmaAudio.Play(KarmaSfxId.UiCancel);
-            Tutorial = null; OpeningArrivalFade = 0;
+            Tutorial = null; OpeningArrivalFade = 0; OpeningArrivalSpeech = null;
             ResetHitFeedback();
             Paused = false; Time.timeScale = 1; ClearProjectiles();
             if (runRoot != null) { runRoot.gameObject.SetActive(false); Destroy(runRoot.gameObject); }

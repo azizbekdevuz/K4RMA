@@ -53,6 +53,7 @@ namespace KarmaPrototype
             playerClips[name] = clip; playerSequences[name] = sequence;
         }
         float playerExplicitRecoveryEnd;
+        internal bool PlayerActionPlaying => Time.time < actionUntil || Time.time < poseUntil;
         internal bool UsesNativePlayer24 => nativePlayer24;
         internal void PlayPlayerAction(string nativePose, string legacyPose, float seconds)
         {

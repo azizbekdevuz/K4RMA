@@ -17,7 +17,7 @@ namespace KarmaPrototype
         static readonly Color keycapPressed = new Color(1.03f, 0.94f, 0.79f);
         readonly GUIContent promptContent = new GUIContent();
         Texture2D keycapAtlas;
-        GUIStyle keycapLegend, promptText, shortcutButton;
+        [System.NonSerialized] GUIStyle keycapLegend, promptText, shortcutButton, settingsShortcutButton;
         bool keycapAtlasLoaded;
         readonly TextGenerator keycapText = new TextGenerator();
         readonly List<UIVertex> keycapVertices = new List<UIVertex>();
@@ -122,7 +122,7 @@ namespace KarmaPrototype
                 rect.y += rect.height * 0.38f;
                 rect.height *= 0.62f;
             }
-            DrawKeycapLegend(rect, cap.Legend, legendTint * keycapInk);
+            DrawKeycapLegend(rect, cap.Legend, legendTint * (game.SettingsOpen ? Color.white : keycapInk));
             GUI.color = color;
         }
 
@@ -185,13 +185,10 @@ namespace KarmaPrototype
         bool ShortcutButton(Rect bounds, string label, KarmaAction action)
         {
             const int shortcutColumn = 86;
-            shortcutButton ??= new GUIStyle(menuButton)
-            {
-                clipping = TextClipping.Clip,
-                // Reserve equal side gutters so the text stays centered and clears the keycap.
-                padding = new RectOffset(shortcutColumn, shortcutColumn, 0, 0)
-            };
-            bool clicked = GUI.Button(bounds, label, shortcutButton);
+            GUIStyle style = game.SettingsOpen
+                ? (settingsShortcutButton ??= CreateShortcutStyle(settingsButton, shortcutColumn))
+                : (shortcutButton ??= CreateShortcutStyle(menuButton, shortcutColumn));
+            bool clicked = GUI.Button(bounds, label, style);
             if (Event.current.type == EventType.Repaint)
             {
                 KeycapStyles();
@@ -201,6 +198,16 @@ namespace KarmaPrototype
                 DrawKeycap(new Rect(center - size * 0.5f, size), cap, KarmaInput.Held(action));
             }
             return clicked;
+        }
+
+        static GUIStyle CreateShortcutStyle(GUIStyle source, int shortcutColumn)
+        {
+            return new GUIStyle(source)
+            {
+                clipping = TextClipping.Clip,
+                // Reserve equal side gutters so the text stays centered and clears the keycap.
+                padding = new RectOffset(shortcutColumn, shortcutColumn, 0, 0)
+            };
         }
 
         bool KeyBindingButton(Rect bounds, KarmaAction action)
@@ -222,6 +229,7 @@ namespace KarmaPrototype
             if (Event.current.type != EventType.Repaint) return;
             KeycapStyles();
             promptText.fontSize = fontSize;
+            promptText.normal.textColor = game.SettingsOpen ? Color.white : text.normal.textColor;
             float height = Mathf.Min(bounds.height - 2, fontSize + 11);
             float x = bounds.x;
             if (center)

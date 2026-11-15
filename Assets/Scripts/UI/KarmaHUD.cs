@@ -48,8 +48,10 @@ namespace KarmaPrototype
             menuButton = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleCenter };
             menuButton.normal.textColor = new Color(0.92f, 0.9f, 0.82f);
             menuButton.hover.textColor = Color.white;
-            centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
+            menuButton.active.textColor = Color.white;
+            menuButton.focused.textColor = menuButton.normal.textColor;
             foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
+            centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
             foreach (var s in new[] { title, heading, text, small, menuButton, centered }) if (font != null) s.font = font;
         }
         void OnGUI()
@@ -91,7 +93,7 @@ namespace KarmaPrototype
                         break;
                 }
             }
-            if (!string.IsNullOrEmpty(game.OpeningArrivalSpeech) && game.OpeningArrivalFade < 0.45f)
+            if (!game.Paused && !string.IsNullOrEmpty(game.OpeningArrivalSpeech) && game.OpeningArrivalFade < 0.45f)
             {
                 Panel(new Rect(230, 550, 820, 140));
                 Label(255, 565, 770, 75, game.OpeningArrivalSpeech, text);

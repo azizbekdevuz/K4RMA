@@ -238,7 +238,12 @@ public static class KarmaTutorialChecks
                     }
                 }
             }
-            await Wait(1200); Check(tutorial.Step == (lesson < 3 ? KarmaTutorialStep.Lesson : KarmaTutorialStep.FinalDialogue), "Next lesson stays in the same room; final lesson opens travel");
+            await Wait(1200);
+            Check(tutorial.Step == KarmaTutorialStep.Complete && game.CanMove && game.AllowsPlayerActions,
+                "Lesson completion waits for Space without freezing the simulation");
+            await Press(KarmaAction.DialogueConfirm);
+            await Wait();
+            Check(tutorial.Step == (lesson < 3 ? KarmaTutorialStep.Lesson : KarmaTutorialStep.FinalDialogue), "Next lesson stays in the same room; final lesson opens travel");
             Check(!game.World.GetComponentsInChildren<KarmaTutorialGate>()[lesson].GetComponent<BoxCollider2D>().enabled, "Completed training opens its barrier " + lesson);
             Check(string.IsNullOrEmpty(tutorial.BlockedMessage), "Completion clears blocked warning " + lesson);
         }

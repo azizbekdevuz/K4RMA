@@ -15,7 +15,7 @@ namespace KarmaPrototype
             public KarmaSwordScarPlanner.Plan CurrentPlan { get; private set; }
             public bool Running { get { return groundRoot != null && groundRoot.gameObject.activeSelf; } }
             // Keep the original individual 2.1875-wide contacts and artwork fit.
-            Vector2 ScarSize { get { return new Vector2(KarmaStage.ArenaWidth / KarmaSwordScarPlanner.ScarCount,
+            Vector2 ScarSize { get { return new Vector2(KarmaStage.ArenaWidth / 16f,
                 sword.SwordSize(EnemyAttack.SW02).y * 0.92f); } }
 
             bool ClearEscapePath(float targetX)
@@ -69,32 +69,30 @@ namespace KarmaPrototype
                 if (owner.game.World != null) owner.game.World.GetComponent<KarmaSwordVfxPool>()?.Cancel(groundRoot);
                 groundRoot.gameObject.SetActive(false); Destroy(groundRoot.gameObject); groundRoot = null;
             }
-            Transform GroupRoot(int round, int group)
+            Transform ReleaseRoot(int round)
             {
-                var node = new GameObject("SW03 group " + group + " / round " + (round + 1)).transform;
+                var node = new GameObject("SW03 synchronized release / round " + (round + 1)).transform;
                 node.SetParent(roundRoot, false); return node;
             }
-            KarmaSwordScarRise[] MarkGroup(Transform root, int group, Vector2 size, float warning)
+            KarmaSwordScarRise[] MarkRound(Transform root, Vector2 size, float warning)
             {
-                var marks = new KarmaSwordScarRise[KarmaSwordScarPlanner.GroupCount];
-                int mark = 0;
+                var marks = new KarmaSwordScarRise[CurrentPlan.Positions.Length];
                 for (int i = 0; i < CurrentPlan.Positions.Length; i++)
-                    if (CurrentPlan.Groups[i] == group)
-                        marks[mark++] = KarmaSwordScarRise.Warning(owner.game, owner, root,
+                    marks[i] = KarmaSwordScarRise.Warning(owner.game, owner, root,
                             CurrentPlan.Positions[i], size.x, warning, "SW03 sword-cut warning / site " + i);
                 return marks;
             }
-            void ReleaseGroup(Transform root, int group, Vector2 size, float active, KarmaAttackContact[] contacts)
+            void ReleaseRound(Transform root, Vector2 size, float active, KarmaAttackContact[] contacts)
             {
+                var clock = new KarmaSwordScarClock(Time.frameCount);
                 for (int i = 0; i < CurrentPlan.Positions.Length; i++)
                 {
-                    if (CurrentPlan.Groups[i] != group) continue;
                     float x = CurrentPlan.Positions[i];
                     var shot = owner.Attack(new Vector2(x, size.y / 2), Vector2.zero, size, active,
-                        contact: contacts[i / 2], pattern: EnemyAttack.SW03, parent: root);
+                        contact: contacts[CurrentPlan.ContactIndices[i]], pattern: EnemyAttack.SW03, parent: root);
                     KarmaSwordAttackPolish.Core(shot);
                     shot.Visual.gameObject.name = "SW03 rising blade / site " + i;
-                    shot.Visual.gameObject.AddComponent<KarmaSwordScarRise>().Initialize(owner.game, owner, shot, size, active, i % 2 != 0);
+                    shot.Visual.gameObject.AddComponent<KarmaSwordScarRise>().Initialize(owner.game, owner, shot, size, active, i % 2 != 0, clock);
                     KarmaSwordVfxPool.For(owner.game).Sparks(owner, new Vector2(x, 0.35f), Vector2.up, 3, 18, root);
                 }
             }
@@ -110,6 +108,9 @@ namespace KarmaPrototype
                 float previousSafe = float.NaN;
                 for (int round = 0; round < KarmaSwordScarPlanner.Rounds && owner.Active; round++)
                 {
+                    // The previous round lifetime AND rest have elapsed. Remove
+                    // its scope before solving a new route; no old hazard can
+                    // block the next warning's reaction/movement interval.
                     ClearRound();
                     roundRoot = new GameObject("SW03 ground round " + (round + 1)).transform;
                     roundRoot.SetParent(groundRoot, false);
@@ -122,43 +123,39 @@ namespace KarmaPrototype
                     if (!KarmaSwordScarPlanner.TryPlan(random, KarmaStage.ArenaLeft, KarmaStage.ArenaRight, size.x,
                         KarmaSwordScarRise.VisualSize(size).x, body.center.x, body.extents.x, velocity,
                         Mathf.Max(0, owner.game.Config.moveSpeed) * 0.8f, warning, previousSafe, ClearEscapePath, out var plan, previousPlacement))
-                    { yield return owner.Wait(RecoverySeconds(0.8f)); yield break; }
+                    {
+                        Debug.LogWarning("SW03 cancelled before telegraph: current player state has no reachable safe corridor.");
+                        yield return owner.Wait(RecoverySeconds(0.8f)); yield break;
+                    }
                     CurrentPlan = plan; previousSafe = plan.SafeX;
                     previousPlacement = (float[])plan.Positions.Clone();
                     var chargeCue = KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, owner.Position, warning, true);
                     chargeCue.transform.SetParent(roundRoot, true);
-                    var roots = new[] { GroupRoot(round, 0), GroupRoot(round, 1) };
-                    var warnings = new Transform[2];
-                    var marks = new KarmaSwordScarRise[2][];
-                    var releaseAt = new[] { float.PositiveInfinity, float.PositiveInfinity };
-                    var contacts = new KarmaAttackContact[KarmaSwordScarPlanner.GroupCount];
+                    var releaseRoot = ReleaseRoot(round);
+                    float releaseAt = float.PositiveInfinity;
+                    var contacts = new KarmaAttackContact[plan.ContactCount];
                     var feedbackShown = new bool[contacts.Length];
-                    // Keep shared contact consumption for each adjacent pair.
-                    // Each pair contributes one physical sword to each group.
+                    // One accepted encounter per spatial cluster, including
+                    // overlapping blades. Other clusters keep independent ledgers.
                     for (int i = 0; i < contacts.Length; i++) contacts[i] = new KarmaAttackContact();
-                    warnings[0] = new GameObject("SW03 warning group 0").transform;
-                    warnings[0].SetParent(roots[0], false);
-                    marks[0] = MarkGroup(warnings[0], 0, size, warning);
-                    // Both locked layouts are visible before the player reacts.
-                    // The later group has a longer countdown, not a late surprise.
-                    warnings[1] = new GameObject("SW03 warning group 1").transform;
-                    warnings[1].SetParent(roots[1], false);
-                    marks[1] = MarkGroup(warnings[1], 1, size, warning + KarmaSwordScarPlanner.StaggerSeconds);
+                    var warningRoot = new GameObject("SW03 round warnings").transform;
+                    warningRoot.SetParent(releaseRoot, false);
+                    // One synchronous warning pass, one countdown, one release.
+                    var marks = MarkRound(warningRoot, size, warning);
                     float elapsed = 0;
                     bool slammed = false;
                     float rest = round + 1 < KarmaSwordScarPlanner.Rounds ? Mathf.Clamp(Settings.scarRoundGap, 0.3f, 0.8f) : 0.24f;
-                    while (owner.Active && elapsed < releaseAt[1] + active + rest)
+                    while (owner.Active && elapsed < releaseAt + active + rest)
                     {
                         yield return null;
                         if (!owner.Active) yield break;
                         if (owner.game.Paused) continue;
                         // Before any release, a player stun restarts the warning
                         // clock as before. Already-visible locations stay locked.
-                        if (owner.game.Player.Stunned && float.IsPositiveInfinity(releaseAt[0]))
+                        if (owner.game.Player.Stunned && float.IsPositiveInfinity(releaseAt))
                         {
                             elapsed = 0;
-                            foreach (var groupMarks in marks)
-                                if (groupMarks != null) foreach (var mark in groupMarks) mark.SetWarningProgress(0);
+                            foreach (var mark in marks) mark.SetWarningProgress(0);
                             continue;
                         }
                         elapsed += Time.deltaTime;
@@ -172,27 +169,23 @@ namespace KarmaPrototype
                                 swing.AddComponent<KarmaSwordGroundSlam>().Initialize(owner.game, owner);
                             }
                         }
-                        for (int group = 0; group < 2; group++)
+                        if (float.IsPositiveInfinity(releaseAt))
                         {
-                            if (marks[group] == null || !float.IsPositiveInfinity(releaseAt[group])) continue;
-                            float groupWarning = warning + group * KarmaSwordScarPlanner.StaggerSeconds;
-                            float progress = Mathf.Clamp01(elapsed / groupWarning);
-                            foreach (var mark in marks[group]) mark.SetWarningProgress(progress);
-                            // A frame drop can lengthen, never shorten, a warning.
-                            if (elapsed < groupWarning) continue;
-                            warnings[group].gameObject.SetActive(false);
-                            Destroy(warnings[group].gameObject);
-                            releaseAt[group] = elapsed;
-                            ReleaseGroup(roots[group], group, size, active, contacts);
-                            if (group == 0)
-                            {
-                                KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_Release_v6",
-                                    owner.Position + new Vector2(owner.direction * 1.1f, -0.8f),
-                                    new Vector2(0.55f, 4.5f), 0.12f, scope: roundRoot);
-                                KarmaAudio.StopSlot("sw-bed");
-                                KarmaAudio.Play(KarmaSfxId.SwElectricDischarge);
-                            }
-                            if (group == 1 && round == KarmaSwordScarPlanner.Rounds - 1)
+                            float progress = Mathf.Clamp01(elapsed / warning);
+                            foreach (var mark in marks) mark.SetWarningProgress(progress);
+                            // Frame drops may extend the common warning, never shorten it.
+                            if (elapsed < warning) continue;
+                            warningRoot.gameObject.SetActive(false);
+                            Destroy(warningRoot.gameObject);
+                            releaseAt = elapsed;
+                            // No yields or delayed starts inside this whole-round pass.
+                            ReleaseRound(releaseRoot, size, active, contacts);
+                            KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_Release_v6",
+                                owner.Position + new Vector2(owner.direction * 1.1f, -0.8f),
+                                new Vector2(0.55f, 4.5f), 0.12f, scope: roundRoot);
+                            KarmaAudio.StopSlot("sw-bed");
+                            KarmaAudio.Play(KarmaSfxId.SwElectricDischarge);
+                            if (round == KarmaSwordScarPlanner.Rounds - 1)
                                 KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_GuardRing_v6",
                                     owner.Position, Vector2.one * 3.5f, 0.16f, scope: roundRoot);
                         }

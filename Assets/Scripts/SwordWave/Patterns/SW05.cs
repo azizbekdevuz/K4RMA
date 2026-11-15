@@ -88,7 +88,6 @@ namespace KarmaPrototype
                 if (ThresholdPending) thresholdsUsed++;
                 owner.state = ActionState.Telegraph;
                 owner.animator.PlayWavePhase("Windup");
-                KarmaSW05VFX.Warning(owner.effectsRoot, owner.game, owner.Position, KarmaSpace.Units(new Vector2(2, 2)));
                 yield return owner.Wait(0.8f); owner.ClearPatternObjects();
                 Vector2 ground = new Vector2(KarmaStage.ArenaCenter, KarmaSpace.GuardianGroundY);
                 owner.animator.PlayWavePhase("Rising");

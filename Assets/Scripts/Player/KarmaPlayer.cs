@@ -73,13 +73,14 @@ namespace KarmaPrototype
             remnantHalo.enabled = techniques.CounterReady(Time.time);
             art.gameObject.SetActive(game.Phase == RunPhase.Transition || game.Phase == RunPhase.GuardianFallen
                 || game.Phase == RunPhase.PlayerFallen || game.Phase == RunPhase.Defeat
-                || animator.ParrySuccessVisible
+                || animator.ParrySuccessVisible || animator.DamageFlashVisible
                 || Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
             bool airborne = Airborne;
             Crouching = game.CanMove && !game.DialogueLocksPlayerInput && !ControlLocked && !airborne && KarmaInput.Vertical < 0
                 && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;
             if (!PresentControlState(!airborne)) animator.Pose(game.Phase == RunPhase.GuardianFallen ? ceremonyMove : move,
                 airborne, body.linearVelocity.y, Crouching);
+            animator.ApplyDamageFlash();
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; return; }
             if (ControlLocked) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; return; }
             if (game.DialogueLocksPlayerInput) return;

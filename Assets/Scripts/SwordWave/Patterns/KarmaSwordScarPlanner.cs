@@ -1,242 +1,238 @@
 using System;
+using System.Collections.Generic;
 
 namespace KarmaPrototype
 {
-    // SW03 only. Validate the union of both full-sized groups. A walking
-    // escape completed before the first release survives their overlap too.
+    // SW03 release clock, independent of component update order. Frame/delta
+    // inputs keep pause and same-frame sampling testable without an Editor.
+    public sealed class KarmaSwordScarClock
+    {
+        int frame;
+        float elapsed;
+        public KarmaSwordScarClock(int creationFrame) { frame = creationFrame; }
+        public float Sample(int currentFrame, float delta, bool paused)
+        {
+            if (frame != currentFrame)
+            {
+                frame = currentFrame;
+                if (!paused) elapsed += delta;
+            }
+            return elapsed;
+        }
+    }
+
+    // SW03 only: reserve safe corridors, then fill the remaining danger regions.
     internal static class KarmaSwordScarPlanner
     {
-        public const int ScarCount = 16, GroupCount = 8, Rounds = 5;
-        public const float Clearance = 0.55f, ReactionSeconds = 0.28f;
-        public const float StaggerSeconds = 0.25f, MinimumWarning = 0.8f;
-        public const int MaxAttempts = 48;
-        public const float MinimumLayoutShift = 1.1f;
-        // One isolated, consecutive cast sequence per process/domain. Battle
-        // restarts/identical owner positions cannot reset it; Unity RNG is untouched.
+        public const int MaxSwords = 26, Rounds = 5, MaxAttempts = 48;
+        public const float Clearance = 0.25f, ReactionSeconds = 0.28f;
+        public const float MinimumWarning = 0.8f;
+        public const float MinimumLayoutShift = 0.75f;
+        static readonly int[] ClusterChoices = { 1, 3, 4 };
+        // v7 alpha >=128, bottom-up rows 350..1300: opaque blade body <=264px
+        // of the 704px fit. Crossguards/glow may overlap, blade bodies stay apart.
+        public static float InternalSpacing(float visualWidth) { return visualWidth * (264f / 704f) + 0.15f; }
         static int seedSequence = Guid.NewGuid().GetHashCode();
-        public static int NextSeed()
+        public static int NextSeed() { return System.Threading.Interlocked.Increment(ref seedSequence) & 0x3fffffff; }
+        public struct Corridor
         {
-            // Positive 30-bit seeds avoid System.Random's +/-seed aliases and
-            // int.MinValue/int.MaxValue alias at the signed counter boundary.
-            return System.Threading.Interlocked.Increment(ref seedSequence) & 0x3fffffff;
+            public float Left, Right, CenterMin, CenterMax;
+            public float Width { get { return Right - Left; } }
+            public float Center { get { return (Left + Right) / 2; } }
         }
-
         public sealed class Plan
         {
-            public readonly float[] Positions;
-            public readonly int[] Groups;
-            public readonly float SafeX;
-            public readonly bool Fallback;
-            public readonly int Strategy;
+            public float[] Positions;
+            public int[] ClusterSizes, SwordClusters, ContactIndices;
+            public Corridor[] Corridors;
+            public float SafeX, SafeClearance;
+            public int SafeOptions;
+            public bool Fallback;
             public int CandidatesTried, SpacingCandidates, UnsafeCandidates, SimilarCandidates;
-            public Plan(float[] positions, int[] groups, float safeX, bool fallback, int strategy)
-            { Positions = positions; Groups = groups; SafeX = safeX; Fallback = fallback; Strategy = strategy; }
+            public int ContactCount { get { return ClusterSizes.Length; } }
+
         }
-
-        static float Clamp(float value, float low, float high)
-        { return Math.Max(low, Math.Min(high, value)); }
-
+        struct Region { public float Left, Right; public Region(float left, float right) { Left = left; Right = right; } }
+        static float Clamp(float value, float low, float high) { return Math.Max(low, Math.Min(high, value)); }
+        static float Range(Random random, float low, float high) { return low + (high - low) * (float)random.NextDouble(); }
+        static float ClearLimit(float from, float target, Func<float, bool> clear)
+        {
+            if (clear == null || clear(target)) return target;
+            float low = 0, high = 1;
+            for (int i = 0; i < 12; i++)
+            { float t = (low + high) / 2; if (clear(from + (target - from) * t)) low = t; else high = t; }
+            return from + (target - from) * low;
+        }
         public static bool TryPlan(Random random, float left, float right, float width,
             float visualWidth, float playerX, float half, float velocity, float speed, float warning,
             float previousSafe, Func<float, bool> clearPath, out Plan plan, float[] previousPositions = null)
         {
             plan = null;
-            if (random == null || right <= left || width <= 0 || half < 0 || speed < 0
+            if (random == null || right <= left || width <= 0 || visualWidth <= 0 || half < 0 || speed < 0
                 || warning < MinimumWarning || float.IsNaN(playerX) || float.IsNaN(velocity)) return false;
-            float inset = half + Clearance;
-            if (playerX < left + half || playerX > right - half || inset * 2 >= right - left) return false;
+            float inset = half + Clearance, corridorWidth = Math.Max(4 * half, 2 * inset + 0.4f);
+            if (playerX < left + half || playerX > right - half || corridorWidth >= right - left
+                || clearPath != null && !clearPath(playerX)) return false;
             float reach = speed * Math.Max(0, warning - ReactionSeconds);
-            // A moving player may keep travelling during their reaction delay.
-            // Require a route from that position as well as an immediate stop.
-            float reactionX = Clamp(playerX + Clamp(velocity * ReactionSeconds, -6, 6), left + inset, right - inset);
-            if (clearPath != null && !clearPath(reactionX))
+            float reaction = ClearLimit(playerX, Clamp(playerX + Clamp(velocity * ReactionSeconds, -6, 6), left + half, right - half), clearPath);
+            float low = Math.Max(left + inset, Math.Max(playerX, reaction) - reach);
+            float high = Math.Min(right - inset, Math.Min(playerX, reaction) + reach);
+            low = Math.Max(low, ClearLimit(playerX, low, clearPath));
+            high = Math.Min(high, ClearLimit(playerX, high, clearPath));
+            if (low > high) return false;
+            float spacing = InternalSpacing(visualWidth), gap = Math.Max(2 * half + 0.1f, 0.4f);
+            var cost = Costs(width, spacing, gap);
+            Plan best = null; float bestScore = float.NegativeInfinity;
+            int rejected = 0, unsafeRoutes = 0, similar = 0, tried = 0;
+            // Final attempt: a fresh single corridor at CURRENT reachable space.
+            // No stale-layout replay, reduced safety, or unbounded regeneration.
+            for (int attempt = 0; attempt <= MaxAttempts; attempt++)
             {
-                // Resolve the wall-limited part of the same horizontal sweep.
-                // Eight bounded probes never claim a route through an obstacle.
-                float low = 0, high = 1;
-                for (int i = 0; i < 8; i++)
+                bool fallback = attempt == MaxAttempts;
+                if (fallback && best != null) break;
+                tried++;
+                float firstWidth = fallback ? corridorWidth : corridorWidth + Range(random, 0, 0.8f);
+                float centerLow = Math.Max(left + firstWidth / 2, low - firstWidth / 2 + inset);
+                float centerHigh = Math.Min(right - firstWidth / 2, high + firstWidth / 2 - inset);
+                if (centerLow > centerHigh) { unsafeRoutes++; continue; }
+                float first = fallback ? Clamp((low + high) / 2, centerLow, centerHigh) : Range(random, centerLow, centerHigh);
+                var reserved = new List<Region> { new Region(first - firstWidth / 2, first + firstWidth / 2) };
+                if (!fallback)
                 {
-                    float fraction = (low + high) / 2;
-                    if (clearPath(playerX + (reactionX - playerX) * fraction)) low = fraction; else high = fraction;
+                    float secondWidth = corridorWidth + Range(random, 0, 0.8f);
+                    float second = Range(random, left + secondWidth / 2, right - secondWidth / 2);
+                    if (Math.Abs(second - first) < (firstWidth + secondWidth) / 2 + width)
+                    { rejected++; continue; }
+                    reserved.Add(new Region(second - secondWidth / 2, second + secondWidth / 2));
                 }
-                reactionX = playerX + (reactionX - playerX) * low;
+                reserved.Sort((a, b) => a.Left.CompareTo(b.Left));
+                var regions = new List<Region>(); float cursor = left;
+                foreach (var corridor in reserved) { regions.Add(new Region(cursor, corridor.Left)); cursor = corridor.Right; }
+                regions.Add(new Region(cursor, right));
+                var candidate = Fill(random, regions, cost, width, spacing, gap);
+                if (candidate == null) { rejected++; continue; }
+                candidate.Corridors = FreeSpace(candidate.Positions, left, right, width, half, corridorWidth);
+                if (candidate.Corridors.Length < reserved.Count || !SafeRoute(candidate, low, high, half, playerX, previousSafe, clearPath))
+                { unsafeRoutes++; continue; }
+                float shift = Difference(candidate.Positions, previousPositions);
+                if (shift < MinimumLayoutShift) similar++;
+                float score = candidate.Positions.Length * 100 + Math.Min(3, shift)
+                    + Math.Min(2, candidate.SafeOptions) * 0.4f + Range(random, 0, 1)
+                    + (float.IsNaN(previousSafe) ? 0 : Math.Min(4, Math.Abs(candidate.SafeX - previousSafe)) * 0.25f);
+                if (score <= bestScore) continue;
+                candidate.Fallback = fallback; best = candidate; bestScore = score;
             }
-            // Even a wrong-way body cannot straddle two independent contacts.
-            float spacing = Math.Max(width + Math.Max(0.75f, 2 * half + 0.1f), visualWidth + 0.15f);
-            if ((ScarCount - 1) * spacing + width > right - left) return false;
-            // Cap prediction in both time and distance, including during dashes.
-            float drift = Clamp(velocity * 0.45f, -6, 6);
-            float predicted = Clamp(playerX + drift, left + width / 2, right - width / 2);
-            int roll = random.Next(100), strategy = roll < 35 ? 0 : roll < 70 ? 1 : 2;
-            float best = float.NegativeInfinity;
-            int spacingCandidates = 0, unsafeCandidates = 0, similarCandidates = 0;
-            float safeLow = Math.Max(left + inset, Math.Max(playerX, reactionX) - reach);
-            float safeHigh = Math.Min(right - inset, Math.Min(playerX, reactionX) + reach);
-            for (int attempt = 0; attempt < MaxAttempts; attempt++)
+            if (best == null) return false;
+            best.CandidatesTried = tried; best.SpacingCandidates = rejected;
+            best.UnsafeCandidates = unsafeRoutes; best.SimilarCandidates = similar;
+            plan = best; return true;
+        }
+        // Minimum span for every exact sword count using only 1/3/4 clusters.
+        static float[] Costs(float width, float spacing, float gap)
+        {
+            var cost = new float[MaxSwords + 1];
+            for (int n = 1; n <= MaxSwords; n++)
             {
-                // Randomize the *space between* swords, including both arena
-                // margins. No cells or quarter quotas: sparse weights alternate
-                // tight, non-overlapping runs with larger readable escape gaps.
-                var positions = safeHigh < safeLow ? null : Scatter(random, left, right, width, spacing,
-                    safeLow + (safeHigh - safeLow) * (float)random.NextDouble(), inset);
-                if (positions == null || !Spaced(positions, left, right, width, spacing))
-                { spacingCandidates++; continue; }
-                if (!Different(positions, previousPositions, left, right))
-                { similarCandidates++; continue; }
-                if (!TrySafePoint(positions, left, right, width, playerX, reactionX, inset, reach,
-                    previousSafe, clearPath, out float safe)) { unsafeCandidates++; continue; }
-                int target = 0;
-                for (int i = 1; i < positions.Length; i++)
-                    if (Math.Abs(positions[i] - predicted) < Math.Abs(positions[target] - predicted)) target = i;
-                var groups = Groups(random);
-                // Each adjacent pair contributes one sword to each group.
-                // Escape pressure swaps only within a pair, preserving contact
-                // sharing without fixing the count in any spatial quarter.
-                if (strategy == 2 && groups[target] == 0)
-                { groups[target] = 1; groups[target ^ 1] = 0; }
-                float nearest = float.PositiveInfinity;
-                for (int i = 0; i < positions.Length; i++)
-                    if (groups[i] == (strategy == 2 ? 1 : 0)) nearest = Math.Min(nearest, Math.Abs(positions[i] - predicted));
-                float score = (strategy == 0 ? 0 : 3 - nearest)
-                    + Math.Min(2, Math.Abs(safe - playerX))
-                    + (float.IsNaN(previousSafe) ? 0 : Math.Min(2, Math.Abs(safe - previousSafe)));
-                if (score <= best) continue;
-                best = score; plan = new Plan(positions, groups, safe, false, strategy);
+                cost[n] = float.PositiveInfinity;
+                foreach (int size in ClusterChoices) if (size <= n)
+                    cost[n] = Math.Min(cost[n], width + (size - 1) * spacing + (n == size ? 0 : gap + cost[n - size]));
             }
-            if (plan != null)
+            return cost;
+        }
+        static Plan Fill(Random random, List<Region> regions, float[] cost, float width, float spacing, float gap)
+        {
+            var capacities = new int[regions.Count]; int total = 0;
+            for (int r = 0; r < regions.Count; r++)
             {
-                Diagnostics(plan, spacingCandidates, unsafeCandidates, similarCandidates);
-                return true;
+                for (int n = 1; n <= MaxSwords; n++) if (cost[n] <= regions[r].Right - regions[r].Left) capacities[r] = n;
+                total += capacities[r];
             }
-            // Bounded deterministic fallback: reserve the whole body at a
-            // reachable point, then pack sixteen spaced swords on either side.
-            // Obstructed/no-space input fails safely instead of inventing a route.
-            float fallbackSafe = Clamp(playerX, Math.Max(left + inset, reactionX - reach), Math.Min(right - inset, reactionX + reach));
-            if (Math.Abs(fallbackSafe - playerX) > reach + 0.0001f
-                || clearPath != null && !clearPath(fallbackSafe)) return false;
-            float lo = left + width / 2, hi = right - width / 2;
-            float before = Math.Min(hi, fallbackSafe - inset - width / 2);
-            float after = Math.Max(lo, fallbackSafe + inset + width / 2);
-            int leftCapacity = before < lo ? 0 : (int)Math.Floor((before - lo) / spacing) + 1;
-            int rightCapacity = after > hi ? 0 : (int)Math.Floor((hi - after) / spacing) + 1;
-            int nLeft = (int)Math.Round(ScarCount * (fallbackSafe - left) / (right - left));
-            nLeft = Math.Max(Math.Max(0, ScarCount - rightCapacity), Math.Min(Math.Min(ScarCount, leftCapacity), nLeft));
-            if (nLeft > leftCapacity || ScarCount - nLeft > rightCapacity) return false;
-            var fallback = new float[ScarCount];
-            Fill(fallback, 0, nLeft, lo, before);
-            Fill(fallback, nLeft, ScarCount - nLeft, after, hi);
-            if (!Spaced(fallback, left, right, width, spacing)) return false;
-            // Never display a repeated fallback after a visible layout. A truly
-            // constrained/blocked arena must fail safely before any telegraph.
-            if (!Different(fallback, previousPositions, left, right)) return false;
-            var fallbackGroups = new int[ScarCount];
-            for (int i = 0; i < ScarCount; i++) fallbackGroups[i] = i % 2;
-            plan = new Plan(fallback, fallbackGroups, fallbackSafe, true, strategy);
-            Diagnostics(plan, spacingCandidates, unsafeCandidates, similarCandidates);
-            return true;
-        }
-
-        static void Diagnostics(Plan plan, int spacing, int unsafeRoutes, int similar)
-        {
-            plan.CandidatesTried = MaxAttempts; plan.SpacingCandidates = spacing;
-            plan.UnsafeCandidates = unsafeRoutes; plan.SimilarCandidates = similar;
-        }
-        static float[] Scatter(Random random, float left, float right, float width, float spacing, float safe, float inset)
-        {
-            float lo = left + width / 2, hi = right - width / 2;
-            float before = Math.Min(hi, safe - inset - width / 2);
-            float after = Math.Max(lo, safe + inset + width / 2);
-            int leftCapacity = before < lo ? 0 : (int)Math.Floor((before - lo) / spacing) + 1;
-            int rightCapacity = after > hi ? 0 : (int)Math.Floor((hi - after) / spacing) + 1;
-            int minimum = Math.Max(0, ScarCount - rightCapacity), maximum = Math.Min(ScarCount, leftCapacity);
-            if (minimum > maximum) return null;
-            int nLeft = random.Next(minimum, maximum + 1);
-            var positions = new float[ScarCount];
-            // Reserve a random reachable pocket before scattering. The unchanged
-            // union validator still proves an actual collision-free walking route.
-            return ScatterSegment(random, positions, 0, nLeft, lo, before, spacing)
-                && ScatterSegment(random, positions, nLeft, ScarCount - nLeft, after, hi, spacing) ? positions : null;
-        }
-        static bool ScatterSegment(Random random, float[] positions, int start, int count, float low, float high, float spacing)
-        {
-            if (count == 0) return true;
-            float slack = Math.Max(0, high - low - (count - 1) * spacing), sum = 0;
-            var gaps = new float[count + 1];
-            for (int i = 0; i < gaps.Length; i++)
+            int count = Math.Min(MaxSwords, total);
+            if (count < 2) return null;
+            int[] allocation = null; int choices = 0;
+            for (; count >= 2 && allocation == null; count--)
             {
-                float sample = (float)random.NextDouble();
-                gaps[i] = 0.02f + sample * sample * sample * sample; sum += gaps[i];
+                for (int a = 0; a <= Math.Min(count, capacities[0]); a++)
+                for (int b = 0; b <= Math.Min(count - a, capacities[1]); b++)
+                {
+                    int c = count - a - b;
+                    if (cost[a] > regions[0].Right - regions[0].Left || cost[b] > regions[1].Right - regions[1].Left
+                        || (regions.Count == 2 ? c != 0 : c > capacities[2] || cost[c] > regions[2].Right - regions[2].Left)) continue;
+                    if (random.Next(++choices) == 0) allocation = regions.Count == 2 ? new[] { a, b } : new[] { a, b, c };
+                }
             }
-            float cap = Math.Max(spacing, slack * 2 / gaps.Length);
-            for (int i = 0; i < gaps.Length; i++)
+            if (allocation == null) return null;
+            var positions = new List<float>(); var clusters = new List<int>(); var sites = new List<int>();
+            for (int r = 0; r < regions.Count; r++)
             {
-                gaps[i] *= slack / sum;
-                if (gaps[i] > cap) return false;
+                int remaining = allocation[r]; if (remaining == 0) continue;
+                float available = regions[r].Right - regions[r].Left;
+                var sizes = new List<int>();
+                while (remaining > 0)
+                {
+                    var options = new List<int>();
+                    foreach (int size in ClusterChoices) if (size <= remaining
+                        && width + (size - 1) * spacing + (remaining == size ? 0 : gap + cost[remaining - size]) <= available + 0.00001f) options.Add(size);
+                    if (options.Count == 0) return null;
+                    int chosen = options[random.Next(options.Count)]; sizes.Add(chosen); remaining -= chosen;
+                    available -= width + (chosen - 1) * spacing + (remaining == 0 ? 0 : gap);
+                }
+                float[] steps = new float[sizes.Count];
+                for (int c = 0; c < sizes.Count; c++)
+                {
+                    float extra = sizes[c] == 1 ? 0 : Range(random, 0, Math.Min(0.3f, Math.Max(0, available) / (sizes[c] - 1)));
+                    steps[c] = spacing + extra; available -= extra * (sizes[c] - 1);
+                }
+                var extras = new float[sizes.Count + 1]; float sum = 0;
+                for (int i = 0; i < extras.Length; i++) { extras[i] = Range(random, 0.1f, 1); sum += extras[i]; }
+                for (int i = 0; i < extras.Length; i++) extras[i] *= Math.Max(0, available) / sum;
+                float x = regions[r].Left + extras[0] + width / 2;
+                for (int c = 0; c < sizes.Count; c++)
+                {
+                    int cluster = clusters.Count; clusters.Add(sizes[c]);
+                    for (int i = 0; i < sizes[c]; i++) { positions.Add(x); sites.Add(cluster); if (i + 1 < sizes[c]) x += steps[c]; }
+                    x += width + gap + extras[c + 1];
+                }
             }
-            float at = low + gaps[0];
-            for (int i = 0; i < count; i++)
-            { positions[start + i] = at; at += spacing + gaps[i + 1]; }
-            return true;
+            if (clusters.Count < 2) return null;
+            return new Plan { Positions = positions.ToArray(), ClusterSizes = clusters.ToArray(),
+                SwordClusters = sites.ToArray(), ContactIndices = sites.ToArray() };
         }
-        static int Quarter(float x, float left, float right)
-        { return (int)Clamp((x - left) * 4 / (right - left), 0, 3); }
-        static bool Different(float[] positions, float[] previous, float left, float right)
+        // Merge sorted damage intervals before measuring physical free ground.
+        public static Corridor[] FreeSpace(float[] positions, float left, float right, float width, float half, float minimumWidth)
         {
-            if (previous == null || previous.Length != positions.Length) return true;
-            float shift = 0; int moved = 0;
-            var counts = new int[4];
-            for (int i = 0; i < positions.Length; i++)
-            {
-                float delta = Math.Abs(positions[i] - previous[i]); shift += delta;
-                if (delta >= 1) moved++;
-                counts[Quarter(positions[i], left, right)]++;
-                counts[Quarter(previous[i], left, right)]--;
-            }
-            bool regionalChange = false;
-            foreach (int count in counts) regionalChange |= count != 0;
-            return shift / positions.Length >= MinimumLayoutShift && moved >= ScarCount / 2 && regionalChange;
-        }
-
-        static void Fill(float[] positions, int start, int count, float low, float high)
-        {
-            for (int i = 0; i < count; i++) positions[start + i] = count == 1 ? (low + high) / 2 : low + (high - low) * i / (count - 1);
-        }
-        static int[] Groups(Random random)
-        {
-            var groups = new int[ScarCount];
-            for (int i = 0; i < ScarCount; i += 2)
-            { groups[i] = random.Next(2); groups[i + 1] = 1 - groups[i]; }
-            return groups;
-        }
-        static bool Spaced(float[] positions, float left, float right, float width, float spacing)
-        {
-            for (int i = 0; i < positions.Length; i++)
-                if (positions[i] - width / 2 < left - 0.0001f || positions[i] + width / 2 > right + 0.0001f
-                    || i > 0 && positions[i] - positions[i - 1] < spacing - 0.0001f) return false;
-            return true;
-        }
-        static bool TrySafePoint(float[] positions, float left, float right, float width, float playerX,
-            float reactionX, float inset, float reach, float previousSafe, Func<float, bool> clearPath, out float safe)
-        {
-            float cursor = left + inset, limit = right - inset, best = float.PositiveInfinity;
-            safe = playerX;
+            var result = new List<Corridor>(); float cursor = left, inset = half + Clearance;
             for (int i = 0; i <= positions.Length; i++)
             {
-                float end = i == positions.Length ? limit : Math.Min(limit, positions[i] - width / 2 - inset);
-                float reachableStart = Math.Max(cursor, Math.Max(playerX, reactionX) - reach);
-                float reachableEnd = Math.Min(end, Math.Min(playerX, reactionX) + reach);
-                if (reachableEnd >= reachableStart)
-                {
-                    float target = Clamp(playerX, reachableStart, reachableEnd), distance = Math.Abs(target - playerX);
-                    if (distance <= reach + 0.0001f && (clearPath == null || clearPath(target)))
-                    {
-                        float score = distance + (!float.IsNaN(previousSafe) && Math.Abs(target - previousSafe) < 1 ? 1.5f : 0);
-                        if (score < best) { best = score; safe = target; }
-                    }
-                }
-                if (i < positions.Length) cursor = Math.Max(cursor, positions[i] + width / 2 + inset);
+                float end = i == positions.Length ? right : Math.Min(right, positions[i] - width / 2);
+                if (end - cursor >= minimumWidth - 0.0001f && end - cursor >= 2 * inset)
+                    result.Add(new Corridor { Left = cursor, Right = end, CenterMin = cursor + inset, CenterMax = end - inset });
+                if (i < positions.Length) cursor = Math.Max(cursor, positions[i] + width / 2);
             }
-            return !float.IsPositiveInfinity(best);
+            return result.ToArray();
+        }
+        static bool SafeRoute(Plan plan, float low, float high, float half, float playerX, float previousSafe, Func<float, bool> clear)
+        {
+            float best = float.NegativeInfinity;
+            foreach (var corridor in plan.Corridors)
+            {
+                float from = Math.Max(low, corridor.CenterMin), to = Math.Min(high, corridor.CenterMax);
+                if (from > to) continue;
+                float target = Clamp(corridor.Center, from, to);
+                if (clear != null && !clear(target)) continue;
+                plan.SafeOptions++;
+                float margin = Math.Min(target - corridor.Left, corridor.Right - target) - half;
+                float score = Math.Min(1.5f, margin) - Math.Abs(target - playerX) * 0.03f
+                    + (float.IsNaN(previousSafe) ? 0 : Math.Min(3, Math.Abs(target - previousSafe)) * 0.1f);
+                if (score > best) { best = score; plan.SafeX = target; plan.SafeClearance = margin; }
+            }
+            return plan.SafeOptions > 0;
+        }
+        public static float Difference(float[] positions, float[] previous)
+        {
+            if (previous == null || previous.Length != positions.Length) return 3;
+            float sum = 0; for (int i = 0; i < positions.Length; i++) sum += Math.Abs(positions[i] - previous[i]);
+            return sum / positions.Length;
         }
     }
 }

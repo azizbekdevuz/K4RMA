@@ -224,8 +224,6 @@ namespace KarmaPrototype
             }
             public override Bounds DamageBounds(SpriteRenderer renderer)
             { return damageMotion != null ? damageMotion.GetDamageBounds(renderer) : renderer.bounds; }
-            public override void DamageFeedback(Vector2 point) { KarmaSwordHitFeedback.Show(owner.game.World, point, true); }
-            public override bool CustomHitVisual(EnemyAttack pattern) { return pattern != EnemyAttack.SW05; }
             KarmaAttackContact finalDetonationContact;
             float finalDetonationUntil;
             public void RegisterFinalDetonation(KarmaAttackContact contact)
@@ -257,12 +255,12 @@ namespace KarmaPrototype
                 }
                 if (damaged && (pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SW05 && IsFinalDetonation(contact)))
                     KarmaSwordElectrocution.ShowPlayer(owner.game);
-                if (damaged && CustomHitVisual(pattern) && pattern != EnemyAttack.SW03)
+                if (damaged && pattern != EnemyAttack.SW05 && pattern != EnemyAttack.SW03)
                 {
                     if (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
                         KarmaSwordWaveAnimation.Impact(owner.game, owner, point, pattern == EnemyAttack.SW02);
                     else if (pattern == EnemyAttack.SWBasic) KarmaSwordBasicPresentation.Impact(owner.game, owner, point);
-                    else KarmaSwordHitFeedback.Show(owner.game.World, point, false);
+                    else KarmaSwordHitFeedback.ShowPlayerImpact(owner.game.World, point);
                 }
                 if (damaged && !parried && (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02
                     || pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SWBasic && !BasicMeleeSelected))
@@ -367,14 +365,6 @@ namespace KarmaPrototype
             public override void OnDamaged()
             {
                 movement.RememberSwordPressure(); counter.OnDamaged();
-                // Confirm the health change in LateUpdate without reserving Hurt
-                // or touching the committed attack coroutine. SW05 stays intact.
-                if (owner.selected != EnemyAttack.SW05)
-                {
-                    var flash = owner.art.GetComponent<KarmaSwordDamageFlash>();
-                    if (flash == null) flash = owner.art.gameObject.AddComponent<KarmaSwordDamageFlash>();
-                    flash.Queue(owner);
-                }
             }
             public override Transform PersistentEffects { get { return persistentRoot; } }
             public void CounterParried(KarmaAttackContact contact) { counter.OnParried(contact); }

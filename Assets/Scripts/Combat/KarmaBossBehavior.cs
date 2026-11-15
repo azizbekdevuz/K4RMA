@@ -87,11 +87,6 @@ namespace KarmaPrototype
             public virtual void OnDamaged() { }
             public virtual void ReducedDamageFeedback() { }
             public virtual Bounds DamageBounds(SpriteRenderer renderer) { return renderer.bounds; }
-            public virtual void DamageFeedback(Vector2 point)
-            {
-                owner.animator.Hurt();
-            }
-            public virtual bool CustomHitVisual(EnemyAttack pattern) { return false; }
             // Opt in per contact; the damage-inclusive player API still decides
             // whether defenses reject the hit and whether CC can be applied.
             public virtual bool TryPlayerCrowdControl(EnemyAttack pattern, KarmaAttackContact contact,

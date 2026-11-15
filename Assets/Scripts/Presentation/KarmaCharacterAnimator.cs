@@ -67,6 +67,20 @@ namespace KarmaPrototype
         public void Attack(Vector2 direction) { if (nativePlayer24) hurtUntil = 0; slashDirection = direction; actionUntil = Time.time + 0.18f;
             if (sheet == "Player") SamplePlayerClip(direction.y < -0.25f ? "AirSlash" : direction.y > 0.25f ? "Rising" : "Attack", true); }
         public void Hurt() { if (nativePlayer24) { CancelPlayerActionForControl(); playerClip = null; } hurtUntil = Time.time + 0.16f; }
+        float damageFlashAt, damageFlashUntil;
+        internal bool DamageFlashVisible => Time.time < damageFlashUntil;
+        internal void StartDamageFlash(float seconds)
+        {
+            damageFlashAt = Time.time;
+            damageFlashUntil = damageFlashAt + Mathf.Max(0.18f, seconds);
+            ApplyDamageFlash();
+        }
+        internal void ApplyDamageFlash()
+        {
+            if (picture == null || !DamageFlashVisible) return;
+            bool red = Mathf.FloorToInt((Time.time - damageFlashAt) * 18) % 2 == 0;
+            picture.color = red ? pictureColor * new Color(1, 0.45f, 0.45f) : pictureColor;
+        }
         public void Die()
         {
             EndGuardianAction(); deathAt = Time.time;

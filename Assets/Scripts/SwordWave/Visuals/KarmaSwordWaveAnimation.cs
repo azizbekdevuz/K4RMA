@@ -54,8 +54,10 @@ namespace KarmaPrototype
             var sword = art.Find("Guardian sprite");
             animation.swordPicture = sword != null ? sword.GetComponent<SpriteRenderer>() : null;
             animation.picture.sortingOrder = 27;
+            if (animation.swordPicture != null)
+                animation.picture.sortingLayerID = animation.swordPicture.sortingLayerID;
             animation.size = heavy ? new Vector2(2.6f, 3.5f) : new Vector2(1.7f, 2.5f);
-            animation.ApplyCharge();
+            animation.picture.enabled = false;
             animation.AttachEnergy(SwordEnergyPhase.Charge);
         }
         public static void Flight(KarmaGame game, KarmaEnemy owner, KarmaBossAttack shot, Vector2 velocity, Vector2 size)
@@ -115,7 +117,15 @@ namespace KarmaPrototype
             var camera = game.GameCamera;
             float unitsPerPixel = camera != null && camera.orthographic && camera.pixelHeight > 0
                 ? 2 * camera.orthographicSize / camera.pixelHeight : 0;
-            energy.ConfigureVisual(picture.bounds, transform.position, unitsPerPixel);
+            if (playback == Playback.Charge)
+            {
+                bool hasBlade = TryChargeBlade(out var heel, out var bend, out var tip);
+                if (hasBlade)
+                    transform.position = heel;
+                energy.ConfigureBlade(Vector2.zero, hasBlade ? bend - heel : Vector2.zero,
+                    hasBlade ? tip - heel : Vector2.zero, unitsPerPixel, owner.DamageBounds.size.y);
+            }
+            else energy.ConfigureVisual(picture.bounds, transform.position, unitsPerPixel);
             energy.Draw(transform.position, age, duration, dt);
         }
         void ReturnEnergy()
@@ -138,17 +148,69 @@ namespace KarmaPrototype
             picture.flipX = velocity.x < 0; picture.flipY = false;
             picture.transform.localRotation = Quaternion.identity;
         }
-        void ApplyCharge()
+        // Blade anchors measured on the existing sprites, normalized to a 256px cell.
+        // Columns are Windup, Slash, Prepare01, Prepare02, Swing01 and Swing02.
+        static readonly Vector2[,] ChargeBladeSockets = {
+            { new(96, 52), new(55, 38), new(15, 24),
+              new(142, 85), new(196, 93), new(247, 93),
+              new(145, 111), new(166, 86), new(185, 66),
+              new(106, 74), new(75, 61), new(45, 54),
+              new(171, 99), new(191, 86), new(212, 66),
+              new(152, 101), new(197, 103), new(237, 101) },
+            { new(187, 31), new(141, 13), new(97, 5),
+              new(173, 104), new(212, 94), new(250, 77),
+              new(144, 102), new(159, 79), new(174, 63),
+              new(122, 79), new(94, 67), new(68, 63),
+              new(175, 94), new(193, 80), new(209, 64),
+              new(169, 103), new(191, 102), new(212, 99) },
+            { new(100, 27), new(53, 46), new(7, 76),
+              new(162, 82), new(208, 75), new(249, 55),
+              new(136, 109), new(156, 89), new(175, 69),
+              new(107, 69), new(84, 59), new(61, 54),
+              new(161, 92), new(181, 77), new(200, 57),
+              new(155, 96), new(187, 96), new(217, 92) },
+            { new(112, 16), new(55, 33), new(7, 58),
+              new(167, 104), new(209, 102), new(249, 91),
+              new(139, 113), new(158, 95), new(177, 77),
+              new(116, 73), new(85, 62), new(56, 58),
+              new(169, 94), new(186, 79), new(203, 59),
+              new(164, 100), new(195, 100), new(223, 98) },
+        };
+        static Vector2 ChargeBladePoint(SpriteRenderer renderer, Vector2 socket)
         {
-            float t = Mathf.Clamp01(age / duration);
-            int frame = aiming ? Mathf.Min(2, (int)(t * 3)) : Mathf.Min(4, (heavy ? 1 : 0) + (int)(t * (heavy ? 4 : 5)));
-            Paint(0, frame, size, new Vector2(0.72f, 0.82f));
-            var bounds = swordPicture != null ? swordPicture.bounds : new Bounds(owner.Position, Vector3.one * 2);
-            // Follow the rendered sword side after the existing pose animator.
-            transform.position = bounds.center + new Vector3(owner.Facing * bounds.extents.x * 0.42f, 0.15f, 0);
-            picture.flipX = owner.Facing < 0;
-            picture.color = new Color(1, 1, 1, aiming ? Mathf.Lerp(0.45f, 0.7f, t) : Mathf.Lerp(0.65f, 1, t));
+            var sprite = renderer.sprite;
+            var pixel = new Vector2(socket.x / 256 * sprite.rect.width, (1 - socket.y / 256) * sprite.rect.height);
+            Vector2 local = (pixel - sprite.pivot) / sprite.pixelsPerUnit;
+            if (renderer.flipX) local.x = -local.x;
+            if (renderer.flipY) local.y = -local.y;
+            return renderer.transform.TransformPoint(local);
         }
+
+        bool TryChargeBlade(out Vector2 heel, out Vector2 bend, out Vector2 tip)
+        {
+            heel = bend = tip = default;
+            if (swordPicture == null || swordPicture.sprite == null) return false;
+            var sprite = swordPicture.sprite;
+            int form = sprite.texture.name switch
+            {
+                "Wave" or "Wave_SW02_Transitions" => 0,
+                "WaveRise" or "WaveRise_SW02_Transitions" => 1,
+                "WaveWard" or "WaveWard_SW02_Transitions" => 2,
+                "WaveFinal" or "WaveFinal_SW02_Transitions" => 3,
+                _ => -1
+            };
+            int frame = sprite.name switch
+            {
+                "Windup" => 0, "Slash" => 1, "Prepare01" => 2, "Prepare02" => 3,
+                "Swing01" => 4, "Swing02" => 5, _ => -1
+            };
+            if (form < 0 || frame < 0) return false;
+            heel = ChargeBladePoint(swordPicture, ChargeBladeSockets[form, frame * 3]);
+            bend = ChargeBladePoint(swordPicture, ChargeBladeSockets[form, frame * 3 + 1]);
+            tip = ChargeBladePoint(swordPicture, ChargeBladeSockets[form, frame * 3 + 2]);
+            return true;
+        }
+
         void LateUpdate()
         {
             if (game == null || owner == null || !owner.PresentationActive || owner.Stunned || game.Phase != RunPhase.Combat)
@@ -159,7 +221,6 @@ namespace KarmaPrototype
             {
                 if (age >= duration || owner.CurrentPattern != pattern || chargeScope == null || !chargeScope.gameObject.activeInHierarchy)
                 { Destroy(gameObject); return; }
-                ApplyCharge();
             }
             else if (playback == Playback.Flight)
             {
@@ -251,6 +312,7 @@ namespace KarmaPrototype
             readonly GameObject node;
             readonly Mesh mesh;
             readonly MeshRenderer renderer;
+            readonly MaterialPropertyBlock chargeMaterialProperties;
             SwordEnergyPhase phase;
             Vector2 size;
             Vector2 electricSize, electricOffset;
@@ -291,6 +353,11 @@ namespace KarmaPrototype
                 renderer.sharedMaterial = KarmaCombatVFX.GlowMaterial ?? KarmaVisuals.DefaultMaterial;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+                // The charge points are already mirrored in world space by the live sprite transform.
+                // This mesh shares a sprite shader, so make its own shader flip neutral.
+                chargeMaterialProperties = new MaterialPropertyBlock();
+                chargeMaterialProperties.SetVector("unity_SpriteProps", new Vector4(1, 1, 0, 0));
+                chargeMaterialProperties.SetColor("unity_SpriteColor", Color.white);
                 node.SetActive(false);
             }
             public void Begin(KarmaEnemy owner, SwordEnergyPhase mode, bool strong, bool tracking, Vector2 footprint,
@@ -302,6 +369,7 @@ namespace KarmaPrototype
                 swordOffset = Vector2.zero; slashSign = 1;
                 System.Array.Clear(motes, 0, motes.Length);
                 renderer.sortingLayerID = layer; renderer.sortingOrder = order;
+                renderer.SetPropertyBlock(phase == SwordEnergyPhase.Charge ? chargeMaterialProperties : null);
                 node.transform.position = at; node.SetActive(true); Active = true;
                 if (phase == SwordEnergyPhase.Release || phase == SwordEnergyPhase.Impact || phase == SwordEnergyPhase.Dissipate)
                     Emit(phase == SwordEnergyPhase.Dissipate ? (heavy ? 2 : 1) : (heavy ? 4 : 2),
@@ -456,42 +524,44 @@ namespace KarmaPrototype
                 float y = t * 2 - 1;
                 return new Vector2(facing * size.x * (0.37f - 0.54f * y * y), size.y * y * 0.48f);
             }
+            Vector2 bladeHeel, bladeBend, bladeTip;
+            float bladePixelSize, chargeBodyHeight;
+            public void ConfigureBlade(Vector2 heel, Vector2 bend, Vector2 tip, float unitsPerPixel, float bodyHeight)
+            {
+                bladeHeel = heel; bladeBend = bend; bladeTip = tip;
+                bladePixelSize = unitsPerPixel;
+                chargeBodyHeight = Mathf.Max(2, bodyHeight);
+            }
+            Vector2 OnBlade(float t)
+            {
+                Vector2 control = bladeBend * 2 - (bladeHeel + bladeTip) * 0.5f;
+                return Vector2.Lerp(Vector2.Lerp(bladeHeel, control, t), Vector2.Lerp(control, bladeTip, t), t);
+            }
+            float BladeFillProgress(float t)
+            { return heavy ? (aiming ? Mathf.Lerp(0.06f,0.35f,t) : Mathf.Lerp(0.35f,1,t)) : Mathf.Lerp(0.06f,1,t); }
             void Charge(float t)
             {
-                // Orbiting convergence becomes a compressed white spine at lock.
-                // Long irregular bolts, motes and rings have separate clocks.
-                float focus = aiming ? 0.58f + t * 0.22f : 0.55f + t * 0.45f;
-                float climax = aiming ? 0 : Mathf.SmoothStep(0, 1, Mathf.Clamp01((t - 0.72f) / 0.28f));
-                Vector2 bottom = new Vector2(-facing * 0.22f, -size.y * 0.34f);
-                Vector2 tip = new Vector2(facing * 0.34f, size.y * 0.40f);
-                Lightning(bottom, tip, heavy ? 0.17f : 0.10f, focus * power, 0.07f, 0);
-                int arcs = heavy ? 6 : 4;
-                for (int a = 0; a < arcs; a++)
+                if (Vector2.Distance(bladeHeel,bladeTip)<0.01f) return;
+                float front = BladeFillProgress(t);
+                float width = Mathf.Max(chargeBodyHeight*(heavy?0.034f:0.025f),bladePixelSize*2);
+                float brightness = 0.35f+front*0.65f;
+                // Blue steel lights from the guard to the tip. A bounded aura
+                // extends a little beyond the blade, with no free-floating core.
+                for (int p=0;p<Points;p++) path[p]=OnBlade(front*p/(Points-1));
+                Ribbon(width*2.3f,Alpha(new Color(0.04f,0.32f,1.4f),brightness*0.38f));
+                Ribbon(width,Alpha(Cyan,brightness*(heavy?0.75f:0.60f)),core:0.65f);
+                Ribbon(width*0.27f,Alpha(White,brightness*0.65f));
+                int arcs = heavy?6:4;
+                for (int a=0;a<arcs;a++)
                 {
-                    float angle = a * Mathf.PI * 2 / arcs + age * (a % 2 == 0 ? 2.1f : -1.7f);
-                    float radius = (heavy ? 3.5f : 2.1f) * (1 - climax * 0.4f) * (0.9f + 0.16f * Flicker(a, 0));
-                    Vector2 outer = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle) * 0.8f) * radius;
-                    float u = Mathf.Repeat(age * 2.8f + a * 0.31f, 1);
-                    Vector2 target = Vector2.Lerp(bottom, tip, u);
-                    Lightning(outer, target, heavy ? 0.15f : 0.10f, focus * power * 0.85f, heavy ? 0.48f : 0.32f, a + 1);
-                }
-                int particles = heavy ? 22 : 14;
-                for (int i = 0; i < particles; i++)
-                {
-                    float u = Mathf.Repeat(age * (heavy ? 3.4f : 2.4f) + Noise((uint)i * 73 + seed), 1);
-                    float angle = i * 2.39996f + age * 2.6f + u * 1.4f;
-                    Vector2 axis = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle) * 0.8f);
-                    Vector2 end = axis * ((1 - u) * (heavy ? 4.1f : 2.65f));
-                    Segment(end + axis * (0.3f + u * 0.4f), end, heavy ? 0.09f : 0.065f,
-                        Alpha(i % 3 == 0 ? White : Cyan, Mathf.Sin(u * Mathf.PI) * focus));
-                }
-                float pulse = 1 + Mathf.Sin(age * (heavy ? 34 : 26)) * 0.10f;
-                Ring((heavy ? Mathf.Lerp(2.25f, 1.1f, t) : 1.4f) * pulse, 0.42f,
-                    age * 4, focus * 0.8f, heavy ? 0.12f : 0.085f, 2);
-                if (heavy)
-                {
-                    Ring(Mathf.Lerp(1.5f, 2.4f, t) * pulse, 0.76f, -age * 5, focus * 0.6f, 0.09f, 2);
-                    Glint(tip * 0.25f, 1.1f + climax, climax * (0.75f + 0.25f * Mathf.Sin(age * 70)));
+                    float u = front*(a+0.35f)/arcs;
+                    Vector2 from=OnBlade(u),to=OnBlade(Mathf.Min(front,u+0.14f));
+                    Vector2 axis=(to-from).normalized,normal=new Vector2(-axis.y,axis.x);
+                    float blink=0.75f+0.25f*CrackleFlicker(a+120,0);
+                    BladeBolt(from,to,width*0.22f,brightness*blink,width*0.6f,a+120);
+                    // Short sparks protrude from the illuminated portion only.
+                    Vector2 end=to+normal*(width*(a%2==0?2.8f:-2.8f));
+                    BladeBolt(to,end,width*0.15f,brightness*blink*0.6f,width*0.4f,a+140);
                 }
             }
             void Flight()

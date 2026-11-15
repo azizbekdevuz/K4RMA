@@ -80,7 +80,7 @@ namespace KarmaPrototype
             // while parrying, hurt or dead; no prior pose may cross a room reset.
             if (sheet != "Player") return;
             CancelPlayerActionForControl(); ResetPlayerStatus();
-            deathAt = -1; empowermentUntil = 0; playerClip = null;
+            deathAt = -1; empowermentUntil = damageFlashUntil = 0; playerClip = null;
             wasAirborne = false; landedUntil = jumpVisualUntil = 0;
             picture.transform.localPosition = pictureHome; picture.transform.localRotation = Quaternion.identity;
             picture.color = pictureColor; transform.localRotation = Quaternion.identity;

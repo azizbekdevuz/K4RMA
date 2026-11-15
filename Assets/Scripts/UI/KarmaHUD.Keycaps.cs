@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KarmaPrototype
@@ -18,6 +19,8 @@ namespace KarmaPrototype
         Texture2D keycapAtlas;
         GUIStyle keycapLegend, promptText, shortcutButton;
         bool keycapAtlasLoaded;
+        readonly TextGenerator keycapText = new TextGenerator();
+        readonly List<UIVertex> keycapVertices = new List<UIVertex>();
 
         enum KeycapShape { Square, Wide, Spacebar, Enter, Tall }
 
@@ -113,12 +116,65 @@ namespace KarmaPrototype
             }
             else GUI.Box(rect, GUIContent.none);
 
-            if (cap.Shape == KeycapShape.Enter) rect.y += rect.height * 0.11f;
-            else rect.y -= rect.height * 0.045f;
-            promptContent.text = cap.Legend;
-            GUI.color = legendTint;
-            GUI.Label(rect, promptContent, keycapLegend);
+            if (cap.Shape == KeycapShape.Enter)
+            {
+                // Center on the broad lower face of the L-shaped key.
+                rect.y += rect.height * 0.38f;
+                rect.height *= 0.62f;
+            }
+            DrawKeycapLegend(rect, cap.Legend, legendTint * keycapInk);
             GUI.color = color;
+        }
+
+        void DrawKeycapLegend(Rect bounds, string legend, Color tint)
+        {
+            var font = keycapLegend.font != null ? keycapLegend.font : GUI.skin.font;
+            if (font == null) return;
+            // Rasterize at the final screen size instead of magnifying a small glyph.
+            float screenScale = Mathf.Max(1, Mathf.Abs(GUI.matrix.m00));
+            int rasterSize = Mathf.Max(1, Mathf.CeilToInt(keycapLegend.fontSize * screenScale));
+            float glyphScale = (float)rasterSize / keycapLegend.fontSize;
+            var settings = new TextGenerationSettings {
+                font = font, fontSize = rasterSize, fontStyle = keycapLegend.fontStyle,
+                color = tint, scaleFactor = 1, lineSpacing = 1,
+                textAnchor = TextAnchor.UpperLeft, richText = false,
+                horizontalOverflow = HorizontalWrapMode.Overflow,
+                verticalOverflow = VerticalWrapMode.Overflow,
+                generateOutOfBounds = true
+            };
+            if (!keycapText.Populate(legend, settings)) return;
+            keycapText.GetVertices(keycapVertices);
+            var min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            var max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            for (int i = 0; i + 3 < keycapVertices.Count; i += 4)
+            {
+                if (keycapVertices[i].position == keycapVertices[i + 2].position) continue;
+                for (int j = 0; j < 4; j++)
+                {
+                    Vector2 point = keycapVertices[i + j].position;
+                    min = Vector2.Min(min, point);
+                    max = Vector2.Max(max, point);
+                }
+            }
+            if (float.IsInfinity(min.x)) return;
+            // Place the center of the actual rendered glyph quads at the key center.
+            // The same vertices are measured and drawn, on every OS and viewport scale.
+            Vector2 center = (min + max) * 0.5f;
+            if (!font.material.SetPass(0)) return;
+            GL.PushMatrix();
+            GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0);
+            GL.MultMatrix(GUI.matrix);
+            GL.Begin(GL.QUADS);
+            for (int i = 0; i < keycapVertices.Count; i++)
+            {
+                var vertex = keycapVertices[i];
+                GL.Color(vertex.color);
+                GL.TexCoord(vertex.uv0);
+                GL.Vertex3(bounds.center.x + (vertex.position.x - center.x) / glyphScale,
+                    bounds.center.y - (vertex.position.y - center.y) / glyphScale, 0);
+            }
+            GL.End();
+            GL.PopMatrix();
         }
 
         void DrawKeycapSlice(Rect bounds, Rect topLeft)

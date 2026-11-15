@@ -73,6 +73,8 @@ namespace KarmaPrototype
                 {
                     if (DisplayConfirmationPending) RevertDisplaySettings(); else CloseSettings();
                 }
+                else if (!KarmaInput.RebindingThisFrame && DisplayConfirmationPending
+                    && KarmaInput.Pressed(KarmaAction.Confirm)) KeepDisplaySettings();
                 return;
             }
             if (KarmaInput.Pressed(KarmaAction.Settings) && (Phase == RunPhase.Title || Paused))

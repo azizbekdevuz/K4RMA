@@ -118,20 +118,18 @@ namespace KarmaPrototype
                 picture.sprite = frames[frame];
                 if (sheet == "Player" && poses.Count > 0)
                 {
-                    if (wasAirborne && !airborne) landedUntil = Time.time + 3f / 12;
-                    // Landing is presentation only; never slide in a landing pose
-                    // while movement or another takeoff is already underway.
-                    if (airborne || Mathf.Abs(movement) > 0.1f || crouching) landedUntil = 0;
-                    bool takeoff = !wasAirborne && airborne && verticalSpeed > 0;
+                    if (wasAirborne && !airborne) landedUntil = Time.time + 0.10f;
+                    // Keep the brief landing visible during horizontal movement.
+                    // It never delays physics, a new jump, crouch or combat poses.
+                    if (airborne || crouching) landedUntil = 0;
                     wasAirborne = airborne;
-                    if (takeoff) jumpVisualUntil = Time.time + 1f / 12;
                     string pose = Time.time < hurtUntil ? (nativePlayer24 && airborne ? "AirKnockback" : "Hurt")
                         : Time.time < poseUntil ? explicitPose
                         : Time.time < actionUntil ? (slashDirection.y < -0.25f ? "AirSlash"
                             : slashDirection.y > 0.25f ? "Rising" : "Attack")
                         : PlayerRecovering(movement, airborne) ? PlayerRecoveryPose(movement, airborne)
                         : !nativePlayer24 && actionUntil > 0 && Time.time < actionUntil + 0.08f ? "Recovery"
-                        : airborne ? (Time.time < jumpVisualUntil ? "JumpStart" : verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
+                        : airborne ? (verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
                         : crouching ? "Crouch"
                         : Time.time < landedUntil ? "Land"
                         : PlayerTurning ? "Turn" : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";

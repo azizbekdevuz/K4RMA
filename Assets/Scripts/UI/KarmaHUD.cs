@@ -104,6 +104,7 @@ namespace KarmaPrototype
 
         void OnDestroy()
         {
+            ((IDisposable)keycapText).Dispose();
             if (runtimeFont != null) Destroy(runtimeFont);
             if (tutorialRouteArrow != null) Destroy(tutorialRouteArrow);
         }

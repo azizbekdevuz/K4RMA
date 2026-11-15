@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
   sheets:
   - id: Idle
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Idle.png
     sprites:
     - {fileID: -8381659573352531839, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
     - {fileID: -2756498017462300822, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
@@ -28,9 +28,21 @@ MonoBehaviour:
     - {fileID: 947337786871001495, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
     - {fileID: 7132915409514813599, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
     - {fileID: -2055793278435719954, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: -3224017838152206214, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: -9058397865947749583, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 2325545084575423394, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: -124274965492468373, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 9169997543014763408, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: -7183379107816089311, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 4054963598109182476, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: -2358344185738792140, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 7515985278260112536, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 886038330804277044, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 6793265153002498458, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
+    - {fileID: 4341902968661677860, guid: 9026eb3accdc45afb0bee01956fdf7e7, type: 3}
     poses: []
   - id: Run
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Run.png
     sprites:
     - {fileID: 1725074434948180663, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
     - {fileID: -6450398274895702993, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
@@ -38,8 +50,13 @@ MonoBehaviour:
     - {fileID: -3218867303384580802, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
     - {fileID: 7264823018393102350, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
     - {fileID: -6142624701978572155, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
-    - {fileID: -425075948663645550, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
-    - {fileID: -8449018333635047107, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: 2180788937267540241, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: 9028224485147933967, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: 3118500899713962705, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: -7403916260319717948, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: 8524055721738955152, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: 4129681958072312793, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
+    - {fileID: -7330736244118570297, guid: 8ecdba44e78440389bbf56a16c732502, type: 3}
     poses: []
   - id: Turn
     source:
@@ -50,13 +67,12 @@ MonoBehaviour:
     - {fileID: 2533054045810163466, guid: e899650751bd474190a1ce793e347a79, type: 3}
     poses: []
   - id: JumpStart
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Jump.png
     sprites:
-    - {fileID: -6099222926389503723, guid: 6de99a971f1e4840860eaf05d2768707, type: 3}
-    - {fileID: 8306317002725052813, guid: 6de99a971f1e4840860eaf05d2768707, type: 3}
+    - {fileID: -6758588068102300134, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
     poses: []
   - id: Jump
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Jump.png
     sprites:
     - {fileID: -6758588068102300134, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
     - {fileID: -6161132995388330631, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
@@ -64,41 +80,33 @@ MonoBehaviour:
     - {fileID: 2303696549851116058, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
     poses: []
   - id: Apex
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Jump.png
     sprites:
-    - {fileID: -8332371929084586631, guid: f77d2c828dfa44f0a74adce30667d6d4, type: 3}
-    - {fileID: -176697032673282992, guid: f77d2c828dfa44f0a74adce30667d6d4, type: 3}
+    - {fileID: -1671476050, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
     poses: []
   - id: Fall
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Jump.png
     sprites:
-    - {fileID: -7055757904827642730, guid: a8881299af1945799e42d430fa050ff0, type: 3}
-    - {fileID: 54417067314821061, guid: a8881299af1945799e42d430fa050ff0, type: 3}
-    - {fileID: -7386563172030753507, guid: a8881299af1945799e42d430fa050ff0, type: 3}
-    - {fileID: 5440241436481605770, guid: a8881299af1945799e42d430fa050ff0, type: 3}
+    - {fileID: -1398586471, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
+    - {fileID: -976430172, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
+    - {fileID: 9176327, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
+    - {fileID: 481726811, guid: 6b7d1483cae54a46af57e4db7afb058a, type: 3}
     poses: []
   - id: Land
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Land.png
     sprites:
     - {fileID: 6743631784608454911, guid: 41b7ac480eaa42ca8dc289689236c24f, type: 3}
     - {fileID: -9113960893451212327, guid: 41b7ac480eaa42ca8dc289689236c24f, type: 3}
-    - {fileID: 2268028862204035742, guid: 41b7ac480eaa42ca8dc289689236c24f, type: 3}
-    - {fileID: 5614722388677693027, guid: 41b7ac480eaa42ca8dc289689236c24f, type: 3}
-    - {fileID: 7048532363471853429, guid: 41b7ac480eaa42ca8dc289689236c24f, type: 3}
-    - {fileID: -4717523546039432211, guid: 41b7ac480eaa42ca8dc289689236c24f, type: 3}
     poses: []
   - id: Crouch
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Crouch.png
     sprites:
     - {fileID: 4428235640955466993, guid: d170311b2f66436fb35a2f7efe49cf38, type: 3}
     - {fileID: -5863955971378665060, guid: d170311b2f66436fb35a2f7efe49cf38, type: 3}
     - {fileID: -6738046588895201835, guid: d170311b2f66436fb35a2f7efe49cf38, type: 3}
-    - {fileID: 1541350651884212895, guid: d170311b2f66436fb35a2f7efe49cf38, type: 3}
-    - {fileID: -7186096504287335016, guid: d170311b2f66436fb35a2f7efe49cf38, type: 3}
-    - {fileID: 8499232016044412851, guid: d170311b2f66436fb35a2f7efe49cf38, type: 3}
     poses: []
   - id: Attack
-    source:
+    source: Assets/Arts/Resources/Player/Native24/Attack.png
     sprites:
     - {fileID: -8431332876658845596, guid: 470c179a383e421cba23184910be23ed, type: 3}
     - {fileID: 8487396200811185018, guid: 470c179a383e421cba23184910be23ed, type: 3}

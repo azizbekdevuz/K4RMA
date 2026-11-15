@@ -36,12 +36,20 @@ namespace KarmaPrototype
         {
             if (!nativePlayer24 || playerSequences.ContainsKey(name)) return;
             string artName = name == "AirSlash" ? "AirHorizontal" : name == "Dash" ? "Pierce"
-                : name == "Transition" ? "PersonalizeWave" : name;
+                : name == "Transition" ? "PersonalizeWave"
+                : name == "JumpStart" || name == "Apex" || name == "Fall" ? "Jump" : name;
             var clip = Resources.Load<AnimationClip>("Player/Animation24/" + name);
             if (clip == null) return;
             var sequence = Resources.LoadAll<Sprite>("Player/Native24/" + artName);
             System.Array.Sort(sequence, (a,b) => string.CompareOrdinal(a.name,b.name));
             if (sequence.Length == 0) return;
+            if (artName == "Jump" && sequence.Length == 9)
+            {
+                int start = name == "Fall" ? 5 : name == "Apex" ? 4 : 0;
+                int count = name == "JumpStart" || name == "Apex" ? 1 : 4;
+                var phase = new Sprite[count];
+                System.Array.Copy(sequence, start, phase, 0, count); sequence = phase;
+            }
             playerClips[name] = clip; playerSequences[name] = sequence;
         }
         float playerExplicitRecoveryEnd;
@@ -90,13 +98,35 @@ namespace KarmaPrototype
             if (!playerClips.TryGetValue(name, out var clip) || !playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) { if (!nativePlayer24) ShowPose(name); return; }
             if (restart || playerClip != name) { playerClip = name; playerClipAt = Time.time; }
             float elapsed = Mathf.Max(0, Time.time - playerClipAt);
-            float duration = sequence.Length / playerSampleRate;
+            if (SamplePlayerLocomotion(name, elapsed, sequence)) return;
+            float sampleRate = playerSampleRate;
+            float duration = sequence.Length / sampleRate;
             float sample = clip.isLooping ? elapsed % duration : Mathf.Min(elapsed, duration - 0.0001f);
             // Quantize visuals only. Physics, damage and input windows keep their original clocks.
-            picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * playerSampleRate))];
+            picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * sampleRate))];
             picture.flipX = false;
             picture.transform.localScale = pictureScale;
             CurrentPose = name;
+        }
+
+        bool SamplePlayerLocomotion(string name, float elapsed, Sprite[] sequence)
+        {
+            int index, tick = Mathf.FloorToInt(elapsed * 24);
+            switch (name)
+            {
+                case "Run": return false;
+                case "Jump": index = tick < 3 ? 0 : tick < 6 ? 1 : tick < 8 ? 2 : 3; break;
+                case "Fall": index = tick < 2 ? 0 : tick < 4 ? 1 : tick < 6 ? 2 : 3; break;
+                case "JumpStart": case "Apex": index = 0; break;
+                case "Land": index = Mathf.FloorToInt(elapsed * 20); break;
+                case "Crouch": index = tick; break;
+                default: return false;
+            }
+            picture.sprite = sequence[Mathf.Min(index, sequence.Length - 1)];
+            picture.flipX = false;
+            picture.transform.localScale = pictureScale;
+            CurrentPose = name;
+            return true;
         }
     }
 }

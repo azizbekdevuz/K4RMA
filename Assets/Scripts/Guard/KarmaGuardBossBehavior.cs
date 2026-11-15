@@ -19,6 +19,9 @@ namespace KarmaPrototype
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
             public readonly GD05Pattern Dome;
+            Sprite gd01Shield, frontalShield, invulnerableShield;
+            Vector2 shieldVisualSize;
+            MaterialPropertyBlock shieldProperties;
             int domeUses;
             [UnityEngine.Scripting.Preserve]
             public GuardBossBehavior(KarmaEnemy owner) : base(owner)
@@ -39,6 +42,13 @@ namespace KarmaPrototype
                     KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
                     throw new System.InvalidOperationException("GD01 이전 방어막 이미지가 없습니다.");
                 owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
+                gd01Shield = owner.shieldHalo.sprite;
+                frontalShield = Resources.Load<Sprite>("Guard/Effects/GD04_FrontBarrier");
+                invulnerableShield = Resources.Load<Sprite>("Guard/Effects/Guard_InvulnerableBarrier");
+                if (frontalShield == null || invulnerableShield == null)
+                    throw new System.InvalidOperationException("방어형 상태별 방어막 이미지가 없습니다.");
+                shieldVisualSize = KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost;
+                shieldProperties = new MaterialPropertyBlock();
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
                 owner.gameObject.AddComponent<KarmaGuardStunStars>().Initialize(owner.game,
@@ -85,8 +95,8 @@ namespace KarmaPrototype
                 KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
                 KarmaAudio.Play(AutoShieldActive ? KarmaSfxId.GdShieldHit : KarmaSfxId.CombatGuardBlock);
             }
-            public override Color ShieldColor { get { return BlocksSelection
-                ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
+            public override Color ShieldColor { get { return BlocksSelection && !owner.Invulnerable && !AutoShieldActive
+                ? new Color(1, 1, 1, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : Color.white; } }
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
             public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
             public override bool TryQueueParry() { return Heavy.TryQueueParry(); }
@@ -110,7 +120,26 @@ namespace KarmaPrototype
                 owner.shieldUntil = 0;
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }
-            public override void Tick() { shield.Tick(); }
+            public override void Tick() { shield.Tick(); PaintShield(); }
+            void PaintShield()
+            {
+                // One existing renderer, one visual: invulnerability > GD01 > GD04 frontal defense.
+                // Visibility and damage remain owned by the existing combat state and rules.
+                var sprite = owner.Invulnerable ? invulnerableShield : AutoShieldActive || BlocksSelection ? gd01Shield : frontalShield;
+                var halo = owner.shieldHalo;
+                if (halo.sprite != sprite)
+                {
+                    halo.sprite = sprite;
+                    // The new full-canvas sprites retain transparent pivot space; match their painted
+                    // ring radius to the existing, tightly sliced GD01 image rather than its canvas.
+                    float framing = sprite == frontalShield ? 1.2f : sprite == invulnerableShield ? 1.15f : 1;
+                    halo.transform.localScale = new Vector3(shieldVisualSize.x * framing / sprite.bounds.size.x,
+                        shieldVisualSize.y * framing / sprite.bounds.size.y, 1);
+                    halo.GetPropertyBlock(shieldProperties);
+                    shieldProperties.SetTexture("_MainTex", sprite.texture); halo.SetPropertyBlock(shieldProperties);
+                }
+                halo.flipX = sprite == frontalShield && owner.Facing < 0;
+            }
             public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
             {
                 if (domeUses < 2 && owner.attacks.Contains(EnemyAttack.GD05)

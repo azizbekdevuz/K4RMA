@@ -77,11 +77,8 @@ namespace KarmaPrototype
                 heavyStrike.ShieldAway = GuardTrialShieldAway;
                 if (heavyStrike.Show(attack))
                 {
-                    if (GuardTrialShieldAway)
-                    {
-                        guardDamageSprite = heavyStrike.DamageSprite;
-                        guardDamageScale = heavyStrike.DamageScale; guardDamageOverride = true;
-                    }
+                    guardDamageSprite = heavyStrike.DamageSprite;
+                    guardDamageScale = heavyStrike.DamageScale; guardDamageOverride = true;
                     CurrentPose = (GuardTrialShieldAway ? "GD05/ShieldAway/" : "") + heavyStrike.CurrentPose;
                     return;
                 }
@@ -162,7 +159,7 @@ namespace KarmaPrototype
         {
             if (renderer != picture || sheet != "Ward" || !guardDamageOverride || guardDamageSprite == null)
                 return renderer.bounds;
-            // Both movement and attack recovery preserve the original unrotated damage silhouette.
+            // Pose-specific visuals preserve the original unrotated damage silhouette.
             var local = guardDamageSprite.bounds;
             var root = picture.transform.parent;
             var scale = Vector3.Scale(root.lossyScale, guardDamageScale);

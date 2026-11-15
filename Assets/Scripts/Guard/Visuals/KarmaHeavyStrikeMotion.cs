@@ -7,13 +7,13 @@ namespace KarmaPrototype
     sealed class KarmaHeavyStrikeMotion
     {
         readonly SpriteRenderer picture;
-        readonly Vector3 home, scale;
+        readonly Vector3 home, scale, damageScale;
         readonly Sprite[] poses = new Sprite[3];
         readonly Sprite[] heatedPoses = new Sprite[3];
         readonly Sprite[] shieldlessPoses = new Sprite[3], shieldlessHeatedPoses = new Sprite[3];
         public bool ShieldAway { get; set; }
         public Sprite DamageSprite { get; private set; }
-        public Vector3 DamageScale { get { return scale; } }
+        public Vector3 DamageScale { get { return damageScale; } }
         bool active, swinging, heated;
         float swingAt;
         public string FormKey { get; private set; }
@@ -45,7 +45,9 @@ namespace KarmaPrototype
             // Match the helmet-to-sole body against this form's standing pose, excluding the raised weapon.
             // All three frames and their molten variants share the same authored body scale.
             float bodyFraction = key == "Ward" ? 0.76f : key == "WardRise" ? 0.64f : key == "WardWave" ? 0.60f : 0.65f;
-            scale = originalScale * (standing.bounds.size.y / (poses[0].bounds.size.y * bodyFraction));
+            damageScale = originalScale * (standing.bounds.size.y / (poses[0].bounds.size.y * bodyFraction));
+            // Corrected compact bodies retain their idle helmet-to-sole size; damage keeps its original bounds.
+            scale = damageScale * (key == "WardWave" ? 1.10f : key == "WardFinal" ? 1.16f : 1);
         }
         public void Prepare() { active = true; swinging = heated = false; Apply(0); }
         public void Heat() { heated = true; if (active && !swinging) Apply(0); }
@@ -54,7 +56,7 @@ namespace KarmaPrototype
         public bool Show(EnemyAttack attack)
         {
             if (!active || (attack != EnemyAttack.GD02 && attack != EnemyAttack.GD05)) return false;
-            int frame = !swinging ? 0 : Time.time - swingAt < 0.07f ? 1 : 2;
+            int frame = !swinging ? 0 : Time.time - swingAt < 2f / 24f ? 1 : 2;
             Apply(frame);
             return true;
         }

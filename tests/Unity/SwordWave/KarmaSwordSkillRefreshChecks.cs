@@ -166,7 +166,9 @@ public static class KarmaSwordSkillRefreshChecks
                         Check(Mathf.Sign(velocity.x)==side && enemy.Facing==side,"release samples current player side and turns boss");
                         Check(Mathf.Sign(((Transform)Get(enemy,"art")).localScale.x)==side,"art facing matches projectile at release");
                         Check(trackingSides.Count==2,"warning/boss track both sides before each projectile");
-                        float speed=game.Config.BossTuning.sword.swordSpeed*1.3f*(pattern==EnemyAttack.SW02?1.25f:1);
+                        float speed=pattern==EnemyAttack.SW02
+                            ? Mathf.Max(0.1f,game.Config.BossTuning.sword.swordSpeed*1.25f*1.3f)
+                            : Mathf.Max(KarmaSpace.Scale,game.Config.BossTuning.sword.swordSpeed*1.3f);
                         Check(Mathf.Abs(velocity.x-side*speed)<0.001f && velocity.y==0,"existing projectile speed retained");
                         Check((Vector2)Get(shot,"size")== (Vector2)Call(Get(enemy,"behavior"),"SwordSize",pattern),"existing hitbox retained");
                         Check(shot.GetComponent<KarmaSwordWaveAnimation>()!=null,"existing wave VFX retained");
@@ -335,13 +337,13 @@ public static class KarmaSwordSkillRefreshChecks
             foreach (var shot in Root.GetComponentsInChildren<KarmaBossAttack>()) if (seen.Add(shot))
             {
                 released = enemy.FightSeconds - start;
-                Check(Mathf.Abs(((Vector2)Get(shot, "velocity")).x - game.Config.BossTuning.sword.swordSpeed * 1.25f * 1.3f) < 0.01f, "SW02 speed +30%");
+                Check(Mathf.Abs(((Vector2)Get(shot, "velocity")).x - Mathf.Max(0.1f, game.Config.BossTuning.sword.swordSpeed * 1.25f * 1.3f)) < 0.01f, "SW02 original configured speed restored");
                 Check((Vector2)Get(shot, "size") == size, "SW02 original hit rectangle");
                 Check(shot.Visual.sprite == KarmaWaveArtwork.Sprite("Sword_Crescent_v6"), "SW01/SW02 source sharing preserved");
             }
         });
         Check(seen.Count == 1 && Mathf.Abs(released - (0.34f + locked)) < 0.12f, "SW02 one release at shorter advertised timing");
-        Pass("SW02 +30% speed, shorter tracking/lock/release, one original hit rectangle, shared source");
+        Pass("SW02 original configured speed, existing tracking/release and hit rectangle");
     }
     static void Capture(string name)
     {
@@ -484,6 +486,7 @@ public static class KarmaSwordSkillRefreshChecks
         Check(Mathf.Abs(released[0]-absorbed-tracking-locked)<0.08f,"first counter keeps tracking and lock timing");
         for(int i=1;i<4;i++) Check(Mathf.Abs(released[i]-released[i-1]-tracking-locked-gap)<0.09f,"all four counter shots retain their cadence");
         await Until(() => Get(counter,"activeVolley")==null);
+        await Seconds(0.15f); // SW04's three-frame cosmetic fade owns no attack slot.
         Check(Root.GetComponentInChildren<KarmaSwordWardVfx>()==null,"ward cleans up after all four projectiles finish");
         Pass("SW04 full four-shot sequence, original tracking/lock/gap timing, defensive state and normal cleanup");
     }
@@ -493,7 +496,7 @@ public static class KarmaSwordSkillRefreshChecks
         await Until(() => Get(counter, "activeVolley") != null);
         var ward=Root.GetComponentInChildren<KarmaSwordWardVfx>();Check(ward!=null,"one native SW04 barrier exists");
         int initialFrame=ward.FrameIndex;await Seconds(0.24f);
-        Check(ward.FrameIndex!=initialFrame && Root.GetComponentsInChildren<KarmaSwordWardVfx>().Length==1,"one baked formation advances without duplicate formations");
+        Check(ward.FrameIndex!=initialFrame && Root.GetComponentsInChildren<KarmaSwordWardVfx>().Length==1,"one 24fps dome advances without duplicate formations");
         foreach(var blade in (SpriteRenderer[])Get(Get(counter,"activeVolley"),"Blades"))Check(!blade.enabled,"quiet guard hides duplicate individual blades");
         Capture("sw04-grand-orbit");enemy.TakeDamage(1);
         await Seconds(0.06f);Capture("sw04-grand-absorb");
@@ -824,11 +827,11 @@ public static class KarmaSwordSkillRefreshChecks
                 if(tail>KarmaSwordScarRise.BladeFadeSeconds+0.02f && opacity>0.01f)sawResidual=true;
             }
             var layers=game.World.GetComponentsInChildren<KarmaSW05Energy>();
-            Check(layers.All(l=>!l.CapacityExceeded),"all 16 staggered swords fit energy mesh budgets");
+            Check(layers.All(l=>!l.CapacityExceeded),"all simultaneously planned swords fit energy mesh budgets");
             var clock=System.Diagnostics.Stopwatch.StartNew();
             RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});
             clock.Stop();
-            if(Root.GetComponentsInChildren<KarmaSwordScarRise>().Count(v=>Get(v,"sequence").ToString()=="Blade")==16)costs.Add(clock.Elapsed.TotalMilliseconds);
+            if(SW03PlannedCount>0 && Root.GetComponentsInChildren<KarmaSwordScarRise>().Count(v=>Get(v,"sequence").ToString()=="Blade")==SW03PlannedCount)costs.Add(clock.Elapsed.TotalMilliseconds);
             var old=RenderTexture.active;RenderTexture.active=target;pixels.ReadPixels(new Rect(0,0,960,360),0,0);pixels.Apply();RenderTexture.active=old;
             System.IO.File.WriteAllBytes(folder+"/"+(count++).ToString("D3")+".png",pixels.EncodeToPNG());
         }
@@ -838,7 +841,7 @@ public static class KarmaSwordSkillRefreshChecks
             Check(!ShaderUtil.ShaderHasError(Resources.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish").shader),"split sword/aura shader compiles");
             Pass("SW03 separate aura: delayed ignition, independent renderer and residual beyond blade fade verified in Play Mode");
             Check(count>150 && costs.Count>10,"real-time warning/rise/active/fade and repeated-wave footage captured");
-            costs.Sort();Pass("SW03 RENDER "+folder+" frames="+count+" 16-sword SubmitRenderRequest CPU ms median="+costs[costs.Count/2].ToString("F3")+" p95="+costs[(int)(costs.Count*0.95)].ToString("F3")+" (readback/PNG excluded; not GPU frame time)");
+            costs.Sort();Pass("SW03 RENDER "+folder+" frames="+count+" maximum-density SubmitRenderRequest CPU ms median="+costs[costs.Count/2].ToString("F3")+" p95="+costs[(int)(costs.Count*0.95)].ToString("F3")+" (readback/PNG excluded; not GPU frame time)");
             recorder.Tick=null;UnityEngine.Object.Destroy(recorder);UnityEngine.Object.Destroy(camera.gameObject);UnityEngine.Object.Destroy(target);UnityEngine.Object.Destroy(pixels);
         }
     }
@@ -869,12 +872,162 @@ public static class KarmaSwordSkillRefreshChecks
         }
         public void Dispose(){recorder.Tick=null;UnityEngine.Object.Destroy(recorder);UnityEngine.Object.Destroy(camera.gameObject);UnityEngine.Object.Destroy(target);UnityEngine.Object.Destroy(pixels);}
     }
+    static void CheckSW05RestoredContracts()
+    {
+        var type=typeof(KarmaSW05Energy);
+        foreach (string removed in new[] {"MagneticFieldBlast","PressurePetal","ResidualMagneticField","LocalResidualElectricity"})
+            Check(type.GetMethod(removed,F)==null,"obsolete final pass removed: "+removed);
+        Check(type.GetMethod("HazardVolumes",F)!=null,"historical full-region warning builder restored");
+        Check(Mathf.Abs(KarmaSW05RainBlade.ExplosionActiveSeconds-0.12f)<0.00001f,"damage interval remains 120ms");
+    }
+    static void CheckSW05RestoredWarning(KarmaSW05Energy energy,KarmaSW05RainBlade[] blades)
+    {
+        Check(!energy.Detonated && Mathf.Abs((float)Get(energy,"life")-0.60f)<0.0001f,
+            "original warning uses current 600ms charge, without another delay");
+        foreach (var blade in blades)
+        {
+            var warning=(SpriteRenderer)Get(blade,"warning");
+            Check(warning==null || !warning.gameObject.activeInHierarchy,
+                "planted explosion range marker removed; charge and blast retained");
+        }
+        var layers=energy.GetComponentsInChildren<KarmaSwordPackedVfx>();
+        Check(layers.Length>0 && layers.All(l=>l.ClipId==KarmaSwordPackedVfx.Clip.Overcharge),"original charge sheet is connected");
+        var zones=(Vector3[])Get(energy,"zones");
+        foreach(var layer in layers)
+        {
+            var sr=layer.GetComponent<SpriteRenderer>();var block=new MaterialPropertyBlock();sr.GetPropertyBlock(block);
+            var clip=block.GetVector("_ClipRect");
+            Check(zones.Any(z=>clip.x>=z.x-0.001f && clip.z<=z.y+0.001f && Mathf.Abs(clip.w-z.z)<0.001f)
+                && clip.y==0,"historical art tiles cannot cover a safe gap");
+        }
+    }
+    static void CheckSW05RestoredRegions(KarmaSW05Energy energy)
+    {
+        var zones=(Vector3[])Get(energy,"zones");
+        float savedAge=energy.Age;
+        try
+        {
+            foreach(float time in new[] {0f,1f/30,0.12f,0.16f,0.24f,0.42f,0.48f})
+            {
+                Set(energy,"age",time);Set(energy,"count",0);Call(energy,"FinalEnergy");
+                int quads=(int)Get(energy,"count");
+                Check(!energy.CapacityExceeded && quads<=8192,"historical composition fits the existing pool");
+                if(time>=0.48f) { Check(quads==0,"original fade ends without delayed lightning");continue; }
+                Check(quads>0,"restored explosion submits geometry throughout its original fade");
+                var vertices=(Vector3[])Get(Get(energy,"buffer"),"vertices");
+                for(int q=0;q<quads;q++)
+                {
+                    float left=float.PositiveInfinity,right=float.NegativeInfinity,top=0,bottom=float.PositiveInfinity;
+                    for(int n=0;n<4;n++)
+                    {
+                        var v=energy.transform.TransformPoint(vertices[q*4+n]);
+                        left=Mathf.Min(left,v.x);right=Mathf.Max(right,v.x);top=Mathf.Max(top,v.y);bottom=Mathf.Min(bottom,v.y);
+                    }
+                    Check(bottom>=-0.001f && zones.Any(z=>left>=z.x-0.001f && right<=z.y+0.001f && top<=z.z+0.001f),
+                        "restored mesh stays in current locked damage regions");
+                }
+            }
+        }
+        finally { Set(energy,"age",savedAge);Set(energy,"count",0);Call(energy,"FinalEnergy");Call(energy,"Upload"); }
+    }
+    static void CheckSW05ImmediateDischarge(KarmaSW05Energy energy,int swords)
+    {
+        var mesh = energy.GetComponent<MeshFilter>().sharedMesh;
+        int quads = (int)Get(energy,"count");
+        Check(energy.Detonated && energy.Age == 0 && (int)Get(energy,"detonationFrame") == Time.frameCount,
+            "all sword flashes start on the trigger frame with one zero-age clock");
+        Check(quads >= swords && mesh != null && mesh.GetIndexCount(0) == (uint)(quads*6)
+            && !energy.CapacityExceeded,"Ignite uploads nonempty flash geometry immediately without a dead frame");
+        Call(energy,"LateUpdate");
+        Check(energy.Age == 0 && (int)Get(energy,"count") == quads,
+            "the trigger frame LateUpdate preserves the full flash peak");
+        Check(energy.GetComponentsInChildren<Collider2D>(true).Length == 0,
+            "discharge branches and supporting glow add no damage colliders");
+        var renderer = energy.GetComponent<MeshRenderer>();
+        var block = new MaterialPropertyBlock(); renderer.GetPropertyBlock(block);
+        Check(renderer.enabled && renderer.gameObject.activeInHierarchy && renderer.sortingOrder == 36,
+            "release submits to an active renderer in front of stage and swords");
+        Check(renderer.sharedMaterial == Resources.Load<Material>("SwordWave/SW05/SW05Celestial")
+            && block.GetFloat("_Mode") == 6,"procedural vertex-color shader path is selected");
+        Check(energy.transform.parent == Root && energy.GetComponentInParent<KarmaSW05RainBlade>() == null
+            && Mathf.Abs((float)Get(energy,"life")-0.48f)<0.001f,
+            "historical 480ms fade is independent of 120ms sword damage cleanup");
+        var layers=energy.GetComponentsInChildren<KarmaSwordPackedVfx>();
+        Check(layers.Length>0 && layers.All(l=>l.ClipId==KarmaSwordPackedVfx.Clip.Detonation && l.FrameIndex==0),
+            "same historical charge layers switch once to original explosion frame zero");
+        Check(layers.All(l=>Mathf.Abs((float)Get(l,"seconds")-8f/24)<0.00001f),"original eight frames use current 24fps");
+        CheckSW05RestoredRegions(energy);
+        CheckSW05EruptionPixels(energy);
+    }
+    // Explicit Unity-only render check. This is not executed by the offline
+    // compiler or mesh probe; it must run in the actual URP project.
+    static void CheckSW05EruptionPixels(KarmaSW05Energy energy)
+    {
+        float savedAge = energy.Age; int savedLayer = energy.gameObject.layer;
+        var cameraNode = new GameObject("SW05 eruption renderer check");
+        var camera = cameraNode.AddComponent<Camera>();
+        cameraNode.AddComponent<UniversalAdditionalCameraData>();
+        camera.enabled = false; camera.orthographic = true; camera.aspect = 1.5f;
+        camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
+        camera.cullingMask = 1 << 31;
+        var target = new RenderTexture(384,256,0,RenderTextureFormat.ARGB32);
+        var pixels = new Texture2D(384,256,TextureFormat.RGBA32,false);
+        var old = RenderTexture.active;
+        var packed=energy.GetComponentsInChildren<KarmaSwordPackedVfx>();
+        var packedLayers=packed.Select(p=>p.gameObject.layer).ToArray();
+        try
+        {
+            energy.gameObject.layer = 31;
+            foreach(var layer in packed)layer.gameObject.layer=31;
+            foreach (float time in new[] {0f,0.10f,0.15f,0.30f})
+            {
+                Set(energy,"age",time); Set(energy,"count",0);
+                Call(energy,"FinalEnergy"); Call(energy,"Upload");
+                foreach(var layer in packed)layer.SetProgress(time/(8f/24));
+                var vertices = (Vector3[])Get(Get(energy,"buffer"),"vertices");
+                int count = (int)Get(energy,"count");
+                var bounds = new Bounds(energy.transform.TransformPoint(vertices[0]),Vector3.zero);
+                for (int i = 1; i < count*4; i++) bounds.Encapsulate(energy.transform.TransformPoint(vertices[i]));
+                camera.orthographicSize = Mathf.Max(bounds.size.y*0.56f,bounds.size.x/(camera.aspect*1.8f));
+                camera.transform.position = new Vector3(bounds.center.x,bounds.center.y,-10);
+                RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest {destination=target});
+                RenderTexture.active = target; pixels.ReadPixels(new Rect(0,0,384,256),0,0); pixels.Apply();
+                int left=384,right=-1,bottom=256,top=-1,lit=0;
+                var colors = pixels.GetPixels32();
+                for (int y = 0; y < 256; y++)
+                for (int x = 0; x < 384; x++)
+                {
+                    var c = colors[y*384+x];
+                    if (Mathf.Max(c.r,c.g,c.b) < (time < 0.12f ? 80 : 20)) continue;
+                    left=Mathf.Min(left,x);right=Mathf.Max(right,x);bottom=Mathf.Min(bottom,y);top=Mathf.Max(top,y);lit++;
+                }
+                float perUnit = 256/(2*camera.orthographicSize);
+                Check(top-bottom >= bounds.size.y*perUnit*0.65f && right-left >= bounds.size.x*perUnit*0.55f,
+                    "the actual shader/renderer produces a wide tall image at "+time+" seconds");
+                if (time <= 0.10f) Check(lit > 384*256*0.05f,"historical packed explosion and mesh produce visible camera pixels");
+                else Check(lit > 30,"historical explosion fades after damage expiry");
+            }
+        }
+        finally
+        {
+            RenderTexture.active = old; energy.gameObject.layer = savedLayer;
+            for(int i=0;i<packed.Length;i++)
+            {
+                packed[i].gameObject.layer=packedLayers[i];
+                packed[i].SetProgress((float)Get(packed[i],"age")/(float)Get(packed[i],"seconds"));
+            }
+            Set(energy,"age",savedAge); Set(energy,"count",0); Call(energy,"FinalEnergy"); Call(energy,"Upload");
+            UnityEngine.Object.Destroy(cameraNode); UnityEngine.Object.Destroy(target); UnityEngine.Object.Destroy(pixels);
+        }
+    }
     static async Task SW05()
     {
+        CheckSW05RestoredContracts();
         Reset(); game.Player.transform.position = new Vector2(35, 12); Physics2D.SyncTransforms(); Force(EnemyAttack.SW05);
         bool warned = false, formationWarned = false, exploded = false, retained = false, dimmed = false, finalWarnCaptured = false;
-        bool distinctionCaptured = false, rainCaptured = false, impactCaptured = false, blastCaptured = false, tailCaptured = false;
+        bool distinctionCaptured = false, rainCaptured = false, impactCaptured = false, blastCaptured = false, tailCaptured = false, echoSeen = false;
         var played = new Dictionary<KarmaSwordPackedVfx.Clip,HashSet<int>>();
+        var plantedPoses = new Dictionary<KarmaSW05VFX,Matrix4x4>();
         int lastCount = 0; float lastLanding = -1, detonation = -1;
         var waves = new List<float>(); var launches = new HashSet<KarmaSW05RainBlade>();
         await Until(() => !(bool)Get(enemy, "running"), () =>
@@ -884,7 +1037,9 @@ public static class KarmaSwordSkillRefreshChecks
             if (launches.Count > lastCount) { if (waves.Count == 0 || enemy.FightSeconds - waves.Last() > 0.5f) waves.Add(enemy.FightSeconds); lastCount = launches.Count; }
             retained |= shots.Count(s => s.Landed) >= 32;
             var sprites = Root.GetComponentsInChildren<SpriteRenderer>();
-            formationWarned |= shots.Length==0 && sprites.Any(s=>s.name=="SW05 locked warning / no damage" && s.enabled);
+            Check(!sprites.Any(s=>s.name=="SW05 locked warning / no damage" && s.enabled),
+                "SW05 never displays the obsolete body rectangle in any phase");
+            formationWarned |= shots.Length==0 && Root.GetComponentsInChildren<KarmaSW05Energy>().Any(e=>e.name=="SW05 batched falling sword warnings / no damage");
             foreach (var layer in Root.GetComponentsInChildren<KarmaSwordPackedVfx>())
             {
                 if (!played.TryGetValue(layer.ClipId,out var frames)) played[layer.ClipId] = frames = new HashSet<int>();
@@ -893,11 +1048,39 @@ public static class KarmaSwordSkillRefreshChecks
                 if (layer.ClipId == KarmaSwordPackedVfx.Clip.Detonation)
                     Check(shots.Length == 0 || shots.All(s => (bool)Get(s,"detonating")),"packed detonation starts at the real shared damage event");
             }
-            foreach(var energy in Root.GetComponentsInChildren<KarmaSW05Energy>())Check(!energy.CapacityExceeded,"bounded VFX meshes do not truncate");
-            Check(!sprites.Any(s => s.name.Contains("planted explosion warning")),"final rectangular footprints are absent");
-            Check(!Root.GetComponentsInChildren<KarmaSwordPackedVfx>().Any(v=>v.ClipId==KarmaSwordPackedVfx.Clip.Overcharge),"no exact-area packed charge layer");
+            var energies = Root.GetComponentsInChildren<KarmaSW05Energy>();
+            foreach(var energy in energies)
+            {
+                Check(!energy.CapacityExceeded,"bounded VFX meshes do not truncate");
+                var mesh = energy.GetComponent<MeshFilter>().sharedMesh;
+                int quads = (int)Get(energy,"count"), capacity = (int)Get(Get(energy,"buffer"),"capacity");
+                Check(mesh != null && quads <= capacity && mesh.GetIndexCount(0) == (uint)(quads*6),
+                    "every emitted energy quad reaches the bounded mesh draw");
+            }
+            Check(energies.Count(e=>e.name=="SW05 planted electrical lattice / no damage") <= 1,
+                "all planted swords share one idle electrical mesh");
+            foreach (var shot in shots.Where(s=>s.Landed && !(bool)Get(s,"detonating")))
+            {
+                var planted = (KarmaSW05VFX)Get(shot,"planted");
+                var renderer = planted.GetComponent<SpriteRenderer>();
+                Vector2 center = renderer.transform.position, axis = -renderer.transform.up;
+                Vector2 foot = center+axis*((0.12f-center.y)/axis.y);
+                Vector2 hilt = renderer.transform.TransformPoint(new Vector3(0,2.30f,0));
+                Check(Vector2.Distance(shot.ElectricFoot,foot) < 0.002f
+                    && Vector2.Distance(shot.ElectricHilt,hilt) < 0.002f,
+                    "electric roots and crossguards follow measured heavy-sword geometry at every landing angle");
+                if ((float)Get(planted,"age") <= 0.10f) continue;
+                Matrix4x4 pose = renderer.transform.localToWorldMatrix;
+                if (plantedPoses.TryGetValue(planted,out var previous))
+                    Check(pose == previous,"settled planted swords never drift, rotate or change proportion");
+                else plantedPoses.Add(planted,pose);
+            }
+            if(energies.Any(e=>e.Detonated))
+                Check(!sprites.Any(s=>s.gameObject.activeInHierarchy && s.name.Contains("planted explosion warning")),
+                    "historical warnings retire at the shared release event");
             warned |= sprites.Any(s => s.name == "SW05 낙하 지면 전조" && s.enabled && s.gameObject.activeInHierarchy);
-            dimmed |= sprites.Any(s => s.name.Contains("wood-embedded sword") && s.color.a >= 0.28f && s.color.a <= 0.35f && s.sortingOrder == 15);
+            dimmed |= sprites.Any(s => s.name.Contains("wood-embedded sword") && s.color.a >= 0.4f && s.color.a <= 0.55f && s.sortingOrder == 15);
+            echoSeen |= sprites.Any(s=>s.name=="SW05 compact blade echo / no damage");
             if (!rainCaptured && shots.Any(s => !s.Landed && (float)Get(s,"age") > 0.025f))
             { rainCaptured = true; Capture("sw05-falling"); }
             if (!impactCaptured && waves.Count == 1 && shots.Any(s => s.Landed))
@@ -908,29 +1091,59 @@ public static class KarmaSwordSkillRefreshChecks
             {
                 if (lastLanding < 0) lastLanding = enemy.FightSeconds;
                 var charge=Root.GetComponentsInChildren<KarmaSW05Energy>().FirstOrDefault(e=>Get(e,"kind").ToString()=="Charge");
-                Check(charge!=null && !charge.Detonated,"local electric charge precedes damage");
-                if(charge.Age>0.05f)Check((int)Get(charge,"count")>0,"charge mesh emits localized electricity");
+                Check(charge!=null && !charge.Detonated,"restored area warning precedes damage");
+                Check(Mathf.Abs((float)Get(charge,"life")-0.60f) < 0.0001f
+                    && ((Array)Get(charge,"sites")).Length == shots.Length,
+                    "all 48-54 planted anchors share the existing 0.60-second charge clock");
+                CheckSW05RestoredWarning(charge,shots);
+                if(charge.Age>0.05f)Check((int)Get(charge,"count")>0,"charge mesh displays the locked damage region");
                 if (!finalWarnCaptured && enemy.FightSeconds-lastLanding >= 0.35f)
-                { finalWarnCaptured = true; Capture("sw05-electric-charge"); }
+                { finalWarnCaptured = true; Capture("sw05-explosion-range-warning"); }
             }
-            if (sprites.Any(s => s.name.Contains("final explosion / damage volume")))
+            if (energies.Any(e=>e.Detonated))
             {
-                if (!exploded) detonation = enemy.FightSeconds;
+                var sharedDischarge = energies.Single(e=>e.Detonated);
+                Check(!energies.Any(e=>Get(e,"kind").ToString()=="Summon"),
+                    "summoning mesh retires at final release");
+                Check(((Array)Get(sharedDischarge,"sites")).Length == launches.Count
+                    && (int)Get(Get(sharedDischarge,"buffer"),"capacity") == 8192,
+                    "every sword uses one shared detonation clock within the existing 8192-quad budget");
+                Check((int)Get(sharedDischarge,"count") <= 8192,
+                    "restored historical mesh fits its current bounded pool");
+                if (sharedDischarge.Age >= 0.18f && sharedDischarge.Age < 0.46f)
+                    Check(shots.Length == 0 && sharedDischarge.GetComponent<MeshRenderer>().enabled
+                        && (int)Get(sharedDischarge,"count") > 0,
+                        "original explosion fade survives damage-owner cleanup");
+                if (!exploded)
+                {
+                    detonation = enemy.FightSeconds;
+                    CheckSW05RestoredRegions(sharedDischarge);
+                    CheckSW05EruptionPixels(sharedDischarge);
+                }
                 exploded = true;
                 if (!blastCaptured && enemy.FightSeconds-detonation >= 0.035f)
                 { blastCaptured = true; Capture("sw05-final-explosion"); }
                 if (!tailCaptured && enemy.FightSeconds-detonation >= 0.15f)
                 { tailCaptured = true; Capture("sw05-final-explosion-tail"); }
                 Check(shots.All(s => (bool)Get(s, "detonating")), "every planted sword detonates synchronously");
+                if (shots.Length > 0)
+                {
+                    object contact = Get(shots[0],"explosionContact");
+                    Check(contact != null && shots.All(s=>ReferenceEquals(contact,Get(s,"explosionContact"))),
+                        "every simultaneous explosion retains one shared damage ledger");
+                    Check(Mathf.Abs(KarmaSW05RainBlade.ExplosionActiveSeconds-0.12f) < 0.0001f,
+                        "final electrical burst preserves the 0.12-second damage window");
+                }
             }
         });
         Check(waves.Count == 3 && waves[2] - waves[1] < 2.8f, "three existing volleys with faster impact cadence");
         Check(retained && formationWarned && warned && exploded && dimmed && distinctionCaptured, "formation/falling warnings remain; old swords recede below new strike cues");
         Check(finalWarnCaptured && detonation - lastLanding >= 0.58f && detonation-lastLanding <= 0.68f, "electric charge retains the 0.60-second final countdown");
         Check(launches.Count >= 48 && launches.Count <= 54, "all three complete rain waves retained");
-        foreach (var clip in new[] { KarmaSwordPackedVfx.Clip.FallingAura,KarmaSwordPackedVfx.Clip.LandingShock,
-            KarmaSwordPackedVfx.Clip.Detonation })
-            Check(played.ContainsKey(clip) && played[clip].Count >= (clip == KarmaSwordPackedVfx.Clip.FallingAura ? 4 : clip == KarmaSwordPackedVfx.Clip.Detonation ? 8 : 6),
+        Check(echoSeen && !played.ContainsKey(KarmaSwordPackedVfx.Clip.FallingAura),
+            "compact blade echoes replace the duplicate broad falling aura");
+        foreach (var clip in new[] { KarmaSwordPackedVfx.Clip.LandingShock })
+            Check(played.ContainsKey(clip) && played[clip].Count >= 6,
                 "supplied animation advances through its frames: " + clip);
         await Seconds(0.05f);
         Check(Root.GetComponentsInChildren<KarmaSW05RainBlade>(true).Length == 0
@@ -955,13 +1168,15 @@ public static class KarmaSwordSkillRefreshChecks
         Check(game != null, "live game required for SW03 runtime checks");
         await SW03Active(enraged, verifyEscape);
     }
-    static int[] SW03Quarters(float[] positions)
-        => Enumerable.Range(0,4).Select(q=>positions.Count(x=>Mathf.Clamp((int)((x-KarmaStage.ArenaLeft)*4/KarmaStage.ArenaWidth),0,3)==q)).ToArray();
-    static void SW03Different(float[] previous,float[] current)
+    static int SW03PlannedCount
     {
-        Check(previous.Zip(current,(a,b)=>Mathf.Abs(a-b)).Average()>=1.1f-0.0001f,"visible round/cast changes mean sword positions by >=1.1 world units");
-        Check(previous.Zip(current,(a,b)=>Mathf.Abs(a-b)).Count(d=>d>=1)>=8,"at least eight emergence sites move by >=1 world unit");
-        Check(!SW03Quarters(previous).SequenceEqual(SW03Quarters(current)),"regional density changes between visible rounds/casts");
+        get { var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");return plan==null?0:((float[])Get(plan,"Positions")).Length; }
+    }
+    static void SW03Different(float[] previous,float[] current,bool varietyFallback=false)
+    {
+        Check(!previous.SequenceEqual(current),"maximum-density planning never replays the identical visible row");
+        if(previous.Length==current.Length && !varietyFallback)
+            Check(previous.Zip(current,(a,b)=>Mathf.Abs(a-b)).Max()>0.1f,"continuous corridor packing changes physical sword sites");
     }
     // Runs only when explicitly invoked in an already playing game. Exercise
     // the real normal-seed Execute path, not just a test-seeded planner call.
@@ -980,17 +1195,17 @@ public static class KarmaSwordSkillRefreshChecks
                 body.position=at;body.linearVelocity=Vector2.zero;game.Player.transform.position=at;Physics2D.SyncTransforms();
                 Set(GroundPhase,"seedOverride",null);Force(EnemyAttack.SW03);
                 var phase=GroundPhase;var scope=(Transform)Get(phase,"groundRoot");
-                await Until(()=>scope.GetComponentsInChildren<KarmaSwordScarRise>().Count(v=>Get(v,"sequence").ToString()=="Warning")==16);
+                await Until(()=>SW03PlannedCount>0 && scope.GetComponentsInChildren<KarmaSwordScarRise>().Count(v=>Get(v,"sequence").ToString()=="Warning")==SW03PlannedCount);
                 int seed=(int)phase.GetType().GetProperty("Seed",F).GetValue(phase);
                 Check(seeds.Add(seed),"normal casts/battle resets never reuse a cast seed");
                 var plan=Get(phase,"<CurrentPlan>k__BackingField");
                 var positions=(float[])((float[])Get(plan,"Positions")).Clone();
-                Check(!(bool)Get(plan,"Fallback"),"normal gameplay does not select a repetitive fallback");
-                if(previous!=null)SW03Different(previous,positions);
+                Check(positions.Length>=24 && positions.Length<=26,"normal cast reaches corridor-first density target");
+                if(previous!=null)SW03Different(previous,positions,(bool)Get(plan,"Fallback"));
                 else if(priorBattle!=null)Check(!priorBattle.SequenceEqual(positions),"battle reset does not replay the same first layout");
                 var warnings=scope.GetComponentsInChildren<KarmaSwordScarRise>().Where(v=>Get(v,"sequence").ToString()=="Warning")
                     .ToDictionary(v=>v,v=>(Vector2)Get(v,"ground"));
-                Check(warnings.Values.Select(p=>p.x).OrderBy(p=>p).SequenceEqual(positions),"all sixteen planned coordinates reach real warnings");
+                Check(warnings.Values.Select(p=>p.x).OrderBy(p=>p).SequenceEqual(positions),"every planned coordinate reaches one real warning");
                 await Seconds(0.08f);
                 Check(warnings.All(p=>p.Key!=null && (Vector2)Get(p.Key,"ground")==p.Value && (Vector2)p.Key.transform.position==p.Value),"real normal-cast warnings remain fixed");
                 previous=positions;priorBattle=positions;
@@ -1003,10 +1218,13 @@ public static class KarmaSwordSkillRefreshChecks
     {
         game=UnityEngine.Object.FindAnyObjectByType<KarmaGame>();Reset();Force(EnemyAttack.SW03);
         var scope=(Transform)Get(GroundPhase,"groundRoot");
-        await Until(()=>scope.GetComponentsInChildren<KarmaBossAttack>().Length==16);
+        await Until(()=>SW03PlannedCount>0 && scope.GetComponentsInChildren<KarmaBossAttack>().Length==SW03PlannedCount);
         var shots=scope.GetComponentsInChildren<KarmaBossAttack>();var shot=shots[0];
         var ledger=(KarmaAttackContact)Get(shot,"contact");
-        Check(shots.Count(s=>ReferenceEquals(Get(s,"contact"),ledger))==2,"cross-group pair shares one real ledger");
+        var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");
+        int site=System.Array.IndexOf((float[])Get(plan,"Positions"),shot.transform.position.x);
+        int cluster=((int[])Get(plan,"ContactIndices"))[site];
+        Check(shots.Count(s=>ReferenceEquals(Get(s,"contact"),ledger))==((int[])Get(plan,"ClusterSizes"))[cluster],"all overlapping blades in one cluster share one real ledger");
         var at=(Vector2)shot.transform.position;var size=(Vector2)Get(shot,"size");
         var position=new Vector2(at.x,KarmaSpace.PlayerHalfHeight+0.02f);
         game.Player.transform.position=position;game.Player.GetComponent<Rigidbody2D>().position=position;Physics2D.SyncTransforms();
@@ -1017,9 +1235,9 @@ public static class KarmaSwordSkillRefreshChecks
         Check(after<before && ledger.DealtDamage && ledger.Consumed,"real SW03 contact deals one hit");
         Set(game.Player,"invulnerableUntil",0f);
         enemy.TryAttackHit(at,at,size,10,ledger,0,sourcePattern:EnemyAttack.SW03);
-        Check(game.Player.Health==after,"second group/repeated overlap cannot reuse a consumed contact");
+        Check(game.Player.Health==after,"cluster overlap/repeated frames cannot reuse a consumed contact");
         Call(enemy,"InterruptPattern");await Until(()=>scope==null);
-        Check(!GroundRunning,"interruption clears both groups");
+        Check(!GroundRunning,"interruption clears the synchronized round");
     }
     static object GroundPhase => Get(Get(enemy,"behavior"),"ground");
     static bool GroundRunning => (bool)GroundPhase.GetType().GetProperty("Running",F).GetValue(GroundPhase);
@@ -1065,8 +1283,11 @@ public static class KarmaSwordSkillRefreshChecks
             var roundRoots=new HashSet<Transform>();
             var warningTimes=new Dictionary<Transform,float>();
             var warningDurations=new Dictionary<Transform,float>();
-            var groupReleases=new Dictionary<Transform,float>();
+            var releaseFrames=new Dictionary<Transform,int>();
+            var recycledBeforeRelease=new Dictionary<Transform,int>();
             var ledgerCounts=new Dictionary<Transform,Dictionary<object,int>>();
+            var clusterSizesByRound=new Dictionary<Transform,int[]>();
+            var clusterLedgers=new Dictionary<Transform,Dictionary<int,object>>();
             Transform escapeRound=null;
             var warningPositions=new Dictionary<KarmaSwordScarRise,Vector2>();
             var warningSites=new Dictionary<Transform,Dictionary<int,Vector2>>();
@@ -1111,24 +1332,38 @@ public static class KarmaSwordSkillRefreshChecks
                 foreach(var set in warnings.GroupBy(v=>v.transform.parent))
                 {
                     var warningRoot=set.Key;var groupRoot=warningRoot.parent;var roundRoot=groupRoot.parent;
+                    Check(set.Select(v=>(float)Get(v,"life")).Distinct().Count()==1
+                        && set.Select(v=>v.FrameIndex).Distinct().Count()==1,"all warnings share one duration and countdown frame");
                     if(warningRoots.Add(warningRoot))
                     {
-                        Check(set.Count()==8 && set.Select(v=>((Vector2)Get(v,"ground")).x).Distinct().Count()==8,
-                            "eight unique warnings per staggered group");
+                        Check(set.Count()==SW03PlannedCount && set.Select(v=>((Vector2)Get(v,"ground")).x).Distinct().Count()==set.Count(),
+                            "one locked warning per sword in the common countdown");
                         warningTimes[groupRoot]=enemy.FightSeconds;
                         warningDurations[groupRoot]=(float)Get(set.First(),"life");
                         Check(warningDurations[groupRoot]>=0.8f,"minimum readable warning retained");
                         if(roundRoots.Add(roundRoot))
                         {
+                            recycledBeforeRelease[roundRoot]=KarmaSwordVfxPool.For(game).RecycledLive;
                             if(lastRelease>=0)
                                 Check(Mathf.Abs(enemy.FightSeconds-lastRelease-active-Mathf.Clamp(game.Config.BossTuning.sword.scarRoundGap,0.3f,0.8f))<0.06f,
-                                    "gap follows the SECOND group's unchanged active duration");
+                                    "gap follows the common unchanged active duration");
                             warningSeconds=(float)Get(set.First(),"life");
                             var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");
                             centers=((float[])Get(plan,"Positions")).ToList();
-                            if(layouts.Count>0)SW03Different(layouts[layouts.Count-1],centers.ToArray());
+                            if(layouts.Count>0)SW03Different(layouts[layouts.Count-1],centers.ToArray(),(bool)Get(plan,"Fallback"));
                             layouts.Add(centers.ToArray());
-                            Check(!(bool)Get(plan,"Fallback"),"normal five-round completion uses randomized layouts");
+                            Check(centers.Count>=24 && centers.Count<=26,"corridor-first layout reaches useful sword density");
+                            var clusterSizes=(int[])Get(plan,"ClusterSizes");
+                            Check(clusterSizes.All(c=>c==1||c==3||c==4) && clusterSizes.Sum()==centers.Count,"only one/three/four sword spatial clusters");
+                            Check((float)Get(plan,"SafeClearance")>=0.25f-0.0001f,"safe center retains body clearance and positive tolerance");
+                            foreach(var corridor in (System.Array)Get(plan,"Corridors"))
+                            {
+                                float left=(float)Get(corridor,"Left"),right=(float)Get(corridor,"Right");
+                                Check(right-left>=game.Player.GetComponent<Collider2D>().bounds.size.x*2-0.001f,"physical corridor is at least two actual player widths");
+                                Check(left>=KarmaStage.ArenaLeft && right<=KarmaStage.ArenaRight,"no off-arena corridor space counted");
+                            }
+                            clusterSizesByRound[roundRoot]=clusterSizes;
+                            clusterLedgers[roundRoot]=new Dictionary<int,object>();
                             warningSites[roundRoot]=new Dictionary<int,Vector2>();
                             releasedSites[roundRoot]=new HashSet<int>();
                             ledgerCounts[roundRoot]=new Dictionary<object,int>();
@@ -1166,15 +1401,29 @@ public static class KarmaSwordSkillRefreshChecks
                     foreach(var set in rising.GroupBy(v=>v.transform.parent.parent))
                     {
                         var groupRoot=set.Key;var roundRoot=groupRoot.parent;
+                        Check(set.Max(v=>(float)Get(v,"age"))-set.Min(v=>(float)Get(v,"age"))<0.0001f,
+                            "all round swords share identical rise age");
+                        Check(set.Select(v=>Get(v,"roundClock")).Distinct().Count()==1 && Get(set.First(),"roundClock")!=null
+                            && set.Select(v=>v.FrameIndex).Distinct().Count()==1,"one shared clock and reveal frame across all round swords");
+                        var shots=groupRoot.GetComponentsInChildren<KarmaBossAttack>();
+                        Check(shots.Max(s=>(float)Get(s,"remaining"))-shots.Min(s=>(float)Get(s,"remaining"))<0.0001f,
+                            "all active damage lifetimes remain synchronized");
+                        Check(groupRoot.GetComponentsInChildren<KarmaSW05Energy>().All(fx=>!fx.CapacityExceeded),"simultaneous ignition fits every existing mesh buffer");
+                        Check(set.All(v=>Mathf.Abs((float)Get(v,"life")-active)<0.0001f)
+                            && set.Select(v=>((Vector2)Get(v,"footprint")).y).Distinct().Count()==1,
+                            "every sword retains identical active duration and vertical travel");
                         if(!activeRoots.Add(groupRoot))continue;
-                        Check(set.Count()==8,"eight new swords per group");
+                        Check(set.Count()==SW03PlannedCount,"all planned swords are visible together on the first release frame");
+                        Check(KarmaSwordVfxPool.For(game).RecycledLive==recycledBeforeRelease[roundRoot],"simultaneous release does not recycle live pooled effects");
+                        var impact=groupRoot.GetComponentsInChildren<KarmaSW05Energy>().Single(fx=>fx.name=="SW03 grouped ground discharge / no damage");
+                        Check((int)Get(impact,"scarSiteCount")==SW03PlannedCount,"every simultaneous sword is present in the ground-impact buffer");
                         Check(!groupRoot.GetComponentsInChildren<Transform>().Any(t=>t.name.StartsWith("Guardian launch/")),"no launch copies");
-                        Check(groupRoot.GetComponentsInChildren<KarmaBossAttack>().Select(shot=>Get(shot,"contact")).Distinct().Count()==8,
-                            "one pair-ledger member per group");
+                        var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");
+                        Check(groupRoot.GetComponentsInChildren<KarmaBossAttack>().Select(shot=>Get(shot,"contact")).Distinct().Count()==((int[])Get(plan,"ClusterSizes")).Length,
+                            "one independent ledger per spatial cluster at the common release");
                         Check(Mathf.Abs(enemy.FightSeconds-warningTimes[groupRoot]-warningDurations[groupRoot])<0.04f,"full warning for each group");
-                        groupReleases[groupRoot]=enemy.FightSeconds;lastRelease=enemy.FightSeconds;
-                        var other=groupReleases.Where(k=>k.Key!=null && k.Key!=groupRoot && k.Key.parent==roundRoot).ToArray();
-                        if(other.Length>0)Check(Mathf.Abs(enemy.FightSeconds-other[0].Value-0.25f)<0.04f,"0.25-second activation stagger");
+                        Check(!releaseFrames.ContainsKey(roundRoot),"exactly one activation event in a round");
+                        releaseFrames[roundRoot]=Time.frameCount;lastRelease=enemy.FightSeconds;
                         float health=enemy.Health;enemy.TakeDamage(1);
                         Check(Mathf.Abs(enemy.Health-health+1)<0.001f,"boss vulnerable during active swords");
                     }
@@ -1183,6 +1432,7 @@ public static class KarmaSwordSkillRefreshChecks
                         var viewScope=view.transform.parent.parent;
                         if(blades.Add(view))
                         {
+                            Check(Time.frameCount==releaseFrames[viewScope.parent],"every round sword first appears on the same observed frame");
                             int site=int.Parse(view.name.Substring(view.name.LastIndexOf(' ')+1));
                             Check(releasedSites[viewScope.parent].Add(site),"each planned site releases exactly one sword");
                             Check(warningSites[viewScope.parent].TryGetValue(site,out var warned)
@@ -1190,6 +1440,11 @@ public static class KarmaSwordSkillRefreshChecks
                                 && Mathf.Abs(view.GetComponentInParent<KarmaBossAttack>().transform.position.x-warned.x)<0.001f,
                                 "warning, rising sword and damage contact use the same locked planner coordinate");
                             var ledger=Get(view.GetComponentInParent<KarmaBossAttack>(),"contact");
+                            var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");
+                            int cluster=((int[])Get(plan,"ContactIndices"))[site];
+                            var mapping=clusterLedgers[viewScope.parent];
+                            if(mapping.TryGetValue(cluster,out var shared))Check(ReferenceEquals(shared,ledger),"cluster blades share the same accepted contact");
+                            else {Check(!mapping.Values.Contains(ledger),"unrelated clusters never share a global ledger");mapping[cluster]=ledger;}
                             var counts=ledgerCounts[viewScope.parent];
                             counts[ledger]=counts.TryGetValue(ledger,out int count)?count+1:1;
                         }
@@ -1204,6 +1459,9 @@ public static class KarmaSwordSkillRefreshChecks
                         var auraProps=new MaterialPropertyBlock();aura.GetComponent<SpriteRenderer>().GetPropertyBlock(auraProps);
                         Check(auraProps.GetFloat("_EnergyLayer")==1,"aura uses complementary energy mask");
                         float auraAge=(float)Get(aura,"age");
+                        // This observer may run before the aura's LateUpdate.
+                        Check(ReferenceEquals(Get(aura,"roundClock"),Get(view,"roundClock"))
+                            && Mathf.Abs(auraAge-(float)Get(view,"age"))<=Time.deltaTime+0.0001f,"aura samples the same common clock at LateUpdate");
                         if(auraAge<KarmaSwordScarRise.AuraDelay)Check(auraProps.GetFloat("_Fade")==0,"sword emerges before aura ignition");
                         float originalFit=size.y*sr.sprite.pixelsPerUnit/KarmaSwordScarRise.BladePixels.height;
                         Check(Mathf.Abs(sr.transform.localScale.x-originalFit*0.76f)<0.0001f
@@ -1244,15 +1502,16 @@ public static class KarmaSwordSkillRefreshChecks
             // Synchronous GPU readback and PNG encoding can dominate wall time
             // on low-memory editors; the simulated combat clock is unchanged.
             },timeout:recording != null ? 180 : 55);
-            Check(roundRoots.Count==5 && warningRoots.Count==10 && activeRoots.Count==10 && blades.Count==80 && warningPositions.Count==80,
-                "five rounds, ten groups, eighty one-to-one warnings and swords");
-            Check(ledgerCounts.Values.All(c=>c.Count==8 && c.Values.All(n=>n==2)),"eight adjacent pairs retain shared consumption across groups");
-            Check(layouts.Count==5 && warningSites.Values.All(s=>s.Count==16) && releasedSites.Values.All(s=>s.Count==16),
-                "all five varied rounds release all eighty matching warnings/swords");
+            Check(roundRoots.Count==5 && warningRoots.Count==5 && activeRoots.Count==5 && blades.Count==layouts.Sum(p=>p.Length) && warningPositions.Count==blades.Count,
+                "five rounds, five synchronized releases, one warning per planned sword");
+            Check(ledgerCounts.All(pair=>pair.Value.Values.OrderBy(n=>n).SequenceEqual(clusterSizesByRound[pair.Key].OrderBy(n=>n))),"one contact ledger per cluster with exactly its assigned sword count");
+            Check(layouts.Count==5 && layouts.All(p=>p.Length>=24 && p.Length<=26)
+                && warningSites.All(pair=>releasedSites[pair.Key].SetEquals(pair.Value.Keys)),
+                "five corridor-first rounds release all matching warnings/swords");
             if(verifyEscape)
             {
                 UnityEngine.Object.Destroy(escape);game.Player.enabled=true;
-                Check(game.Player.Health==escapeHealth,"reaction-delayed walking survives both staggered groups");
+                Check(game.Player.Health==escapeHealth,"reaction-delayed walking survives the simultaneous active window");
             }
             if(!verifyEscape)Check(retreated && retreatCount>=2 && approachTravel>0.5f && travel>10,"original evasion and approach continue without extra attacks");
             Check(chargeFrames.Count==0 && surgeFrames.Count==0,"no secondary charge or blade column layers are spawned");
@@ -1277,12 +1536,12 @@ public static class KarmaSwordSkillRefreshChecks
                 object[] resumed={8f,true,true,default(EnemyAttack)};
                 Check((bool)Call(behavior,"TrySelect",resumed) && (EnemyAttack)resumed[3]==EnemyAttack.SWBasic,"ready basic can be selected immediately after the ground timeline");
             }
-            Pass("ACTIVE SW03 "+(enraged?"enraged":"normal")+": no shield, real damage in every round, retreats="+retreatCount+", approach travel="+approachTravel.ToString("F3")+", zero basic melee/ranged or extra specials, five rounds/80 blades, fixed warnings, 8+8 groups and 0.25-second stagger, exact single-sprite presentation, special gating/cleanup and deferred SW05 passed");
+            Pass("ACTIVE SW03 "+(enraged?"enraged":"normal")+": no shield, real damage in every round, retreats="+retreatCount+", approach travel="+approachTravel.ToString("F3")+", zero basic melee/ranged or extra specials, five rounds/"+blades.Count+" blades, fixed warnings, one same-frame release per round, exact single-sprite presentation, special gating/cleanup and deferred SW05 passed");
         }
         foreach(string transition in new[] {"interrupt","parry","disable","combat","death"})
         {
             Reset();Force(EnemyAttack.SW03);var phase=GroundPhase;var scope=(Transform)Get(phase,"groundRoot");
-            await Until(()=>scope.GetComponentsInChildren<KarmaBossAttack>().Length==16);
+            await Until(()=>SW03PlannedCount>0 && scope.GetComponentsInChildren<KarmaBossAttack>().Length==SW03PlannedCount);
             Check(GroundRunning && !enemy.Invulnerable,"vulnerable active phase before "+transition);
             if(transition=="interrupt")Call(enemy,"InterruptPattern");
             else if(transition=="parry")
@@ -1323,9 +1582,25 @@ public static class KarmaSwordSkillRefreshChecks
             for (int i = 0; i < 2; i++) blades.Add(KarmaSW05RainBlade.Spawn(game,enemy,Root,spec,10,null));
             await Until(() => blades.All(b => b.Landed));
             var rain = blades[0]; Vector2 size = rain.ExplosionSize;
+            // Normal jump only: FixedUpdate sets jumpSpeed once, then the
+            // physics step applies constant gravity. No variable-height hold.
+            float jumpY = 0, jumpV = game.Config.jumpSpeed, apex = 0;
+            float step = Time.fixedDeltaTime;
+            for (int n = 0; n < Mathf.CeilToInt(2*game.Config.jumpSpeed/Mathf.Abs(Physics2D.gravity.y*game.Config.gravityScale)/step); n++)
+            {
+                jumpV += Physics2D.gravity.y*game.Config.gravityScale*step;
+                jumpY += jumpV*step; apex = Mathf.Max(apex,jumpY);
+            }
+            float torso = apex+player.DamageBounds.extents.y;
+            Check(Mathf.Abs(size.y-torso) < player.DamageBounds.size.y*0.05f,
+                "existing ceiling is already approximately the ordinary jump torso; no gameplay height change required");
+            Check(Mathf.Abs(rain.ExplosionCenter.y-size.y/2) < 0.00001f
+                && Mathf.Abs(size.x-Mathf.Max(1.6f,spec.size.y*1.8f)) < 0.00001f,
+                "original floor anchoring and horizontal damage width retained");
             Check(Mathf.Abs(size.y-KarmaSW05RainBlade.CalculateExplosionHeight(game.Config)) < 0.001f,"derived height used by damage geometry");
             foreach (var b in blades) b.ArmExplosion(0.60f);
             var energy = KarmaSW05Energy.Prepare(Root,game,blades,0.60f);
+            CheckSW05RestoredWarning(energy,blades.ToArray());
             var zones = (Vector3[])Get(energy,"zones");
             Check(zones.Length == 1 && Mathf.Abs(zones[0].z-size.y) < 0.001f
                 && Mathf.Abs(zones[0].x-(35-size.x/2)) < 0.001f
@@ -1354,7 +1629,11 @@ public static class KarmaSwordSkillRefreshChecks
             Check(bounds.min.x < 35+size.x/2 && bounds.max.x > 35-size.x/2,"player remains horizontally inside hazard");
             Check(attack ? bounds.min.y > size.y : bounds.min.y < size.y,"real collider distinguishes apex jump from upward jump attack");
             Check((float)Get(player,"invulnerableUntil") <= Time.time && !player.Shielded && !player.TestInvincible,"avoidance trial has no immunity or guard");
-            energy.Ignite(); var ledger = new KarmaAttackContact();
+            float beforeVisualHealth = player.Health; bool beforeVisualShock = player.Shocked;
+            energy.Ignite(); CheckSW05ImmediateDischarge(energy,blades.Count);
+            Check(player.Health == beforeVisualHealth && player.Shocked == beforeVisualShock,
+                "the bright flash and lightning geometry alone cause no damage or Shock");
+            var ledger = new KarmaAttackContact();
             Call(Get(enemy,"behavior"),"RegisterFinalDetonation",ledger);
             foreach (var b in blades) b.Explode(ledger);
             Capture(attack ? "sw05-jump-attack-clears" : "sw05-normal-jump-hit");
@@ -1372,6 +1651,32 @@ public static class KarmaSwordSkillRefreshChecks
                 if (attack) Check(player.GetComponent<Collider2D>().bounds.min.y > size.y,"air slash stays above hazard through full 0.12-second damage interval");
             });
             Check(enemy.FightSeconds-began >= 0.60f+KarmaSW05RainBlade.ExplosionActiveSeconds-0.02f,"damage lifetime retained");
+            Action observeAfterDamage = () =>
+            {
+                Set(player,"invulnerableUntil",0f);
+                Check(player.Health == after && (float)Get(player,"shockUntil") == shockUntil,
+                    "residual fragments and dying electricity never deal another hit or refresh Shock");
+            };
+            if (!attack)
+            {
+                await Until(()=>energy == null || energy.Age >= 0.18f,observeAfterDamage);
+                Check(energy != null,"shared lightning remains alive for harmless afterimages");
+                float pausedAge = energy.Age; int pausedQuads = (int)Get(energy,"count");
+                var vertices = (Vector3[])Get(Get(energy,"buffer"),"vertices");
+                var pausedVertices = vertices.Take(pausedQuads*4).ToArray();
+                game.TogglePause();
+                try
+                {
+                    await Task.Delay(120);
+                    Check(energy.Age == pausedAge && (int)Get(energy,"count") == pausedQuads
+                        && pausedVertices.Select((vertex,index)=>vertex == vertices[index]).All(same=>same),
+                        "pause freezes the shared residual clock and all branching geometry");
+                }
+                finally { if (game.Paused) game.TogglePause(); }
+            }
+            await Until(()=>energy == null,observeAfterDamage);
+            Check(Root.GetComponentsInChildren<KarmaSW05Energy>(true).Length == 0,
+                "fragments and afterglow naturally release every electricity mesh");
             UnityEngine.Object.Destroy(drive); player.enabled = true;
             Pass((attack ? "upward jump attack avoids" : "normal jump at apex is hit by") + " real SW05 explosion; height=" + size.y.ToString("F4") + ", collider bottom=" + bounds.min.y.ToString("F4"));
         }

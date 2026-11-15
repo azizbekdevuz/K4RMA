@@ -4,8 +4,8 @@ namespace KarmaPrototype
 {
     /// <summary>
     /// Visual-only secondary motion for the Wave guardian.
-    /// Uses the sprites already chosen by KarmaCharacterAnimator; does not
-    /// select different sprites, spawn projectiles, or modify the boss root.
+    /// Samples the animator's owned walking frames from actual root travel;
+    /// never spawns projectiles or modifies the boss root.
     ///
     /// Attach to the Wave guardian's "Artwork" object in KarmaArtwork.Guardian().
     /// </summary>
@@ -39,6 +39,9 @@ namespace KarmaPrototype
         int previousFacing;
         bool initialized;
         int motionRevision;
+        string previousBodyAction;
+        Vector3 ascentEntryOffset;
+        float ascentEntryAngle, hoverStartedAt;
         internal bool HoverActive { get; private set; }
 
         void Start()
@@ -60,7 +63,7 @@ namespace KarmaPrototype
 
             spriteTransform = child;
             spriteRenderer = child.GetComponent<SpriteRenderer>();
-            spriteHome = child.localPosition;
+            spriteHome = animator.SwordAuthoredHome;
             spriteHomeRotation = child.localRotation;
             previousRootPosition = enemy.Position;
             previousFacing = transform.lossyScale.x < 0 ? -1 : 1;
@@ -77,6 +80,9 @@ namespace KarmaPrototype
         void AdvanceMotion(float dt)
         {
             if (!initialized) return;
+            // Resolve the material/scale of the actual selected sprite even
+            // after death, interruption, or an external pose overwrite.
+            if (animator != null) animator.RegisterSwordAppearance();
             // Artwork survives briefly after its owner dies and is detached.
             // Reset before checking the owner so no last-frame lean is retained.
             if (animator == null || enemy == null || !enemy.PresentationActive ||
@@ -89,8 +95,8 @@ namespace KarmaPrototype
             if (enemy.Stunned) { ResetVisualTransform(); return; }
             if (dt <= 0) return;
 
-            // The existing character animator selects sprites in Update().
-            // Only add subtle offsets AFTER it finishes; no root translation.
+            // Sample locomotion after the existing logical pose in Update().
+            // Gameplay and incoming-damage sprites remain independent.
             visualClock += dt;
             string pose = animator.CurrentPose ?? "Idle";
             int facing = transform.lossyScale.x < 0 ? -1 : 1;
@@ -110,23 +116,28 @@ namespace KarmaPrototype
             bool locomotionPose = pose == "Idle" || pose == "Move";
             bool sliding = pose == "Backstep";
             bool grounded = enemy.Position.y <= KarmaSpace.GuardianGroundY + 0.1f;
+            bool walkingFrames = animator.SampleSwordLocomotion(travel, dt, facing, grounded);
+            animator.SampleSwordBasicContactPose();
+            animator.RegisterSwordAppearance();
             float nominalSpeed = game != null
                 ? Mathf.Max(0.1f, game.Config.enemyMoveSpeed * game.Config.BossTuning.moveMultiplier)
                 : KarmaSpace.Units(2.4f) * 1.7f;
             float actualSpeed = (locomotionPose || sliding) && grounded ? travel / dt * facing : 0;
+            float previousSpeed = locomotionSpeed;
             locomotionSpeed = Mathf.Lerp(locomotionSpeed, actualSpeed, 1 - Mathf.Exp(-dt / 0.07f));
+            float accelerationLean = Mathf.Clamp((locomotionSpeed - previousSpeed) / (nominalSpeed * Mathf.Max(dt, 0.001f) * 12), -1, 1);
             if (locomotionPose && grounded)
                 gaitPhase += Mathf.Abs(travel) * 11f / nominalSpeed;
             // Queuing the following warning must not restart a release that is
             // still being displayed. Only a real release can repeat one pose.
-            if (pose != previousPose || pose == "Wave" && motionRevision != animator.WaveMotionRevision)
+            if (pose != previousPose || motionRevision != animator.WaveMotionRevision)
             {
                 previousPose = pose;
                 poseStartedAt = visualClock;
             }
             motionRevision = animator.WaveMotionRevision;
 
-            float elapsed = visualClock - poseStartedAt;
+            float elapsed = KarmaCharacterAnimator.SwordFrameTime(visualClock - poseStartedAt);
             int current = enemy.CurrentPattern;
             bool aimed = current == (int)EnemyAttack.SW02;
             bool scars = current == (int)EnemyAttack.SW03;
@@ -144,7 +155,7 @@ namespace KarmaPrototype
                     float dashSpeed = game != null ? game.Config.BossTuning.sword.swordRetreatSpeed : 48;
                     float slide = Mathf.Clamp(locomotionSpeed / Mathf.Max(1, dashSpeed), -1, 1);
                     delta.x = 0.045f * slide;
-                    angle = -7.5f * slide;
+                    angle = -5.5f * slide - 0.6f * accelerationLean;
                     break;
 
                 case "Idle":
@@ -159,8 +170,11 @@ namespace KarmaPrototype
                     // Positive local X travel needs a clockwise lean. Keep the
                     // gait smaller than that lean so retreat steps cannot tip
                     // the upper body against their measured travel direction.
-                    angle = -walkingTilt * (0.8f * movement + 0.2f * gait);
-                    if (pose == "Idle") angle += 0.35f * Mathf.Sin(visualClock * 1.2f) * (1 - Mathf.Abs(movement));
+                    angle = -walkingTilt * (0.8f * movement + 0.2f * gait) - 0.5f * accelerationLean;
+                    // A single approved locomotion pose cannot supply a genuine
+                    // alternating footfall cycle. Keep its soles down; distance
+                    // drives a small weight transfer, never a fabricated bounce.
+                    if (pose == "Idle") angle += 0.22f * Mathf.Sin(visualClock * 1.2f) * (1 - Mathf.Abs(movement));
                     break;
 
                 case "Windup":
@@ -209,12 +223,98 @@ namespace KarmaPrototype
                     break;
             }
 
+            if (walkingFrames)
+            {
+                // The authored legs and hips carry locomotion. Do not layer the
+                // old whole-body sway on top of planted support-foot drawings.
+                delta = Vector3.zero;
+                angle = 0;
+            }
+
+            // Body animation follows the existing gameplay events, independently
+            // of the legacy logical pose retained for damage/contact policy.
+            string bodyAction = animator.SwordBodyAction;
+            if (bodyAction == "UltimateAscent" && previousBodyAction != bodyAction)
+            {
+                ascentEntryOffset = motionOffset;
+                ascentEntryAngle = motionAngle;
+            }
+            previousBodyAction = bodyAction;
+            bool mobile = pose == "Move" || pose == "Backstep";
+            if (animator.SwordBodyVisible && bodyAction != null && pose != "Hurt" && !mobile && !walkingFrames)
+            {
+                float age = animator.SwordBodyAge;
+                float release = animator.SwordReleaseAge;
+                float load = Mathf.SmoothStep(0, 1, age / Mathf.Max(1f / 24, animator.SwordBodyDuration));
+                bool released = animator.SwordBodyReleased;
+                float force = bodyAction == "Heavy" ? 1.15f : bodyAction == "BasicRanged" ? 0.45f : 0.8f;
+                float alternating = animator.SwordMotionStrike % 2 == 0 ? 1 : -0.55f;
+                if (animator.BasicBodyActive)
+                {
+                    // Authored arm/shoulder/waist poses own the cuts. Do not
+                    // rotate the flattened body to invent a swing.
+                    delta = Vector3.zero; angle = 0;
+                    motionOffset = motionVelocity = Vector3.zero;
+                    motionAngle = angularVelocity = 0;
+                }
+                else if (bodyAction == "UltimateAscent")
+                {
+                    // Sample the existing FlyBoss schedule, not a second rise.
+                    float settle = 1 - Mathf.SmoothStep(0, 1, animator.SwordAscentProgress);
+                    delta = ascentEntryOffset * settle;
+                    angle = ascentEntryAngle * settle + 1.1f * Mathf.Sin(visualClock * 4f) * (1 - settle);
+                }
+                else if (bodyAction == "UltimateStart")
+                {
+                    // Restore the original Windup anticipation on the corrected body.
+                    float anticipation = Mathf.SmoothStep(0, 1, animator.SwordBodySmoothAge / 0.12f);
+                    delta.x = -0.025f * anticipation; angle = -4.2f * anticipation;
+                }
+                else if (bodyAction == "Summon")
+                {
+                    float command = age < 3f / 24 ? -Mathf.Sin(age * Mathf.PI * 4) : Mathf.Exp(-12 * (age - 3f / 24));
+                    if (age < 9f / 24) { delta.x = 0.016f * command; angle = 2.2f * command; }
+                }
+                else if (bodyAction == "UltimateHold")
+                { delta.x = 0; angle = -0.5f + 0.18f * Mathf.Sin(visualClock * 2.5f); }
+                else if (bodyAction == "UltimateCharge")
+                { delta.x = -0.025f * load; angle = -4.2f * load; }
+                else if (bodyAction == "UltimateCommand" || bodyAction == "UltimateFinish")
+                {
+                    // Original Wave release recoil; keep the final detonation's longer accent.
+                    float impulse = Mathf.Exp(-(bodyAction == "UltimateFinish" ? 7 : 8) * release);
+                    delta.x = (bodyAction == "UltimateFinish" ? 0.06f : attackReach) * impulse;
+                    angle = (bodyAction == "UltimateFinish" ? 5f : attackTilt) * impulse;
+                }
+                else if (bodyAction == "UltimateRecover")
+                { delta.x = 0; angle = 1.4f * Mathf.Exp(-6 * age); }
+                else if (bodyAction == "Counter")
+                {
+                    float counterRelease = released ? Mathf.Exp(-14 * release) : 0;
+                    delta.x = 0.028f * counterRelease;
+                    angle = -1.1f + 3.4f * counterRelease * alternating;
+                }
+                else if (released)
+                {
+                    float impulse = Mathf.Exp(-12 * release);
+                    delta.x = attackReach * force * impulse;
+                    angle = attackTilt * force * alternating * impulse;
+                }
+                else { delta.x = -0.02f * force * load; angle = -2.5f * force * load; }
+            }
+
             // Hover belongs only to the existing airborne full-shield phase.
             // Grounded poses (including Guard) never add a vertical bob.
+            bool wasHovering = HoverActive;
             HoverActive = aerial && enemy.Invulnerable && pose != "Hurt"
                 && enemy.Position.y > KarmaSpace.GuardianGroundY + 0.1f;
-            if (HoverActive) delta.y = hoveringBob * Mathf.Sin(visualClock * 5f);
-            else { motionOffset.y = 0; motionVelocity.y = 0; }
+            if (HoverActive)
+            {
+                if (!wasHovering) hoverStartedAt = visualClock;
+                float hoverAge = visualClock - hoverStartedAt;
+                delta.y = hoveringBob * Mathf.Sin(hoverAge * 5f) * Mathf.SmoothStep(0, 1, hoverAge / 0.2f);
+            }
+            else if (!aerial) { motionOffset.y = 0; motionVelocity.y = 0; }
 
             // Carry the displayed offset and its velocity across sprite changes.
             // A new pose changes the target, never teleports to its first sample.
@@ -225,10 +325,9 @@ namespace KarmaPrototype
             Quaternion rotation = Quaternion.Euler(0f, 0f, motionAngle);
             // The supplied pivots are just above the feet. Rotate around that
             // foot anchor, preserving its authored height through the lean.
-            Vector3 foot = spriteRenderer.sprite != null && !animator.SW02UsesIntermediateFrame
-                ? new Vector3(0, spriteRenderer.sprite.bounds.min.y * spriteTransform.localScale.y, 0) : Vector3.zero;
+            Vector3 foot = animator.SwordFoot;
             Vector3 planted = spriteHomeRotation * (foot - rotation * foot);
-            spriteTransform.localPosition = spriteHome + motionOffset + planted;
+            spriteTransform.localPosition = animator.SwordVisualHome + motionOffset + planted;
             spriteTransform.localRotation = spriteHomeRotation * rotation;
         }
 
@@ -267,7 +366,8 @@ namespace KarmaPrototype
             if (enemy != null) previousRootPosition = enemy.Position;
             previousFacing = transform.lossyScale.x < 0 ? -1 : 1;
             HoverActive = false;
-            spriteTransform.localPosition = spriteHome;
+            previousBodyAction = null;
+            spriteTransform.localPosition = animator != null && animator.CurrentPose != "Death" ? animator.SwordVisualHome : spriteHome;
             spriteTransform.localRotation = spriteHomeRotation;
         }
 

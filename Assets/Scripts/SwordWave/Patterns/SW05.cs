@@ -21,6 +21,8 @@ namespace KarmaPrototype
             {
                 owner.state = ActionState.Attack;
                 Vector2 from = owner.Position;
+                bool ascending = target.y > from.y;
+                if (ascending) owner.animator.PrepareSwordBody("UltimateAscent", seconds);
                 float elapsed = 0;
                 while (elapsed < seconds && owner.Active)
                 {
@@ -28,11 +30,12 @@ namespace KarmaPrototype
                     {
                         elapsed += Time.deltaTime;
                         owner.transform.position = Vector2.Lerp(from, target, Mathf.SmoothStep(0, 1, elapsed / seconds));
+                        if (ascending) owner.animator.SampleSwordAscent(elapsed / seconds);
                     }
                     yield return null;
                 }
             }
-            IEnumerator FormAerialSword(SpriteRenderer[] blades, KarmaAerialSwordPlanner.Group plan, float seconds)
+            IEnumerator FormAerialSword(SpriteRenderer[] blades, KarmaSW05VFX[] reveals, KarmaAerialSwordPlanner.Group plan, float seconds)
             {
                 // Harmless ascent: the same picture becomes the real projectile only
                 // after every blade has reached its reserved, visibly locked sky slot.
@@ -58,20 +61,32 @@ namespace KarmaPrototype
                         Vector2 orbitTangent = new Vector2(-(orbit.y - (source.y + 5.5f)) * 0.85f, (orbit.x - source.x) * 0.11f);
                         Vector2 p2 = orbit - orbitTangent + Vector2.down * 0.6f;
                         float v = 1 - u;
-                        Vector2 point = v*v*v*source + 3*v*v*u*p1 + 3*v*u*u*p2 + u*u*u*orbit;
+                        Vector2 orbitPoint = v*v*v*source + 3*v*v*u*p1 + 3*v*u*u*p2 + u*u*u*orbit;
                         float lift = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.6f, 1, t));
-                        point = Vector2.Lerp(point, end, lift);
+                        Vector2 point = Vector2.Lerp(orbitPoint, end, lift);
+                        // Differentiate the blended path instead of abruptly
+                        // replacing its tangent when the lift begins.
                         Vector2 tangent = 3*v*v*(p1-source) + 6*v*u*(p2-p1) + 3*u*u*(orbit-p2);
-                        if (lift > 0.1f) tangent = Vector2.up;
-                        float turn = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.45f, 1, t));
+                        float orbitRate = circle < 1 ? 3 * (1-circle) * (1-circle) / 0.65f : 0;
+                        float liftT = Mathf.InverseLerp(0.6f, 1, t);
+                        float liftRate = 6 * liftT * (1-liftT) / 0.4f;
+                        tangent = tangent * orbitRate * (1-lift) + (end-orbitPoint) * liftRate;
+                        float turn = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.38f, 0.9f, t));
                         Vector2 fall = plan.shots[i].velocity.normalized;
                         float fallAngle = Mathf.Atan2(fall.y, fall.x) * Mathf.Rad2Deg;
-                        float angle = Mathf.LerpAngle(Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg, fallAngle, turn);
                         var blade = blades[i];
+                        float travelAngle = tangent.sqrMagnitude > 0.0001f
+                            ? Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg : fallAngle;
+                        float desiredAngle = Mathf.LerpAngle(travelAngle, fallAngle, turn);
+                        // The existing 0.42 s locked hold remains long enough
+                        // to finish this bounded turn before the real release.
+                        float angle = Mathf.MoveTowardsAngle(blade.transform.eulerAngles.z - 90,
+                            desiredAngle, 720 * Time.deltaTime);
                         blade.transform.position = point;
                         blade.transform.localScale = scales[i] * Mathf.Lerp(0.22f, 1, Mathf.SmoothStep(0, 1, t));
                         blade.transform.rotation = Quaternion.Euler(0, 0, angle + 90);
                         KarmaSW05VFX.ApplyDepth(blade, plan.shots[i].depth, Mathf.SmoothStep(0, 1, t * 6));
+                        reveals[i].SetFormation(t);
                     }
                     yield return null;
                 }
@@ -83,7 +98,7 @@ namespace KarmaPrototype
                 if (ThresholdPending) thresholdsUsed++;
                 owner.state = ActionState.Telegraph;
                 owner.animator.PlayWavePhase("Windup");
-                KarmaSW05VFX.Warning(owner.effectsRoot, owner.game, owner.Position, KarmaSpace.Units(new Vector2(2, 2)));
+                owner.animator.PrepareSwordBody("UltimateStart", 0.8f);
                 yield return owner.Wait(0.8f); owner.ClearPatternObjects();
                 Vector2 ground = new Vector2(KarmaStage.ArenaCenter, KarmaSpace.GuardianGroundY);
                 owner.animator.PlayWavePhase("Rising");
@@ -93,6 +108,7 @@ namespace KarmaPrototype
                 owner.transform.position = AerialSwordCastPosition;
                 owner.fullShield = true;
                 owner.animator.PlayWavePhase("Guard");
+                owner.animator.PrepareSwordBody("UltimateHold", 0);
                 KarmaSW05VFX.Corona(owner.effectsRoot, owner.game, owner.transform);
                 int seed = KarmaAerialSwordPlanner.ResolveSeed(Settings.aerialSwordSeed);
                 var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed);
@@ -124,6 +140,7 @@ namespace KarmaPrototype
                             (b.orbit.x - KarmaStage.ArenaCenter) / (KarmaStage.ArenaWidth * 0.36f))));
                     var marks = new SpriteRenderer[plan.shots.Length];
                     var blades = new SpriteRenderer[plan.shots.Length];
+                    var reveals = new KarmaSW05VFX[plan.shots.Length];
                     for (int member = 0; member < plan.shots.Length; member++)
                     {
                         var shot = plan.shots[member];
@@ -131,7 +148,7 @@ namespace KarmaPrototype
                         // This fixed ground mark never tracks after the sky layout locks.
                         Vector2 axis = shot.velocity.normalized;
                         Vector2 tip = shot.PositionAt(shot.life) + axis * (shot.size.x / 2);
-                        marks[member] = KarmaSW05VFX.Warning(owner.effectsRoot, owner.game, new Vector2(tip.x, 0.18f),
+                        marks[member] = KarmaSW05VFX.FallWarning(owner.effectsRoot, owner.game, new Vector2(tip.x, 0.18f),
                             new Vector2(shot.size.y / Mathf.Abs(axis.y), 0.34f));
                         marks[member].name = "SW05 낙하 지면 전조";
                         blades[member] = KarmaVisuals.Box(owner.effectsRoot, "Forming aerial sword / no damage",
@@ -140,24 +157,28 @@ namespace KarmaPrototype
                         KarmaSW05VFX.ApplyDepth(blades[member], shot.depth);
                         blades[member].transform.position = owner.Position;
                         blades[member].color = Color.clear;
-                        KarmaSW05VFX.Ascent(blades[member], shot.size, owner.game);
+                        reveals[member] = KarmaSW05VFX.Ascent(blades[member], shot.size, owner.game);
                     }
 
-                    yield return FormAerialSword(blades, plan, warning);
+                    var fallWarnings = KarmaSW05Energy.FallWarnings(owner.effectsRoot, owner.game, owner, marks, plan.shots, warning);
+                    yield return FormAerialSword(blades, reveals, plan, warning);
                     if (!owner.Active) yield break;
                     KarmaSW05VFX.RainRelease(owner.effectsRoot, owner.game, owner.Position);
                     for (int member = 0; member < plan.shots.Length; member++)
                     {
-                        blades[member].gameObject.SetActive(false); Destroy(blades[member].gameObject);
                         var shot = plan.shots[member];
                         var attack = KarmaSW05RainBlade.Spawn(owner.game, owner, owner.effectsRoot,
                             shot, owner.Damage * Settings.aerialSwordDamageMultiplier, marks[member]);
+                        fallWarnings.BindFallWarning(member, attack);
+                        KarmaSW05VFX.ReleaseFormation(blades[member], attack.Visual);
+                        blades[member].gameObject.SetActive(false); Destroy(blades[member].gameObject);
                         planner.RegisterLaunch(attack.transform);
                         planted.Add(attack);
                     }
                     KarmaAudio.StopSlot("sw-rain");
                     KarmaAudio.Play(KarmaSfxId.SwUltimateRain);
                     owner.animator.ReleaseWavePhase();
+                    owner.animator.ReleaseSwordBody("UltimateCommand", group);
                     while (owner.Active && planner.HasLiveShots) yield return null;
                     if (!owner.Active) yield break;
                     // Only the final landing starts the common countdown. Rain
@@ -166,9 +187,11 @@ namespace KarmaPrototype
                     {
                         foreach (var blade in planted) if (blade != null) blade.ArmExplosion(DetonationWarning);
                         var ignition = KarmaSW05Energy.Prepare(owner.effectsRoot, owner.game, planted, DetonationWarning);
+                        owner.animator.PrepareSwordBody("UltimateCharge", DetonationWarning);
                         yield return owner.Wait(DetonationWarning);
                         if (!owner.Active) yield break;
                         ignition.Ignite();
+                        owner.animator.ReleaseSwordBody("UltimateFinish");
                         var contact = new KarmaAttackContact();
                         sword.RegisterFinalDetonation(contact);
                         foreach (var blade in planted) if (blade != null) blade.Explode(contact);
@@ -177,6 +200,7 @@ namespace KarmaPrototype
                 }
                 if (!owner.Active) yield break;
                 owner.fullShield = false;
+                owner.animator.PrepareSwordBody("UltimateRecover", 0.7f);
                 owner.animator.PlayWavePhase("Rising");
                 yield return FlyBoss(ground, 0.7f);
                 // Let the last harmless impact finish during descent rather than

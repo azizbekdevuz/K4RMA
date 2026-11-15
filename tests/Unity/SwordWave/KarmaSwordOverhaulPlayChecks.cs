@@ -142,7 +142,7 @@ public static class KarmaSwordOverhaulPlayChecks
     static async Task CheckScarEscape()
     {
         await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(false,true);
-        results.Add("PASS: SW03 reaction-delayed physical walking avoids both staggered groups");
+        results.Add("PASS: SW03 reaction-delayed physical walking avoids the simultaneous active window");
     }
     static void Tick(float dt)
     {
@@ -246,7 +246,7 @@ public static class KarmaSwordOverhaulPlayChecks
     static async Task CheckScars(bool enraged)
     {
         await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(enraged);
-        results.Add("PASS: SW03 normal/empowered 80 swords in five staggered rounds");
+        results.Add("PASS: SW03 normal/empowered maximum-density clusters in five synchronized rounds");
     }
     static async Task CheckScarHitAndCancel()
     {

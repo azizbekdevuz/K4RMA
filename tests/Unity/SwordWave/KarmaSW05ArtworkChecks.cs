@@ -317,7 +317,12 @@ public static class KarmaSW05ArtworkChecks
                             if (!baseline)
                             {
                                 var sprite = blade.Visual.sprite;
-                                var localTip = (new Vector2(512, 33.5f) - sprite.pivot) / sprite.pixelsPerUnit;
+                                // Current heavy artwork: alpha >= 128 core is
+                                // x=57..453, y=25..993 in Unity pixel space.
+                                // The imported (255,509) pivot centers that core.
+                                Check(Vector2.Distance(sprite.pivot, new Vector2(255, 509)) < 0.001f,
+                                    "heavy artwork retains its measured opaque-core pivot");
+                                var localTip = (new Vector2(255, 25) - sprite.pivot) / sprite.pixelsPerUnit;
                                 var actualTip = blade.Visual.transform.TransformPoint(localTip);
                                 var expectedTip = (Vector2)blade.transform.position + shot.velocity.normalized * shot.size.x / 2;
                                 Check(Vector2.Distance(actualTip, expectedTip) < 0.002f, "new image tip maps to unchanged physical tip");

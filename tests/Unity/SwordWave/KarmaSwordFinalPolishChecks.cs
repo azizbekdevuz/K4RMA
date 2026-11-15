@@ -82,17 +82,50 @@ public static class KarmaSwordFinalPolishChecks
     {
         var size = (Vector2)Get(shot, "size"); var velocity = (Vector2)Get(shot, "velocity");
         bool rangedBasic = pattern == EnemyAttack.SWBasic && velocity.sqrMagnitude > 0.01f;
-        if (rangedBasic || pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
+        if (rangedBasic)
+        {
+            var visual = shot.Visual;
+            var footprint = (Vector2)Behavior.GetType().GetMethod("SwordSize", F).Invoke(Behavior,
+                new object[] { EnemyAttack.SW01 });
+            var flight = shot.GetComponent<KarmaSwordWaveAnimation>();
+            Check(flight != null && visual.enabled && visual.gameObject.activeInHierarchy,
+                "basic uses the live SW01 sprite renderer");
+            Check(shot.GetComponent<KarmaSwordBasicPresentation>() == null && shot.GetComponent<MeshRenderer>() == null,
+                "no Basic replacement renderer or late mesh overwrite");
+            Check((Vector2)Get(flight, "size") == footprint && !(bool)Get(flight, "heavy") && (int)Get(flight, "clip") == 1,
+                "same SW01 animation size and sequence");
+            bool validFrame = false;
+            for (int i = 0; i < 5; i++)
+                validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_" + i);
+            Check(validFrame, "actual Basic sprite is a registered SW01 flight frame");
+            var expected = new Vector2(footprint.x * 1.12f / 0.65f, footprint.y / 0.81f);
+            Check(Vector2.Distance(visual.bounds.size, expected) < 0.002f,
+                "final world bounds equal SW01, including parents and frame bounds fitting");
+            Check(visual.color == Color.white && visual.flipX == (velocity.x < 0) && !visual.flipY,
+                "same SW01 tint and facing");
+            var reference = new GameObject("SW01 material reference");
+            try
+            {
+                var renderer = reference.AddComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(renderer);
+                Check(visual.sharedMaterial == renderer.sharedMaterial, "same SW01 sprite material");
+            }
+            finally { UnityEngine.Object.Destroy(reference); }
+            Check((EnemyAttack)Get(shot, "sourcePattern") == EnemyAttack.SWBasic && size == footprint * 0.90f,
+                "Basic ID and smaller original collision footprint stay independent of artwork");
+            return;
+        }
+        if (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
         {
             var visual = shot.Visual;
             string sequence = pattern == EnemyAttack.SW02 ? "SW02Flight" : "SW01Flight";
             bool validFrame = false;
             for (int i = 0; i < 5; i++)
                 validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_" + sequence + "_" + i);
+            if (pattern == EnemyAttack.SW02)
+                validFrame = visual.sprite == Resources.Load<Sprite>("SwordWave/SW02/SW02_BlueCrescent");
             Check(validFrame, "released shot uses a registered frame from its electric flight sequence");
-            Vector2 footprint = rangedBasic
-                ? (Vector2)Behavior.GetType().GetMethod("SwordSize", F).Invoke(Behavior, new object[] { EnemyAttack.SW01 }) * 0.5f
-                : size;
+            Vector2 footprint = size;
+            if (pattern == EnemyAttack.SW01) footprint.x *= 1.12f;
             Vector2 coreFraction = pattern == EnemyAttack.SW02 ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f);
             var actual = Vector2.Scale(visual.sprite.bounds.size, visual.transform.localScale);
             Check(Vector2.Distance(Vector2.Scale(actual, coreFraction), footprint) < 0.002f,
@@ -160,7 +193,7 @@ public static class KarmaSwordFinalPolishChecks
         };
         await Until(() => !(bool)Get(Enemy, "running") || error != null); probe.Before = probe.After = null; UnityEngine.Object.Destroy(probe.gameObject); Set(Enemy, "running", true);
         m.seconds = Enemy.FightSeconds - start; Check(error == null, error);
-        Check(m.shots == (pattern == EnemyAttack.SW01 ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
+        Check(m.shots == (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SWBasic && melee ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
 
         // SW01 chooses its first lane randomly once per cast. Both original
         // heights and their stagger must survive in either order.
@@ -169,7 +202,7 @@ public static class KarmaSwordFinalPolishChecks
             && Mathf.Abs(Mathf.Max(m.heights[0], m.heights[1]) - 6.6f) < 0.01f
             && m.releaseTimes[1] - m.releaseTimes[0] >= 0.42f,
             "SW01 retains both randomized lanes and release stagger: " + JsonUtility.ToJson(m) + "; overlap=" + both);
-        if (pattern == EnemyAttack.SWBasic && melee) Check(seen.Count == 1, "one melee retains latched mode");
+        if (pattern == EnemyAttack.SWBasic && melee) Check(seen.Count == 2, "two melee cuts retain latched mode");
         Check(m.peakCosmetics <= KarmaSwordVfxPool.Capacity, "bounded sprite pool");
         File.WriteAllText(output + "/" + prefix + ".json", JsonUtility.ToJson(m, true)); Log(prefix + ": " + m.shots + " shots, " + m.rounds + " rises, " + m.seconds.ToString("F3") + "s, cosmetics peak " + m.peakCosmetics);
     }
@@ -272,7 +305,7 @@ public static class KarmaSwordFinalPolishChecks
             Vector2 at = game.Player.GetComponent<Collider2D>().bounds.center;
             bool wasRunning = (bool)Get(Enemy, "running");
             float stunBegan = float.NaN;
-            var onsetProbe = stage == 3 ? null
+            var onsetProbe = stage == 3 || pattern != EnemyAttack.SW04 ? null
                 : new GameObject("stun onset frame observer").AddComponent<KarmaSwordDashFrameProbe>();
             if (onsetProbe != null)
                 onsetProbe.After = () => { if (float.IsNaN(stunBegan) && Enemy.Stunned) stunBegan = Enemy.FightSeconds; };
@@ -294,6 +327,16 @@ public static class KarmaSwordFinalPolishChecks
                 await Until(() => !(bool)Get(Enemy, "running") && !(bool)Get(Counter, "guardResponseRunning"));
                 Check(!Enemy.Stunned, pattern + " final inheritance completes normally after parry");
                 Log(pattern + ": final inheritance parry succeeds without stun; attack completes");
+                continue;
+            }
+            if (pattern != EnemyAttack.SW04)
+            {
+                Check(game.Player.ParryCount == parries + 1 && !(bool)Get(Enemy, "pendingParry")
+                    && !Enemy.Stunned && (bool)Get(Enemy, "running") == wasRunning,
+                    pattern + " parry succeeds without boss stun or interruption");
+                await Seconds(0.1f);
+                Check(!Enemy.Stunned && !Enemy.GetComponent<KarmaSwordStunFeedback>().Electrocuted,
+                    pattern + " has no delayed electrocution");
                 continue;
             }
             Check(game.Player.ParryCount == parries + 1 && (bool)Get(Enemy, "pendingParry"), pattern + " real successful contact queues boss stun");

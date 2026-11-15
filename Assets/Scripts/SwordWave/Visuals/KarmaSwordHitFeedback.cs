@@ -141,7 +141,7 @@ namespace KarmaPrototype
             // the boss root and its original incoming-damage bounds stay fixed.
             float angle = 9 + Mathf.Sin(owner.FightSeconds * 5) * 1.5f;
             var rotation = Quaternion.Euler(0, 0, angle);
-            var foot = new Vector3(0, picture.sprite.bounds.min.y * picture.transform.localScale.y, 0);
+            var foot = picture.GetComponentInParent<KarmaCharacterAnimator>().SwordFoot;
             picture.transform.localPosition += foot - rotation * foot;
             picture.transform.localRotation *= rotation;
             orbit.position = new Vector3(picture.bounds.center.x, picture.bounds.max.y + 0.8f, 0);
@@ -256,9 +256,9 @@ namespace KarmaPrototype
             // Enter over one frame. The status owns the end, including refresh;
             // a separate visual timer must not expire before the control lock.
             float envelope = Mathf.Min(1,(age+1f/60)*24);
-            home=picture.transform.localPosition;rotation=picture.transform.localRotation;color=picture.color;
             originalSprite=picture.sprite;
             if (boss != null) picture.GetComponentInParent<KarmaCharacterAnimator>().ShowSwordElectrocutionPose();
+            home=picture.transform.localPosition;rotation=picture.transform.localRotation;color=picture.color;
             shownSprite=picture.sprite;
             float sign = FrameIndex%2==0 ? -1 : 1;
             float scale = Mathf.Max(0.01f,Mathf.Abs(picture.transform.parent.lossyScale.x));

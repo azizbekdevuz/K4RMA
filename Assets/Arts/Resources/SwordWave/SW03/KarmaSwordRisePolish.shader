@@ -72,12 +72,21 @@ Shader "K4RMA/SwordRisePolish"
                 // Profile positions light without warping the selected sword.
                 // Source alpha still defines the solid artwork silhouette.
                 float y=saturate(blade.y);
-                float width=y<0.05?lerp(0.02,0.50,y/0.05)
-                    :y<0.14?lerp(0.50,0.20,(y-0.05)/0.09)
-                    :y<0.25?lerp(0.20,0.24,(y-0.14)/0.11)
-                    :y<0.50?lerp(0.24,0.20,(y-0.25)/0.25)
-                    :y<0.70?lerp(0.20,0.25,(y-0.50)/0.20)
-                    :lerp(0.25,0,(y-0.70)/0.30);
+                // Match KarmaSwordScarRise.BladeHalfWidth: measured clean alpha.
+                float width=y<0.05?lerp(0.002,0.070,y/0.05)
+                    :y<0.07?lerp(0.070,0.411,(y-0.05)/0.02)
+                    :y<0.0887?lerp(0.411,0.496,(y-0.07)/0.0187)
+                    :y<0.0894?lerp(0.496,0.338,(y-0.0887)/0.0007)
+                    :y<0.10?lerp(0.338,0.269,(y-0.0894)/0.0106)
+                    :y<0.12?lerp(0.269,0.152,(y-0.10)/0.02)
+                    :y<0.16?lerp(0.152,0.145,(y-0.12)/0.04)
+                    :y<0.20?lerp(0.145,0.186,(y-0.16)/0.04)
+                    :y<0.35?lerp(0.186,0.136,(y-0.20)/0.15)
+                    :y<0.50?lerp(0.136,0.134,(y-0.35)/0.15)
+                    :y<0.56?lerp(0.134,0.145,(y-0.50)/0.06)
+                    :y<0.65?lerp(0.145,0.125,(y-0.56)/0.09)
+                    :y<0.82?lerp(0.125,0.115,(y-0.65)/0.17)
+                    :lerp(0.115,0,(y-0.82)/0.18);
                 float sword = (1-smoothstep(width-0.012,width+0.012,abs(blade.x-0.5)))
                     * step(0,blade.y) * step(blade.y,1);
                 if (_EnergyLayer > 0.5)
@@ -109,12 +118,8 @@ Shader "K4RMA/SwordRisePolish"
                 }
                 else
                 {
-                    // Animate the painted discharge independently from the solid metal.
-                    // The original silhouette and transparent padding remain intact.
-                    float flow = AuraNoise(float2(blade.x*17+_AuraSeed,blade.y*9-_AuraTime*4));
-                    float cyan = saturate((color.b-color.r)*3) * saturate((color.g-color.r)*4);
-                    float discharge = cyan * (1-sword);
-                    color.a *= lerp(1,0.45+0.55*flow,discharge);
+                    // Clean texture alpha owns the metal silhouette. External
+                    // electricity exists only in the sibling aura and mesh.
                     float glint = pow(saturate(1-abs(blade.y-_RiseProgress)*5),3);
                     float release=1-smoothstep(0.035,0.15,_AuraTime);
                     float edgeLight=pow(saturate(abs(blade.x-0.5)/max(width,0.015)),6);

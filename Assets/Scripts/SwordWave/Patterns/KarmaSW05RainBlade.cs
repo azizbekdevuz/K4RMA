@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace KarmaPrototype
 {
@@ -20,6 +20,7 @@ namespace KarmaPrototype
         KarmaAttackContact explosionContact;
         public const float ExplosionActiveSeconds = 0.12f;
         public bool Landed { get; private set; }
+        internal float FallWarningAge => age; // Read-only VFX clock; never advances flight.
         // A grounded player's collider bottom rises by v²/2g at most (the
         // fixed-step trajectory is slightly lower). Put the ceiling halfway
         // into the real upward air-slash travel above that apex. A normal jump
@@ -33,15 +34,16 @@ namespace KarmaPrototype
         public Vector2 ExplosionSize => new Vector2(Mathf.Max(1.6f, shot.size.y * 1.8f), explosionHeight);
         public Vector2 ExplosionCenter => new Vector2(landing.x, ExplosionSize.y / 2);
         // Presentation anchors follow the actual embedded blade, not blast bounds.
-        public Vector2 ElectricFoot => new Vector2(landing.x, 0.12f);
-        public Vector2 ElectricHilt => ElectricFoot - shot.velocity.normalized * (shot.size.x * 0.60f);
+        public Vector2 ElectricFoot => planted != null ? KarmaSW05Energy.GroundAnchor(planted.Sword) : new Vector2(landing.x, 0.12f);
+        public Vector2 ElectricHilt => planted != null ? KarmaSW05Energy.GuardAnchor(planted.Sword)
+            : ElectricFoot - shot.velocity.normalized * (shot.size.x * 0.60f);
         public float ElectricWidth => shot.size.y;
+        public SpriteRenderer PlantedVisual => planted != null ? planted.Sword : null;
         public void ArmExplosion(float seconds = 0.75f)
         {
             explosionArmed = true; explosionWarning = seconds;
             if (!Landed) return;
-            // Keep falling warnings until landing. Final charge uses local
-            // electricity only; collision geometry stays in ExplosionSize/Center.
+            // Keep the planted charge and its clock, without a blast-range marker.
             if (planted != null) planted.ChargePlanted(seconds);
         }
         public void Explode(KarmaAttackContact sharedContact)
@@ -103,6 +105,7 @@ namespace KarmaPrototype
             if (warning != null) { warning.gameObject.SetActive(false); Destroy(warning.gameObject); warning = null; }
             landing = to + shot.velocity.normalized * (shot.size.x / 2);
             planted = KarmaSW05VFX.Strike(transform.parent, game, to, shot.size, shot.velocity.normalized, shot.depth);
+            planted.ContinueClockFrom(Visual);
             Landed = true;
             if (game.IsCombat && owner.Alive) KarmaAudio.Play(KarmaSfxId.SwPerSwordThunder, lifetimeOwner: this);
             Visual.gameObject.SetActive(false);

@@ -23,13 +23,23 @@ namespace KarmaPrototype
         { return new Vector2(contactSize.y*BladePixels.width/BladePixels.height*VisualWidthScale,contactSize.y); }
         public static float BladeHalfWidth(float y)
         {
+            // Half-widths measured from the clean sword alpha, in BladePixels.
+            // This profile drives only the separate aura/mesh, never contacts.
             y=Mathf.Clamp01(y);
-            return y<0.05f?Mathf.Lerp(0.02f,0.50f,y/0.05f)
-                :y<0.14f?Mathf.Lerp(0.50f,0.20f,(y-0.05f)/0.09f)
-                :y<0.25f?Mathf.Lerp(0.20f,0.24f,(y-0.14f)/0.11f)
-                :y<0.50f?Mathf.Lerp(0.24f,0.20f,(y-0.25f)/0.25f)
-                :y<0.70f?Mathf.Lerp(0.20f,0.25f,(y-0.50f)/0.20f)
-                :Mathf.Lerp(0.25f,0,(y-0.70f)/0.30f);
+            return y<0.05f?Mathf.Lerp(0.002f,0.070f,y/0.05f)
+                :y<0.07f?Mathf.Lerp(0.070f,0.411f,(y-0.05f)/0.02f)
+                :y<0.0887f?Mathf.Lerp(0.411f,0.496f,(y-0.07f)/0.0187f)
+                :y<0.0894f?Mathf.Lerp(0.496f,0.338f,(y-0.0887f)/0.0007f)
+                :y<0.10f?Mathf.Lerp(0.338f,0.269f,(y-0.0894f)/0.0106f)
+                :y<0.12f?Mathf.Lerp(0.269f,0.152f,(y-0.10f)/0.02f)
+                :y<0.16f?Mathf.Lerp(0.152f,0.145f,(y-0.12f)/0.04f)
+                :y<0.20f?Mathf.Lerp(0.145f,0.186f,(y-0.16f)/0.04f)
+                :y<0.35f?Mathf.Lerp(0.186f,0.136f,(y-0.20f)/0.15f)
+                :y<0.50f?Mathf.Lerp(0.136f,0.134f,(y-0.35f)/0.15f)
+                :y<0.56f?Mathf.Lerp(0.134f,0.145f,(y-0.50f)/0.06f)
+                :y<0.65f?Mathf.Lerp(0.145f,0.125f,(y-0.56f)/0.09f)
+                :y<0.82f?Mathf.Lerp(0.125f,0.115f,(y-0.65f)/0.17f)
+                :Mathf.Lerp(0.115f,0,(y-0.82f)/0.18f);
         }
         static readonly string[] Sheets = { "SW03_GroundScar_5f", "SW03_RisingBlade_Tall_5f", "SW03_HitCut_5f" };
         static readonly Sprite[,] frames = new Sprite[3, 5];
@@ -46,6 +56,7 @@ namespace KarmaPrototype
         Vector2 footprint, ground;
         Transform scope;
         float age, life;
+        KarmaSwordScarClock roundClock;
         bool flipped, ended;
 
         KarmaSW05Energy electricalBlade, electricalWarning;
@@ -102,15 +113,16 @@ namespace KarmaPrototype
                 Mathf.Lerp(0.42f, 1, charge));
             if (electricalWarning != null) electricalWarning.SetCharge(progress);
         }
-        public void Initialize(KarmaGame director, KarmaEnemy enemy, KarmaBossAttack shot, Vector2 size, float seconds, bool mirror = false)
+        public void Initialize(KarmaGame director, KarmaEnemy enemy, KarmaBossAttack shot, Vector2 size, float seconds, bool mirror = false, KarmaSwordScarClock clock = null)
         {
+            roundClock = clock;
             attack = (KarmaSwordBossAttack)shot; scope = shot.transform.parent;
             Setup(director, enemy, ScarSequence.Blade, new Vector2(shot.transform.position.x, 0), size, seconds);
             // Narrow only cosmetic ground discharge/fragments, never the contact footprint.
             var energySize = new Vector2(size.x * VisualWidthScale, size.y);
             electricalBlade = KarmaSW05Energy.Scar(scope,game,shot.transform,new Vector2(shot.transform.position.x,0),energySize,seconds);
             flipped = mirror; Paint(0);
-            KarmaSwordScarAura.Spawn(scope, director, enemy, picture, EnergySeed(shot.transform.position.x));
+            KarmaSwordScarAura.Spawn(scope, director, enemy, picture, EnergySeed(shot.transform.position.x), roundClock);
 
         }
         static void Impact(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at, Vector2 size, string name)
@@ -130,7 +142,7 @@ namespace KarmaPrototype
             if (game == null || owner == null || !owner.PresentationActive || owner.Stunned)
             { ended = true; if (sequence != ScarSequence.Blade) Destroy(gameObject); return; }
             if (game.Paused || sequence == ScarSequence.Warning) return;
-            age += Time.deltaTime;
+            age = roundClock != null ? roundClock.Sample(Time.frameCount, Time.deltaTime, game.Paused) : age + Time.deltaTime;
             if (sequence == ScarSequence.Impact && age >= life) { Destroy(gameObject); return; }
             // Contact stages retain their original clock. Only sprite clips run at 24 FPS.
             FrameIndex = sequence == ScarSequence.Blade
@@ -210,15 +222,18 @@ namespace KarmaPrototype
     // inherits the blade scale or owns a collider, contact or attack component.
     public sealed class KarmaSwordScarAura : MonoBehaviour
     {
+        [Range(0,2)] public float Intensity = 1;
         KarmaGame game; KarmaEnemy owner; SpriteRenderer source, picture;
         MaterialPropertyBlock properties; Vector3 anchor, scale;
         float age, tailAge, noiseSeed, glowGain; bool released;
-        public static void Spawn(Transform root, KarmaGame game, KarmaEnemy owner, SpriteRenderer source, int seed)
+        KarmaSwordScarClock roundClock;
+        public static void Spawn(Transform root, KarmaGame game, KarmaEnemy owner, SpriteRenderer source, int seed, KarmaSwordScarClock clock = null)
         {
             var node = new GameObject("SW03 independent aura / no damage");
             node.transform.SetParent(root, false);
             var fx = node.AddComponent<KarmaSwordScarAura>();
             fx.game=game; fx.owner=owner; fx.source=source;
+            fx.roundClock=clock;
             fx.picture=node.AddComponent<SpriteRenderer>();
             fx.picture.sprite=source.sprite; fx.picture.sharedMaterial=source.sharedMaterial;
             fx.picture.sortingOrder=source.sortingOrder-1;
@@ -235,7 +250,7 @@ namespace KarmaPrototype
         {
             if(game==null || owner==null || !owner.PresentationActive || owner.Stunned) {Destroy(gameObject);return;}
             if(game.Paused)return;
-            age+=Time.deltaTime;
+            age=roundClock!=null?roundClock.Sample(Time.frameCount,Time.deltaTime,game.Paused):age+Time.deltaTime;
             if(source!=null && source.gameObject.activeInHierarchy)
             {anchor=source.transform.position;scale=source.transform.lossyScale;}
             else released=true;
@@ -246,7 +261,7 @@ namespace KarmaPrototype
             // Irregular luminance only: the entire layer stays locked to the
             // sword. Upward flow and edge turbulence happen inside the shader.
             float pulse=0.82f+0.18f*Mathf.PerlinNoise(noiseSeed,age*19);
-            properties.SetFloat("_Fade",ignition*fade*fade*pulse*0.8f*glowGain);
+            properties.SetFloat("_Fade",ignition*fade*fade*pulse*0.8f*glowGain*Mathf.Max(0,Intensity));
             properties.SetFloat("_AuraTime",Mathf.Max(0,age-KarmaSwordScarRise.AuraDelay));
             picture.SetPropertyBlock(properties);
             transform.SetPositionAndRotation(anchor,Quaternion.identity);
@@ -273,35 +288,4 @@ namespace KarmaPrototype
         }
     }
 
-    // Existing sword artwork swings from above the hand into the floor. The
-    // actor image and incoming-damage silhouette are untouched.
-    public sealed class KarmaSwordGroundSlam : MonoBehaviour
-    {
-        KarmaGame game;
-        KarmaEnemy owner;
-        SpriteRenderer blade;
-        float age;
-        public void Initialize(KarmaGame director, KarmaEnemy enemy)
-        {
-            game = director; owner = enemy;
-            blade = KarmaVisuals.Box(transform, "SW03 downward blade", Vector2.zero, Vector2.one, Color.white, 30);
-            KarmaWaveArtwork.Apply(blade, "SW04_CounterBlade_v6", new Vector2(4.4f, 0.42f), Vector2.zero);
-            Paint();
-        }
-        void Paint()
-        {
-            float t = Mathf.Clamp01(age / 0.18f);
-            float angle = Mathf.Lerp(78, -78, t * t);
-            Vector2 axis = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad) * owner.Facing, Mathf.Sin(angle * Mathf.Deg2Rad));
-            transform.position = owner.Position + new Vector2(owner.Facing * 0.65f, 0.1f) + axis * 1.6f;
-            transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(axis.y, axis.x) * Mathf.Rad2Deg);
-        }
-        void Update()
-        {
-            if (owner == null || !owner.PresentationActive || owner.Stunned) { Destroy(gameObject); return; }
-            if (game.Paused) return;
-            age += Time.deltaTime; Paint();
-            if (age >= 0.18f) Destroy(gameObject);
-        }
-    }
 }

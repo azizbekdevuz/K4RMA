@@ -58,6 +58,7 @@ namespace KarmaPrototype
                     {
                         owner.state = ActionState.Telegraph;
                         owner.animator.PrepareWaveAttack(warning, false);
+                        owner.animator.PrepareSwordBody("Volley", warning, i);
                     }
                     else owner.animator.PlayWavePhase("Windup", warning);
                     if (scars) yield return owner.Wait(warning);
@@ -70,6 +71,7 @@ namespace KarmaPrototype
                     if (!scars)
                     {
                         sword.ReleaseSW01(origin, velocity, waveSize, life, high);
+                        owner.animator.ReleaseSwordBody("Volley", i);
                         sword.WaveLaunchVFX(origin, velocity, waveSize, false, high);
                     }
                     else { owner.Attack(origin, velocity, waveSize, sword.WaveLife); owner.animator.ReleaseWavePhase(); owner.animator.PlayWavePhase("Guard"); }

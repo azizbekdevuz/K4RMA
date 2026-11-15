@@ -14,24 +14,37 @@ namespace KarmaPrototype
         Dictionary<string, Sprite> swordDamagePoses;
         Sprite swordDamageFallback;
         bool swordPresentationConfigured;
-        internal const float BasicSwingSeconds = 0.10f;
+        internal const float BasicSwingSeconds = 3f / 24;
+        internal int BasicStrikeIndex { get; private set; }
         float basicReleasedAt = float.NegativeInfinity;
         bool basicPresentationActive, basicReleaseStarted;
-        public void PrepareBasicAttack(float warningSeconds)
+        float basicStrikeSeconds = BasicSwingSeconds;
+        internal bool BasicBodyActive => basicPresentationActive &&
+            (SwordBodyAction == "BasicMelee" || SwordBodyAction == "BasicRanged");
+        internal float BasicReleaseAge => Mathf.Max(0, Time.time - basicReleasedAt);
+        public void PrepareBasicAttack(float warningSeconds, bool melee = false)
         {
             // Keep the original damage-pose policy and warning clock. Only the
             // Basic display below holds the loaded sword until the real event.
+            ConfigureBasicReturnFrames();
             PrepareWaveAttack(warningSeconds, false);
             basicPresentationActive = true; basicReleaseStarted = false;
+            BasicStrikeIndex = 0;
+            PrepareSwordBody(melee ? "BasicMelee" : "BasicRanged", warningSeconds);
         }
-        public void BeginBasicRelease()
+        public void BeginBasicRelease(float strikeSeconds = BasicSwingSeconds, int strike = 0)
         {
+            // A cancelled/replaced preparation cannot regain presentation ownership.
+            if (!BasicBodyActive || deathAt >= 0 || Time.time < hurtUntil) return;
+            basicStrikeSeconds = Mathf.Max(0, strikeSeconds);
+            BasicStrikeIndex = strike;
             basicReleasedAt = Time.time; basicReleaseStarted = basicPresentationActive = true;
             WaveMotionRevision++;
+            ReleaseSwordBody(SwordBodyAction, strike);
             // Coroutines can release after GuardianPose's Update. Show this
             // event now, preserving the damage silhouette already saved there.
             if (sheet == "Wave" && deathAt < 0 && Time.time >= hurtUntil && poses.ContainsKey("Slash"))
-            { ShowPose("Slash"); GuardianPhaseOverridesPose = true; }
+            { ShowPose("Slash"); ApplySwordBodyPresentation("Attack", EnemyAttack.SWBasic); GuardianPhaseOverridesPose = true; }
         }
         internal void ConfigureSwordPresentation()
         {
@@ -42,13 +55,17 @@ namespace KarmaPrototype
             // poses; inherited forms already supplied their own sixteen poses.
             swordDamagePoses = new Dictionary<string, Sprite>(poses);
             swordDamageFallback = picture.sprite;
+            GuardianDamageSprite = picture.sprite; GuardianDamageScale = pictureScale;
             foreach (var sprite in KarmaArtwork.Sprites("Wave"))
                 if (sprite != null && !poses.ContainsKey(sprite.name)) poses.Add(sprite.name, sprite);
             ConfigureSW02Frames();
+            ConfigureSwordBodyCoordinates();
+            ConfigureSwordAppearance();
+            ConfigureSwordLocomotion();
             guardianPose = SwordGuardianPose;
             deferExplicitPose = true;
             onPoseRequested = () => waveSwingAt = float.PositiveInfinity;
-            onActionEnded = EndSW02PresentationAction;
+            onActionEnded = EndSwordBodyAction;
         }
         public void PrepareWaveAttack(float warningSeconds, bool aimed)
         {
@@ -77,6 +94,8 @@ namespace KarmaPrototype
             Sprite damageSprite = GuardianDamageSprite;
             Vector3 damageScale = GuardianDamageScale;
             ShowPose("Move");
+            swordWalkAllowed = true;
+            ApplySwordBodyPresentation("Approach", EnemyAttack.SW03);
             GuardianDamageSprite = damageSprite;
             GuardianDamageScale = damageScale;
             GuardianPhaseOverridesPose = true;
@@ -87,15 +106,17 @@ namespace KarmaPrototype
         {
             if (picture == null || deathAt >= 0 || sheet != "Wave") return;
             ShowPose(poses.ContainsKey("Guard") ? "Guard" : "Hurt");
+            ApplySwordBodyFrame(0);
             GuardianPhaseOverridesPose = true;
         }
         void SwordGuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
         {
+            swordWalkAllowed = (action == "Approach" || action == "Idle") && !airborne;
             // Poses follow the actual combat state, including long attacks and recovery.
             if (picture == null || deathAt >= 0) return;
             if (EmpowermentPose()) return;
-            picture.color = action == "Stunned" ? new Color(0.52f, 0.72f, 0.86f, pictureColor.a)
-                : Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            ApplySwordBodyColor(action == "Stunned" ? new Color(0.52f, 0.72f, 0.86f, pictureColor.a)
+                : Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor);
             transform.localRotation = Quaternion.identity;
             bool basicWave = sheet == "Wave" && (attack == EnemyAttack.SWBasic || attack == EnemyAttack.SW01 || attack == EnemyAttack.SW02);
             bool waveAction = basicWave && (action == "Telegraph" || action == "Attack");
@@ -165,7 +186,7 @@ namespace KarmaPrototype
             if (basicAction && basicPresentationActive && Time.time >= hurtUntil)
             {
                 string basicPose = action == "Telegraph" ? "Windup"
-                    : action == "Attack" && basicReleaseStarted && Time.time - basicReleasedAt < BasicSwingSeconds
+                    : action == "Attack" && basicReleaseStarted && BasicReleaseAge < basicStrikeSeconds
                         ? "Slash" : "FollowThrough";
                 if (poses.ContainsKey(basicPose)) { phaseOverridesPose |= pose != basicPose; pose = basicPose; }
             }
@@ -178,19 +199,84 @@ namespace KarmaPrototype
             if (composed) picture.sprite = guardianAppearance;
             picture.transform.localScale = pictureScale * (composed ? appearanceScale : 1);
             ApplySW02Presentation(action, attack);
+            ApplySwordBodyPresentation(action, attack);
             if (sheet == "Wave")
             {
                 GuardianDamageSprite = damageSprite; GuardianDamageScale = damageScale;
-                GuardianPhaseOverridesPose = phaseOverridesPose || picture.sprite != damageSprite
-                    || picture.transform.localScale != damageScale;
+                GuardianPhaseOverridesPose = true; // Body registration never changes the saved damage silhouette.
             }
             // Secondary motion consumes this display pose; damage continues to
             // use the separately saved sprite, scale and authored foot transform.
             guardianPreviousPosition = transform.position;
-            picture.transform.localPosition = pictureHome;
-            picture.color = action == "Stunned" ? new Color(0.52f, 0.72f, 0.86f, pictureColor.a)
-                : Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor;
+            picture.transform.localPosition = SwordVisualHome;
+            ApplySwordBodyColor(action == "Stunned" ? new Color(0.52f, 0.72f, 0.86f, pictureColor.a)
+                : Time.time < hurtUntil ? new Color(1, 0.45f, 0.45f) : pictureColor);
             transform.localRotation = Quaternion.identity;
+        }
+
+        Sprite[] basicReturnFrames;
+        void ConfigureBasicReturnFrames()
+        {
+            if (basicReturnFrames != null || !poses.TryGetValue("Idle", out var idle)) return;
+            var loaded = Resources.LoadAll<Sprite>("SwordWave/SWBasic/" + idle.texture.name + "_Return");
+            string[] names = { "LinkLow", "ReturnCross", "ReturnFinish" };
+            var frames = new Sprite[3];
+            for (int i = 0; i < frames.Length; i++)
+            {
+                foreach (var sprite in loaded) if (sprite.name == names[i]) frames[i] = sprite;
+                if (frames[i] == null) throw new System.InvalidOperationException("Missing SWBasic return pose: " + idle.texture.name + "/" + names[i]);
+            }
+            basicReturnFrames = frames;
+        }
+        int BasicBodyFrame()
+        {
+            // 0..5: unchanged Combat; 6..8: Basic-only return; 9: approved Idle.
+            if (!basicReleaseStarted)
+            {
+                float remaining = SwordBodyDuration - SwordBodyAge;
+                if (SwordBodyAction == "BasicRanged" && remaining <= 2f / 24) return 2;
+                return remaining <= 3f / 24 ? 1 : 0;
+            }
+            float age = SwordFrameTime(BasicReleaseAge);
+            if (SwordBodyAction == "BasicMelee")
+            {
+                if (BasicStrikeIndex == 0)
+                    return age < 1f / 24 ? 2 : age < 2f / 24 ? 3 : age < 3f / 24 ? 4 : 6;
+                // A complete authored backhand: low load -> cross-body -> high
+                // finish. These are distinct arm/waist drawings, not reversed
+                // Combat frames or a rotation of the whole character.
+                return age < 1f / 24 ? 6 : age < 2f / 24 ? 7 : age < 5f / 24 ? 8 : age < 8f / 24 ? 5 : 9;
+            }
+            // Hold the authored cross-body release long enough to read at 24fps.
+            // Cosmetic follow-through only; projectile release/waits are unchanged.
+            float releaseHold = Mathf.Max(basicStrikeSeconds, 4f / 24);
+            if (age < releaseHold) return 3;
+            return age < releaseHold + 2f / 24 ? 4
+                : age < releaseHold + 4f / 24 ? 5 : 9;
+        }
+        void ApplyBasicBodyFrame(int frame)
+        {
+            if (frame < 6) { ApplySwordBodyFrame(frame); return; }
+            picture.sprite = frame == 9 ? poses["Idle"] : basicReturnFrames[frame - 6];
+            RegisterSwordBodySprite();
+            if (frame < 9)
+            {
+                // One authored PPU and sole per form; no per-frame scaling.
+                SwordFoot = Vector3.zero;
+                SwordVisualHome = pictureHome + Vector3.up * swordReferenceSole;
+                picture.transform.localPosition = SwordVisualHome;
+            }
+        }
+
+        internal void SampleSwordBasicContactPose()
+        {
+            // Last body sample before secondary motion and blade sockets. A
+            // logical Slash or queued pose must not replace the contact drawing
+            // between the coroutine event and the rendered LateUpdate frame.
+            if (!BasicBodyActive || !SwordBodyVisible || deathAt >= 0 || Time.time < hurtUntil
+                || sw02Owner == null || sw02Owner.Stunned
+                || sw02Owner.CurrentPattern != (int)EnemyAttack.SWBasic) return;
+            ApplyBasicBodyFrame(BasicBodyFrame());
         }
     }
 }

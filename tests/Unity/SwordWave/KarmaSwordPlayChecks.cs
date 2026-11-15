@@ -215,7 +215,7 @@ public static class KarmaSwordPlayChecks
     static async Task CheckSW03(bool enraged)
     {
         await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(enraged);
-        results.Add("PASS: SW03 5 x (8+8), locked warnings, stagger, vulnerability, gating and cleanup");
+        results.Add("PASS: SW03 five maximum-density cluster rounds, locked warnings, simultaneous release, vulnerability, gating and cleanup");
     }
     static async Task CheckScarCancellation()
     {
@@ -271,11 +271,9 @@ public static class KarmaSwordPlayChecks
         Check(!(bool)Behavior.GetType().GetProperty("BasicMeleeSelected").GetValue(Behavior), "medium basic is a wave");
         await Until(() => Attacks().Length > 0);
         Check(Get<Vector2>(Attacks()[0], "velocity").x > 0, "medium wave aims toward player");
-        bool rangedFrame = false;
-        for (int i = 0; i < 5; i++)
-            rangedFrame |= Attacks()[0].Visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_" + i);
-        Check(rangedFrame && Attacks()[0].GetComponent<KarmaSwordBasicPresentation>() != null,
-            "medium wave preserves the current animated SW01 crescent presentation");
+        Check(Attacks()[0].Visual.sprite == KarmaWaveArtwork.Sprite("Sword_Crescent_v6")
+            && Attacks()[0].GetComponent<KarmaSwordBasicPresentation>() != null,
+            "medium wave has its own simple crescent presentation");
         Snapshot("swbasic-wave");
         Reset(); typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.49f);
         object[] args = { 15f, true, true, EnemyAttack.SWBasic };

@@ -6,6 +6,8 @@ Shader "K4RMA/SW05/CrimsonBlade"
         _Color ("Tint", Color) = (1,1,1,1)
         _Formation ("Harmless sword formation", Range(0,1)) = 1
         _BladePresence ("Blade-only presence", Range(0,1)) = 1
+        _VisualTime ("Paused sword time", Float) = 0
+        _Energy ("Stored electrical charge", Range(0,1)) = 0
     }
     SubShader
     {
@@ -27,6 +29,7 @@ Shader "K4RMA/SW05/CrimsonBlade"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 half _Formation, _BladePresence;
+                float _VisualTime, _Energy;
             CBUFFER_END
             struct Input { float3 vertex : POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Output { float4 vertex : SV_POSITION; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_OUTPUT_STEREO };
@@ -45,7 +48,8 @@ Shader "K4RMA/SW05/CrimsonBlade"
             {
                 float2 uv = SW05BladeUV(i.uv,_BladePresence);
                 half4 source = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv);
-                source.rgb = SW05BladeRadiance(source.rgb,uv,_BladePresence);
+                source.rgb = SW05BladeRadiance(source.rgb,uv,_BladePresence,_VisualTime,_Energy);
+                // The texture is sword-only; the separate energy mesh owns aura.
                 // Grow the image from the hilt toward its downward tip. The
                 // default is fully formed for falling swords and impact frames.
                 half boundary = 1 - _Formation;

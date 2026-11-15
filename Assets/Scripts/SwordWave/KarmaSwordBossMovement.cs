@@ -167,6 +167,8 @@ namespace KarmaPrototype
                 {
                     float safeGap = Mathf.Max(swordPressureTarget, SwordSpacingDistance());
                     bool pressure = swordPressurePending && Mathf.Abs(dx) < safeGap;
+                    if (!pressure && behavior.CloseBasicReady
+                        && SwordRetreatClearance(-1, 6) >= 6 && SwordRetreatClearance(1, 6) >= 6) return false;
                     float distance = Mathf.Abs(dx);
                     bool tooClose = distance < behavior.BasicMeleeRange * 0.55f;
                     bool nearMelee = tooClose || distance < Settings.pressureRetreatStartDistance

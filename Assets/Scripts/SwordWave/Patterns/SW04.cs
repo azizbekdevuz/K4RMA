@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 namespace KarmaPrototype
 {
@@ -38,10 +38,10 @@ namespace KarmaPrototype
                 if (swordGuardRoot != null) yield break;
                 owner.state = ActionState.Telegraph;
                 owner.animator.PlayWavePhase("Windup");
-                // A non-damaging formation uses the native charge circle. It
+                owner.animator.PrepareSwordBody("Counter", owner.Warning(0.7f));
+                // A non-damaging dome unfolds inside the existing warning. It
                 // needs no swept hit-area sprite or duplicate square warning.
-                var formation = KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art,
-                    owner.Position, owner.Warning(0.7f), true);
+                var formation = KarmaSwordWardVfx.Prepare(owner.game, owner, owner.Warning(0.7f));
                 yield return owner.Wait(owner.Warning(0.7f));
                 if (formation != null) Destroy(formation.gameObject);
                 KarmaAudio.StopSlot("sw-bed");
@@ -86,6 +86,8 @@ namespace KarmaPrototype
                             Vector2 origin = blades[i].transform.position, aim = Vector2.right * owner.direction;
                             var slot = volley.Slots[i];
                             var mark = SwordGuardPathMark(slot, origin, origin, size, false);
+                            if (!owner.running || owner.selected == EnemyAttack.SW04)
+                                owner.animator.PrepareSwordBody("Counter", GuardTrackingTime + GuardLockTime, i);
                             float trackingUntil = owner.FightSeconds + GuardTrackingTime;
                             while (owner.Active && volley.Allows(i) && owner.FightSeconds < trackingUntil)
                             {
@@ -126,6 +128,8 @@ namespace KarmaPrototype
                             blades[i].gameObject.SetActive(false); Destroy(blades[i].gameObject); blades[i] = null;
                             shots[i] = owner.Attack(origin, aim * Settings.swordSpeed, size, sword.WaveLife,
                             contact: volley.Contacts[i], pattern: EnemyAttack.SW04, parent: slot);
+                            if (!owner.running || owner.selected == EnemyAttack.SW04)
+                                owner.animator.ReleaseSwordBody("Counter", i);
                             KarmaSwordWardVfx.CounterProjectile(owner.game, owner, shots[i], aim * Settings.swordSpeed, size);
                             KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shots[i]);
                             wardVfx?.Released(origin,aim);
@@ -170,8 +174,10 @@ namespace KarmaPrototype
             }
             void ClearSwordGuard(bool stopRoutine = true)
             {
+                owner.animator.EndSwordCounterBody();
                 if (stopRoutine && swordGuardRoutine != null) owner.StopCoroutine(swordGuardRoutine);
                 swordGuardRoutine = null;
+                if (!stopRoutine) wardVfx?.Finish();
                 wardVfx = null;
                 if (swordGuardRoot != null)
                 { swordGuardRoot.gameObject.SetActive(false); Destroy(swordGuardRoot.gameObject); swordGuardRoot = null; }
@@ -211,6 +217,7 @@ namespace KarmaPrototype
                     wardVfx?.Absorb();
                 }
             }
+            public void GuardImpact() { wardVfx?.Pulse(); }
             public void OnParried(KarmaAttackContact contact)
             {
                 var volley = activeVolley;

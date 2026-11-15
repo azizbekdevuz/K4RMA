@@ -21,7 +21,7 @@ namespace KarmaPrototype
                 Label(275, 550, 730, 50, "공격이 닿기 전, 보호의 힘을 펼쳐라.", centered);
                 float pulse = 0.8f + Mathf.Sin(Time.unscaledTime * 5) * 0.2f;
                 var old = GUI.color; GUI.color = new Color(1, 0.9f, 0.6f, pulse);
-                KeyPrompt(new Rect(275, 615, 730, 55), 23, true, KarmaAction.Guard, "  새로 눌러 막으세요"); GUI.color = old;
+                KeyPrompt(new Rect(275, 615, 730, 55), 23, true, KarmaAction.Guard, "  눌러 막으세요"); GUI.color = old;
                 return;
             }
             if (!string.IsNullOrEmpty(t.Speech))

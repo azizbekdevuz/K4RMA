@@ -12,7 +12,7 @@ namespace KarmaPrototype
         public bool Frozen => WaitingForGuard || Step == KarmaTutorialStep.Lesson || Step == KarmaTutorialStep.FinalDialogue || Step == KarmaTutorialStep.Fade;
         bool preparingGuard, inputReleaseRequired;
         int inputFrame = -1, freezeFrame, dialogue, strikeId, contactId, countedStrike;
-        bool released, strikePaused;
+        bool strikePaused;
         float completeUntil, attackAt, attackProgress, fade, blockedUntil;
         Vector2 strikeStart, strikeEnd;
         SpriteRenderer strike, strikeCharge;
@@ -103,12 +103,15 @@ namespace KarmaPrototype
             { fade += Time.unscaledDeltaTime * 1.5f; if (fade >= 1) Game.FinishOpening(); return; }
             if (WaitingForGuard)
             {
-                if (!KarmaInput.Held(KarmaAction.Guard)) released = true;
-                if (Time.frameCount <= freezeFrame || !released || !KarmaInput.Pressed(KarmaAction.Guard)) return;
-                preparingGuard = true;
-                Game.Player.Essences.ResetTemporaryState();
-                Game.Player.Essences.TryUse(Essence.Guard);
-                preparingGuard = false;
+                if (Time.frameCount <= freezeFrame) return;
+                if (!Game.Player.Shielded)
+                {
+                    if (!KarmaInput.Pressed(KarmaAction.Guard)) return;
+                    preparingGuard = true;
+                    Game.Player.Essences.ResetTemporaryState();
+                    Game.Player.Essences.TryUse(Essence.Guard);
+                    preparingGuard = false;
+                }
                 if (!Game.Player.Shielded) return;
                 WaitingForGuard = false; inputFrame = Time.frameCount;
                 Time.timeScale = 1;
@@ -187,7 +190,6 @@ namespace KarmaPrototype
             {
                 strikePaused = true;
                 WaitingForGuard = true; freezeFrame = Time.frameCount;
-                released = !KarmaInput.Held(KarmaAction.Guard);
                 Time.timeScale = 0; return;
             }
             Vector2 from = strike.transform.position;

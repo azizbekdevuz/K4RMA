@@ -93,6 +93,11 @@ namespace KarmaPrototype
             }
             public override IEnumerator Execute()
             {
+                try { yield return Cast(); }
+                finally { KarmaAudio.StopSlot("sw-summon", 0.12f); }
+            }
+            IEnumerator Cast()
+            {
                 // Consume at cast start, never at completion: an interruption or
                 // healing cannot re-arm an already used 50% / 25% ultimate.
                 if (ThresholdPending) thresholdsUsed++;
@@ -103,6 +108,7 @@ namespace KarmaPrototype
                 Vector2 ground = new Vector2(KarmaStage.ArenaCenter, KarmaSpace.GuardianGroundY);
                 owner.animator.PlayWavePhase("Rising");
 
+                if (owner.Active) KarmaAudio.Play(KarmaSfxId.SwAscensionIgnition, lifetimeOwner: owner);
                 yield return FlyBoss(AerialSwordCastPosition, 0.7f);
                 if (!owner.Active) yield break;
                 owner.transform.position = AerialSwordCastPosition;
@@ -110,6 +116,7 @@ namespace KarmaPrototype
                 owner.animator.PlayWavePhase("Guard");
                 owner.animator.PrepareSwordBody("UltimateHold", 0);
                 KarmaSW05VFX.Corona(owner.effectsRoot, owner.game, owner.transform);
+                KarmaAudio.Play(KarmaSfxId.SwSummoningEnergy, lifetimeOwner: owner);
                 int seed = KarmaAerialSwordPlanner.ResolveSeed(Settings.aerialSwordSeed);
                 var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed);
                 int groups = KarmaAerialSwordPlanner.VolleyCount;
@@ -192,6 +199,8 @@ namespace KarmaPrototype
                         if (!owner.Active) yield break;
                         ignition.Ignite();
                         owner.animator.ReleaseSwordBody("UltimateFinish");
+                        KarmaAudio.StopSlot("sw-summon", 0.12f);
+                        KarmaAudio.Play(KarmaSfxId.SwFinalExplosion, lifetimeOwner: owner);
                         var contact = new KarmaAttackContact();
                         sword.RegisterFinalDetonation(contact);
                         foreach (var blade in planted) if (blade != null) blade.Explode(contact);

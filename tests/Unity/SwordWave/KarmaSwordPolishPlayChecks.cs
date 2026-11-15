@@ -230,34 +230,21 @@ public static class KarmaSwordPolishPlayChecks
     {
         Reset(); Force(EnemyAttack.SW01); await Seconds(0.08f);
         float pattern = (float)Get(Enemy, "patternStarted"); Vector2 root = Enemy.Position;
-        SpriteRenderer overlay = null; bool captured = false; string failure = null;
-        var probe = new GameObject("confirmed hit rendered frame observer").AddComponent<KarmaSwordDashFrameProbe>();
-        probe.After = () =>
-        {
-            try
-            {
-                var node = Art.Find("Sword confirmed damage silhouette");
-                if (node == null || captured) return;
-                overlay = node.GetComponent<SpriteRenderer>();
-                var source = Art.Find("Guardian sprite").GetComponent<SpriteRenderer>();
-                Check(overlay.enabled && overlay.color.a > 0.5f && overlay.sprite == source.sprite && overlay.sharedMaterial.name == "SwordWave/Shared/KarmaSwordRetreatEcho", "whole-body visible cyan confirmed-hit pulse");
-                Check(overlay.transform.localPosition == source.transform.localPosition && overlay.transform.localRotation == source.transform.localRotation, "flash follows real rendered pose after LateUpdate");
-                Check(Enemy.Position == root && (float)Get(Enemy, "patternStarted") == pattern && (bool)Get(Enemy, "running") && !Enemy.Stunned, "visible hit never restarts/interrupts/moves attack");
-                captured = true; Shot("boss-confirmed-hit");
-            } catch (Exception error) { failure = error.ToString(); }
-        };
+        var picture = Art.Find("Guardian sprite").GetComponent<SpriteRenderer>();
         Enemy.TakeDamage(1);
-        await Until(() => captured || failure != null); probe.After = null; UnityEngine.Object.Destroy(probe.gameObject);
-        Check(failure == null && captured, "rendered hit feedback: " + failure);
-        await Seconds(0.24f); Check(!overlay.enabled, "flash expires without restoring over animation");
+        Check(picture.color.r > picture.color.g, "confirmed damage immediately tints the current sprite");
+        Check(Enemy.Position == root && (float)Get(Enemy, "patternStarted") == pattern
+            && (bool)Get(Enemy, "running") && !Enemy.Stunned, "damage flash preserves the attack");
+        Shot("boss-confirmed-hit");
+        await Seconds(Mathf.Max(0.18f, game.Config.hitInvulnerability) + 0.05f);
+        Check(Mathf.Abs(picture.color.r - picture.color.g) < 0.001f, "damage tint expires");
         Reset(); Force(EnemyAttack.SW01); await Seconds(0.05f);
         float shieldMultiplier = game.Config.BossTuning.sword.shieldDamageMultiplier;
         game.Config.BossTuning.sword.shieldDamageMultiplier = 0; Set(Get(Behavior, "counter"), "Guarding", true); Enemy.TakeDamage(1); await Seconds(0.04f);
-        Check(Art.Find("Sword confirmed damage silhouette") == null, "zero actual damage never flashes");
+        picture = Art.Find("Guardian sprite").GetComponent<SpriteRenderer>();
+        Check(picture.color.r <= picture.color.g, "zero actual damage never flashes");
         game.Config.BossTuning.sword.shieldDamageMultiplier = shieldMultiplier;
-        Reset(); Force(EnemyAttack.SW05); await Seconds(0.05f); Enemy.TakeDamage(1); await Seconds(0.04f);
-        Check(Art.GetComponent<KarmaSwordDamageFlash>() == null, "SW05 receives no new overlay behavior");
-        Log("confirmed damage silhouette: visible body pulse, rendered-pose follow, finite lifetime, no animation/root/coroutine changes; zero damage and SW05 excluded");
+        Log("confirmed damage uses a temporary red tint and preserves the current attack; zero damage leaves the tint unchanged");
     }
 }
 #endif

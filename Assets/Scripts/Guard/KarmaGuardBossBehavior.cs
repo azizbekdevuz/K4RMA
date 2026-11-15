@@ -106,7 +106,6 @@ namespace KarmaPrototype
             public override void OnParried()
             {
                 if (AutoShieldActive) KarmaAudio.Play(KarmaSfxId.GdShieldBreak);
-                else KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
                 owner.shieldUntil = 0;
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }

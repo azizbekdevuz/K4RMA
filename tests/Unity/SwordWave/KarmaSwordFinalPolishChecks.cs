@@ -224,7 +224,8 @@ public static class KarmaSwordFinalPolishChecks
     static async Task Impact()
     {
         Reset(); Place(29); await Seconds(0.1f); Force(EnemyAttack.SWBasic); await Seconds(0.15f); Enemy.TakeDamage(1); await Seconds(0.02f); Shot("boss-confirmed-hit");
-        Check(game.World.Find("Sword boss confirmed hit") != null, "boss confirmed-hit overlay");
+        var bossPicture = Enemy.transform.Find("Artwork/Guardian sprite").GetComponent<SpriteRenderer>();
+        Check(bossPicture.color.r > bossPicture.color.g, "confirmed damage tints the boss sprite");
         await Until(() => Root.GetComponentsInChildren<KarmaBossAttack>().Length > 0);
         var shot = Root.GetComponentsInChildren<KarmaBossAttack>()[0]; Place(shot.transform.position.x); Set(game.Player, "invulnerableUntil", 0f);
         float hp = game.Player.Health; await Until(() => game.Player.Health < hp); Shot("player-confirmed-hit");

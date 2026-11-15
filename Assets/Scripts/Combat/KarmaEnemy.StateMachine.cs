@@ -105,8 +105,16 @@ namespace KarmaPrototype
             return true;
         }
         Transform stunCue;
+        bool stunCueSoundStarted;
         void ShowStunCue()
         {
+            // The electrical stun uses its own visual, and short stuns can remove
+            // their stars before this one-shot finishes.
+            if (!stunCueSoundStarted)
+            {
+                stunCueSoundStarted = true;
+                KarmaAudio.Play(KarmaSfxId.CombatBossStagger, lifetimeOwner: this);
+            }
             if (stunCue != null) return;
             var sprite = behavior.StunSprite;
             if (sprite == null) return;
@@ -123,7 +131,9 @@ namespace KarmaPrototype
         }
         void HideStunCue()
         {
+            stunCueSoundStarted = false;
             if (stunCue == null) return;
+            KarmaAudio.StopOwned(stunCue, 0.045f);
             Destroy(stunCue.gameObject);
             stunCue = null;
         }

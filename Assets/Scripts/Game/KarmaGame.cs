@@ -18,8 +18,10 @@ namespace KarmaPrototype
         public bool IsCombat { get { return Phase == RunPhase.Combat && !Paused; } }
         public bool CanMove { get { return Time.frameCount != openingSpeechDismissFrame && !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
         public KarmaTutorial Tutorial { get; private set; }
+        internal bool DialogueLocksPlayerInput => OpeningArrivalSpeech != null || Tutorial?.Step == KarmaTutorialStep.Complete;
         public bool GameplayFrozen => Paused || Tutorial != null && Tutorial.Frozen;
-        public bool AllowsPlayerActions => IsCombat || !Paused && Tutorial != null && Tutorial.CanAct;
+        public bool AllowsPlayerActions => Time.frameCount != openingSpeechDismissFrame
+            && (IsCombat || !Paused && Tutorial != null && Tutorial.CanAct);
         public float Elapsed { get; private set; }
         public float DamageTaken { get; set; }
         public int Retries { get; private set; }
@@ -72,6 +74,8 @@ namespace KarmaPrototype
                 {
                     if (DisplayConfirmationPending) RevertDisplaySettings(); else CloseSettings();
                 }
+                else if (!KarmaInput.RebindingThisFrame && DisplayConfirmationPending
+                    && KarmaInput.Pressed(KarmaAction.Confirm)) KeepDisplaySettings();
                 return;
             }
             if (KarmaInput.Pressed(KarmaAction.Settings) && (Phase == RunPhase.Title || Paused))

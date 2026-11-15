@@ -293,7 +293,7 @@ public static class KarmaSwordPlayChecks
         Check(enemy.Health < health, "repeated incoming hits still deal damage");
         Check(!enemy.Stunned && Get<float>(enemy, "patternStarted") == startedAt,
             "ordinary damage does not restart or stun the committed pattern");
-        Check(Get<float>(animator, "hurtUntil") <= Time.time, "ordinary sword damage uses overlay instead of Hurt reservation");
+        Check(Get<float>(animator, "hurtUntil") <= Time.time, "ordinary sword damage leaves pose timing unchanged");
     }
     static async Task CheckSwordDamageFeedback()
     {
@@ -334,13 +334,12 @@ public static class KarmaSwordPlayChecks
         }
         Reset(); Force(EnemyAttack.SW01); await Seconds(0.06f);
         enemy.TakeDamage(1);
-        var bossFlash = game.World.Find("Sword boss confirmed hit");
-        Check(bossFlash != null && bossFlash.GetComponentInChildren<SpriteRenderer>().sprite.name == "Sword_HitBurst_v2",
-            "real boss hit emits overlay PNG without touching animation");
+        var bossPicture = enemy.transform.Find("Artwork/Guardian sprite").GetComponent<SpriteRenderer>();
+        Check(bossPicture.color.r > bossPicture.color.g, "real boss hit tints the current sprite red");
         Check(game.World.Find("Effect") == null, "sword hit no longer stacks the old white rectangle");
         Snapshot("sword-boss-hit");
-        await Seconds(0.3f);
-        Check(game.World.Find("Sword boss confirmed hit") == null, "boss flash expires promptly");
+        await Seconds(Mathf.Max(0.18f, game.Config.hitInvulnerability) + 0.05f);
+        Check(Mathf.Abs(bossPicture.color.r - bossPicture.color.g) < 0.001f, "boss tint expires promptly");
         Reset(); Set(enemy, "selected", EnemyAttack.SW03); Set(game.Player, "invulnerableUntil", 0f);
         var overlap = new KarmaAttackContact();
         enemy.TryAttackHit(game.Player.Position, game.Player.Position, Vector2.one * 4, 1, overlap, 0, sourcePattern: EnemyAttack.SW04);
@@ -392,13 +391,14 @@ public static class KarmaSwordPlayChecks
             Set(enemy, "fullShield", false);
             enemy.TakeDamage(1);
             var animator = Get<KarmaCharacterAnimator>(enemy, "animator");
-            Check(Get<float>(animator, "hurtUntil") > Time.time, primary + " retains ordinary Hurt animation");
-            Check(game.World.Find("Sword boss confirmed hit") == null, primary + " does not receive sword-only VFX");
+            var bossPicture = enemy.transform.Find("Artwork/Guardian sprite").GetComponent<SpriteRenderer>();
+            Check(Get<float>(animator, "hurtUntil") <= Time.time && bossPicture.color.r > bossPicture.color.g,
+                primary + " uses the red damage flash and leaves pose timing unchanged");
         }
         Reset(); Set(game.Player, "invulnerableUntil", 0f);
         game.Player.TakeDamage(1);
-        Check(game.World.Find("Effect") != null, "ordinary player damage API retains original feedback");
-        results.Add("Guard/RisingSlash damage retains original Hurt; sword-only overlay and white-flash suppression do not leak to other boss types.");
+        Check(game.World.Find("Effect") == null, "ordinary player damage uses sprite tint");
+        results.Add("Guard/RisingSlash and SwordWave use the shared red damage tint.");
     }
     static async Task CheckMovement()
     {

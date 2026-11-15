@@ -307,6 +307,7 @@ namespace KarmaPrototype
             if (renderer.flipY) point.y = -point.y;
             return renderer.transform.TransformPoint(point);
         }
+
         void LateUpdate()
         {
             if (game == null || owner == null || !owner.PresentationActive || owner.Stunned || game.Phase != RunPhase.Combat)
@@ -441,6 +442,7 @@ namespace KarmaPrototype
             readonly GameObject node;
             readonly Mesh mesh;
             readonly MeshRenderer renderer;
+            readonly MaterialPropertyBlock chargeMaterialProperties;
             SwordEnergyPhase phase;
             Vector2 size;
             Vector2 electricSize, electricOffset;
@@ -481,6 +483,11 @@ namespace KarmaPrototype
                 renderer.sharedMaterial = KarmaCombatVFX.GlowMaterial ?? KarmaVisuals.DefaultMaterial;
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
+                // The charge points are already mirrored in world space by the live sprite transform.
+                // This mesh shares a sprite shader, so make its own shader flip neutral.
+                chargeMaterialProperties = new MaterialPropertyBlock();
+                chargeMaterialProperties.SetVector("unity_SpriteProps", new Vector4(1, 1, 0, 0));
+                chargeMaterialProperties.SetColor("unity_SpriteColor", Color.white);
                 node.SetActive(false);
             }
             public void Begin(KarmaEnemy owner, SwordEnergyPhase mode, bool strong, bool tracking, Vector2 footprint,
@@ -492,6 +499,7 @@ namespace KarmaPrototype
                 swordOffset = Vector2.zero; slashSign = 1;
                 System.Array.Clear(motes, 0, motes.Length);
                 renderer.sortingLayerID = layer; renderer.sortingOrder = order;
+                renderer.SetPropertyBlock(phase == SwordEnergyPhase.Charge ? chargeMaterialProperties : null);
                 node.transform.position = at; node.SetActive(true); Active = true;
                 if (phase == SwordEnergyPhase.Release || phase == SwordEnergyPhase.Impact || phase == SwordEnergyPhase.Dissipate)
                     Emit(phase == SwordEnergyPhase.Dissipate ? (heavy ? 16 : 9) : (heavy ? 18 : 11),

@@ -55,13 +55,13 @@ namespace KarmaPrototype
                 amount *= Mathf.Clamp01(behavior.Balance.shieldDamageMultiplier);
                 behavior.ReducedDamageFeedback();
             }
-            ReceiveDamage(amount, source);
+            ReceiveDamage(amount);
         }
-        void ReceiveDamage(float amount, Vector2 source)
+        void ReceiveDamage(float amount)
         {
             if (amount <= 0) return;
-            behavior.DamageFeedback(ClosestDamagePoint(source));
             Health = Mathf.Max(0, Health - amount);
+            animator.StartDamageFlash(game.Config.hitInvulnerability);
             if (Health <= 0)
             {
                 CancelCombat(); art.SetParent(game.World, true); animator.Die();

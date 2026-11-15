@@ -100,8 +100,14 @@ namespace KarmaPrototype
                     for (int i = 0; i < count; i++)
                     {
                         float beginsAt = travelSeconds * i / (count - 1);
-                        float age = elapsed - beginsAt;
+                        float age = elapsed - beginsAt, previousAge = previousElapsed - beginsAt;
                         var slab = slabs[i];
+                        if (age >= 0 && previousAge < 0)
+                            KarmaAudio.Play(KarmaSfxId.GdGroundRise, lifetimeOwner: slab);
+                        // Leave a short audible gap before the next rise. The eruption and hit windows are unchanged.
+                        const float audioFadeAt = 0.19f;
+                        if (age >= audioFadeAt && previousAge < audioFadeAt)
+                            KarmaAudio.StopOwned(slab, 0.045f);
                         slab.enabled = age >= 0 && fall < 1;
                         if (slab.enabled)
                         {

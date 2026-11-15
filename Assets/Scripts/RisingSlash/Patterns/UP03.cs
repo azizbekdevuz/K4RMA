@@ -21,7 +21,6 @@ namespace KarmaPrototype
                 var mark = owner.Mark("전방 대검기 · 등 뒤로", center, size);
                 owner.state = ActionState.Telegraph;
                 float warning = owner.Warning(0.72f);
-                owner.animator.PlayRisingMotion("Rising", warning, 0, 0.3f);
                 KarmaRisingAudio.Warn(warning);
 
                 var preview = KarmaRisingArt.Get("WaveEcho");
@@ -34,15 +33,19 @@ namespace KarmaPrototype
                 yield return owner.Wait(warning);
                 if (mark != null) Destroy(mark.gameObject);
                 KarmaRisingAudio.EndWarning();
-                owner.animator.PlayRisingMotion("Rising", 0.48f, 0.3f, 1);
                 var wave = owner.Attack(center, Vector2.zero, size, 0.42f, Settings.waveDamageMultiplier, null, 0f, visualPose: "Wave");
                 if (wave != null)
                 {
-                    if (owner.Active) KarmaRisingAudio.Wave();
+                    if (owner.Active)
+                    {
+                        owner.animator.StartRisingWave();
+                        KarmaRisingAudio.Wave();
+                    }
                     wave.Repaint(KarmaRisingArt.Get("Wave"), true);
                     if (wave.Visual != null) wave.Visual.flipX = owner.direction < 0;
                 }
                 yield return owner.Wait(0.48f);
+                owner.animator.EndRisingMotion();
                 yield return owner.Recovery(1.15f);
             }
 

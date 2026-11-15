@@ -73,22 +73,23 @@ namespace KarmaPrototype
             remnantHalo.enabled = techniques.CounterReady(Time.time);
             art.gameObject.SetActive(game.Phase == RunPhase.Transition || game.Phase == RunPhase.GuardianFallen
                 || game.Phase == RunPhase.PlayerFallen || game.Phase == RunPhase.Defeat
-                || animator.ParrySuccessVisible
+                || animator.ParrySuccessVisible || animator.DamageFlashVisible
                 || Time.time >= invulnerableUntil || ((int)(Time.time * 18) % 2 == 0));
             bool airborne = Airborne;
-            Crouching = game.CanMove && !ControlLocked && !airborne && KarmaInput.Vertical < 0
+            Crouching = game.CanMove && !game.DialogueLocksPlayerInput && !ControlLocked && !airborne && KarmaInput.Vertical < 0
                 && !KarmaInput.Pressed(KarmaAction.Jump) && jumpBufferedUntil <= Time.time;
             if (!PresentControlState(!airborne)) animator.Pose(game.Phase == RunPhase.GuardianFallen ? ceremonyMove : move,
                 airborne, body.linearVelocity.y, Crouching);
+            animator.ApplyDamageFlash();
             if (!game.CanMove) { move = 0; airSlashBufferedUntil = 0; return; }
             if (ControlLocked) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; return; }
+            if (game.DialogueLocksPlayerInput) return;
             move = Crouching ? 0 : KarmaInput.Horizontal;
             int previousFacing = Facing;
             if (move != 0) Facing = move > 0 ? 1 : -1;
             if (Facing != previousFacing && !airborne && !ControlLocked) animator.BeginPlayerTurn();
             aura.flipX = remnantHalo.flipX = Facing < 0;
             art.localScale = new Vector3(animator.PlayerTurning ? -Facing : Facing, 1, 1);
-            if (game.OpeningArrivalSpeech != null && KarmaInput.Pressed(KarmaAction.DialogueConfirm)) return;
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;
             if (game.AllowsPlayerActions)
             {

@@ -3,81 +3,119 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaCharacterAnimator
     {
-        KarmaRisingArticulatedMotion risingMotion;
-        string risingClip, risingAutomaticPose;
-        float risingElapsed, risingDuration, risingFrom, risingTo, risingAutomaticElapsed, risingLastHurt;
-        int risingClockFrame = -1;
+        const int RisingSpriteFps = 24;
+        const int BasicStrikeFrames = 6;
+        const int BaseDescentFrames = 7;
+        const int LandingFrames = 2;
+        Sprite[] risingBasicStrike, risingDescent, risingPursuit, risingWave, risingCrossing;
+        Sprite[] risingMotion;
+        double risingMotionAt;
+        double risingDescentAt = -1, risingLandingAt = -1;
+        double risingStrikeAt = -1;
 
-        // Pattern-local presentation requests never drive attack execution.
-        internal void PlayRisingMotion(string pose, float seconds, float from = 0, float to = 1)
-        {
-            if (deathAt >= 0) return;
-            risingClip = pose; risingElapsed = 0; risingDuration = Mathf.Max(0.001f, seconds);
-            risingFrom = from; risingTo = to; risingClockFrame = Time.frameCount;
-            SampleRisingMotion();
-        }
-        void EndRisingMotion()
-        {
-            risingClip = null; risingAutomaticPose = null; risingAutomaticElapsed = 0;
-            if (risingMotion != null) risingMotion.Hide();
-        }
-        string RisingForm => poses.TryGetValue("Idle", out var idle) ? idle.texture.name : "Rise";
-        void SampleRisingMotion()
-        {
-            if (risingMotion == null || risingClip == null) return;
-            risingMotion.Sample(RisingForm, risingClip, risingElapsed, risingDuration, risingFrom, risingTo);
-        }
-        internal void ConfigureRisingPresentation()
+        internal void ConfigureRisingPresentation(string form)
         {
             // Base poses live in this boss's library; inherited bodies already supplied
             // their own poses and must keep those images.
             foreach (var sprite in KarmaArtwork.Sprites("Rise"))
                 if (sprite != null && !poses.ContainsKey(sprite.name)) poses[sprite.name] = sprite;
+            risingBasicStrike = form == "Rise"
+                ? LoadRisingFrames("RiseBasicStrike", BasicStrikeFrames)
+                : LoadRisingFrames(form + "Strike", 3);
+            int dropFrames = form == "Rise" ? BaseDescentFrames : form == "RiseWave" ? 2 : 3;
+            risingDescent = LoadRisingFrames(form + "Descent", dropFrames + LandingFrames);
+            if (form == "RiseFinal")
+            {
+                risingCrossing = LoadRisingFrames("RiseFinalCrossing", 3);
+                risingPursuit = risingCrossing;
+            }
+            else risingPursuit = LoadRisingFrames(form + "Pursuit", 3);
+            if (form == "RiseWave") risingWave = LoadRisingFrames("RiseWaveRelease", 3);
+            else if (form == "RiseFinal") risingWave = LoadRisingFrames("RiseFinalWaveRelease", 3);
             guardianPose = RisingGuardianPose;
-            risingMotion = GetComponent<KarmaRisingArticulatedMotion>();
-            if (risingMotion == null) risingMotion = gameObject.AddComponent<KarmaRisingArticulatedMotion>();
-            risingMotion.Configure(picture, () => deathAt < 0 && Time.time >= empowermentUntil,
-                () => deathAt < 0 ? -1 : Time.time - deathAt, () => revivalFrames);
-            onActionEnded -= EndRisingMotion;
-            onActionEnded += EndRisingMotion;
         }
+
+        static Sprite[] LoadRisingFrames(string name, int count)
+        {
+            var frames = Resources.LoadAll<Sprite>("RisingSlash/Forms/" + name);
+            if (frames.Length != count) return null;
+            System.Array.Sort(frames, (a, b) => string.CompareOrdinal(a.name, b.name));
+            return frames;
+        }
+
+        internal void StartRisingDescent(float duration)
+        {
+            if (risingDescent == null) return;
+            risingLandingAt = -1;
+            // Hold the first pose on long drops, then play the cut at its authored rate.
+            risingDescentAt = Time.timeAsDouble + Mathf.Max(0, duration - RisingDropFrameCount / (float)RisingSpriteFps);
+        }
+
+        int RisingDropFrameCount => risingDescent.Length - LandingFrames;
+
+        internal void LandRisingDescent()
+        {
+            if (risingDescentAt < 0) return;
+            risingDescentAt = -1;
+            risingLandingAt = Time.timeAsDouble;
+        }
+
+        internal void ClearRisingAttackFrames()
+        {
+            risingStrikeAt = risingDescentAt = risingLandingAt = -1;
+            EndRisingMotion();
+        }
+
+        internal void StartRisingPursuit() => StartRisingMotion(risingPursuit);
+        internal void StartRisingWave() => StartRisingMotion(risingWave);
+        internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
+        internal void EndRisingMotion() => risingMotion = null;
+
+        void StartRisingMotion(Sprite[] frames)
+        {
+            risingMotion = frames;
+            risingMotionAt = Time.timeAsDouble;
+        }
+
+        static int RisingFrame(double start, int count) =>
+            Mathf.Clamp((int)((Time.timeAsDouble - start) * RisingSpriteFps), 0, count - 1);
+
+        internal void StartRisingBasicStrike()
+        {
+            if (risingBasicStrike != null) risingStrikeAt = Time.timeAsDouble;
+        }
+
+        internal void ClearRisingBasicStrike() => risingStrikeAt = -1;
+
         void RisingGuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
         {
-            if (risingClockFrame != Time.frameCount)
-            {
-                // GuardianPose is skipped by the owner while paused.
-                risingElapsed += Time.deltaTime;
-                risingAutomaticElapsed += Time.deltaTime;
-                risingClockFrame = Time.frameCount;
-            }
-            bool hurt = Time.time < hurtUntil;
-            if (hurt || action == "Stunned" || (action != "Attack" && action != "Telegraph"))
-            {
-                if (risingClip != null) EndRisingMotion();
-            }
-            // Keep this original sprite policy intact: shared hit detection reads
-            // its bounds even while the separate cutout renderers are visible.
-            string pose = hurt ? "Hurt"
+            string pose = Time.time < hurtUntil ? "Hurt"
                 : action == "Stunned" ? "Hurt"
                 : action == "Recover" ? "Landing"
                 : action == "Attack" ? airborne ? "AirSlash" : attack == EnemyAttack.UP01 || attack == EnemyAttack.UP03 ? "Rising" : "Slash"
                 : DefaultGuardianPose(action, airborne, armored);
             if (pose == "Move") pose = "Dash";
-            ApplyGuardianPose(pose);
-            if (risingClip != null) { SampleRisingMotion(); return; }
-            string automatic = action == "Telegraph" ? "Slash" : pose;
-            if (automatic != risingAutomaticPose || (hurt && risingLastHurt != hurtUntil))
+            bool basic = attack == EnemyAttack.GroundStrike && !airborne;
+            if (!basic || (pose != "Slash" && pose != "Landing")) ClearRisingBasicStrike();
+            if (basic && risingBasicStrike != null && risingStrikeAt < 0 && pose == "Slash") pose = "Dash";
+
+            if (pose == "Hurt")
             {
-                risingAutomaticPose = automatic; risingAutomaticElapsed = 0;
-                risingLastHurt = hurtUntil;
+                ClearRisingAttackFrames();
             }
-            float duration = automatic == "Idle" ? 1.6f : automatic == "Dash" ? 0.36f
-                : automatic == "Hurt" ? 0.16f : automatic == "Landing" ? 0.35f : 0.28f;
-            bool loop = automatic == "Idle" || automatic == "Dash";
-            float elapsed = loop ? Mathf.Repeat(risingAutomaticElapsed, duration) : risingAutomaticElapsed;
-            float from = action == "Recover" ? 0.6f : 0;
-            float to = action == "Telegraph" ? 0.3f : 1;
-            risingMotion.Sample(RisingForm, automatic, elapsed, duration, from, to);
+            else if (action != "Attack" && action != "Recover")
+            {
+                risingDescentAt = risingLandingAt = -1;
+            }
+            ApplyGuardianPose(pose);
+            if (risingStrikeAt >= 0)
+                picture.sprite = risingBasicStrike[RisingFrame(risingStrikeAt, risingBasicStrike.Length)];
+            else if (risingDescentAt >= 0 && action == "Attack")
+                picture.sprite = risingDescent[RisingFrame(risingDescentAt, RisingDropFrameCount)];
+            else if (risingLandingAt >= 0)
+                picture.sprite = risingDescent[RisingDropFrameCount + RisingFrame(risingLandingAt, LandingFrames)];
+            else if (risingMotion != null)
+                picture.sprite = risingMotion[RisingFrame(risingMotionAt, risingMotion.Length)];
         }
     }
 }

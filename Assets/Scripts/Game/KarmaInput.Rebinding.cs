@@ -14,7 +14,7 @@ namespace KarmaPrototype
         public static string RebindMessage { get; private set; }
         public static readonly KarmaAction[] ConfigurableActions = {
             KarmaAction.Left, KarmaAction.Right, KarmaAction.Up, KarmaAction.Down, KarmaAction.Jump,
-            KarmaAction.Attack, KarmaAction.Pierce, KarmaAction.Counter, KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard
+            KarmaAction.Attack, KarmaAction.SwordWave, KarmaAction.Pierce, KarmaAction.RisingSlash, KarmaAction.Guard, KarmaAction.Counter
         };
         // Keep Input System's existing v1 JSON format. Runtime-created maps get
         // new binding GUIDs each launch, but v1 also stores the stable map/action
@@ -106,7 +106,7 @@ namespace KarmaPrototype
                 .WithControlsHavingToMatchPath("<Keyboard>")
                 .WithControlsExcluding("<Keyboard>/anyKey")
                 .WithCancelingThrough("<Keyboard>/escape")
-                .OnCancel(op => { RestoreBinding(action, previous); FinishRebinding("키 변경을 취소했습니다."); })
+                .OnCancel(op => { RestoreBinding(action, previous); FinishRebinding(null); })
                 .OnComplete(op =>
                 {
                     string path = "<Keyboard>/" + op.selectedControl.name;

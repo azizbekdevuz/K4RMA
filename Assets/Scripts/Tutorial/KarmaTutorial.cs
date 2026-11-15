@@ -9,11 +9,12 @@ namespace KarmaPrototype
         public int Lesson { get; private set; } = -1;
         public int Successes { get; private set; }
         public bool WaitingForGuard { get; private set; }
-        public bool Frozen => WaitingForGuard || Step == KarmaTutorialStep.Lesson || Step == KarmaTutorialStep.FinalDialogue || Step == KarmaTutorialStep.Fade;
-        bool preparingGuard, inputReleaseRequired;
-        int inputFrame = -1, freezeFrame, dialogue, strikeId, contactId, countedStrike;
-        bool released, strikePaused;
-        float completeUntil, attackAt, attackProgress, fade, blockedUntil;
+        public bool Frozen => WaitingForGuard || Step == KarmaTutorialStep.Lesson
+            || Step == KarmaTutorialStep.FinalDialogue || Step == KarmaTutorialStep.Fade;
+        bool preparingGuard, inputReleaseRequired, completionConfirmed;
+        int inputFrame = -1, freezeFrame, completionFrame, dialogue, strikeId, contactId, countedStrike;
+        bool strikePaused;
+        float attackAt, attackProgress, fade, blockedUntil;
         Vector2 strikeStart, strikeEnd;
         SpriteRenderer strike, strikeCharge;
         Vector3 chargeScale;
@@ -31,7 +32,14 @@ namespace KarmaPrototype
         }
         static readonly string[] Lessons = { "먼저 검을 휘둘러 보아라. 나무의 중심을 정확히 노려라.", "검에 담은 기운을 앞으로 보내 보아라.", "아래에서 위로. 검을 올리는 힘에 몸을 실어라.", "이번에는 막아 보아라. 공격이 닿기 전에 보호의 힘을 펼쳐라." };
         static readonly string[] Ending = { "내가 가르친 기술은 모두 익혔구나.", "하지만 배운 것을 그대로 쓰는 것만으로는 수련이 끝나지 않는다.", "이제 그 기술들을 너만의 것으로 만들어라." };
-        public string Speech => Step == KarmaTutorialStep.FinalDialogue ? Ending[dialogue] : Step == KarmaTutorialStep.Lesson ? Lessons[Lesson] : "";
+        static readonly string[] TrainingNames = { "기본 공격", "검기", "상승베기", "방어" };
+        public string Speech => Step switch
+        {
+            KarmaTutorialStep.Lesson => Lessons[Lesson],
+            KarmaTutorialStep.Complete => TrainingNames[Lesson] + " 훈련을 마쳤다.",
+            KarmaTutorialStep.FinalDialogue => Ending[dialogue],
+            _ => ""
+        };
         public string SpeechTitle => "스승";
         public void Initialize(KarmaGame game)
         {
@@ -72,7 +80,9 @@ namespace KarmaPrototype
             if (Successes >= 3) return;
             Successes++;
             if (Successes != 3) return;
-            Step = KarmaTutorialStep.Complete; completeUntil = Time.time + 1;
+            Step = KarmaTutorialStep.Complete;
+            completionConfirmed = false;
+            completionFrame = Time.frameCount;
             blockedUntil = 0;
             barriers[Lesson].GetComponent<KarmaTutorialGate>().Open();
             KarmaCombatVFX.SpawnSprite(transform, Game.Player.Position, "PlayerVFX", "Barrier", Vector2.one * 3, 0.3f);
@@ -85,11 +95,26 @@ namespace KarmaPrototype
         public void Tick()
         {
             if (Game.SettingsOpen || Game.Paused || KarmaInput.RebindingThisFrame) return;
-            if (Step == KarmaTutorialStep.Lesson || Step == KarmaTutorialStep.FinalDialogue)
+            if (Step == KarmaTutorialStep.Lesson || Step == KarmaTutorialStep.Complete || Step == KarmaTutorialStep.FinalDialogue)
             {
-                if (!KarmaInput.Pressed(KarmaAction.DialogueConfirm)) return;
+                bool confirmed = inputFrame != Time.frameCount && KarmaInput.Pressed(KarmaAction.DialogueConfirm);
+                if (Step == KarmaTutorialStep.Complete)
+                {
+                    completionConfirmed |= confirmed && completionFrame != Time.frameCount;
+                    if (!completionConfirmed || !Game.Player.ReadyToAdvanceTrainingDialogue) return;
+                }
+                else if (!confirmed) return;
                 inputFrame = Time.frameCount; inputReleaseRequired = true;
                 if (Step == KarmaTutorialStep.FinalDialogue) { if (++dialogue == Ending.Length) Step = KarmaTutorialStep.Gate; }
+                else if (Step == KarmaTutorialStep.Complete)
+                {
+                    Step = Lesson == 3 ? KarmaTutorialStep.FinalDialogue : KarmaTutorialStep.Travel;
+                    if (Step == KarmaTutorialStep.FinalDialogue)
+                    {
+                        dialogue = 0;
+                        Game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
+                    }
+                }
                 else
                 {
                     Step = KarmaTutorialStep.Practice;
@@ -103,12 +128,15 @@ namespace KarmaPrototype
             { fade += Time.unscaledDeltaTime * 1.5f; if (fade >= 1) Game.FinishOpening(); return; }
             if (WaitingForGuard)
             {
-                if (!KarmaInput.Held(KarmaAction.Guard)) released = true;
-                if (Time.frameCount <= freezeFrame || !released || !KarmaInput.Pressed(KarmaAction.Guard)) return;
-                preparingGuard = true;
-                Game.Player.Essences.ResetTemporaryState();
-                Game.Player.Essences.TryUse(Essence.Guard);
-                preparingGuard = false;
+                if (Time.frameCount <= freezeFrame) return;
+                if (!Game.Player.Shielded)
+                {
+                    if (!KarmaInput.Pressed(KarmaAction.Guard)) return;
+                    preparingGuard = true;
+                    Game.Player.Essences.ResetTemporaryState();
+                    Game.Player.Essences.TryUse(Essence.Guard);
+                    preparingGuard = false;
+                }
                 if (!Game.Player.Shielded) return;
                 WaitingForGuard = false; inputFrame = Time.frameCount;
                 Time.timeScale = 1;
@@ -130,11 +158,6 @@ namespace KarmaPrototype
                     Game.Player.Essences.ResetTemporaryState();
                     attackAt = Time.time + 1.4f; Time.timeScale = Frozen ? 0 : 1;
                 }
-            }
-            if (Step == KarmaTutorialStep.Complete && Time.time >= completeUntil)
-            {
-                Step = Lesson == 3 ? KarmaTutorialStep.FinalDialogue : KarmaTutorialStep.Travel;
-                if (Lesson == 3) { dialogue = 0; Game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero; Time.timeScale = 0; }
             }
             if (Step == KarmaTutorialStep.Practice && Lesson == 3) TickTrainingStrike();
             if (Step == KarmaTutorialStep.Gate && Mathf.Abs(Game.Player.Position.x - KarmaTutorialStage.FinalGate) <= 5 && KarmaInput.Pressed(KarmaAction.Interact))
@@ -187,7 +210,6 @@ namespace KarmaPrototype
             {
                 strikePaused = true;
                 WaitingForGuard = true; freezeFrame = Time.frameCount;
-                released = !KarmaInput.Held(KarmaAction.Guard);
                 Time.timeScale = 0; return;
             }
             Vector2 from = strike.transform.position;

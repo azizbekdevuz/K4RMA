@@ -43,13 +43,12 @@ namespace KarmaPrototype
         {
             if (!game.GuardianInheriting || entranceBoss == null || !entranceBoss.Alive
                 || game.Enemies.Count == 0 || game.Enemies[0] != entranceBoss) return false;
-            // Suppress the old caption throughout this transition, including the clear exit.
             float elapsed = Time.time - entranceAt;
-            if (elapsed < 0 || elapsed >= entranceDuration) return true;
-            float t = elapsed * (2.8f / entranceDuration);
-            float frame = Ease(t / 0.4f) * (1 - Ease((t - 2.2f) / 0.6f));
+            if (elapsed < 0) return true;
+            float t = Mathf.Min(2.2f, elapsed * (2.8f / entranceDuration));
+            float frame = Ease(t / 0.4f);
             float reveal = Ease((t - 0.4f) / 0.6f);
-            float alpha = reveal * (1 - Ease((t - 2.2f) / 0.6f));
+            float alpha = reveal;
             if (entranceTitle == null)
             {
                 entranceTitle = new GUIStyle(title) { fontSize = 48, alignment = TextAnchor.MiddleLeft, wordWrap = false };
@@ -64,6 +63,10 @@ namespace KarmaPrototype
             Color old = GUI.color;
             GUI.color = new Color(1, 1, 1, alpha);
             entranceLabel.normal.textColor = entranceAccent;
+            entranceLabel.hover.textColor = entranceAccent;
+            entranceLabel.active.textColor = entranceAccent;
+            entranceLabel.focused.textColor = entranceAccent;
+
             GUI.Label(new Rect(148, 513, 900, 24), "B O S S   /   E N C O U N T E R", entranceLabel);
             entranceTitle.normal.textColor = new Color(0.94f, 0.93f, 0.87f);
             // A clipped reveal and small settling movement leave the canonical name intact.
@@ -96,6 +99,8 @@ namespace KarmaPrototype
             }
             float glint = Mathf.Clamp01((t - 0.9f) / 0.35f);
             Fill(new Rect(148 + 680 * glint, 628, 12, 2), new Color(1, 0.96f, 0.83f, Mathf.Sin(glint * Mathf.PI) * alpha));
+            if (game.EncounterPromptReady)
+                KeyPrompt(new Rect(148, 645, 278, 30), 16, false, KarmaAction.DialogueConfirm, "  계속");
             return true;
         }
         static float Ease(float t) { t = Mathf.Clamp01(t); return t * t * (3 - 2 * t); }

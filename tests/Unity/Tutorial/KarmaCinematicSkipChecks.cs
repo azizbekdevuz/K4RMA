@@ -81,12 +81,37 @@ public static class KarmaCinematicSkipChecks
             "Early F hold never reaches fade");
         Check(game.Tutorial.Lesson == -1, "Early fade renders safely without a lesson index");
         await Until(() => game.Tutorial == null, "Early skip froze before reaching combat");
-        Check(game.Phase == RunPhase.Combat && Time.timeScale == 1 && !game.GameplayFrozen,
-            "Early F skip restores combat and time");
+        await CheckArrivalLock();
         await Wait(0.25f); await Keys();
         float x = game.Player.Position.x;
         await Keys(Key.D); await Wait(0.25f); await Keys();
         Check(game.Player.Position.x > x + 0.1f, "Player moves after skipping before the first lesson");
+    }
+    static async Task CheckArrivalLock()
+    {
+        await Frames();
+        Check(game.Phase == RunPhase.Combat && game.OpeningArrivalSpeech != null && !game.GameplayFrozen
+            && game.CanMove && game.AllowsPlayerActions && game.IsCombat && Time.timeScale == 1,
+            "Arrival speech leaves the simulation running");
+        Vector2 at = game.Player.Position;
+        await Keys(Key.D, Key.J, Key.L);
+        await Wait(0.2f);
+        Check(Mathf.Abs(game.Player.Position.x - at.x) < 0.02f && game.Projectiles.Count == 0
+            && game.OpeningArrivalSpeech != null, "Arrival speech blocks new movement and attacks");
+        await Keys();
+        game.TogglePause(); await Keys(Key.Space);
+        Check(game.OpeningArrivalSpeech != null, "Paused Space cannot acknowledge arrival speech");
+        game.TogglePause(); await Keys();
+        await Until(() => game.OpeningArrivalFade < 0.45f, "Arrival fade did not finish");
+        string capture = "output/validation/arrival-speech-" + checks + ".png";
+        Directory.CreateDirectory("output/validation");
+        ScreenCapture.CaptureScreenshot(capture);
+        await Until(() => File.Exists(capture), "Arrival speech screenshot was not captured");
+        await Keys(Key.Space); await Keys(); await Frames();
+        Check(game.OpeningArrivalSpeech == null && game.CanMove && game.AllowsPlayerActions && game.IsCombat
+            && !game.GameplayFrozen && Time.timeScale == 1, "Space acknowledgement clears the speech during normal play");
+        Check(game.Player.Position.y <= at.y + 0.05f && game.Player.GetComponent<Rigidbody2D>().linearVelocity.y <= 0.1f,
+            "Acknowledgement Space does not leak into a jump");
     }
     static async Task CheckPracticeRecovery()
     {
@@ -105,6 +130,7 @@ public static class KarmaCinematicSkipChecks
     }
     static async Task CheckTutorialSkip()
     {
+        Check(Mathf.Approximately(KarmaGame.CinematicSkipHoldSeconds, 1f), "Skip hold takes one second");
         await Tutorial(); FreezeLesson(); await Frames();
         await Keys(Key.Space); await Wait(0.25f);
         Check(game.Phase == RunPhase.Tutorial && game.Tutorial.Step == KarmaTutorialStep.Practice,
@@ -127,12 +153,16 @@ public static class KarmaCinematicSkipChecks
         await Keys(Key.F); await Frames();
         Check(game.Tutorial.Step == KarmaTutorialStep.Lesson, "F does not confirm teacher dialogue");
         Check(Time.timeScale == 0, "Frozen dialogue uses unscaled hold time");
+        await Wait(0.8f);
+        Check(game.Phase == RunPhase.Tutorial && game.CinematicSkipProgress >= 0.8f,
+            "Hold gauge advances before the one-second threshold");
         await Until(() => game.Tutorial == null, "Frozen tutorial never skips");
-        Check(game.Phase == RunPhase.Combat && Time.timeScale == 1, "Skip fades into first combat and restores time");
+        Check(game.Phase == RunPhase.Combat, "Skip fades into first stage");
         Check(game.StageIndex == 0 && game.Player.Essences.Count == 0 && game.Player.Health == game.Config.playerHealth,
             "Skipped tutorial preserves initial skills and health");
         Check(game.World.GetComponentsInChildren<KarmaTrainingTarget>().Length == 0, "Skip removes tutorial actors");
         Check(game.Player.GetComponent<Rigidbody2D>().linearVelocity.y <= 0.1f, "Held skip does not leak a jump into combat");
+        await CheckArrivalLock();
         await Keys(); foreach (var enemy in game.Enemies) enemy.gameObject.SetActive(false);
         await Keys(Key.F); await Wait(1.65f);
         Check(game.Phase == RunPhase.Combat && game.CinematicSkipProgress == 0, "Ordinary combat F never skips");
@@ -149,7 +179,8 @@ public static class KarmaCinematicSkipChecks
         await Until(() => game.Tutorial.WaitingForGuard, "Guard training did not freeze");
         Check(Time.timeScale == 0, "Real guard training freeze reached");
         await Keys(Key.F); await Until(() => game.Tutorial == null, "Guard hold never skips");
-        Check(game.Phase == RunPhase.Combat && Time.timeScale == 1, "Guard freeze skip cleans up and resumes combat");
+        Check(game.Phase == RunPhase.Combat, "Guard freeze skip reaches the first stage");
+        await CheckArrivalLock();
         await Keys();
     }
     static async Task CheckEndingAndRestart()

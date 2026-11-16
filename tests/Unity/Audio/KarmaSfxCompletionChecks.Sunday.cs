@@ -52,6 +52,97 @@ public static partial class KarmaSfxCompletionChecks
         System.IO.Directory.CreateDirectory("output/validation");
         System.IO.File.AppendAllText("output/validation/stun-mixer.txt", report + Environment.NewLine);
     }
+    public static void RunPlaytestGuardBatch()
+    { SessionState.SetBool(Key + ".PlaytestGuard", true); RunBatch(); }
+
+    static async Task CheckPlaytestGuard()
+    {
+        float savedEffects = KarmaPreferences.EffectsVolume;
+        float savedMaster = KarmaPreferences.MasterVolume;
+        bool savedMute = KarmaPreferences.Muted;
+        try
+        {
+            KarmaPreferences.EffectsVolume = 0.8f;
+            KarmaPreferences.MasterVolume = 0.75f;
+            KarmaPreferences.Muted = false;
+            await Prepare(Essence.Guard);
+            PlacePlayer(new Vector2(18.7f, KarmaSpace.PlayerHalfHeight));
+            Set(enemy, "shieldUntil", enemy.FightSeconds + 10f);
+            float health = enemy.Health;
+            Call(game.Player, "Attack");
+            Sample();
+            Check(enemy.Health < health && Count(KarmaSfxId.GdShieldHit) == 1
+                && Count(KarmaSfxId.CombatBladeHit) == 0, "GD01 normal sword contact plays only shield impact");
+            CheckGain(KarmaSfxId.GdShieldHit, 0.42f * 0.58f);
+            CheckGain(KarmaSfxId.PlSwordSwing, 0.43f);
+
+            await Wait(.1f);
+            Clear();
+            health = enemy.Health;
+            game.Player.BeginRisingSlash();
+            Sample();
+            Check(enemy.Health < health && Count(KarmaSfxId.GdShieldHit) == 1
+                && Count(KarmaSfxId.CombatBladeHit) == 0, "GD01 original rising slash uses the quieter shield impact");
+            CheckGain(KarmaSfxId.GdShieldHit, 0.42f * 0.58f);
+            CheckGain(KarmaSfxId.PlRisingSlash, 0.52f);
+
+            await Wait(.1f);
+            Clear();
+            enemy.TakeDamage(1f);
+            CheckGain(KarmaSfxId.GdShieldHit, 0.42f);
+            await Wait(.1f);
+            Clear();
+            Set(enemy, "shieldUntil", 0f);
+            PlacePlayer(new Vector2(18.7f, KarmaSpace.PlayerHalfHeight));
+            game.Player.BeginRisingSlash();
+            Sample();
+            Check(Count(KarmaSfxId.CombatBladeHit) == 1 && Count(KarmaSfxId.GdShieldHit) == 0,
+                "Unshielded rising slash retains ordinary confirmed contact audio");
+
+            await Prepare(Essence.Guard);
+            typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
+            PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
+            Pattern(EnemyAttack.GD02);
+            await Until(() => Live(KarmaSfxId.GdHeavyHit), 5, "GD02 damage cue");
+            CheckGain(KarmaSfxId.GdHeavySwing, 0.69f * 0.63f);
+            CheckGain(KarmaSfxId.GdHeavyHit, 0.66f * 0.63f);
+            await Until(() => !(bool)Get(enemy, "running"), 10, "GD02 completion");
+            Check(Count(KarmaSfxId.GdHeavySwing) == 1 && Count(KarmaSfxId.GdHeavyHit) == 1
+                && Count(KarmaSfxId.PlDamage) == 1, "GD02 keeps one swing and one confirmed hit");
+
+            await Prepare(Essence.Guard);
+            // Test invincibility guarantees a success without changing the trial timeline.
+            Pattern(EnemyAttack.GD05);
+            await Until(() => Live(KarmaSfxId.GdDomeSuccess), 35, "GD05 trial success");
+            await CheckMixerSignal(Source(KarmaSfxId.GdDomeSuccess), "GD05 success onset");
+            await Until(() => enemy.Stunned && Get(enemy, "stunCue") != null
+                && Live(KarmaSfxId.CombatBossSpinningStars), 2, "GD05 success stars and loop");
+            Call(enemy, "ShowStunCue");
+            Sample();
+            Check(Count(KarmaSfxId.GdDomeSuccess) == 1 && Count(KarmaSfxId.CombatBossStagger) == 0
+                && Count(KarmaSfxId.GdDomeFailure) == 0, "GD05 success plays exactly one onset");
+            Check(Count(KarmaSfxId.CombatBossSpinningStars) == 1, "GD05 retains one stars loop");
+            await Until(() => !(bool)Get(enemy, "running"), 15, "GD05 recovery");
+            await Wait(.12f);
+            Check(!Live(KarmaSfxId.CombatBossSpinningStars), "GD05 stars loop stops on recovery");
+            await CheckReflection();
+            Check(runtimeError == null, "No runtime error: " + runtimeError);
+        }
+        finally
+        {
+            KarmaPreferences.EffectsVolume = savedEffects;
+            KarmaPreferences.MasterVolume = savedMaster;
+            KarmaPreferences.Muted = savedMute;
+        }
+    }
+
+    static void CheckGain(KarmaSfxId id, float expected)
+    {
+        var source = Source(id);
+        Check(source != null && source.isPlaying
+            && Mathf.Abs(source.volume - expected * KarmaPreferences.EffectsVolume) < 0.001f, id + " has the expected mixed gain");
+    }
+
     static async Task CheckSundayContacts()
     {
         await Prepare(Essence.Guard);

@@ -268,7 +268,7 @@ namespace KarmaPrototype
             }
             public override bool Armored { get { return counter.Guarding; } }
             public override bool ReduceDamage(Vector2 source) { return counter.Guarding; }
-            public override void ReducedDamageFeedback()
+            public override void ReducedDamageFeedback(bool basicMelee)
             {
                 KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
                 KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);

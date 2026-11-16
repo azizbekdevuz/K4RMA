@@ -133,7 +133,8 @@ namespace KarmaPrototype
                     owner.fullShield = false;
                     owner.state = ActionState.Stunned;
                     owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialSuccessStunSeconds);
-                    owner.ShowStunCue();
+                    // The dome success cue supplies the onset; the stars still own their loop.
+                    owner.ShowStunVisual();
                     yield return owner.Wait(Mathf.Max(0.1f, Settings.trialSuccessStunSeconds));
                     if (!owner.Active) yield break;
                     owner.HideStunCue();

@@ -52,7 +52,7 @@ namespace KarmaPrototype
                 float width = swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
                 Vector2 center = Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
                 if (enemy.OverlapsDamageArea(center, new Vector2(width, swordTuning.longSlashHeight)))
-                    SwordHit(enemy, Vector2.right * Facing);
+                    SwordHit(enemy, Vector2.right * Facing, basicMelee: true);
             }
         }
         void BeginDirectionalSlash(Vector2 direction, float distance, Essence essence)
@@ -87,11 +87,11 @@ namespace KarmaPrototype
                 SwordHit(enemy, direction);
             }
         }
-        bool SwordHit(KarmaEnemy enemy, Vector2 direction)
+        bool SwordHit(KarmaEnemy enemy, Vector2 direction, bool basicMelee = false)
         {
             float before = enemy.Health;
             Vector2 point = enemy.ClosestDamagePoint(Position);
-            enemy.TakeDamage(game.Config.swordDamage, out bool reduced);
+            enemy.TakeDamage(game.Config.swordDamage, out bool reduced, basicMelee);
             if (enemy.Health >= before) return false;
             if (!reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
             KarmaRemnantVFX.SwordImpact(game, point, direction);
@@ -133,7 +133,7 @@ namespace KarmaPrototype
                 if (enemy != null && enemy.Alive && enemy.OverlapsDamageArea(Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4))))
                 {
                     float before = enemy.Health;
-                    enemy.TakeDamage(game.Config.Techniques.risingDamage, out bool reduced);
+                    enemy.TakeDamage(game.Config.Techniques.risingDamage, out bool reduced, basicMelee: true);
                     if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
                 }
         }

@@ -87,10 +87,13 @@ namespace KarmaPrototype
             public override bool BlocksSelection { get { return owner.shieldWarningUntil > 0; } }
             public override bool ReduceDamage(Vector2 source)
             { return owner.frontalGuard && (source.x - owner.Position.x) * owner.direction >= 0 || AutoShieldActive; }
-            public override void ReducedDamageFeedback()
+            public override void ReducedDamageFeedback(bool basicMelee)
             {
                 KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
-                KarmaAudio.Play(AutoShieldActive ? KarmaSfxId.GdShieldHit : KarmaSfxId.CombatGuardBlock);
+                if (AutoShieldActive)
+                    KarmaAudio.Play(KarmaSfxId.GdShieldHit, gainScale: basicMelee ? 0.58f : 1f);
+                else
+                    KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
             }
             public override Color ShieldColor { get { return BlocksSelection
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }

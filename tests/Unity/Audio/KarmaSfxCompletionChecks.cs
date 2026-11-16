@@ -330,6 +330,12 @@ public static partial class KarmaSfxCompletionChecks
         {
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             Check(game != null, "Game exists in Play Mode");
+            if (SessionState.GetBool(Key + ".PlaytestGuard", false))
+            {
+                await CheckPlaytestGuard();
+                Finish("PASS: " + assertions + " Guard playtest gain and stun assertions.", 0);
+                return;
+            }
             if (SessionState.GetBool(Key + ".SundayContacts", false))
             {
                 await CheckSundayContacts();
@@ -512,12 +518,15 @@ public static partial class KarmaSfxCompletionChecks
         Application.logMessageReceived -= CaptureError;
         bool contacts = SessionState.GetBool(Key + ".SundayContacts", false);
         SessionState.EraseBool(Key + ".SundayContacts");
+        bool playtestGuard = SessionState.GetBool(Key + ".PlaytestGuard", false);
+        SessionState.EraseBool(Key + ".PlaytestGuard");
         SessionState.EraseBool(Key + ".Followup");
         SessionState.EraseBool(Key + ".Release");
         SessionState.EraseBool(Key + ".Sunday");
         SessionState.SetBool(Key, false);
         Directory.CreateDirectory("output/validation");
-        File.WriteAllText("output/validation/" + (contacts ? "sfx-sunday-contacts.txt" : "sfx-completion.txt"), result);
+        string report = playtestGuard ? "sfx-playtest-guard.txt" : contacts ? "sfx-sunday-contacts.txt" : "sfx-completion.txt";
+        File.WriteAllText("output/validation/" + report, result);
         Debug.Log(result);
         if (SessionState.GetBool(Key + ".Editor", false))
         {

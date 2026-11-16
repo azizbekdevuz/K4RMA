@@ -87,7 +87,7 @@ namespace KarmaPrototype
             }
             public virtual void Tick() { }
             public virtual void OnDamaged() { }
-            public virtual void ReducedDamageFeedback() { }
+            public virtual void ReducedDamageFeedback(bool basicMelee) { }
             public virtual Bounds DamageBounds(SpriteRenderer renderer) { return renderer.bounds; }
             // Opt in per contact; the damage-inclusive player API still decides
             // whether defenses reject the hit and whether CC can be applied.

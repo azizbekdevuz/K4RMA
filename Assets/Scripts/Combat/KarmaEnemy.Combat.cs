@@ -41,8 +41,9 @@ namespace KarmaPrototype
         public Vector2 ClosestDamagePoint(Vector2 source) { return DamageBounds.ClosestPoint(source); }
         public void TakeDamage(float amount) { TakeDamage(amount, game.Player.Position); }
         public void TakeDamage(float amount, Vector2 source) { TakeDamage(amount, source, out _); }
-        internal void TakeDamage(float amount, out bool reduced) { TakeDamage(amount, game.Player.Position, out reduced); }
-        internal void TakeDamage(float amount, Vector2 source, out bool reduced)
+        internal void TakeDamage(float amount, out bool reduced, bool basicMelee = false)
+        { TakeDamage(amount, game.Player.Position, out reduced, basicMelee); }
+        internal void TakeDamage(float amount, Vector2 source, out bool reduced, bool basicMelee = false)
         {
             reduced = false;
             if (!Alive || !game.IsCombat || amount <= 0 || stopped) return;
@@ -53,7 +54,7 @@ namespace KarmaPrototype
             if (reduced)
             {
                 amount *= Mathf.Clamp01(behavior.Balance.shieldDamageMultiplier);
-                behavior.ReducedDamageFeedback();
+                behavior.ReducedDamageFeedback(basicMelee);
             }
             ReceiveDamage(amount);
         }

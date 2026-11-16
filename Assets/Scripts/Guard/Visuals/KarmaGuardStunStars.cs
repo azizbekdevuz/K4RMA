@@ -8,6 +8,7 @@ namespace KarmaPrototype
     {
         const int FrameCount = 48;
         const float FramesPerSecond = 24;
+        const float CycleSeconds = FrameCount / FramesPerSecond;
         // Approved preview: 160px cue canvas / 250px crouched body;
         // the orbit centre is 15px above the body's top after lowering by 25px.
         const float CanvasHeightRatio = 160f / 250f;
@@ -16,15 +17,18 @@ namespace KarmaPrototype
         KarmaGame game;
         SpriteRenderer picture, mark;
         Func<Transform> getCue;
+        Func<bool> playOnce;
         Transform cue;
         float elapsed;
         int displayedFrame = -1;
+        bool singleCycle;
 
-        public void Initialize(KarmaGame director, SpriteRenderer body, Func<Transform> cueSource)
+        public void Initialize(KarmaGame director, SpriteRenderer body, Func<Transform> cueSource, Func<bool> playOnce)
         {
             game = director;
             picture = body;
             getCue = cueSource;
+            this.playOnce = playOnce;
             for (int i = 0; i < FrameCount; i++)
             {
                 frames[i] = KarmaArtwork.Sprite("GuardStunStars", "Frame" + i.ToString("00"));
@@ -46,13 +50,20 @@ namespace KarmaPrototype
                 cue = current;
                 mark = cue.GetComponent<SpriteRenderer>();
                 elapsed = 0; displayedFrame = -1;
-                KarmaAudio.Play(KarmaSfxId.CombatBossSpinningStars, lifetimeOwner: cue);
+                singleCycle = playOnce();
+                KarmaAudio.Play(KarmaSfxId.CombatBossSpinningStars, lifetimeOwner: cue, playOnce: singleCycle);
             }
             else if (game != null && !game.Paused)
-                elapsed = (elapsed + Time.deltaTime) % (FrameCount / FramesPerSecond);
+                elapsed += Time.deltaTime;
             if (mark == null) return;
+            // GD05's punish window continues after the one-cycle dizzy cue finishes.
+            if (singleCycle && elapsed >= CycleSeconds)
+            {
+                mark.enabled = false;
+                return;
+            }
 
-            int frame = Mathf.FloorToInt(elapsed * FramesPerSecond) % FrameCount;
+            int frame = Mathf.FloorToInt((elapsed % CycleSeconds) * FramesPerSecond);
             if (frame != displayedFrame)
             {
                 mark.sprite = frames[frame];

@@ -42,7 +42,8 @@ namespace KarmaPrototype
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
                 owner.gameObject.AddComponent<KarmaGuardStunStars>().Initialize(owner.game,
-                    owner.art.GetComponentInChildren<SpriteRenderer>(), () => owner.stunCue);
+                    owner.art.GetComponentInChildren<SpriteRenderer>(), () => owner.stunCue,
+                    () => owner.running && owner.selected == EnemyAttack.GD05);
             }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             {

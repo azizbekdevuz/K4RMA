@@ -419,6 +419,8 @@ K4RMA/
 │   │   │   ├── RS_UP05_Crossing.wav
 │   │   │   └── RS_UP05_Final.wav
 │   │   ├── SwordWave/
+│   │   │   ├── SW04_Boss_Shock.wav
+│   │   │   ├── SW04_Player_Shock.wav
 │   │   │   ├── SW05_Ascension_Ignition.wav
 │   │   │   ├── SW05_Final_Explosion.wav
 │   │   │   ├── SW05_PerSword_Thunder.wav

@@ -110,21 +110,8 @@ public static partial class KarmaSfxCompletionChecks
             Check(Count(KarmaSfxId.GdHeavySwing) == 1 && Count(KarmaSfxId.GdHeavyHit) == 1
                 && Count(KarmaSfxId.PlDamage) == 1, "GD02 keeps one swing and one confirmed hit");
 
-            await Prepare(Essence.Guard);
-            // Test invincibility guarantees a success without changing the trial timeline.
-            Pattern(EnemyAttack.GD05);
-            await Until(() => Live(KarmaSfxId.GdDomeSuccess), 35, "GD05 trial success");
-            await CheckMixerSignal(Source(KarmaSfxId.GdDomeSuccess), "GD05 success onset");
-            await Until(() => enemy.Stunned && Get(enemy, "stunCue") != null
-                && Live(KarmaSfxId.CombatBossSpinningStars), 2, "GD05 success stars and loop");
-            Call(enemy, "ShowStunCue");
-            Sample();
-            Check(Count(KarmaSfxId.GdDomeSuccess) == 1 && Count(KarmaSfxId.CombatBossStagger) == 0
-                && Count(KarmaSfxId.GdDomeFailure) == 0, "GD05 success plays exactly one onset");
-            Check(Count(KarmaSfxId.CombatBossSpinningStars) == 1, "GD05 retains one stars loop");
-            await Until(() => !(bool)Get(enemy, "running"), 15, "GD05 recovery");
-            await Wait(.12f);
-            Check(!Live(KarmaSfxId.CombatBossSpinningStars), "GD05 stars loop stops on recovery");
+            await CheckDomeStunAudio(false);
+            await CheckDomeStunAudio(true);
             await CheckReflection();
             Check(runtimeError == null, "No runtime error: " + runtimeError);
         }
@@ -134,6 +121,61 @@ public static partial class KarmaSfxCompletionChecks
             KarmaPreferences.MasterVolume = savedMaster;
             KarmaPreferences.Muted = savedMute;
         }
+    }
+
+    static async Task CheckDomeStunAudio(bool finalParry)
+    {
+        await Prepare(Essence.Guard);
+        // Test invincibility keeps the trial on its success path. Counters still resolve normally.
+        Pattern(EnemyAttack.GD05);
+        await Until(() => enemy.TrialActive, 5, "GD05 trial starts");
+        Transform parryStars = null;
+        AudioSource parrySound = null;
+        if (finalParry)
+        {
+            // Active starts 0.4 seconds before the countdown. Land a parry inside its final stun window.
+            float late = enemy.FightSeconds + Mathf.Clamp(game.Config.BossTuning.guard.trialDuration, 2, 25) + 0.05f;
+            await Until(() => enemy.FightSeconds >= late, 30, "GD05 final parry window");
+            Check(enemy.TrialActive, "Late parry happens during the live trial");
+            var player = game.Player;
+            int before = player.ParryCount;
+            player.BeginCounter();
+            Vector2 center = player.DamageBounds.center;
+            enemy.TryAttackHit(center, center, Vector2.one, 1f,
+                new KarmaAttackContact(parryWithoutRiposte: true), 0f, sourcePattern: EnemyAttack.GD02);
+            Check(player.ParryCount == before + 1 && enemy.Stunned, "Final GD05 contact resolves as a real parry");
+            await Until(() => Live(KarmaSfxId.CombatBossSpinningStars), 1, "GD05 parry stars audio");
+            parryStars = (Transform)Get(enemy, "stunCue");
+            parrySound = Source(KarmaSfxId.CombatBossSpinningStars);
+        }
+        await Until(() => !enemy.TrialActive && enemy.Stunned && Get(enemy, "stunCue") != null,
+            35, "GD05 reward stun with visible stars");
+        float rewardStarted = enemy.FightSeconds;
+        await Until(() => Live(KarmaSfxId.CombatBossSpinningStars), 1, "GD05 success stars audio");
+        var stars = Source(KarmaSfxId.CombatBossSpinningStars);
+        Check(!stars.loop, "GD05 success cannot wrap to the start of the stars clip");
+        if (finalParry)
+            Check(parryStars == (Transform)Get(enemy, "stunCue") && parrySound == stars && stars.isPlaying,
+                "A late parry keeps the same stars and audio through trial success");
+        await CheckMixerSignal(stars, finalParry ? "GD05 late parry stars" : "GD05 success stars");
+        Call(enemy, "ShowStunCue");
+        var mark = ((Transform)Get(enemy, "stunCue")).GetComponent<SpriteRenderer>();
+        Check(mark.enabled, "GD05 displays stars while the one-shot plays");
+        float stunEnds = (float)Get(enemy, "stunnedUntil");
+        Check(Mathf.Abs(stunEnds - rewardStarted
+            - game.Config.BossTuning.guard.trialSuccessStunSeconds) < .06f,
+            "GD05 keeps its authored success stun duration");
+        await Until(() => !mark.enabled && !Live(KarmaSfxId.CombatBossSpinningStars), 3,
+            "GD05 finishes one star animation and one sound together");
+        Check(enemy.Stunned && !enemy.Invulnerable && mark != null,
+            "GD05 punish window remains open after the dizzy cue finishes");
+        await Until(() => !(bool)Get(enemy, "running"), 15, "GD05 recovery");
+        Check(Count(KarmaSfxId.CombatBossSpinningStars) == 1
+            && Count(KarmaSfxId.GdDomeSuccess) == 0
+            && Count(KarmaSfxId.CombatBossStagger) == 0
+            && Count(KarmaSfxId.GdDomeFailure) == 0, "GD05 plays the spinning-stars clip once across the full success");
+        await Until(() => !Live(KarmaSfxId.CombatBossSpinningStars), 1, "GD05 stars audio stops");
+        Check(Get(enemy, "stunCue") == null, "GD05 clears the stars visual on recovery");
     }
 
     static void CheckGain(KarmaSfxId id, float expected)
@@ -192,14 +234,11 @@ public static partial class KarmaSfxCompletionChecks
             await Until(() => enemy.Stunned, 2, kind + " real parry stun");
             Check(Get(enemy, "stunCue") != null && Count(KarmaSfxId.CombatBossStagger) == 1,
                 kind + " stars and one stun sound");
-            if (kind == Essence.Guard || kind == Essence.RisingSlash)
-            {
-                await Until(() => Live(KarmaSfxId.CombatBossSpinningStars), 1, kind + " animated stars audio");
-                var stars = Source(KarmaSfxId.CombatBossSpinningStars);
-                Check(stars.loop && Count(KarmaSfxId.CombatBossSpinningStars) == 1, kind + " spins with one looping cue");
-                await CheckMixerSignal(stars, kind + " spinning stars");
-            }
-            else Check(!Live(KarmaSfxId.CombatBossSpinningStars), kind + " keeps its existing stun sound");
+            await Until(() => Live(KarmaSfxId.CombatBossSpinningStars), 1, kind + " animated stars audio");
+            var stars = Source(KarmaSfxId.CombatBossSpinningStars);
+            Check(stars.loop == (kind != Essence.SwordWave) && Count(KarmaSfxId.CombatBossSpinningStars) == 1,
+                kind + " spins with one audio voice");
+            await CheckMixerSignal(stars, kind + " spinning stars");
             Call(enemy, "ShowStunCue"); Sample();
             Check(Count(KarmaSfxId.CombatBossStagger) == 1, kind + " repeated visual request stays silent");
             Check(Count(KarmaSfxId.CombatBossSpinningStars) <= 1, kind + " repeated visual request does not restart stars audio");
@@ -222,20 +261,25 @@ public static partial class KarmaSfxCompletionChecks
         game.Player.BeginCounter();
         enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(), 0, sourcePattern: EnemyAttack.SW04);
         await Until(() => enemy.Stunned, 2, "SW04 electrical parry stun");
-        Check(Get(enemy, "stunCue") == null && Count(KarmaSfxId.CombatBossStagger) == 1,
-            "Electrical feedback uses no stars sprite but plays one stun cue");
+        await Until(() => Live(KarmaSfxId.Sw04BossShock), 1, "SW04 electrical parry plays the boss shock");
+        Check(Get(enemy, "stunCue") == null && Count(KarmaSfxId.Sw04BossShock) == 1,
+            "Electrical feedback uses one boss shock without stars");
         Call(enemy, "ShowStunCue"); Sample();
-        Check(Count(KarmaSfxId.CombatBossStagger) == 1, "Electrical stun also deduplicates without a sprite");
-        await CheckMixerSignal(Source(KarmaSfxId.CombatBossStagger), "SwordWave electrical stun");
+        Check(Count(KarmaSfxId.Sw04BossShock) == 1 && Count(KarmaSfxId.CombatBossStagger) == 0
+            && Count(KarmaSfxId.CombatBossSpinningStars) == 0 && Count(KarmaSfxId.Sw04PlayerShock) == 0,
+            "SW04 boss electrocution keeps generic stun and player shock feedback silent");
+        await CheckMixerSignal(Source(KarmaSfxId.Sw04BossShock), "SwordWave electrical stun");
         await Prepare(Essence.SwordWave);
         PlacePlayer(new Vector2(17, KarmaSpace.PlayerHalfHeight));
         point = game.Player.GetComponent<Collider2D>().bounds.center;
         game.Player.BeginCounter();
         parries = game.Player.ParryCount;
-        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(breaksShieldOnParry: true), 0);
+        enemy.TryAttackHit(point, point, Vector2.one, 1, new KarmaAttackContact(breaksShieldOnParry: true), 0,
+            sourcePattern: EnemyAttack.SW04);
         await Wait(.15f);
         Check(game.Player.ParryCount == parries + 1 && !enemy.Stunned
-            && Count(KarmaSfxId.CombatBossStagger) == 0, "Final SwordWave parry resistance has no false stun cue");
+            && Count(KarmaSfxId.CombatBossStagger) == 0 && Count(KarmaSfxId.Sw04BossShock) == 0,
+            "Final SwordWave SW04 parry resistance has no false stun cue");
         game.ReturnToTitle();
         var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
         var menu = (KarmaSfxId)((int)KarmaSfxId.MenuMainTheme + library.DefaultMenuTrack);
@@ -335,10 +379,11 @@ public static partial class KarmaSfxCompletionChecks
             await Until(() => (bool)dome.GetType().GetProperty("Active").GetValue(dome), 8, "Dome trial active");
             if (!pass)
                 for (int i = 0; i < 20; i++) Call(dome, "RecordHit");
-            var expected = pass ? KarmaSfxId.GdDomeSuccess : KarmaSfxId.GdDomeFailure;
+            var expected = pass ? KarmaSfxId.CombatBossSpinningStars : KarmaSfxId.GdDomeFailure;
             await Until(() => Count(expected) == 1, 35, "Actual dome outcome " + pass);
             await Wait(.6f);
-            Check(Count(pass ? KarmaSfxId.GdDomeFailure : KarmaSfxId.GdDomeSuccess) == 0, "Mutually exclusive dome audio");
+            Check(Count(pass ? KarmaSfxId.GdDomeFailure : KarmaSfxId.CombatBossSpinningStars) == 0, "Mutually exclusive dome audio");
+            Check(Count(KarmaSfxId.GdDomeSuccess) == 0, "GD05 success uses the stars cue alone");
             Check(Count(expected) == 1, "Dome outcome once");
         }
         game.ReturnToTitle(); await Wait(.45f);

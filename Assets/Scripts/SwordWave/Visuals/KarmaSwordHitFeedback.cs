@@ -71,16 +71,15 @@ namespace KarmaPrototype
         {
             if (orbit == null) return;
             bool visible = owner != null && owner.PresentationActive && owner.Stunned;
+            SetOrbitVisible(visible && !electrical);
             if (electrical && visible)
             {
-                orbit.gameObject.SetActive(false);
                 if (electrocution == null) electrocution = KarmaSwordElectrocution.ShowBoss(game, owner, picture);
                 return;
             }
             if (!visible && electrocution != null)
             { electrocution.Stop(); electrocution = null; electrical = false; }
             if (owner == null || !owner.PresentationActive) electrical = false;
-            orbit.gameObject.SetActive(visible);
             if (!visible || picture == null || game.Paused) return;
             // WaveMotion resets the authored transform first. Lean at the feet;
             // the boss root and its original incoming-damage bounds stay fixed.
@@ -97,11 +96,21 @@ namespace KarmaPrototype
                 stars[i].transform.localRotation = Quaternion.Euler(0, 0, a * Mathf.Rad2Deg);
             }
         }
+        void SetOrbitVisible(bool visible)
+        {
+            if (orbit.gameObject.activeSelf == visible) return;
+            orbit.gameObject.SetActive(visible);
+            if (visible)
+                KarmaAudio.Play(KarmaSfxId.CombatBossSpinningStars, lifetimeOwner: orbit, playOnce: true);
+            else
+                KarmaAudio.StopOwned(orbit, 0.045f);
+        }
+
         void OnDisable()
         {
             electrical = false;
             if (electrocution != null) electrocution.Stop();
-            if (orbit != null) orbit.gameObject.SetActive(false);
+            if (orbit != null) SetOrbitVisible(false);
         }
     }
 
@@ -121,26 +130,41 @@ namespace KarmaPrototype
         Quaternion rotation, trembled;
         Color color, tinted;
         Sprite originalSprite, shownSprite;
-        bool painted, stopped;
+        bool painted, stopped, playerShockPlayed;
         public int FrameIndex { get; private set; }
         public double StartedAt => began;
         public double EndedAt { get; private set; }
         public bool IsBoss => boss != null;
-        public static void ShowPlayer(KarmaGame game)
+        public static bool ShowPlayer(KarmaGame game, bool playShockSound = false)
         {
             var player = game.Player;
-            if (player == null || player.Health <= 0 || !player.Shocked || !player.isActiveAndEnabled || !game.IsCombat) return;
-            // A refresh extends the real state; keep the same visual instance.
+            if (player == null || player.Health <= 0 || !player.Shocked || !player.isActiveAndEnabled || !game.IsCombat) return false;
+            // A refresh extends the real state; keep the same effect and its one-shot.
             foreach (var existing in game.World.GetComponentsInChildren<KarmaSwordElectrocution>())
-                if (existing.player == player && !existing.stopped) return;
-            var art = player.transform.Find("Artwork/Player sprite");
-            if (art == null) return;
-            var fx = Create(game, art.GetComponent<SpriteRenderer>());
+            {
+                if (existing.player != player || existing.stopped) continue;
+                if (playShockSound) existing.PlayPlayerShock();
+                return true;
+            }
+            var picture = player.transform.Find("Artwork/Player sprite")?.GetComponent<SpriteRenderer>();
+            if (picture == null) return false;
+            var fx = Create(game, picture);
             fx.player = player;
+            if (playShockSound) fx.PlayPlayerShock();
+            return true;
+        }
+        void PlayPlayerShock()
+        {
+            if (playerShockPlayed) return;
+            playerShockPlayed = true;
+            KarmaAudio.Play(KarmaSfxId.Sw04PlayerShock, lifetimeOwner: this);
         }
         public static KarmaSwordElectrocution ShowBoss(KarmaGame game, KarmaEnemy owner, SpriteRenderer picture)
         {
-            var fx = Create(game, picture); fx.boss = owner; return fx;
+            var fx = Create(game, picture);
+            fx.boss = owner;
+            KarmaAudio.Play(KarmaSfxId.Sw04BossShock, lifetimeOwner: fx);
+            return fx;
         }
         static KarmaSwordElectrocution Create(KarmaGame game, SpriteRenderer picture)
         {
@@ -180,7 +204,12 @@ namespace KarmaPrototype
         public void Stop()
         {
             if (stopped) return;
-            stopped = true; EndedAt = Time.timeAsDouble; Restore(); gameObject.SetActive(false); Destroy(gameObject);
+            stopped = true;
+            EndedAt = Time.timeAsDouble;
+            KarmaAudio.StopOwned(this, 0.035f);
+            Restore();
+            gameObject.SetActive(false);
+            Destroy(gameObject);
         }
         void LateUpdate()
         {

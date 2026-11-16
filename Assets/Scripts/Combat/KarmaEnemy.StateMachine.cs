@@ -152,9 +152,8 @@ namespace KarmaPrototype
         bool stunCueSoundStarted;
         void ShowStunCue()
         {
-            // The electrical stun uses its own visual, and short stuns can remove
-            // their stars before this one-shot finishes.
-            if (!stunCueSoundStarted)
+            // Short stuns can remove their stars before the one-shot finishes.
+            if (!stunCueSoundStarted && !behavior.PlaysOwnStunSound)
                 KarmaAudio.Play(KarmaSfxId.CombatBossStagger, lifetimeOwner: this);
             ShowStunVisual();
         }

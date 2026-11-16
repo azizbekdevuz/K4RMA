@@ -72,6 +72,8 @@ namespace KarmaPrototype
         MenuGuardians,
         MenuFourGuardiansB,
         CombatBossSpinningStars,
+        Sw04PlayerShock,
+        Sw04BossShock,
         Count
     }
 
@@ -170,7 +172,7 @@ namespace KarmaPrototype
             music = KarmaPreferences.MusicVolume;
         }
 
-        public static void Play(KarmaSfxId id, float window = 0f, Component lifetimeOwner = null, float gainScale = 1f)
+        public static void Play(KarmaSfxId id, float window = 0f, Component lifetimeOwner = null, float gainScale = 1f, bool playOnce = false)
         {
             if (!Application.isPlaying || id < 0 || id >= KarmaSfxId.Count) return;
             if (LifetimeEnded(lifetimeOwner)) return;
@@ -208,14 +210,15 @@ namespace KarmaPrototype
             voice.Priority = cue.Priority;
             voice.StartedFrame = Time.frameCount;
             voice.Live = true;
-            voice.Envelope = cue.Loop || cue.Bus == KarmaSfxBus.Ambience ? 0f : 1f;
+            bool loop = !playOnce && (cue.Loop || cue.Bus == KarmaSfxBus.Ambience);
+            voice.Envelope = loop ? 0f : 1f;
             voice.FadeOut = 0;
             voice.Held = ShouldPause(cue.Bus);
             var source = voice.Source;
             source.clip = clip;
             source.pitch = pitch;
             source.priority = 128 - cue.Priority;
-            source.loop = cue.Loop || cue.Bus == KarmaSfxBus.Ambience;
+            source.loop = loop;
             source.volume = voice.Gain * BusLevel(cue.Bus) * voice.Envelope;
             source.Play();
             if (voice.Held) source.Pause();
@@ -590,6 +593,8 @@ namespace KarmaPrototype
             Add(KarmaSfxId.CombatBossSpinningStars, "Combat/Boss_Spinning_Stars.wav", 0.29f, 0f, 0f, 77, KarmaSfxBus.Gameplay);
             table[(int)KarmaSfxId.CombatBossSpinningStars].Loop = true;
             table[(int)KarmaSfxId.CombatBossSpinningStars].MaxVoices = 1;
+            AddBoss(KarmaSfxId.Sw04PlayerShock, "SwordWave/SW04_Player_Shock.wav", 0.48f, 0f, 0f, 84);
+            AddBoss(KarmaSfxId.Sw04BossShock, "SwordWave/SW04_Boss_Shock.wav", 0.50f, 0f, 0f, 86);
             return table;
         }
     }

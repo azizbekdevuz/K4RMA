@@ -78,4 +78,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 4d8d27dacbf944abbccc04386c817329, type: 3}
   - {fileID: 8300000, guid: f8124907a56745feb106a8e692de144a, type: 3}
   - {fileID: 8300000, guid: b7805da9d2a94e9bbba6ea97b7e104ba, type: 3}
+  - {fileID: 8300000, guid: c8430a8f05dc4c4aab8c5792e4ccb289, type: 3}
+  - {fileID: 8300000, guid: 6134deba816846298f74d4dc3ac2e4db, type: 3}
   DefaultMenuTrack: 1

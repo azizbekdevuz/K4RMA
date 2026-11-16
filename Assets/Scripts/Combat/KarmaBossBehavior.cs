@@ -33,6 +33,7 @@ namespace KarmaPrototype
             protected bool PatternCanReach(EnemyAttack attack, Vector2 from, Vector2 target)
             { return patterns.TryGetValue(attack, out var pattern) && pattern.CanReach(from, target); }
             public virtual bool CanEngage { get { return owner.game.Player.Position.x >= 12; } }
+            public virtual bool PlaysOwnStunSound => false;
             public virtual Sprite StunSprite { get { return KarmaArtwork.Sprite("HitVFX", "Burst"); } }
             public virtual float ParryStunSeconds { get { return 2; } }
             public virtual void Initialize() { }

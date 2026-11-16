@@ -25,8 +25,7 @@ namespace KarmaPrototype
                 KarmaRisingAudio.Warn(0.16f);
                 yield return owner.Wait(0.16f);
                 KarmaRisingAudio.EndWarning();
-                if (drop != null) Destroy(drop.gameObject);
-                if (zone != null) Destroy(zone.gameObject);
+                if (drop != null) { drop.gameObject.SetActive(false); Destroy(drop.gameObject); }
                 var contact = new KarmaAttackContact();
                 float fallTime = Mathf.Clamp(Mathf.Abs(start.y - landing.y) / KarmaSpace.Units(8f), 0.38f, 0.62f);
                 if (owner.Active && start.y > landing.y)
@@ -35,6 +34,8 @@ namespace KarmaPrototype
                     KarmaRisingAudio.Descent(fallTime);
                 }
                 yield return owner.Motion(landing, fallTime, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
+                // Hold the landing tell through the descent, until the impact goes live.
+                if (zone != null) { zone.gameObject.SetActive(false); Destroy(zone.gameObject); }
                 // The shards burst from the impact point when the downward strike lands.
                 rising.ClearBarrier();
                 if (empowered && owner.Active) new UP04Pattern(owner).Burst(landing);

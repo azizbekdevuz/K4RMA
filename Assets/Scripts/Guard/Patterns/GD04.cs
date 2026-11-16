@@ -44,7 +44,6 @@ namespace KarmaPrototype
                 owner.animator.SetGroundSlamFrame(1);
                 yield return owner.Wait(descent);
                 if (!owner.Active) yield break;
-                foreach (var mark in marks) { mark.gameObject.SetActive(false); Destroy(mark.gameObject); }
                 owner.state = ActionState.Attack; owner.animator.Attack(Vector2.down);
                 owner.animator.SetGroundSlamFrame(2);
                 if (owner.Active) KarmaAudio.Play(KarmaSfxId.GdHeavySlam);
@@ -116,6 +115,9 @@ namespace KarmaPrototype
                             slab.transform.localPosition = homes[i] - Vector3.up * height * (1 - rise + fall);
                             slab.color = new Color(1, 1, 1, 1 - fall);
                         }
+                        // Keep each tell visible until its own damage window starts.
+                        if (age >= hitStart && previousAge < hitStart)
+                        { marks[i].gameObject.SetActive(false); Destroy(marks[i].gameObject); }
                         // Damage follows each upward eruption; the tiles never translate horizontally.
                         if (!resolved && age >= hitStart && previousElapsed - beginsAt <= hitEnd)
                             resolved = TryGroundImpact(centers[i], sizes[i]);

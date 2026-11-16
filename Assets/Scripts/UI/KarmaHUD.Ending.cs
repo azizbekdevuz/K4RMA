@@ -4,6 +4,8 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaHUD
     {
+        GUIStyle endingSpeakerLabel;
+
         void EndingScreen()
         {
             float bars = game.EndingCompleted ? 1 : Mathf.SmoothStep(0, 1, game.EndingTime / 1.5f);
@@ -15,10 +17,25 @@ namespace KarmaPrototype
             if (captionAlpha > 0)
             {
                 Color old = GUI.color;
-                GUI.color = new Color(1, 0.84f, 0.58f, captionAlpha);
-                GUI.Label(new Rect(200, 632, 880, 24), game.EndingSpeaker, centered);
-                GUI.color = new Color(1, 1, 1, captionAlpha);
-                GUI.Label(new Rect(160, 656, 960, 46), game.EndingLine, centered);
+                string speaker = game.EndingSpeaker;
+                Color captionHeadingColor = new Color(1, 0.84f, 0.58f, captionAlpha);
+                if (speaker == "스승" || speaker == "제자")
+                {
+                    if (endingSpeakerLabel == null)
+                        endingSpeakerLabel = new GUIStyle(centered) { fontSize = 15, fontStyle = FontStyle.Bold };
+
+                    GUI.color = captionHeadingColor;
+                    GUI.Label(new Rect(160, 638, 960, 23), speaker, endingSpeakerLabel);
+                    GUI.color = new Color(1, 1, 1, captionAlpha);
+                    GUI.Label(new Rect(160, 658, 960, 36), game.EndingLine, centered);
+                }
+                else
+                {
+                    GUI.color = captionHeadingColor;
+                    GUI.Label(new Rect(200, 632, 880, 24), speaker, centered);
+                    GUI.color = new Color(1, 1, 1, captionAlpha);
+                    GUI.Label(new Rect(160, 656, 960, 46), game.EndingLine, centered);
+                }
                 GUI.color = old;
             }
             if (game.EndingFade > 0) FillScreen(new Color(0, 0, 0, game.EndingFade));

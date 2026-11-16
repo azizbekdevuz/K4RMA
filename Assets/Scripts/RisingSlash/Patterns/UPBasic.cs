@@ -18,6 +18,11 @@ namespace KarmaPrototype
                 // A ground dash sweeps a rectangle; no generated polygon is needed.
                 var mark = KarmaVisuals.Box(owner.effectsRoot, "기본 돌진 경로", (owner.Position + target) * 0.5f,
                     bodyAttackSize + Vector2.right * Mathf.Abs(target.x - owner.Position.x), new Color(1f, 0.48f, 0.15f, 0.4f), 9);
+                Vector2 size = KarmaSpace.Units(new Vector2(3.05f, 1.55f));
+                float dashX = target.x - owner.Position.x;
+                float slashFacing = Mathf.Abs(dashX) > 0.01f ? Mathf.Sign(dashX) : owner.direction;
+                var slashCenter = FollowupCenter(target, slashFacing);
+                var slashMark = RisingPath(slashCenter, slashCenter, size, KarmaRisingCue.Charging);
                 float warning = owner.Warning(0.24f);
                 KarmaRisingAudio.Warn(warning);
                 yield return owner.Wait(warning);
@@ -27,10 +32,14 @@ namespace KarmaPrototype
                 if (owner.Active) KarmaRisingAudio.Dash();
                 yield return rising.MotionWithImpact(target, DashSeconds(target),
                     bodyAttackSize, KarmaRisingArt.Get("Slash"), KarmaSfxId.RsDashImpact);
-                Vector2 size = KarmaSpace.Units(new Vector2(3.05f, 1.55f));
+                if (slashMark != null)
+                {
+                    slashMark.gameObject.SetActive(false);
+                    Destroy(slashMark.gameObject);
+                }
                 for (int i = 0; i < 2 && owner.Active; i++)
                 {
-                    var center = owner.Position + new Vector2(owner.direction * KarmaSpace.Units(1.62f), KarmaSpace.Units(0.72f));
+                    var center = FollowupCenter(owner.Position, owner.direction);
                     var player = owner.game.Player.Position;
                     if (Mathf.Abs(player.x - center.x) > size.x / 2 + KarmaSpace.PlayerHalfWidth ||
                         Mathf.Abs(player.y - center.y) > size.y / 2 + KarmaSpace.PlayerHalfHeight) break;
@@ -44,6 +53,9 @@ namespace KarmaPrototype
                 }
                 yield return owner.Recovery(0.4f);
             }
+
+            static Vector2 FollowupCenter(Vector2 position, float facing) =>
+                position + new Vector2(facing * KarmaSpace.Units(1.62f), KarmaSpace.Units(0.72f));
         }
     }
 }

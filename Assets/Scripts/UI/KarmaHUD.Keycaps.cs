@@ -182,9 +182,10 @@ namespace KarmaPrototype
             GUI.DrawTextureWithTexCoords(bounds, keycapAtlas, KarmaArtwork.UV(keycapAtlas, topLeft), true);
         }
 
-        bool ShortcutButton(Rect bounds, string label, KarmaAction action)
+        bool ShortcutButton(Rect bounds, string label, KarmaAction action, bool primary = false)
         {
             const int shortcutColumn = 86;
+            DrawHudButtonPlate(bounds, primary, false, KarmaInput.Held(action));
             GUIStyle style = game.SettingsOpen
                 ? (settingsShortcutButton ??= CreateShortcutStyle(settingsButton, shortcutColumn))
                 : (shortcutButton ??= CreateShortcutStyle(menuButton, shortcutColumn));
@@ -205,6 +206,7 @@ namespace KarmaPrototype
             return new GUIStyle(source)
             {
                 clipping = TextClipping.Clip,
+                wordWrap = false,
                 // Reserve equal side gutters so the text stays centered and clears the keycap.
                 padding = new RectOffset(shortcutColumn, shortcutColumn, 0, 0)
             };

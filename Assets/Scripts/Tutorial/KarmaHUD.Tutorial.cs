@@ -6,6 +6,9 @@ namespace KarmaPrototype
         static readonly string[] tutorialLabels = { "기본 공격", "검기 명중", "상승베기 명중", "방어 성공" };
         static readonly KarmaAction[] tutorialKeys = { KarmaAction.Attack, KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard };
         Texture2D tutorialRouteArrow;
+        KarmaTutorial targetTutorial;
+        KarmaTrainingTarget markedTarget;
+        GUIStyle trainingTargetLabel;
 
         void TutorialScreen()
         {
@@ -38,6 +41,9 @@ namespace KarmaPrototype
                 KeyPrompt(new Rect(235, 655, 810, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
                 return;
             }
+            if (t.Step == KarmaTutorialStep.Practice && t.Lesson >= 0 && t.Lesson < 3)
+                DrawTrainingTarget(t);
+
             bool outsideGate = t.Step == KarmaTutorialStep.Gate && Mathf.Abs(game.Player.Position.x - KarmaTutorialStage.FinalGate) > 5;
             if (t.Step == KarmaTutorialStep.Travel)
                 DrawTutorialRouteArrow(KarmaTutorial.Stations[t.Lesson + 1]);
@@ -72,6 +78,30 @@ namespace KarmaPrototype
                 }
                 KeyPrompt(objective, 18, true, tutorialLabels[t.Lesson] + " " + t.Successes + "/3  ·  ", tutorialKeys[t.Lesson], detail);
             }
+        }
+
+        void DrawTrainingTarget(KarmaTutorial tutorial)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (targetTutorial != tutorial)
+            {
+                targetTutorial = tutorial;
+                markedTarget = tutorial.GetComponentInChildren<KarmaTrainingTarget>();
+            }
+            if (markedTarget == null) return;
+            Bounds bounds = markedTarget.HitBounds;
+            var world = new Vector3(bounds.center.x, bounds.max.y + 0.35f, bounds.center.z);
+            Vector3 point = game.GameCamera.WorldToViewportPoint(world);
+            if (point.z <= 0) return;
+            trainingTargetLabel ??= new GUIStyle(centered) { fontSize = 15, fontStyle = FontStyle.Bold };
+            trainingTargetLabel.normal.textColor = HudBrass;
+            float x = Mathf.Clamp(point.x * 1280, 84, 1196);
+            float y = Mathf.Clamp((1 - point.y) * 720, 105, 552);
+            var label = new Rect(x - 74, y - 32, 148, 30);
+            Panel(label);
+            GUI.Label(label, point.x > 1 ? "훈련 표적  ›" : point.x < 0 ? "‹  훈련 표적" : "훈련 표적", trainingTargetLabel);
+            if (point.x >= 0 && point.x <= 1)
+                SpriteArt(new Rect(x - 5, y - 3, 10, 10), KarmaArtwork.Sprite("UI", "FilledSlot"), HudBrass);
         }
 
         void DrawTutorialRouteArrow(float destination)

@@ -52,7 +52,7 @@ namespace KarmaPrototype
             if (entranceTitle == null)
             {
                 entranceTitle = new GUIStyle(title) { fontSize = 48, alignment = TextAnchor.MiddleLeft, wordWrap = false };
-                entranceLabel = new GUIStyle(small) { fontSize = 11, alignment = TextAnchor.MiddleLeft, wordWrap = false };
+                entranceLabel = new GUIStyle(small) { fontSize = 14, alignment = TextAnchor.MiddleLeft, wordWrap = false };
             }
             Fill(new Rect(0, 0, 1280, 720), new Color(0.008f, 0.012f, 0.018f, 0.10f * frame));
             Fill(new Rect(0, 0, 1280, 12 * frame), new Color(0.008f, 0.01f, 0.014f, 0.96f));
@@ -67,7 +67,7 @@ namespace KarmaPrototype
             entranceLabel.active.textColor = entranceAccent;
             entranceLabel.focused.textColor = entranceAccent;
 
-            GUI.Label(new Rect(148, 513, 900, 24), "B O S S   /   E N C O U N T E R", entranceLabel);
+            GUI.Label(new Rect(148, 513, 900, 24), "다음 수호자", entranceLabel);
             entranceTitle.normal.textColor = new Color(0.94f, 0.93f, 0.87f);
             // A clipped reveal and small settling movement leave the canonical name intact.
             GUI.BeginGroup(new Rect(148, 542, 970 * reveal, 76));

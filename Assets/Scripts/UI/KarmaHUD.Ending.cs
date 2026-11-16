@@ -18,7 +18,8 @@ namespace KarmaPrototype
             {
                 Color old = GUI.color;
                 string speaker = game.EndingSpeaker;
-                Color captionHeadingColor = new Color(1, 0.84f, 0.58f, captionAlpha);
+                Color captionHeadingColor = WithOpacity(HudBrass, captionAlpha);
+                Fill(new Rect(300, 628, 680, 1), WithOpacity(HudRule, captionAlpha));
                 if (speaker == "스승" || speaker == "제자")
                 {
                     if (endingSpeakerLabel == null)
@@ -41,7 +42,10 @@ namespace KarmaPrototype
             if (game.EndingFade > 0) FillScreen(new Color(0, 0, 0, game.EndingFade));
             if (game.EndingCompleted)
             {
-                if (ShortcutButton(new Rect(410, 313, 460, 40), "다시 수련하기", KarmaAction.Restart)) game.RestartSession();
+                DrawHudShade(0.23f);
+                Panel(new Rect(388, 208, 504, 241));
+                Label(388, 224, 504, 62, "시련 완료", title);
+                if (ShortcutButton(new Rect(410, 313, 460, 42), "다시 수련하기", KarmaAction.Restart, true)) game.RestartSession();
                 if (ShortcutButton(new Rect(410, 367, 460, 40), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
             }
             else if (game.Paused) DrawPauseOverlay();

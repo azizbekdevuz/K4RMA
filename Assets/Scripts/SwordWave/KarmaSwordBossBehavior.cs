@@ -284,6 +284,13 @@ namespace KarmaPrototype
                 if (owned.Count == 3) result.Add(EnemyAttack.SW05);
                 return result;
             }
+            public override Essence? InheritanceCueFor(EnemyAttack attack) => attack switch
+            {
+                EnemyAttack.SW01 or EnemyAttack.SW02 => Essence.SwordWave,
+                EnemyAttack.SW03 => Essence.RisingSlash,
+                EnemyAttack.SW04 => Essence.Guard,
+                _ => null
+            };
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.SW05; }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {

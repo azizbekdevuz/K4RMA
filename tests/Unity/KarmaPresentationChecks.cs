@@ -1,0 +1,283 @@
+#if UNITY_EDITOR
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using KarmaPrototype;
+using UnityEditor;
+using UnityEngine;
+
+[InitializeOnLoad]
+public static class KarmaPresentationChecks
+{
+    const BindingFlags Hidden = BindingFlags.NonPublic | BindingFlags.Static;
+    const string SymbolKey = "K4RMA.UnifiedSymbolChecks", SymbolOutput = "output/symbol-review";
+    static bool symbolsStarted;
+    static string symbolError;
+    static KarmaGame symbolGame;
+    static int assertions;
+    static void Check(bool value, string message)
+    {
+        assertions++;
+        if (!value) throw new Exception(message);
+    }
+    static float Support(Sprite sprite) => (float)typeof(KarmaCharacterAnimator)
+        .GetMethod("FallenSupportHeight", Hidden).Invoke(null, new object[] { sprite });
+
+    static KarmaPresentationChecks()
+    {
+        EditorApplication.update += () => {
+            if (!SessionState.GetBool(SymbolKey, false)) return;
+            Application.runInBackground = true; EditorApplication.isPaused = false;
+            EditorApplication.QueuePlayerLoopUpdate();
+            if (!symbolsStarted && EditorApplication.isPlaying && Time.frameCount > 3)
+            { symbolsStarted = true; RunSymbols(); }
+        };
+    }
+    [MenuItem("K4RMA/검증/고유화 문양 통일")]
+    public static void RunSymbolsFromMenu()
+    {
+        if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before validation.");
+        SessionState.SetBool(SymbolKey + ".Background", Application.runInBackground);
+        SessionState.SetBool(SymbolKey, true);
+        EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
+        EditorApplication.EnterPlaymode();
+    }
+    static async Task SymbolsUntil(Func<bool> done)
+    {
+        double deadline = EditorApplication.timeSinceStartup + 40;
+        while (!done())
+        {
+            if (symbolError != null) throw new Exception(symbolError);
+            if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Symbol presentation timeout");
+            await Task.Delay(10);
+        }
+    }
+    static async Task SymbolCapture(string name)
+    {
+        string path = SymbolOutput + "/" + name + ".png";
+        if (File.Exists(path)) File.Delete(path);
+        ScreenCapture.CaptureScreenshot(path);
+        await SymbolsUntil(() => File.Exists(path));
+    }
+    static void CheckCeremony(bool guardian, Essence essence)
+    {
+        var root = symbolGame.World.Find(guardian ? "Guardian inheritance ceremony" : "Player personalization ceremony");
+        Check(root != null, "Real ceremony exists for " + essence);
+        var pictures = root.GetComponentsInChildren<SpriteRenderer>();
+        var awakening = pictures.Where(p => p.name == "Absorbed sigil" || p.name == "Awakening pulse").ToArray();
+        Check(awakening.Length == 4 && awakening.All(p => p.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken")),
+            "Original awakening sigil and three pulses remain for " + essence);
+        var marks = pictures.Where(p => p.name == "Technique symbol").ToArray();
+        Check(marks.Length == 1 && marks[0].sprite == KarmaArtwork.SkillIcon(essence),
+            "One additional skill symbol for " + essence);
+        Check(marks.All(p => Mathf.Abs(p.transform.localScale.x - p.transform.localScale.y) < 0.001f),
+            "Ceremony preserves the source symbol proportions");
+    }
+    static async void RunSymbols()
+    {
+        string verdict;
+        Application.LogCallback log = (message, stack, type) => {
+            if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Scripts/")) symbolError = message;
+        };
+        try
+        {
+            Directory.CreateDirectory(SymbolOutput); assertions = 0;
+            symbolGame = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
+            Application.logMessageReceived += log;
+            var icons = KarmaArtwork.Settings.skillIcons;
+            Check(icons.Length == 3, "Only the three canonical selection symbols are configured");
+            for (int i = 0; i < 3; i++) Check(icons[i] != null && icons[i].name == new[] { "Wave", "Rise", "Ward" }[i],
+                "Approved selection sprite identity and order remain unchanged");
+            foreach (Essence essence in Enum.GetValues(typeof(Essence)))
+            {
+                symbolGame.StartRun(); symbolGame.Enemies[0].TakeDamage(1000000);
+                await SymbolsUntil(() => symbolGame.Phase == RunPhase.Choosing);
+                if (essence == Essence.SwordWave) await SymbolCapture("choice");
+                symbolGame.Choose(essence); symbolGame.ConfirmChoice();
+                CheckCeremony(false, essence);
+                await Task.Delay(350); await SymbolCapture("personalize-" + essence);
+                await SymbolsUntil(() => symbolGame.GuardianInheriting);
+                CheckCeremony(true, essence);
+                await Task.Delay(350); await SymbolCapture("inherit-" + essence);
+                symbolGame.ReturnToTitle();
+            }
+            symbolGame.StartRun();
+            foreach (Essence essence in Enum.GetValues(typeof(Essence)))
+            { symbolGame.Player.Essences.Preview(essence); symbolGame.Player.Essences.Confirm(out _); }
+            await SymbolCapture("owned-hud");
+            foreach (Essence essence in Enum.GetValues(typeof(Essence)))
+            {
+                symbolGame.Player.Essences.NotifyUnique(essence);
+                string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
+                var proc = symbolGame.World.Find("PersonalizationVFX/" + pose);
+                Check(proc != null && symbolGame.Player.Essences.JustTriggered(essence),
+                    "Original skill-use artwork and HUD feedback are restored");
+                await SymbolCapture("proc-" + essence);
+            }
+            var members = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            typeof(KarmaGame).GetProperty("StageIndex").SetValue(symbolGame, 3);
+            typeof(KarmaGame).GetMethod("LoadRoom", members).Invoke(symbolGame, new object[] { true });
+            symbolGame.Enemies[0].TakeDamage(1000000);
+            Check(symbolGame.Phase == RunPhase.Ending, "Real final defeat starts ending");
+            var ending = symbolGame.World.Find("Ending presentation");
+            for (int i = 0; i < 3; i++)
+            {
+                var symbol = ending.Find("Personalized technique " + (Essence)i).GetComponent<SpriteRenderer>();
+                Check(symbol.sprite == icons[i], "The ending reuses the canonical selection symbol");
+            }
+            await SymbolsUntil(() => symbolGame.EndingTime >= 24.71f); await SymbolCapture("ending-orbit");
+            await SymbolsUntil(() => symbolGame.EndingTime >= 25.58f); await SymbolCapture("ending-united");
+            symbolGame.ReturnToTitle(); await Task.Delay(100);
+            Check(!UnityEngine.Object.FindAnyObjectByType<KarmaPersonalizationVFX>() && !UnityEngine.Object.FindAnyObjectByType<KarmaEndingPresentation>(),
+                "Return to title removes ceremony and ending symbols");
+            Check(symbolError == null, "No presentation runtime errors");
+            verdict = "PASS: " + assertions + " canonical selection symbols across HUD, three real personalizations, inheritance, unique procs and ending";
+        }
+        catch (Exception error) { verdict = "FAIL: " + error; Debug.LogException(error); }
+        Application.logMessageReceived -= log;
+        Directory.CreateDirectory(SymbolOutput); File.WriteAllText(SymbolOutput + "/result.txt", verdict); Debug.Log(verdict);
+        SessionState.SetBool(SymbolKey, false);
+        Application.runInBackground = SessionState.GetBool(SymbolKey + ".Background", false);
+        EditorApplication.ExitPlaymode();
+    }
+
+    public static void CheckCeremonyLayers(KarmaGame game, Action<bool, string> check)
+    {
+        var actor = new GameObject("Ceremony validation actor");
+        actor.transform.SetParent(game.World, false);
+        try
+        {
+            foreach (bool guardian in new[] { false, true })
+            foreach (Essence essence in Enum.GetValues(typeof(Essence)))
+            {
+                KarmaPersonalizationVFX.Play(game, actor.transform, essence, 2.4f, guardian);
+                var root = game.World.Find(guardian ? "Guardian inheritance ceremony" : "Player personalization ceremony");
+                try
+                {
+                    var pictures = root.GetComponentsInChildren<SpriteRenderer>();
+                    var awaken = KarmaArtwork.Sprite("PersonalizationVFX", "Awaken");
+                    check(awaken != null && pictures.Count(p => p.sprite == awaken) == 4,
+                        "Original awakening artwork is restored: " + essence + "/" + guardian);
+                    var symbol = pictures.Single(p => p.name == "Technique symbol");
+                    check(symbol.sprite != null && symbol.sprite == KarmaArtwork.SkillIcon(essence), "One correct skill mark");
+                    var incoming = pictures.Single(p => p.name == "Inherited power");
+                    string oldPose = essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry";
+                    check(incoming.sprite != null && incoming.sprite == (guardian ? KarmaArtwork.SkillIcon(essence)
+                        : KarmaArtwork.Sprite("UI", oldPose)), "Original incoming power artwork is preserved");
+                    var effect = root.GetComponent<KarmaPersonalizationVFX>();
+                    var fields = BindingFlags.Instance | BindingFlags.NonPublic;
+                    foreach (float t in new[] { 0f, 0.3f, 0.55f, 0.6f, 0.65f, 0.75f, 0.9f })
+                    {
+                        typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, t * 2.4f);
+                        typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
+                        check(pictures.Count(p => p.sprite == symbol.sprite && p.color.a > 0.001f) <= 1,
+                            "Never duplicate the visible skill mark: " + essence + "/" + guardian + "/" + t);
+                        if (t == 0.75f) check(symbol.color.a > 0.9f, "Skill mark is visible during awakening");
+                        check(Mathf.Abs(symbol.transform.localScale.x - symbol.transform.localScale.y) < 0.001f,
+                            "Skill mark preserves proportions");
+                        check(Quaternion.Angle(incoming.transform.rotation, Quaternion.identity) < 0.001f
+                            && Quaternion.Angle(symbol.transform.rotation, Quaternion.identity) < 0.001f,
+                            "Incoming and awakening marks stay upright throughout the ceremony");
+                        var sigil = pictures.Single(p => p.name == "Absorbed sigil");
+                        check(symbol.color.r == sigil.color.r && symbol.color.g == sigil.color.g && symbol.color.b == sigil.color.b
+                            && incoming.color.r == sigil.color.r && incoming.color.g == sigil.color.g && incoming.color.b == sigil.color.b,
+                            "Both marks match the original awakening effect color");
+                    }
+                }
+                finally { UnityEngine.Object.DestroyImmediate(root.gameObject); }
+                int children = game.World.childCount;
+                game.Player.Essences.ResetTemporaryState();
+                try
+                {
+                    for (int i = 0; i < 2; i++) game.Player.Essences.NotifyUnique(essence);
+                    string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
+                    var expected = KarmaArtwork.Sprite("PersonalizationVFX", pose);
+                    check(game.World.childCount == children + 4 && game.Player.Essences.JustTriggered(essence),
+                        "Repeated skill use preserves the original two-part effect and HUD feedback");
+                    for (int i = children; i < game.World.childCount; i++)
+                    {
+                        var fx = game.World.GetChild(i);
+                        var sprites = fx.GetComponentsInChildren<SpriteRenderer>();
+                        check(sprites.All(p => p.sprite != KarmaArtwork.SkillIcon(essence)), "No selection symbol added to skill use");
+                        if (fx.GetComponent<KarmaCombatVFX>() != null)
+                            check(expected != null && sprites.Where(p => p.name != "Spark").All(p => p.sprite == expected),
+                                "Original skill artwork is used for core, light and echo");
+                    }
+                }
+                finally
+                {
+                    while (game.World.childCount > children)
+                        UnityEngine.Object.DestroyImmediate(game.World.GetChild(game.World.childCount - 1).gameObject);
+                }
+            }
+        }
+        finally { UnityEngine.Object.DestroyImmediate(actor); }
+    }
+
+    [MenuItem("K4RMA/검증/배경과 사망 접지")]
+    public static void RunFromMenu()
+    {
+        string result;
+        try { Run(); result = "PASS: " + assertions + " background/original texture and fallen-body support assertions"; }
+        catch (Exception error) { result = "FAIL: " + error; Debug.LogException(error); }
+        Directory.CreateDirectory("output/validation");
+        File.WriteAllText("output/validation/presentation-ground.txt", result);
+        Debug.Log(result);
+    }
+    public static void RunBatch()
+    {
+        RunFromMenu();
+        EditorApplication.Exit(File.ReadAllText("output/validation/presentation-ground.txt").StartsWith("PASS:") ? 0 : 1);
+    }
+    static void Run()
+    {
+        assertions = 0;
+        var stage = new GameObject("Presentation checks");
+        try
+        {
+            var fallen = Resources.LoadAll<Sprite>("Neutral/Revival/Neutral")
+                .OrderBy(s => s.name).First();
+            float silhouetteBottom = fallen.vertices.Min(v => v.y);
+            float supportHeight = Support(fallen);
+            Check(supportHeight > silhouetteBottom + 0.05f,
+                "Actual fallen body's support must be higher than its protruding blade tip: " +
+                supportHeight + " bottom=" + silhouetteBottom + " vertices=" + fallen.vertices.Length + " triangles=" + fallen.triangles.Length);
+
+            var artwork = new GameObject("Detached fallen guardian"); artwork.transform.SetParent(stage.transform);
+            artwork.transform.position = new Vector3(8, 12, 0);
+            artwork.transform.rotation = Quaternion.Euler(0, 0, 18);
+            artwork.transform.localScale = new Vector3(-1.7f, 1.7f, 1);
+            var picture = new GameObject("Guardian sprite").AddComponent<SpriteRenderer>();
+            picture.transform.SetParent(artwork.transform, false);
+            picture.transform.localPosition = new Vector3(0, -KarmaSpace.GuardianGroundY / KarmaSpace.GuardianArtScale, 0);
+            picture.transform.localScale = Vector3.one * KarmaSpace.Scale;
+            var animator = artwork.AddComponent<KarmaCharacterAnimator>();
+            animator.ConfigureSprites(picture, new[] { KarmaArtwork.Settings.neutralGuardian });
+            animator.ConfigureSheet("Neutral");
+            animator.Die();
+            float support = Support(picture.sprite);
+            Check(animator.CurrentPose == "Death", "Death pose is selected immediately");
+            Check(Mathf.Abs(picture.transform.TransformPoint(new Vector3(0, support, 0)).y) < 0.001f,
+                "Fallen body lands on the floor after an elevated, mirrored, tilted pose");
+            Check(Quaternion.Angle(artwork.transform.rotation, Quaternion.identity) < 0.01f, "Death clears retained tilt");
+            var settled = artwork.transform.position;
+            animator.Pose(0, false);
+            Check(Vector3.Distance(settled, artwork.transform.position) < 0.001f, "Repeated death updates do not drift");
+
+            KarmaArtwork.Background(stage.transform, 0);
+            var background = stage.transform.Find("Trial hall artwork");
+            var renderer = background.GetComponent<SpriteRenderer>();
+            Check(renderer.sprite == KarmaArtwork.Settings.dojoPanorama, "Stage zero uses the same extended temple");
+            Check(background.GetComponentsInChildren<Renderer>().Length == 1, "Single plate has no overlay seam");
+            Check(Mathf.Abs(renderer.bounds.size.x - KarmaStage.BackgroundWidth * 2) < 0.001f, "Two-width outpaint coverage");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(stage);
+        }
+    }
+}
+#endif

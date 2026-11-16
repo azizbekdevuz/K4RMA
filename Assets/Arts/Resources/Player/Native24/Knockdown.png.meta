@@ -1,0 +1,344 @@
+fileFormatVersion: 2
+guid: 749f2ad5c3504788b5e509f2bdb000de
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5843485205948933420
+    second: Knockdown_0
+  - first:
+      213: -560812883987795578
+    second: Knockdown_00
+  - first:
+      213: 4888768524618703361
+    second: Knockdown_01
+  - first:
+      213: 5608292332828192704
+    second: Knockdown_02
+  - first:
+      213: 5777331123369737147
+    second: Knockdown_03
+  - first:
+      213: 4559198961940342307
+    second: Knockdown_04
+  - first:
+      213: -6961859422711504876
+    second: Knockdown_05
+  - first:
+      213: -5919425653096029649
+    second: Knockdown_06
+  - first:
+      213: 8438798411314641226
+    second: Knockdown_07
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 142.53331
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 1
+  swizzle: 50462976
+  cookieLightType: 2
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Knockdown_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.12866817}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 681f17047a79738f0800000000000000
+      internalID: -560812883987795578
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_01
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13318284}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1022203421568d340800000000000000
+      internalID: 4888768524618703361
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_02
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13318284}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cf65c6a928a4dd40800000000000000
+      internalID: 5608292332828192704
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_03
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13318284}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbbf24e0c043d2050800000000000000
+      internalID: 5777331123369737147
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.17155756}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 326a8cadc47854f30800000000000000
+      internalID: 4559198961940342307
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_05
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.17155756}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41023159db1826f90800000000000000
+      internalID: -6961859422711504876
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_06
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.17155756}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2260e02bb9f9dda0800000000000000
+      internalID: -5919425653096029649
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Knockdown_07
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.17155756}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a493a85c172ac1570800000000000000
+      internalID: 8438798411314641226
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    outline: []
+    customData:
+    physicsShape: []
+    bones: []
+    spriteID:
+    internalID: 0
+    vertices: []
+    indices:
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Knockdown_0: -5843485205948933420
+      Knockdown_00: -560812883987795578
+      Knockdown_01: 4888768524618703361
+      Knockdown_02: 5608292332828192704
+      Knockdown_03: 5777331123369737147
+      Knockdown_04: 4559198961940342307
+      Knockdown_05: -6961859422711504876
+      Knockdown_06: -5919425653096029649
+      Knockdown_07: 8438798411314641226
+  mipmapLimitGroupName:
+  pSDRemoveMatte: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

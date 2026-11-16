@@ -1,6 +1,5 @@
 # K4RMA — combined ignore rules
-# Planning-repository rules and the v0.1.0 Unity project rules.
-# Both sets are kept. Neither list replaces the other.
+# Planning files and Unity prototype development.
 
 # Unity-generated folders
 /[Ll]ibrary/
@@ -64,9 +63,6 @@ sysinfo.txt
 /Assets/StreamingAssets/aa.meta
 /Assets/StreamingAssets/aa/
 
-# Generated native current-image inventory
-/Assets/K4RMA/Editor/CompleteArtInventory.asset*
-
 # OS-generated files
 .DS_Store
 ._*
@@ -91,3 +87,9 @@ Desktop.ini
 *.p12
 *.pfx
 *.keystore
+
+# Python validation and local Unity backups
+__pycache__/
+*.py[cod]
+*.rej
+/backups/

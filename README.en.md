@@ -3,9 +3,9 @@
   <br /><strong>WHAT YOU GIVE UP COMES BACK.</strong>
   <br /><sub>잃어버린 능력이 다음 적의 힘이 된다.</sub>
   <br /><br />
-  <img alt="Project status: pre-production" src="https://img.shields.io/badge/status-pre--production-ef4444?style=flat-square" />
+  <img alt="Project status: playable prototype" src="https://img.shields.io/badge/status-playable_prototype-2563eb?style=flat-square" />
   <img alt="Engine: Unity" src="https://img.shields.io/badge/engine-Unity-222222?style=flat-square&logo=unity" />
-  <img alt="Language: C sharp (planned)" src="https://img.shields.io/badge/language-C%23_(planned)-6b4eff?style=flat-square" />
+  <img alt="Language: C sharp" src="https://img.shields.io/badge/language-C%23-6b4eff?style=flat-square" />
   <img alt="Mode: single player first" src="https://img.shields.io/badge/mode-single--player_first-2563eb?style=flat-square" />
   <br /><br />
   <a href="README.md"><strong>🇰🇷 한국어</strong></a> &nbsp;|&nbsp; <a href="README.en.md"><strong>🇺🇸 English</strong></a>
@@ -17,11 +17,13 @@
   <br /><sub>Concept art / 콘셉트 이미지 · Not actual gameplay / 실제 게임 화면이 아닙니다.</sub>
 </div>
 
-> [!IMPORTANT]
-> **K4RMA is a working title in pre-production.** The central loop is the team’s current direction; ability and stage counts, synergy rules, 2D versus 3D, and final visuals are not settled. Planned features are not implemented features. The body below remains that planning record.
+## Current 2D prototype
 
-> [!NOTE]
-> **v0.1.0** integrates the 2D prototype into this repository. Open it in Unity **6000.6.2f1**, play `Assets/K4RMA/Scenes/KarmaPrototype.unity`, and press Enter. The original run notes are in [docs/PROTOTYPE.md](docs/PROTOTYPE.md).
+Open the project in **Unity 6000.6.2f1** and play [KarmaPrototype](Assets/Scenes/KarmaPrototype.unity). Move with A/D or the arrow keys, jump with Space, and attack with J. The K4RMA Editor menu contains guardian practice modes. See the [project structure](docs/STRUCTURE.MD) and [collaboration rules](docs/RULES.MD).
+
+## Original planning record
+
+The following sections describe the initial project plan. For the first integrated prototype, see the [v0.1.0 run notes](docs/PROTOTYPE.md).
 
 ## Overview
 

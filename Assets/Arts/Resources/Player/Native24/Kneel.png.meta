@@ -1,0 +1,344 @@
+fileFormatVersion: 2
+guid: 8a35513abe9741aab0e70ca2f8a4d662
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 9060147746969969097
+    second: Kneel_0
+  - first:
+      213: 4001146128333840205
+    second: Kneel_00
+  - first:
+      213: 7105142856266742504
+    second: Kneel_01
+  - first:
+      213: 1578745199503442513
+    second: Kneel_02
+  - first:
+      213: -2080847476296231400
+    second: Kneel_03
+  - first:
+      213: 7489990003487035828
+    second: Kneel_04
+  - first:
+      213: 6303236152012520580
+    second: Kneel_05
+  - first:
+      213: -317363453730521830
+    second: Kneel_06
+  - first:
+      213: 97500574136562056
+    second: Kneel_07
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 163.60197
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 1
+  swizzle: 50462976
+  cookieLightType: 2
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Kneel_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.045146726}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4f94c9643de68730800000000000000
+      internalID: 4001146128333840205
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_01
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.047404062}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8eafe2a78c98a9260800000000000000
+      internalID: 7105142856266742504
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_02
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.047404062}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1528147f464d8e510800000000000000
+      internalID: 1578745199503442513
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_03
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.047404062}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 816589fbe385f13e0800000000000000
+      internalID: -2080847476296231400
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.072234765}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b15219793ac1f760800000000000000
+      internalID: 7489990003487035828
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_05
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.072234765}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48c3b1062e7997750800000000000000
+      internalID: 6303236152012520580
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_06
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.072234765}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1d73bbce9f789bf0800000000000000
+      internalID: -317363453730521830
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Kneel_07
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.072234765}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8817ece61446a5100800000000000000
+      internalID: 97500574136562056
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    outline: []
+    customData:
+    physicsShape: []
+    bones: []
+    spriteID:
+    internalID: 0
+    vertices: []
+    indices:
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Kneel_0: 9060147746969969097
+      Kneel_00: 4001146128333840205
+      Kneel_01: 7105142856266742504
+      Kneel_02: 1578745199503442513
+      Kneel_03: -2080847476296231400
+      Kneel_04: 7489990003487035828
+      Kneel_05: 6303236152012520580
+      Kneel_06: -317363453730521830
+      Kneel_07: 97500574136562056
+  mipmapLimitGroupName:
+  pSDRemoveMatte: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

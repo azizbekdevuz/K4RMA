@@ -3,9 +3,9 @@
   <br /><strong>WHAT YOU GIVE UP COMES BACK.</strong>
   <br /><sub>잃어버린 능력이 다음 적의 힘이 된다.</sub>
   <br /><br />
-  <img alt="Project status: pre-production" src="https://img.shields.io/badge/status-pre--production-ef4444?style=flat-square" />
+  <img alt="Project status: playable prototype" src="https://img.shields.io/badge/status-playable_prototype-2563eb?style=flat-square" />
   <img alt="Engine: Unity" src="https://img.shields.io/badge/engine-Unity-222222?style=flat-square&logo=unity" />
-  <img alt="Language: C sharp (planned)" src="https://img.shields.io/badge/language-C%23_(planned)-6b4eff?style=flat-square" />
+  <img alt="Language: C sharp" src="https://img.shields.io/badge/language-C%23-6b4eff?style=flat-square" />
   <img alt="Mode: single player first" src="https://img.shields.io/badge/mode-single--player_first-2563eb?style=flat-square" />
   <br /><br />
   <a href="README.md"><strong>🇰🇷 한국어</strong></a> &nbsp;|&nbsp; <a href="README.en.md"><strong>🇺🇸 English</strong></a>
@@ -17,11 +17,23 @@
   <br /><sub>Concept art / 콘셉트 이미지 · Not actual gameplay / 실제 게임 화면이 아닙니다.</sub>
 </div>
 
-> [!IMPORTANT]
-> **K4RMA는 개발 준비 단계의 가제입니다.** 게임의 핵심 루프는 팀이 논의한 방향이지만 능력/스테이지 수, 시너지 규칙, 2D/3D 및 최종 그래픽은 아직 결정되지 않았습니다. 계획된 기능을 이미 구현된 것처럼 표시하지 않습니다. 아래 본문은 그 기획 기록이다.
+## 현재 2D 프로토타입
 
-> [!NOTE]
-> **v0.1.0**에 2D 프로토타입이 이 저장소로 통합되어 있다. Unity **6000.6.2f1**로 열고 `Assets/K4RMA/Scenes/KarmaPrototype.unity`를 실행한 뒤 Play하고 Enter로 시작한다. 실행 안내 원문은 [docs/PROTOTYPE.md](docs/PROTOTYPE.md)에 있다.
+고유화 순서에 따라 보스의 유형과 계승 패턴이 달라지는 2D 보스러시.
+
+Unity `6000.6.2f1`에서 `Assets/Scenes/KarmaPrototype.unity`를 실행한다.
+
+- 이동: `A/D` 또는 방향키 · 점프: `Space` · 공격: `J`
+- 보스 기술: `Q` 검기 · `Left Shift` 상승베기 · `E` 방어
+- 일시정지/설정: `Esc` · 재시작: `R`
+
+연습 메뉴: `K4RMA` 메뉴에서 보스와 패턴을 선택한다.
+
+[파일 구조](docs/STRUCTURE.MD) · [협업 규칙](docs/RULES.MD)
+
+## 초기 기획 기록
+
+아래는 프로젝트 초기의 기획 기록이다. 첫 통합 버전은 [v0.1.0 실행 안내](docs/PROTOTYPE.md)에 기록되어 있다.
 
 ## 게임 소개
 

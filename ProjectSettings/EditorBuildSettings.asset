@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/K4RMA/Scenes/KarmaPrototype.unity
+    path: Assets/Scenes/KarmaPrototype.unity
     guid: 13d7ac6715dd66a41924e890b6628f17
   m_configObjects: {}

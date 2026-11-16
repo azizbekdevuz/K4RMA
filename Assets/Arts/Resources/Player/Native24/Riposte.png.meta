@@ -1,0 +1,344 @@
+fileFormatVersion: 2
+guid: a42b2f5e97594adf8573e12b60fdd6f4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6870343773459687737
+    second: Riposte_0
+  - first:
+      213: -5404049880317841620
+    second: Riposte_00
+  - first:
+      213: 3063466771349849070
+    second: Riposte_01
+  - first:
+      213: 5987624702276712063
+    second: Riposte_02
+  - first:
+      213: -1892980587124000547
+    second: Riposte_03
+  - first:
+      213: -1480235720061970393
+    second: Riposte_04
+  - first:
+      213: -6188720225134626165
+    second: Riposte_05
+  - first:
+      213: 4793172989779457499
+    second: Riposte_06
+  - first:
+      213: -4533011016321564630
+    second: Riposte_07
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 129.67897
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 1
+  swizzle: 50462976
+  cookieLightType: 2
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Riposte_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.15349887}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2fa9270445f005b0800000000000000
+      internalID: -5404049880317841620
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_01
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1557562}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee3458f2cce938a20800000000000000
+      internalID: 3063466771349849070
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_02
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1557562}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f76be8361f0581350800000000000000
+      internalID: 5987624702276712063
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_03
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 443
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.1557562}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd873c97f28cab5e0800000000000000
+      internalID: -1892980587124000547
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13995485}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7289cd98475257be0800000000000000
+      internalID: -1480235720061970393
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_05
+      rect:
+        serializedVersion: 2
+        x: 443
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13995485}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8a33969ebf3d1aa0800000000000000
+      internalID: -6188720225134626165
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_06
+      rect:
+        serializedVersion: 2
+        x: 886
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13995485}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd53dca5075c48240800000000000000
+      internalID: 4793172989779457499
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Riposte_07
+      rect:
+        serializedVersion: 2
+        x: 1329
+        y: 0
+        width: 443
+        height: 443
+      alignment: 9
+      pivot: {x: 0.5, y: 0.13995485}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2088316f728711c0800000000000000
+      internalID: -4533011016321564630
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    outline: []
+    customData:
+    physicsShape: []
+    bones: []
+    spriteID:
+    internalID: 0
+    vertices: []
+    indices:
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Riposte_0: 6870343773459687737
+      Riposte_00: -5404049880317841620
+      Riposte_01: 3063466771349849070
+      Riposte_02: 5987624702276712063
+      Riposte_03: -1892980587124000547
+      Riposte_04: -1480235720061970393
+      Riposte_05: -6188720225134626165
+      Riposte_06: 4793172989779457499
+      Riposte_07: -4533011016321564630
+  mipmapLimitGroupName:
+  pSDRemoveMatte: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

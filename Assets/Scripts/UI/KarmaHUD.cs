@@ -89,14 +89,15 @@ namespace KarmaPrototype
                         Panel(new Rect(300, 525, 680, 110));
                         Label(325, 539, 640, 35, "시험 통과", heading);
                         KeyPrompt(new Rect(325, 578, 640, 44), 18, false,
-                            "오른쪽 수련문 앞에서  ", KarmaAction.Interact, "  고유화 선택");
+                            "오른쪽 수련문 앞에서  ", KarmaAction.Interact, "  키를 누르면 고유화할 기술을 선택할 수 있습니다.");
                         break;
                 }
             }
             if (!game.Paused && !string.IsNullOrEmpty(game.OpeningArrivalSpeech) && game.OpeningArrivalFade < 0.45f)
             {
                 Panel(new Rect(230, 550, 820, 140));
-                Label(255, 565, 770, 75, game.OpeningArrivalSpeech, text);
+                DrawSpeakerNameplate(255, 523, "제자");
+                Label(255, 560, 770, 75, game.OpeningArrivalSpeech, text);
                 KeyPrompt(new Rect(255, 655, 770, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
             }
             if (game.OpeningArrivalFade > 0) Fill(new Rect(0, 0, 1280, 720), new Color(0, 0, 0, game.OpeningArrivalFade));
@@ -117,7 +118,7 @@ namespace KarmaPrototype
             if (texture == null)
             {
                 Fill(bounds, new Color(0.22f, 0.035f, 0.035f));
-                GUI.Label(bounds, "이미지 파일 누락: " + name + "\nAssets 전체를 적용하세요.");
+                GUI.Label(bounds, "이미지 파일이 누락되었습니다. " + name + "\nAssets 전체를 적용해야 합니다.");
                 return;
             }
             Rect crop = source ?? new Rect(0, 0, texture.width, texture.height);
@@ -144,6 +145,26 @@ namespace KarmaPrototype
         }
         void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
+        GUIStyle speakerNameplate;
+
+        void DrawSpeakerNameplate(float x, float y, string speaker, float opacity = 1f)
+        {
+            if (speakerNameplate == null)
+                speakerNameplate = new GUIStyle(centered) { fontSize = 16, fontStyle = FontStyle.Bold };
+
+            var accent = new Color32(240, 223, 201, 255);
+            speakerNameplate.normal.textColor = accent;
+            var tab = new Rect(x, y, 88, 28);
+            byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(opacity) * 255f);
+            Fill(tab, new Color32(57, 50, 45, alpha));
+            accent.a = alpha;
+            Fill(new Rect(tab.x, tab.y, tab.width, 2), accent);
+            Color saved = GUI.color;
+            GUI.color = new Color(saved.r, saved.g, saved.b, saved.a * opacity);
+            GUI.Label(tab, speaker, speakerNameplate);
+            GUI.color = saved;
+        }
+
         const float DialoguePanelOpacity = 0.7f;
         static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, DialoguePanelOpacity)); }
         static void DrawViewportBorders()

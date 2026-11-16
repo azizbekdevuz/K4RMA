@@ -78,7 +78,7 @@ namespace KarmaPrototype
         internal void ApplyDamageFlash()
         {
             if (picture == null || !DamageFlashVisible) return;
-            bool red = Mathf.FloorToInt((Time.time - damageFlashAt) * 18) % 2 == 0;
+            bool red = Time.time - damageFlashAt < 0.18f;
             picture.color = red ? pictureColor * new Color(1, 0.45f, 0.45f) : pictureColor;
         }
         public void Die()

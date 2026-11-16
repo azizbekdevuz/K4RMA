@@ -17,19 +17,24 @@ namespace KarmaPrototype
             {
                 Fill(new Rect(0, 0, 1280, 720), new Color(0.01f, 0.02f, 0.04f, 0.4f));
                 Panel(new Rect(250, 540, 780, 150));
+                DrawSpeakerNameplate(275, 513, t.SpeechTitle);
                 Label(275, 550, 730, 50, "공격이 닿기 전, 보호의 힘을 펼쳐라.", centered);
                 float pulse = 0.8f + Mathf.Sin(Time.unscaledTime * 5) * 0.2f;
                 var old = GUI.color; GUI.color = new Color(1, 0.9f, 0.6f, pulse);
                 string guardKey = KarmaInput.BindingLabel(KarmaAction.Guard);
-                string instruction = guardKey == "K" ? "를 눌러 막으세요" : " 키를 눌러 막으세요";
+                string instruction = guardKey == "K" ? "를 누르면 공격을 막을 수 있습니다." : " 키를 누르면 공격을 막을 수 있습니다.";
                 KeyPrompt(new Rect(275, 615, 730, 55), 23, true, KarmaAction.Guard, instruction); GUI.color = old;
                 return;
             }
             if (!string.IsNullOrEmpty(t.Speech))
             {
                 Panel(new Rect(210, 550, 860, 140));
-                Label(235, 560, 810, 25, t.Step == KarmaTutorialStep.Complete ? tutorialLabels[t.Lesson] + " 3/3 · 수련 완료" : t.SpeechTitle, small);
-                Label(235, 588, 810, 65, t.Speech, text);
+                if (t.Step == KarmaTutorialStep.Complete)
+                    Label(235, 560, 810, 25, tutorialLabels[t.Lesson] + " 3/3 · 수련 완료", small);
+                else
+                    DrawSpeakerNameplate(235, 523, t.SpeechTitle);
+                float dialogueTop = t.Step == KarmaTutorialStep.Complete ? 588 : 560;
+                Label(235, dialogueTop, 810, 65, t.Speech, text);
                 KeyPrompt(new Rect(235, 655, 810, 25), 14, false, KarmaAction.DialogueConfirm, "  계속");
                 return;
             }
@@ -42,19 +47,20 @@ namespace KarmaPrototype
             if (!string.IsNullOrEmpty(blockedMessage))
             {
                 Panel(new Rect(210, 120, 860, 70));
+                DrawSpeakerNameplate(235, 93, t.SpeechTitle);
                 Label(230, 130, 820, 50, blockedMessage, centered);
             }
             Panel(new Rect(210, 615, 860, 65));
             var objective = new Rect(230, 630, 820, 42);
             if (outsideGate)
-                GUI.Label(objective, "모든 훈련을 마쳤다. 관문으로 이동하세요.", centered);
+                GUI.Label(objective, "모든 훈련을 마쳤습니다. 관문으로 이동하면 다음 시련을 시작할 수 있습니다.", centered);
             else if (t.Step == KarmaTutorialStep.Gate)
-                KeyPrompt(objective, 18, true, "관문 앞에서  ", KarmaAction.Interact, "  다음 보스 스테이지로 이동");
+                KeyPrompt(objective, 18, true, "관문 앞에서  ", KarmaAction.Interact, "  키를 누르면 다음 시련으로 이동합니다.");
             else if (t.Step == KarmaTutorialStep.Travel && t.Lesson < 0)
                 KeyPrompt(objective, 18, true, KarmaAction.Left, " / ", KarmaAction.Right, "  이동   ·   ",
                     KarmaAction.Down, "  앉기   ·   ", KarmaAction.Jump, "  점프");
             else if (t.Step == KarmaTutorialStep.Travel)
-                GUI.Label(objective, "다음 훈련 장소로 이동하세요.", centered);
+                GUI.Label(objective, "다음 훈련 장소에서 수련을 이어갈 수 있습니다.", centered);
             else
             {
                 string detail = t.Lesson == 1 ? "  ·  표적에서 거리를 두고 발사"

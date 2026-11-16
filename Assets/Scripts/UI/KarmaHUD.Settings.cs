@@ -60,11 +60,11 @@ namespace KarmaPrototype
             }
             if (KarmaInput.Rebinding)
             {
-                KeyPrompt(new Rect(SettingsLeft, 595, SettingsColumnWidth, 23), 14, true, "새 키를 누르세요.");
+                KeyPrompt(new Rect(SettingsLeft, 595, SettingsColumnWidth, 23), 14, true, "키를 누르면 새 조작 키로 설정됩니다.");
                 KeyPrompt(new Rect(SettingsLeft, 620, SettingsColumnWidth, 28), 14, true, KarmaAction.Pause, "  키 변경 취소");
             }
             else KeyPrompt(new Rect(SettingsLeft, 567, SettingsColumnWidth, 25), 14, true,
-                KarmaInput.RebindMessage ?? "변경할 키를 선택한 뒤 새 키를 누르세요.");
+                KarmaInput.RebindMessage ?? "변경할 동작을 선택하면 새 키를 지정할 수 있습니다.");
             if (!KarmaInput.Rebinding
                 && ShortcutButton(new Rect(790, 635, 390, 45), "저장하고 돌아가기", KarmaAction.Pause)) game.CloseSettings();
         }
@@ -92,7 +92,7 @@ namespace KarmaPrototype
         }
         void DisplayConfirmationScreen()
         {
-            Label(240, 220, 800, 65, "화면 설정을 유지할까요?", settingsTitle);
+            Label(240, 220, 800, 65, "화면 설정을 변경했습니다.", settingsTitle);
             Label(280, 310, 720, 65,
                 Mathf.CeilToInt(game.DisplayConfirmationSeconds) + "초 뒤 이전 설정으로 돌아갑니다.", settingsCentered);
             var keepBounds = new Rect(300, 430, 300, 55);

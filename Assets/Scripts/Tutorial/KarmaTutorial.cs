@@ -36,7 +36,7 @@ namespace KarmaPrototype
         public string Speech => Step switch
         {
             KarmaTutorialStep.Lesson => Lessons[Lesson],
-            KarmaTutorialStep.Complete => TrainingNames[Lesson] + " 훈련을 마쳤다.",
+            KarmaTutorialStep.Complete => TrainingNames[Lesson] + " 훈련을 완료했습니다.",
             KarmaTutorialStep.FinalDialogue => Ending[dialogue],
             _ => ""
         };

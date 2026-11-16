@@ -49,7 +49,7 @@ namespace KarmaPrototype
                 if (firstChoice) preview += "   ·   다음 상대  " + names[(int)e] + "형 수호자";
                 Label(280, 520, 720, 35, preview, centered);
             }
-            else Label(280, 520, 720, 35, "다음 시련에 남길 원형을 선택하세요.", centered);
+            else Label(280, 520, 720, 35, "고유화할 기술을 선택하면 결과를 미리 확인할 수 있습니다.", centered);
             GUI.enabled = game.PendingChoice.HasValue;
             if (ShortcutButton(new Rect(440, 568, 400, 45), "고유화", KarmaAction.Confirm)) game.ConfirmChoice();
             GUI.enabled = true;
@@ -149,7 +149,10 @@ namespace KarmaPrototype
             Fill(new Rect(190, 515, 900, 174), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
             SpriteArt(new Rect(214, 549, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
             Label(310, 530, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
-            Label(310, 572, 750, 64, PersonalizationGuideText(essence), text);
+            string technique = KarmaPatternCatalog.Name(essence);
+            string guide = PersonalizationGuideText(essence)
+                + $"\n이 수호자는 {technique}를 계승해 새로운 {technique} 패턴을 사용합니다.";
+            Label(310, 572, 750, 68, guide, text);
             KeyPrompt(new Rect(310, 644, 750, 30), 16, false, KarmaAction.DialogueConfirm, "  전투 시작");
         }
 
@@ -161,17 +164,17 @@ namespace KarmaPrototype
                     string pierce = KarmaInput.BindingLabel(KarmaAction.Pierce);
                     string pierceKey = pierce == "L" ? "L을" : pierce + " 키를";
                     return "방향키와 " + pierceKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있다.";
+                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있습니다.";
                 case Essence.RisingSlash:
                     string attack = KarmaInput.BindingLabel(KarmaAction.Attack);
                     string attackKey = attack == "J" ? "J를" : attack + " 키를";
                     return "공중에서 방향키와 " + attackKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있다. 아래 방향을 선택하면 잠시 체공할 수 있다.";
+                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있습니다.\n아래 방향을 선택하면 잠시 체공할 수 있습니다.";
                 default:
                     string counter = KarmaInput.BindingLabel(KarmaAction.Counter);
                     string counterKey = counter == "K" ? "K를" : counter + " 키를";
                     return "적의 공격이 닿는 순간 " + counterKey
-                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있다.";
+                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있습니다.";
             }
         }
 
@@ -183,7 +186,10 @@ namespace KarmaPrototype
                 SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
                 Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
                 Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
-                Label(180, 395, 920, 80, "스승: 이제 그 기술들은 누구의 것이냐?\n제자: 배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", centered);
+                DrawSpeakerNameplate(340, 401, "스승");
+                Label(443, 401, 610, 28, "이제 그 기술들은 누구의 것이냐?", text);
+                DrawSpeakerNameplate(340, 439, "제자");
+                Label(443, 439, 610, 28, "배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", text);
                 if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart)) game.RestartSession();
                 if (ShortcutButton(new Rect(420, 585, 440, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
                 return;

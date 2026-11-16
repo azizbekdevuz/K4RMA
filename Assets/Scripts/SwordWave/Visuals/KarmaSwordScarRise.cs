@@ -38,6 +38,7 @@ namespace KarmaPrototype
             new Rect(116, 48, 172, 293), new Rect(126, 48, 170, 493),
             new Rect(131, 48, 172, 581), new Rect(142, 47, 174, 627), new Rect(144, 48, 176, 628)
         };
+        KarmaSwordScarClock roundClock;
         KarmaGame game;
         KarmaEnemy owner;
         SpriteRenderer picture;
@@ -102,15 +103,16 @@ namespace KarmaPrototype
                 Mathf.Lerp(0.42f, 1, charge));
             if (electricalWarning != null) electricalWarning.SetCharge(progress);
         }
-        public void Initialize(KarmaGame director, KarmaEnemy enemy, KarmaBossAttack shot, Vector2 size, float seconds, bool mirror = false)
+        public void Initialize(KarmaGame director, KarmaEnemy enemy, KarmaBossAttack shot, Vector2 size, float seconds, bool mirror = false, KarmaSwordScarClock clock = null)
         {
+            roundClock = clock;
             attack = (KarmaSwordBossAttack)shot; scope = shot.transform.parent;
             Setup(director, enemy, ScarSequence.Blade, new Vector2(shot.transform.position.x, 0), size, seconds);
             // Narrow only cosmetic ground discharge/fragments, never the contact footprint.
             var energySize = new Vector2(size.x * VisualWidthScale, size.y);
             electricalBlade = KarmaSW05Energy.Scar(scope,game,shot.transform,new Vector2(shot.transform.position.x,0),energySize,seconds);
             flipped = mirror; Paint(0);
-            KarmaSwordScarAura.Spawn(scope, director, enemy, picture, EnergySeed(shot.transform.position.x));
+            KarmaSwordScarAura.Spawn(scope, director, enemy, picture, EnergySeed(shot.transform.position.x), roundClock);
 
         }
         static void Impact(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at, Vector2 size, string name)
@@ -130,7 +132,7 @@ namespace KarmaPrototype
             if (game == null || owner == null || !owner.PresentationActive || owner.Stunned)
             { ended = true; if (sequence != ScarSequence.Blade) Destroy(gameObject); return; }
             if (game.Paused || sequence == ScarSequence.Warning) return;
-            age += Time.deltaTime;
+            age = roundClock != null ? roundClock.Sample(Time.frameCount, Time.deltaTime, game.Paused) : age + Time.deltaTime;
             if (sequence == ScarSequence.Impact && age >= life) { Destroy(gameObject); return; }
             // Contact stages retain their original clock. Only sprite clips run at 24 FPS.
             FrameIndex = sequence == ScarSequence.Blade
@@ -210,15 +212,17 @@ namespace KarmaPrototype
     // inherits the blade scale or owns a collider, contact or attack component.
     public sealed class KarmaSwordScarAura : MonoBehaviour
     {
+        KarmaSwordScarClock roundClock;
         KarmaGame game; KarmaEnemy owner; SpriteRenderer source, picture;
         MaterialPropertyBlock properties; Vector3 anchor, scale;
         float age, tailAge, noiseSeed, glowGain; bool released;
-        public static void Spawn(Transform root, KarmaGame game, KarmaEnemy owner, SpriteRenderer source, int seed)
+        public static void Spawn(Transform root, KarmaGame game, KarmaEnemy owner, SpriteRenderer source, int seed, KarmaSwordScarClock clock = null)
         {
             var node = new GameObject("SW03 independent aura / no damage");
             node.transform.SetParent(root, false);
             var fx = node.AddComponent<KarmaSwordScarAura>();
             fx.game=game; fx.owner=owner; fx.source=source;
+            fx.roundClock = clock;
             fx.picture=node.AddComponent<SpriteRenderer>();
             fx.picture.sprite=source.sprite; fx.picture.sharedMaterial=source.sharedMaterial;
             fx.picture.sortingOrder=source.sortingOrder-1;
@@ -235,7 +239,7 @@ namespace KarmaPrototype
         {
             if(game==null || owner==null || !owner.PresentationActive || owner.Stunned) {Destroy(gameObject);return;}
             if(game.Paused)return;
-            age+=Time.deltaTime;
+            age = roundClock != null ? roundClock.Sample(Time.frameCount, Time.deltaTime, game.Paused) : age + Time.deltaTime;
             if(source!=null && source.gameObject.activeInHierarchy)
             {anchor=source.transform.position;scale=source.transform.lossyScale;}
             else released=true;

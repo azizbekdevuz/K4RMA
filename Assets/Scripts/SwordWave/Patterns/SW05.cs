@@ -78,22 +78,28 @@ namespace KarmaPrototype
             }
             public override IEnumerator Execute()
             {
+                try { yield return Cast(); }
+                finally { KarmaAudio.StopSlot("sw-summon", 0.12f); }
+            }
+            IEnumerator Cast()
+            {
                 // Consume at cast start, never at completion: an interruption or
                 // healing cannot re-arm an already used 50% / 25% ultimate.
                 if (ThresholdPending) thresholdsUsed++;
                 owner.state = ActionState.Telegraph;
                 owner.animator.PlayWavePhase("Windup");
-                KarmaSW05VFX.Warning(owner.effectsRoot, owner.game, owner.Position, KarmaSpace.Units(new Vector2(2, 2)));
                 yield return owner.Wait(0.8f); owner.ClearPatternObjects();
                 Vector2 ground = new Vector2(KarmaStage.ArenaCenter, KarmaSpace.GuardianGroundY);
                 owner.animator.PlayWavePhase("Rising");
 
+                if (owner.Active) KarmaAudio.Play(KarmaSfxId.SwAscensionIgnition, lifetimeOwner: owner);
                 yield return FlyBoss(AerialSwordCastPosition, 0.7f);
                 if (!owner.Active) yield break;
                 owner.transform.position = AerialSwordCastPosition;
                 owner.fullShield = true;
                 owner.animator.PlayWavePhase("Guard");
                 KarmaSW05VFX.Corona(owner.effectsRoot, owner.game, owner.transform);
+                KarmaAudio.Play(KarmaSfxId.SwSummoningEnergy, lifetimeOwner: owner);
                 int seed = KarmaAerialSwordPlanner.ResolveSeed(Settings.aerialSwordSeed);
                 var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed);
                 int groups = KarmaAerialSwordPlanner.VolleyCount;
@@ -169,6 +175,8 @@ namespace KarmaPrototype
                         yield return owner.Wait(DetonationWarning);
                         if (!owner.Active) yield break;
                         ignition.Ignite();
+                        KarmaAudio.StopSlot("sw-summon", 0.12f);
+                        KarmaAudio.Play(KarmaSfxId.SwFinalExplosion, lifetimeOwner: owner);
                         var contact = new KarmaAttackContact();
                         sword.RegisterFinalDetonation(contact);
                         foreach (var blade in planted) if (blade != null) blade.Explode(contact);

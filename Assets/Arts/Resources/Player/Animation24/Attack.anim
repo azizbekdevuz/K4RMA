@@ -22,15 +22,15 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: -8431332876658845596, guid: 470c179a383e421cba23184910be23ed, type: 3}
-    - time: 0.041666668
+    - time: 0.0416666667
       value: {fileID: 8487396200811185018, guid: 470c179a383e421cba23184910be23ed, type: 3}
-    - time: 0.083333336
+    - time: 0.0833333333
       value: {fileID: -1817577000789676572, guid: 470c179a383e421cba23184910be23ed, type: 3}
     - time: 0.125
       value: {fileID: 7472637298218705688, guid: 470c179a383e421cba23184910be23ed, type: 3}
-    - time: 0.16666667
+    - time: 0.166666667
       value: {fileID: -4124970390197136415, guid: 470c179a383e421cba23184910be23ed, type: 3}
-    - time: 0.20833333
+    - time: 0.208333333
       value: {fileID: 4926961585743250360, guid: 470c179a383e421cba23184910be23ed, type: 3}
     attribute: m_Sprite
     path:

@@ -7,7 +7,8 @@ namespace KarmaPrototype
         sealed class GD03Pattern : GuardBossPattern
         {
             public GD03Pattern(KarmaEnemy owner) : base(owner) { }
-            public override void Interrupt() { owner.animator.SetGuardThrownShield(null); }
+            public override void Interrupt()
+            { KarmaAudio.StopSlot("gd-flight"); owner.animator.SetGuardThrownShield(null); }
 
             public override IEnumerator Execute()
             {
@@ -38,6 +39,8 @@ namespace KarmaPrototype
                 trail.numCapVertices = trail.numCornerVertices = 2;
 
                 owner.animator.SetGuardThrownShield(shield);
+                KarmaAudio.Play(KarmaSfxId.GdShieldLaunch, lifetimeOwner: shield);
+                KarmaAudio.Play(KarmaSfxId.GdShieldFlight, lifetimeOwner: shield);
                 try
                 {
                     float speed = Mathf.Max(KarmaSpace.Units(1), Settings.shieldThrowSpeed);
@@ -60,12 +63,12 @@ namespace KarmaPrototype
                                 KarmaCombatVFX.SpawnSprite(owner.effectsRoot, to, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one * 2.2f), 0.25f);
                                 owner.game.SwordHitFeedback();
                                 owner.game.PresentationShake(0.2f, 0.22f);
+                                KarmaAudio.StopOwned(shield, 0.08f);
                                 shield.gameObject.SetActive(false); Destroy(shield.gameObject);
                                 owner.animator.SetGuardThrownShield(null);
                                 owner.TakeDamage(owner.game.Config.Techniques.counterDamage, before);
                                 if (!owner.Active) yield break;
                                 owner.state = ActionState.Stunned;
-                                KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
                                 owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.parryStunSeconds);
                                 owner.ShowStunCue();
                                 while (owner.Active && owner.Stunned) yield return null;
@@ -106,7 +109,7 @@ namespace KarmaPrototype
                         yield return null;
                     }
                 }
-                finally { owner.animator.SetGuardThrownShield(null); }
+                finally { KarmaAudio.StopOwned(shield, 0.08f); owner.animator.SetGuardThrownShield(null); }
                 // A normal catch immediately ends the attack; only a reflected hit earns a stun.
             }
         }

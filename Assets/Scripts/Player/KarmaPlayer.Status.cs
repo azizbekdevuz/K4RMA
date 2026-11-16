@@ -33,16 +33,16 @@ namespace KarmaPrototype
         // Reuse the normal damage path, including counter, guard, tutorial and test immunity.
         public bool TakeCrowdControlHit(float damage, CrowdControlKind kind, float seconds,
             Vector2 launchVelocity = default)
-            => TakeCrowdControlHit(damage, kind, seconds, launchVelocity, false, true);
+            => TakeCrowdControlHit(damage, kind, seconds, launchVelocity, true);
 
         // Attack dispatch keeps its existing visual and parry/riposte policy.
         internal bool TakeCrowdControlHit(float damage, CrowdControlKind kind, float seconds,
-            Vector2 launchVelocity, bool customHitVisual, bool counterDamage)
+            Vector2 launchVelocity, bool counterDamage)
         {
             if (!ValidCrowdControl(kind, seconds, launchVelocity) || game == null || body == null
                 || game.Paused || !game.AllowsPlayerActions || Health <= 0 || !Finite(damage) || damage <= 0) return false;
             float before = Health;
-            TakeDamage(damage, customHitVisual, counterDamage);
+            TakeDamage(damage, counterDamage);
             return Health < before && Health > 0 && ApplyCrowdControl(kind, seconds, launchVelocity, true);
         }
 

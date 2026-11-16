@@ -24,9 +24,12 @@ namespace KarmaPrototype
         public void GuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)
         {
             if (picture == null || deathAt >= 0) return;
-            if (EmpowermentPose()) return;
-            if (guardianPose != null) { guardianPose(action, attack, airborne, armored); return; }
-            ApplyGuardianPose(DefaultGuardianPose(action, airborne, armored));
+            if (!EmpowermentPose())
+            {
+                if (guardianPose != null) guardianPose(action, attack, airborne, armored);
+                else ApplyGuardianPose(DefaultGuardianPose(action, airborne, armored));
+            }
+            ApplyDamageFlash();
         }
         string DefaultGuardianPose(string action, bool airborne, bool armored)
         {

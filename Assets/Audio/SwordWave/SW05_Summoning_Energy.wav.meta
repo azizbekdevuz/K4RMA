@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: c5c8054333814277a1b75f306bca6407
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 8
+  defaultSettings:
+    serializedVersion: 2
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: 0
+    quality: 0.9
+    conversionMode: 0
+    preloadAudioData: 1
+  platformSettingOverrides: {}
+  forceToMono: 0
+  normalize: 0
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: Source SW05_Summoning_Energy.wav; decoded PCM; region 0s to end; smooth overlap 0.12s; master unchanged
+  assetBundleName:
+  assetBundleVariant:

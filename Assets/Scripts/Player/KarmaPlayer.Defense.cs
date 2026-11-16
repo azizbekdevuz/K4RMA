@@ -17,10 +17,8 @@ namespace KarmaPrototype
             KarmaAudio.Play(KarmaSfxId.GdShieldActivate);
         }
         public void TakeDamage(float damage)
-        { TakeDamage(damage, false); }
-        // Attack owners may supply their confirmed-contact sprite separately.
-        // Preserve the public damage API and all other sources' feedback.
-        internal void TakeDamage(float damage, bool customHitVisual, bool counterDamage = true)
+        { TakeDamage(damage, true); }
+        internal void TakeDamage(float damage, bool counterDamage)
         {
             if (!game.AllowsPlayerActions || Health <= 0 || damage <= 0) return;
             bool invulnerable = Time.time < invulnerableUntil;
@@ -61,8 +59,7 @@ namespace KarmaPrototype
             Health -= actual; game.DamageTaken += actual;
             KarmaAudio.Play(KarmaSfxId.PlDamage);
             invulnerableUntil = Time.time + game.Config.hitInvulnerability;
-            if (!customHitVisual)
-                KarmaVisuals.Flash(game.World, Position, Vector2.one * KarmaSpace.Scale, new Color(1, 0.2f, 0.3f));
+            animator.StartDamageFlash(game.Config.hitInvulnerability);
             if (Health <= 0) game.PlayerDied();
         }
         internal bool TakeTerrainDamage(float damage)
@@ -72,6 +69,7 @@ namespace KarmaPrototype
             float actual = Mathf.Min(Health, damage);
             Health -= actual;
             game.DamageTaken += actual;
+            animator.StartDamageFlash(0.18f);
             KarmaAudio.Play(KarmaSfxId.PlDamage);
             if (Health <= 0) game.PlayerDied();
             return true;

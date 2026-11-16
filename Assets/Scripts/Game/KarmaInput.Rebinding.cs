@@ -14,7 +14,7 @@ namespace KarmaPrototype
         public static string RebindMessage { get; private set; }
         public static readonly KarmaAction[] ConfigurableActions = {
             KarmaAction.Left, KarmaAction.Right, KarmaAction.Up, KarmaAction.Down, KarmaAction.Jump,
-            KarmaAction.Attack, KarmaAction.Pierce, KarmaAction.Counter, KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard
+            KarmaAction.Attack, KarmaAction.SwordWave, KarmaAction.Pierce, KarmaAction.RisingSlash, KarmaAction.Guard, KarmaAction.Counter
         };
         // Keep Input System's existing v1 JSON format. Runtime-created maps get
         // new binding GUIDs each launch, but v1 also stores the stable map/action
@@ -101,12 +101,12 @@ namespace KarmaPrototype
             Initialize(); CancelRebinding();
             var action = actions[(int)id];
             string previous = action.bindings[0].overridePath;
-            action.Disable(); RebindMessage = "새 키를 누르세요. Esc로 취소합니다.";
+            action.Disable(); RebindMessage = "키를 누르면 새 조작 키로 설정됩니다. Esc로 취소할 수 있습니다.";
             rebind = action.PerformInteractiveRebinding(0)
                 .WithControlsHavingToMatchPath("<Keyboard>")
                 .WithControlsExcluding("<Keyboard>/anyKey")
                 .WithCancelingThrough("<Keyboard>/escape")
-                .OnCancel(op => { RestoreBinding(action, previous); FinishRebinding("키 변경을 취소했습니다."); })
+                .OnCancel(op => { RestoreBinding(action, previous); FinishRebinding(null); })
                 .OnComplete(op =>
                 {
                     string path = "<Keyboard>/" + op.selectedControl.name;
@@ -120,7 +120,7 @@ namespace KarmaPrototype
             Initialize();
             if (Array.IndexOf(ConfigurableActions, id) < 0 || string.IsNullOrEmpty(path)
                 || !path.StartsWith("<Keyboard>/", StringComparison.OrdinalIgnoreCase))
-            { message = "키보드 키를 선택하세요."; return false; }
+            { message = "키보드 키만 지정할 수 있습니다."; return false; }
             string key = path.Substring(path.LastIndexOf('/') + 1).ToLowerInvariant();
             if (key == "escape" || key == "o" || key == "p" || key == "anykey")
             { message = "Esc·O·P는 메뉴·테스트 조작에 사용합니다."; return false; }
@@ -131,7 +131,7 @@ namespace KarmaPrototype
                 {
                     string used = binding.effectivePath;
                     if (!string.IsNullOrEmpty(used) && string.Equals(used.Substring(used.LastIndexOf('/') + 1), key, StringComparison.OrdinalIgnoreCase))
-                    { message = "이미 사용 중인 키입니다. 먼저 해당 키의 동작을 변경하세요."; return false; }
+                    { message = "이미 사용 중인 키입니다. 기존 동작의 키를 먼저 변경해야 합니다."; return false; }
                 }
             }
             actions[(int)id].ApplyBindingOverride(0, path);

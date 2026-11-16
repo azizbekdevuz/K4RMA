@@ -10,7 +10,7 @@ namespace KarmaPrototype
         SpriteRenderer visual;
         LineRenderer edge, arrow;
         Color baseColor;
-        bool restrainedVisual, aerialVisual, aerialGround;
+        bool restrainedVisual, aerialVisual, aerialGround, geometryDirty;
         readonly List<Vector2> points = new List<Vector2>(8);
         readonly List<Vector2> hull = new List<Vector2>(16);
         Vector2[] vertices = System.Array.Empty<Vector2>();
@@ -79,11 +79,10 @@ namespace KarmaPrototype
             {
                 shape = Sprite.Create(renderer.sprite.texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1);
                 renderer.sprite = shape;
+                renderer.forceRenderingOff = true;
                 geometryChanged = true;
             }
-            // Unity's geometry upload allocates internally. A repeated path (or
-            // a changed scale with the same normalized hull) needs no upload.
-            if (geometryChanged) shape.OverrideGeometry(vertices, triangles);
+            geometryDirty |= geometryChanged;
             transform.localPosition = center; transform.localScale = new Vector3(bounds.x, bounds.y, 1);
             if (edge == null)
             {
@@ -131,8 +130,18 @@ namespace KarmaPrototype
         public void Emphasize() { baseColor.a = Mathf.Max(baseColor.a, 0.58f); }
         // Callers own the warning palette.
         public void SetTint(Color tint) { baseColor = tint; ApplyStyle(); }
-        void Update()
-        { ApplyStyle(); }
+        void LateUpdate()
+        {
+            // Sprite geometry must be uploaded before rendering, even if SetPath
+            // was called by a coroutine resumed after the previous frame rendered.
+            if (geometryDirty)
+            {
+                shape.OverrideGeometry(vertices, triangles);
+                geometryDirty = false;
+                visual.forceRenderingOff = false;
+            }
+            ApplyStyle();
+        }
         void ApplyStyle()
         {
             if (visual == null || edge == null) return;

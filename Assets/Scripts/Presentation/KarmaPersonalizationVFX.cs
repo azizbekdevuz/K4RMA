@@ -22,7 +22,7 @@ namespace KarmaPrototype
             effect.actor = actor;
             effect.duration = seconds;
             effect.guardian = guardian;
-            effect.color = essence == Essence.Guard ? new Color(1, 0.85f, 0.2f) : game.Config.ColorOf(essence);
+            effect.color = TechniqueColor(game, essence);
             effect.radius = guardian ? 5.5f : 3.5f;
             effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
             var iconSprite = KarmaArtwork.SkillIcon(essence);
@@ -40,6 +40,9 @@ namespace KarmaPrototype
                 guardian && game.Player.Essences.Count == 1, previousForm);
             effect.Draw();
         }
+
+        internal static Color TechniqueColor(KarmaGame game, Essence essence)
+            => essence == Essence.Guard ? new Color(1, 0.85f, 0.2f) : game.Config.ColorOf(essence);
 
         SpriteRenderer Layer(string name, Sprite sprite, int order)
         {

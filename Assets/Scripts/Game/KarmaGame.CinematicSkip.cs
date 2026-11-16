@@ -4,7 +4,7 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaGame
     {
-        public const float CinematicSkipHoldSeconds = 1.5f;
+        public const float CinematicSkipHoldSeconds = 1f;
         float cinematicSkipHeld;
         RunPhase cinematicSkipPhase;
         bool cinematicSkipNeedsRelease;

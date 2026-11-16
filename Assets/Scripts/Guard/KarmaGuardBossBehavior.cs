@@ -63,6 +63,13 @@ namespace KarmaPrototype
                 if (owned.Count == 3) result.Add(EnemyAttack.GD05);
                 return result;
             }
+            public override Essence? InheritanceCueFor(EnemyAttack attack) => attack switch
+            {
+                EnemyAttack.GD02 => Essence.Guard,
+                EnemyAttack.GD03 => Essence.SwordWave,
+                EnemyAttack.GD04 => Essence.RisingSlash,
+                _ => null
+            };
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.GD05; }
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
@@ -115,7 +122,6 @@ namespace KarmaPrototype
             public override void OnParried()
             {
                 if (AutoShieldActive) KarmaAudio.Play(KarmaSfxId.GdShieldBreak);
-                else KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
                 owner.shieldUntil = 0;
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }

@@ -15,7 +15,7 @@ namespace KarmaPrototype
                 if (sword.BasicMeleeSelected)
                 { yield return Melee(); yield break; }
                 owner.state = ActionState.Telegraph;
-                Vector2 origin = owner.Position;
+                Vector2 origin = RangedOrigin(owner.Position, owner.direction);
                 Vector2 aim = SwordBossBehavior.SwordAim(origin, sword.SwordPlayerBounds.center, owner.direction);
                 Vector2 velocity = aim * sword.BasicSwordSpeed;
                 float flightLife = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
@@ -60,13 +60,23 @@ namespace KarmaPrototype
                 yield return owner.Wait(0.3f);
                 yield return owner.Recovery(0.5f);
             }
+            Vector2 RangedOrigin(Vector2 from, float facing)
+            {
+                var body = owner.DamageBounds;
+                float torsoY = body.min.y + body.size.y * 0.55f;
+                float x = Mathf.Clamp(from.x + Mathf.Sign(facing) * body.size.y * 0.18f,
+                    KarmaStage.ArenaLeft, KarmaStage.ArenaRight);
+                return new Vector2(x, from.y + torsoY - owner.Position.y);
+            }
+
             public override bool CanReach(Vector2 from, Vector2 target)
             {
                 if (sword.BasicMeleeCanReach(from, target)) return true;
                 float facing = target.x < from.x ? -1 : 1;
-                Vector2 aim = SwordBossBehavior.SwordAim(from, target + (Vector2)sword.SwordPlayerBounds.center - owner.game.Player.Position, facing);
+                Vector2 origin = RangedOrigin(from, facing);
+                Vector2 aim = SwordBossBehavior.SwordAim(origin, target + (Vector2)sword.SwordPlayerBounds.center - owner.game.Player.Position, facing);
                 return Vector2.Distance(from, target) <= sword.BasicWaveRange
-                    && sword.SwordShotCanReach(from, aim * sword.BasicSwordSpeed, sword.BasicSwordSize, sword.BasicSwordLife, target);
+                    && sword.SwordShotCanReach(origin, aim * sword.BasicSwordSpeed, sword.BasicSwordSize, sword.BasicSwordLife, target);
             }
 
         }

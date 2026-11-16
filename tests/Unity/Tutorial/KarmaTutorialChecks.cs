@@ -202,7 +202,7 @@ public static class KarmaTutorialChecks
                 KarmaRemnantVFX.ProjectileLook(reference, Vector2.right);
                 Check(strike.sprite == reference.sprite && strike.transform.localScale == reference.transform.localScale && strike.GetComponent<KarmaCombatVFX>() != null, "Guard training uses the player's projectile sprite, size and attack effects");
                 UnityEngine.Object.Destroy(reference.gameObject);
-                await Wait(400); Check(tutorial.WaitingForGuard, "Previously held guard cannot release hold");
+                await Wait(400); Check(tutorial.WaitingForGuard && !game.Player.Shielded, "Held key without an active shield cannot resume training");
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState()); await Wait(); Capture("guard");
                 float time = Time.time; Vector2 player = game.Player.Position;
                 await Press(KarmaAction.Attack); await Wait(500);
@@ -213,12 +213,21 @@ public static class KarmaTutorialChecks
                 await Press(KarmaAction.Pause); Check(!game.Paused && tutorial.WaitingForGuard, "Esc resumes tutorial hold");
                 for (int count = 1; count <= 3; count++)
                 {
-                    await Press(KarmaAction.Guard); await Wait(400);
+                    if (count == 1)
+                    {
+                        game.Player.BeginGuard(game.Config.guardDuration);
+                        float guardUntil = (float)typeof(KarmaPlayer).GetField("guardUntil", Private).GetValue(game.Player);
+                        await Wait();
+                        Check(!tutorial.WaitingForGuard && (float)typeof(KarmaPlayer).GetField("guardUntil", Private).GetValue(game.Player) == guardUntil,
+                            "Active shield resumes training without a new key press or restarting its duration");
+                    }
+                    else await Press(KarmaAction.Guard);
+                    await Wait(400);
                     Check(tutorial.Successes == count && !tutorial.WaitingForGuard, "Actual shield blocks strike " + count);
                     tutorial.GuardBlocked(); Check(tutorial.Successes == count, "No duplicate defense contact");
                     if (count < 3)
                     {
-                        Check(game.Player.Essences.Cooldown(Essence.Guard) > 0, "Successful defense starts its real cooldown");
+                        if (count > 1) Check(game.Player.Essences.Cooldown(Essence.Guard) > 0, "Successful defense starts its real cooldown");
                         await WaitFor(() => game.Player.Essences.Cooldown(Essence.Guard) <= 0, "Defense cooldown ends", 10000);
                         float readyAt = Time.time;
                         await Wait(250);
@@ -229,7 +238,12 @@ public static class KarmaTutorialChecks
                     }
                 }
             }
-            await Wait(1200); Check(tutorial.Step == (lesson < 3 ? KarmaTutorialStep.Lesson : KarmaTutorialStep.FinalDialogue), "Next lesson stays in the same room; final lesson opens travel");
+            await Wait(1200);
+            Check(tutorial.Step == KarmaTutorialStep.Complete && game.CanMove && game.AllowsPlayerActions,
+                "Lesson completion waits for Space without freezing the simulation");
+            await Press(KarmaAction.DialogueConfirm);
+            await Wait();
+            Check(tutorial.Step == (lesson < 3 ? KarmaTutorialStep.Lesson : KarmaTutorialStep.FinalDialogue), "Next lesson stays in the same room; final lesson opens travel");
             Check(!game.World.GetComponentsInChildren<KarmaTutorialGate>()[lesson].GetComponent<BoxCollider2D>().enabled, "Completed training opens its barrier " + lesson);
             Check(string.IsNullOrEmpty(tutorial.BlockedMessage), "Completion clears blocked warning " + lesson);
         }

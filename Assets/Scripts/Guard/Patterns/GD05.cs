@@ -18,11 +18,9 @@ namespace KarmaPrototype
 
             public void StunFromParry()
             {
-                bool enteredStun = !owner.Stunned;
                 owner.state = ActionState.Stunned;
                 owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialParryStunSeconds);
                 owner.ShowStunCue();
-                if (enteredStun) KarmaAudio.Play(KarmaSfxId.CombatBossStagger);
             }
 
             public override IEnumerator Execute()
@@ -114,13 +112,18 @@ namespace KarmaPrototype
                     yield return owner.Wait(Mathf.Max(0.55f, owner.game.Config.hitInvulnerability + 0.05f));
                     if (!owner.Active) yield break;
                     dome.Explode();
+                    KarmaAudio.Play(KarmaSfxId.GdDomeFailure, lifetimeOwner: owner);
                     owner.game.PresentationShake(0.3f, 1.7f);
                     var player = owner.game.Player;
                     if (player.TakeTerrainDamage(owner.Damage * Settings.trialExplosionDamageMultiplier))
                         KarmaCombatVFX.SpawnSprite(owner.effectsRoot, player.Position, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one * 1.8f), 0.25f);
                     if (!owner.Active) yield break;
                 }
-                else dome.Dissolve();
+                else
+                {
+                    dome.Dissolve();
+                    KarmaAudio.Play(KarmaSfxId.GdDomeSuccess, lifetimeOwner: owner);
+                }
                 owner.game.Player.ReleaseArena();
                 yield return owner.Wait(0.4f);
                 if (!owner.Active) yield break;

@@ -22,7 +22,6 @@ namespace KarmaPrototype
                 var drop = RisingPath(start, landing, bodyAttackSize, KarmaRisingCue.Locked);
                 var zone = owner.Mark("UP01 착지 범위", impact, area);
                 KarmaRisingPolish.LockPop(owner.effectsRoot, impact);
-                owner.animator.PlayRisingMotion("Fall", 0.16f, 0, 0.25f);
                 KarmaRisingAudio.Warn(0.16f);
                 yield return owner.Wait(0.16f);
                 KarmaRisingAudio.EndWarning();
@@ -30,16 +29,21 @@ namespace KarmaPrototype
                 if (zone != null) Destroy(zone.gameObject);
                 var contact = new KarmaAttackContact();
                 float fallTime = Mathf.Clamp(Mathf.Abs(start.y - landing.y) / KarmaSpace.Units(8f), 0.38f, 0.62f);
-                if (owner.Active && start.y > landing.y) KarmaRisingAudio.Descent(fallTime);
-                owner.animator.PlayRisingMotion("Fall", fallTime, 0.25f, 1);
+                if (owner.Active && start.y > landing.y)
+                {
+                    owner.animator.StartRisingDescent(fallTime);
+                    KarmaRisingAudio.Descent(fallTime);
+                }
                 yield return owner.Motion(landing, fallTime, bodyAttackSize, contact, KarmaRisingArt.Get("Slash"));
                 // The shards burst from the impact point when the downward strike lands.
                 rising.ClearBarrier();
                 if (empowered && owner.Active) new UP04Pattern(owner).Burst(landing);
                 KarmaRisingPolish.AreaImpact(owner.game, owner.effectsRoot, impact, area * new Vector2(1.15f, 1.8f));
                 if (owner.Active && start.y > landing.y && Mathf.Approximately(owner.Position.y, landing.y))
+                {
+                    owner.animator.LandRisingDescent();
                     KarmaRisingAudio.Landing();
-                owner.animator.PlayRisingMotion("Landing", 0.18f, 0, 0.6f);
+                }
                 var blast = owner.Attack(impact, Vector2.zero, area, 0.18f, Settings.landingDamageMultiplier,
                     contact, 0f, visualPose: "GroundRing");
                 if (blast != null) blast.Repaint(KarmaRisingArt.Get("Impact"), true);

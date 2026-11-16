@@ -1,0 +1,48 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace KarmaPrototype
+{
+    // Every cutout stays an ordinary, editable Unity Sprite subasset.
+    [CreateAssetMenu(menuName = "K4RMA/스프라이트 라이브러리")]
+    public sealed class KarmaSpriteLibrary : ScriptableObject
+    {
+        [Serializable]
+        public sealed class Sheet
+        {
+            public string id, source;
+            public Sprite[] sprites;
+            public string[] poses; // Optional stable logical names for grouped single-image effects.
+        }
+        public Sheet[] sheets = Array.Empty<Sheet>();
+        Dictionary<(string sheet, string pose), Sprite> lookup;
+        public Sprite Get(string sheet, string pose)
+        {
+            if (lookup == null)
+            {
+                lookup = new Dictionary<(string sheet, string pose), Sprite>();
+                foreach (var entry in sheets ?? Array.Empty<Sheet>())
+                    if (entry != null && entry.sprites != null)
+                        for (int i = 0; i < entry.sprites.Length; i++)
+                        {
+                            var sprite = entry.sprites[i];
+                            if (sprite == null) continue;
+                            string logicalPose = entry.poses != null && i < entry.poses.Length && !string.IsNullOrEmpty(entry.poses[i])
+                                ? entry.poses[i] : sprite.name;
+                            lookup[(entry.id ?? string.Empty, logicalPose ?? string.Empty)] = sprite;
+                        }
+            }
+            lookup.TryGetValue((sheet ?? string.Empty, pose ?? string.Empty), out var result);
+            return result;
+        }
+        public Sprite[] All(string sheet)
+        {
+            foreach (var entry in sheets ?? Array.Empty<Sheet>())
+                if (entry != null && entry.id == sheet) return entry.sprites ?? Array.Empty<Sprite>();
+            return Array.Empty<Sprite>();
+        }
+        void OnEnable() { lookup = null; }
+        void OnValidate() { lookup = null; }
+    }
+}

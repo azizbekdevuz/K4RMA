@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9166e98874d22451090e210eb158e831, type: 3}
+  m_Name: KarmaSpriteLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
+  sheets:
+  - id: Player
+    source: Assets/Arts/Resources/Player/Actions.png
+    sprites:
+    - {fileID: -1166498298, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 817887777, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1760789366, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1526526727, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 847005292, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 225469813, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: -2078491597, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 459610708, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 62152086, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: -1365063686, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 343864838, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1534812052, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1155186186, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: -1445634849, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 897304144, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: -631073187, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1493579159, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: -225161381, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1389647563, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    - {fileID: 1615971206, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
+    poses: []
+  - id: Neutral
+    source: Assets/Arts/Resources/Neutral/Forms/Neutral.png
+    sprites:
+    - {fileID: 180812220, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: -1802364208, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: -1085669223, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: 2025771284, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: 449866624, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: 983109016, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: -91326788, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    - {fileID: -568564582, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+    poses: []
+  - id: PlayerVFX
+    source: Assets/Arts/Resources/Shared/Effects/Player.png
+    sprites:
+    - {fileID: 1530285540, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: -1729306486, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 1676913987, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 772279944, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 983479250, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 919857747, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 1904727275, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: -453386028, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 1276894651, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: -316916185, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 1820261239, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    - {fileID: 1554036542, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
+    poses: []
+  - id: PersonalizationVFX
+    source: Assets/Arts/Resources/Shared/Effects/Personalization.png
+    sprites:
+    - {fileID: 792149198, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: -1492975745, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: 992011807, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: 1084522011, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: 802704041, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: -357574439, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: -1939809070, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: -1010624820, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: -1879091948, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: 326557551, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: 1813857475, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    - {fileID: -655821090, guid: c165ad54ef6024e91bf8e1e35d05f3fc, type: 3}
+    poses: []
+  - id: HitVFX
+    source: Assets/Arts/Resources/Shared/Effects/Hit.png
+    sprites:
+    - {fileID: 1818891179, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: 1892587345, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: 315401291, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: -1125525105, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: 333077492, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: -1820714245, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: 1500224326, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    - {fileID: -271184180, guid: 9190ef3cfd31e41cf823904bf54c5d1f, type: 3}
+    poses: []
+  - id: Inheritance
+    source: Assets/Arts/Resources/Shared/ReferencePoses.png
+    sprites:
+    - {fileID: -851417356, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 708199587, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 1649695096, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 1955462934, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    poses: []
+  - id: Props
+    source: Assets/Arts/Resources/Shared/Props.png
+    sprites:
+    - {fileID: 977815531, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -1094462968, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -34954706, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -466129590, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -224960360, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -836759333, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -1834898125, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: 1212195345, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -1277999405, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: 70694705, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: 1618771465, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -1966529862, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: 905766501, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -724449125, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: -1548519484, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    - {fileID: 832456818, guid: d3368cc0881194e7b8eeb1d880ae786a, type: 3}
+    poses: []
+  - id: UI
+    source: Assets/Arts/Resources/UI/Components.png
+    sprites:
+    - {fileID: 155674875, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1293904142, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 1744853837, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -863423451, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 423097522, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 623268062, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -765498871, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 2092113356, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 1707102628, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 1238758093, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 282029970, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 525701880, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1139479999, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -393793223, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1225063267, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -100474043, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 1026406810, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1213273906, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 756980639, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -246941452, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: 1826327480, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1662141122, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1653754720, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    - {fileID: -1881640205, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}
+    poses: []
+  - id: GuardianVFX
+    source: Assets/Arts/Resources/Shared/Effects/Guardian.png
+    sprites:
+    - {fileID: -2089781138, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: 1024197065, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: -449444961, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: -117658128, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: 1215106416, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: 1746320113, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: -171677604, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: 1577692866, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: 1482216255, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: -1844246317, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: -282978673, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    - {fileID: -1004207857, guid: d98113ce286e84d91a3a0c6ba9a6179a, type: 3}
+    poses: []

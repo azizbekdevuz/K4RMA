@@ -22,7 +22,7 @@ public static partial class KarmaGuardPlayChecks
     static int appearanceBoundsChecks;
     static RenderTexture appearanceVideoTarget;
     static Texture2D appearanceVideoPixels;
-    static bool appearanceDomeOnly;
+    static bool appearanceDomeOnly, appearanceHeavyOnly;
 
     [Serializable] sealed class AppearanceSample
     {
@@ -49,6 +49,11 @@ public static partial class KarmaGuardPlayChecks
         UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
         EditorApplication.EnterPlaymode();
+    }
+    public static void RunHeavyAppearanceBatch()
+    {
+        SessionState.SetBool(AppearanceKey + ".HeavyOnly", true);
+        RunAppearanceAuditBatch();
     }
     public static void RunAppearanceGD05Batch()
     {
@@ -108,6 +113,12 @@ public static partial class KarmaGuardPlayChecks
                 if ((row.damageBounds.size - before.worldSize).sqrMagnitude > 0.00001f)
                     appearanceIssues.Add(route + "/" + label + ": original attack damage bounds changed");
             }
+        }
+        if (phase == "Static" && (label.StartsWith("GD02_") || label.StartsWith("GD05_Heavy")))
+        {
+            var idle = appearanceSamples.Find(s => s.route == route && s.phase == "Static" && s.label == "Idle" && s.facing == facing);
+            if (idle == null || (row.localScale - idle.localScale * (row.ppu / (idle.ppu * 1.35f))).sqrMagnitude > 0.00001f)
+                appearanceIssues.Add(route + "/" + label + ": heavy artwork pixel density differs from idle calibration");
         }
         if (Mathf.Abs(Mathf.Abs(row.worldScale.x) - Mathf.Abs(row.worldScale.y)) > 0.0001f)
             appearanceIssues.Add(route + "/" + label + ": nonuniform body transform " + row.worldScale);
@@ -232,6 +243,7 @@ public static partial class KarmaGuardPlayChecks
         if (Array.IndexOf(order, Essence.SwordWave) >= 0) patterns.Add(EnemyAttack.GD03);
         if (Array.IndexOf(order, Essence.RisingSlash) >= 0) patterns.Add(EnemyAttack.GD04);
         if (order.Length == 3) patterns.Add(EnemyAttack.GD05);
+        if (appearanceHeavyOnly) patterns.RemoveAll(pattern => pattern != EnemyAttack.GD02 && pattern != EnemyAttack.GD04 && pattern != EnemyAttack.GD05);
         if (appearanceDomeOnly) patterns.RemoveAll(pattern => pattern != EnemyAttack.GD05);
         foreach (var pattern in patterns)
         foreach (bool alternate in new[] { false, true })
@@ -302,6 +314,8 @@ public static partial class KarmaGuardPlayChecks
         bool background = Application.runInBackground; Application.runInBackground = true;
         Application.logMessageReceived += CaptureError; runtimeError = null;
         int code = 0;
+        appearanceHeavyOnly = SessionState.GetBool(AppearanceKey + ".HeavyOnly", false);
+        SessionState.EraseBool(AppearanceKey + ".HeavyOnly");
         appearanceDomeOnly = SessionState.GetBool(AppearanceKey + ".DomeOnly", false);
         SessionState.EraseBool(AppearanceKey + ".DomeOnly");
         Directory.CreateDirectory(AppearanceOutput);
@@ -345,7 +359,7 @@ public static partial class KarmaGuardPlayChecks
         {
             File.WriteAllText(AppearanceOutput + "/samples.json", JsonUtility.ToJson(new AppearanceAudit {
                 samples = appearanceSamples, issues = appearanceIssues,
-                coverage = (appearanceDomeOnly ? "Two final Guard inheritance routes; live GD05 only. " : "Five Guard inheritance routes; all live eligible attacks with full/low HP. ")
+                coverage = (appearanceDomeOnly ? "Two final Guard inheritance routes; live GD05 only. " : appearanceHeavyOnly ? "Five Guard inheritance routes; live GD02/GD04/GD05 with full/low HP. " : "Five Guard inheritance routes; all live eligible attacks with full/low HP. ")
                     + "Both facings; static reachable poses, six heavy frames, shield-away, GD04, death/revival; GD05 success/failure. Live trial duration shortened to 2 seconds in a runtime config copy. Captures and sampling do not edit production assets."
             }, true));
             Debug.Log("Guard appearance audit completed: " + appearanceSamples.Count + " samples, " + appearanceBoundsChecks + " original damage-bound comparisons, " + appearanceIssues.Count + " structural findings. See samples.json and same-scale pose captures; unchanged transforms do not prove unchanged painted anatomy.");

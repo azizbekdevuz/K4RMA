@@ -19,7 +19,7 @@ namespace KarmaPrototype
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
             public readonly GD05Pattern Dome;
-            Sprite gd01Shield, frontalShield, invulnerableShield;
+            Sprite gd01Shield, invulnerableShield;
             Vector2 shieldVisualSize;
             MaterialPropertyBlock shieldProperties;
             int domeUses;
@@ -43,9 +43,8 @@ namespace KarmaPrototype
                     throw new System.InvalidOperationException("GD01 이전 방어막 이미지가 없습니다.");
                 owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
                 gd01Shield = owner.shieldHalo.sprite;
-                frontalShield = Resources.Load<Sprite>("Guard/Effects/GD04_FrontBarrier");
                 invulnerableShield = Resources.Load<Sprite>("Guard/Effects/Guard_InvulnerableBarrier");
-                if (frontalShield == null || invulnerableShield == null)
+                if (invulnerableShield == null)
                     throw new System.InvalidOperationException("방어형 상태별 방어막 이미지가 없습니다.");
                 shieldVisualSize = KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost;
                 shieldProperties = new MaterialPropertyBlock();
@@ -123,22 +122,18 @@ namespace KarmaPrototype
             public override void Tick() { shield.Tick(); PaintShield(); }
             void PaintShield()
             {
-                // One existing renderer, one visual: invulnerability > GD01 > GD04 frontal defense.
-                // Visibility and damage remain owned by the existing combat state and rules.
-                var sprite = owner.Invulnerable ? invulnerableShield : AutoShieldActive || BlocksSelection ? gd01Shield : frontalShield;
+                // GD04 keeps frontal damage reduction without an additional barrier image.
+                var sprite = owner.Invulnerable ? invulnerableShield : AutoShieldActive || BlocksSelection ? gd01Shield : null;
                 var halo = owner.shieldHalo;
-                if (halo.sprite != sprite)
-                {
-                    halo.sprite = sprite;
-                    // The new full-canvas sprites retain transparent pivot space; match their painted
-                    // ring radius to the existing, tightly sliced GD01 image rather than its canvas.
-                    float framing = sprite == frontalShield ? 1.2f : sprite == invulnerableShield ? 1.15f : 1;
-                    halo.transform.localScale = new Vector3(shieldVisualSize.x * framing / sprite.bounds.size.x,
-                        shieldVisualSize.y * framing / sprite.bounds.size.y, 1);
-                    halo.GetPropertyBlock(shieldProperties);
-                    shieldProperties.SetTexture("_MainTex", sprite.texture); halo.SetPropertyBlock(shieldProperties);
-                }
-                halo.flipX = sprite == frontalShield && owner.Facing < 0;
+                if (halo.sprite == sprite) return;
+                halo.sprite = sprite;
+                if (sprite == null) return;
+                // Match the invulnerability ring to GD01 despite its transparent canvas padding.
+                float framing = sprite == invulnerableShield ? 1.15f : 1;
+                halo.transform.localScale = new Vector3(shieldVisualSize.x * framing / sprite.bounds.size.x,
+                    shieldVisualSize.y * framing / sprite.bounds.size.y, 1);
+                halo.GetPropertyBlock(shieldProperties);
+                shieldProperties.SetTexture("_MainTex", sprite.texture); halo.SetPropertyBlock(shieldProperties);
             }
             public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
             {

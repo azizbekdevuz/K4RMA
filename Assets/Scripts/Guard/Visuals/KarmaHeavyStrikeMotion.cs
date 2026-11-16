@@ -42,12 +42,12 @@ namespace KarmaPrototype
                     if (shieldlessPoses[i] == null || shieldlessHeatedPoses[i] == null)
                         throw new System.InvalidOperationException("GD05 빈손 강공격 자세 누락: " + names[i]);
                 }
-            // Match the helmet-to-sole body against this form's standing pose, excluding the raised weapon.
-            // All three frames and their molten variants share the same authored body scale.
+            // Preserve the original damage bounds independently of visual artwork calibration.
             float bodyFraction = key == "Ward" ? 0.76f : key == "WardRise" ? 0.64f : key == "WardWave" ? 0.60f : 0.65f;
             damageScale = originalScale * (standing.bounds.size.y / (poses[0].bounds.size.y * bodyFraction));
-            // Corrected compact bodies retain their idle helmet-to-sole size; damage keeps its original bounds.
-            scale = damageScale * (key == "WardWave" ? 1.10f : key == "WardFinal" ? 1.16f : 1);
+            // Heavy sheets use 1.35 source pixels per idle pixel, including molten and shield-away poses.
+            // Weapon reach and transparent padding must not change the body's pixel density.
+            scale = originalScale * (poses[0].pixelsPerUnit / (standing.pixelsPerUnit * 1.35f));
         }
         public void Prepare() { active = true; swinging = heated = false; Apply(0); }
         public void Heat() { heated = true; if (active && !swinging) Apply(0); }
@@ -67,7 +67,7 @@ namespace KarmaPrototype
             picture.transform.localPosition = home;
             picture.transform.localScale = scale;
             picture.transform.localRotation = Quaternion.identity;
-            CurrentPose = "GD02/" + poses[index].name;
+            CurrentPose = index == 0 ? "GD02/Windup" : index == 1 ? "GD02/Downstroke" : "GD02/FollowThrough";
         }
     }
 }

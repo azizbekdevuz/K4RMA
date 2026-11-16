@@ -146,10 +146,13 @@ namespace KarmaPrototype
         }
         void PersonalizationGuide(Essence essence)
         {
-            Fill(new Rect(190, 515, 900, 174), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
-            SpriteArt(new Rect(214, 549, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
-            Label(310, 530, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
-            Label(310, 572, 750, 64, PersonalizationGuideText(essence), text);
+            Fill(new Rect(190, 478, 900, 211), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
+            SpriteArt(new Rect(214, 512, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
+            Label(310, 493, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
+            Label(310, 535, 750, 64, PersonalizationGuideText(essence), text);
+            string technique = KarmaPatternCatalog.Name(essence);
+            Label(310, 608, 750, 28,
+                $"이 수호자는 {technique}를 계승해 새로운 {technique} 패턴을 사용합니다.", text);
             KeyPrompt(new Rect(310, 644, 750, 30), 16, false, KarmaAction.DialogueConfirm, "  전투 시작");
         }
 
@@ -161,17 +164,17 @@ namespace KarmaPrototype
                     string pierce = KarmaInput.BindingLabel(KarmaAction.Pierce);
                     string pierceKey = pierce == "L" ? "L을" : pierce + " 키를";
                     return "방향키와 " + pierceKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있다.";
+                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있습니다.";
                 case Essence.RisingSlash:
                     string attack = KarmaInput.BindingLabel(KarmaAction.Attack);
                     string attackKey = attack == "J" ? "J를" : attack + " 키를";
                     return "공중에서 방향키와 " + attackKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있다. 아래 방향을 선택하면 잠시 체공할 수 있다.";
+                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있습니다. 아래 방향을 선택하면 잠시 체공할 수 있습니다.";
                 default:
                     string counter = KarmaInput.BindingLabel(KarmaAction.Counter);
                     string counterKey = counter == "K" ? "K를" : counter + " 키를";
                     return "적의 공격이 닿는 순간 " + counterKey
-                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있다.";
+                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있습니다.";
             }
         }
 

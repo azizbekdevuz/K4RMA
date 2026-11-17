@@ -18,6 +18,7 @@ namespace KarmaPrototype.EditorTools
             public readonly EnemyAttack Attack;
             public readonly string Label;
             public readonly Essence[] Inherited;
+            public Func<KarmaEnemy, bool> HasPendingEffects { get; set; }
             public Pattern(EnemyAttack attack, string label, params Essence[] inherited)
             { Attack = attack; Label = label; Inherited = inherited; }
         }
@@ -129,17 +130,19 @@ namespace KarmaPrototype.EditorTools
             if (enemy.Alive) SetProperty(enemy, "Health", enemy.MaxHealth);
             if (awaiting)
             {
-                if (!(bool)Get(enemy, "running") && EditorApplication.timeSinceStartup >= nextRunAt)
+                if (!(bool)Get(enemy, "running") && enemy.FightSeconds >= nextRunAt
+                    && active.Patterns[index].HasPendingEffects?.Invoke(enemy) != true)
                 {
                     awaiting = false;
                     if (mode == Mode.Sequence && ++index >= active.Patterns.Length)
                     { Report(active.Name + " · 전체 패턴 순회 완료"); active = null; return; }
-                    nextRunAt = EditorApplication.timeSinceStartup + 0.8;
+                    nextRunAt = enemy.FightSeconds + 0.8;
                 }
-                else if (EditorApplication.timeSinceStartup > deadline)
+                else if (enemy.FightSeconds > deadline)
                 { Report(active.Name + " · 패턴 실행 시간 초과"); Stop(); }
             }
-            else if (EditorApplication.timeSinceStartup >= nextRunAt) StartPattern();
+            else if (enemy.FightSeconds >= nextRunAt
+                && active.Patterns[index].HasPendingEffects?.Invoke(enemy) != true) StartPattern();
         }
         static void StartPattern()
         {
@@ -150,8 +153,11 @@ namespace KarmaPrototype.EditorTools
         {
             yield return null; starting = false;
             if (target != enemy || active == null || enemy == null || !game.IsCombat) yield break;
+            // Independent attacks can outlive the host's action slot. Never
+            // cancel one merely because the practice repeat delay has elapsed.
+            if (active.Patterns[index].HasPendingEffects?.Invoke(enemy) == true) yield break;
             var pattern = active.Patterns[index]; Invoke(enemy, "InterruptPattern"); SetHold(true);
-            awaiting = true; nextRunAt = EditorApplication.timeSinceStartup + 0.25; deadline = EditorApplication.timeSinceStartup + 90;
+            awaiting = true; nextRunAt = enemy.FightSeconds + 0.25; deadline = enemy.FightSeconds + 90;
             Report(active.Name + " · " + pattern.Label + (mode == Mode.Sequence ? " · 순회 " + (index + 1) + "/" + active.Patterns.Length : " 연습"));
             if (active.Passive != null && active.Passive(enemy, pattern.Attack)) { nextRunAt += 2; yield break; }
             Set(enemy, "selected", pattern.Attack); Set(enemy, "previous", (EnemyAttack)(-1));

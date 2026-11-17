@@ -93,11 +93,12 @@ public static class KarmaSwordFinalPolishChecks
             Check(shot.GetComponent<KarmaSwordBasicPresentation>() == null && shot.GetComponent<MeshRenderer>() == null,
                 "no Basic replacement renderer or late mesh overwrite");
             Check((Vector2)Get(flight, "size") == footprint && !(bool)Get(flight, "heavy") && (int)Get(flight, "clip") == 1,
-                "same SW01 animation size and sequence");
-            bool validFrame = false;
-            for (int i = 0; i < 5; i++)
-                validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_" + i);
-            Check(validFrame, "actual Basic sprite is a registered SW01 flight frame");
+                "shared SW01 flight size and playback route");
+            var selectedCrescent = Resources.Load<Sprite>("SwordWave/SWBasic/SWBasic_BlueCrescent");
+            Check(selectedCrescent != null && visual.sprite == selectedCrescent,
+                "shared flight preserves the authored Basic crescent instead of replacing it with SW01 frames");
+            Check((int)Get(flight, "pattern") == (int)EnemyAttack.SWBasic && Get(flight, "energy") == null,
+                "Basic keeps its identity and is not overdrawn by SW01 electrical flight geometry");
             var expected = new Vector2(footprint.x * 1.12f / 0.65f, footprint.y / 0.81f);
             Check(Vector2.Distance(visual.bounds.size, expected) < 0.002f,
                 "final world bounds equal SW01, including parents and frame bounds fitting");

@@ -3,8 +3,13 @@ using UnityEngine;
 namespace KarmaPrototype
 {
     // A field-space ceremony attached to the real actor, with no hit boxes or damage.
-    public sealed class KarmaPersonalizationVFX : MonoBehaviour
+    public sealed partial class KarmaPersonalizationVFX : MonoBehaviour
     {
+        public const float CeremonyDuration = 1.8f, PlayerDuration = 7.6f;
+        internal const float CompletionAt = 5.5f, CompletionDuration = 1.3f;
+        public const float ProofAnticipation = 0.75f;
+        internal static float ProofRelease(Essence essence) => essence == Essence.Guard ? 1.45f
+            : essence == Essence.RisingSlash ? 1.07f : 0.9f;
         Transform actor;
         SpriteRenderer halo, sigil, orb, techniqueSymbol;
         readonly SpriteRenderer[] motes = new SpriteRenderer[20];
@@ -24,20 +29,22 @@ namespace KarmaPrototype
             effect.guardian = guardian;
             effect.color = TechniqueColor(game, essence);
             effect.radius = guardian ? 5.5f : 3.5f;
-            effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
-            var iconSprite = KarmaArtwork.SkillIcon(essence);
-            effect.sigil = effect.Layer("Absorbed sigil", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 16);
-            var absorbedIcon = guardian ? iconSprite : KarmaArtwork.Sprite("UI",
-                essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry");
-            effect.orb = effect.Layer("Inherited power", absorbedIcon, 25);
-            effect.techniqueSymbol = effect.Layer("Technique symbol", iconSprite, 26);
-            for (int i = 0; i < effect.motes.Length; i++)
-                effect.motes[i] = effect.Layer("Absorbing fragment", KarmaArtwork.Sprite("PersonalizationVFX", "Core"), 23);
-            for (int i = 0; i < effect.waves.Length; i++)
-                effect.waves[i] = effect.Layer("Awakening pulse", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 17);
+            if (guardian)
+            {
+                effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
+                effect.sigil = effect.Layer("Absorbed sigil", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 16);
+                effect.techniqueSymbol = effect.Layer("Technique symbol", KarmaArtwork.SkillIcon(essence), 26);
+                for (int i = 0; i < effect.waves.Length; i++)
+                    effect.waves[i] = effect.Layer("Awakening pulse", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 17);
+            }
+            effect.orb = effect.Layer("Inherited power", guardian ? KarmaArtwork.SkillIcon(essence)
+                : KarmaArtwork.Sprite("PersonalizationVFX", "Core"), guardian ? 25 : 4);
+            for (int i = 0; i < (guardian ? effect.motes.Length : 6); i++)
+                effect.motes[i] = effect.Layer("Absorbing fragment", KarmaArtwork.Sprite("PersonalizationVFX", "Core"), guardian ? 23 : 4);
             var animator = actor.GetComponentInChildren<KarmaCharacterAnimator>(true);
             if (animator != null) animator.Empower(essence, seconds, previousAppearance,
                 guardian && game.Player.Essences.Count == 1, previousForm);
+            if (!guardian) effect.BeginPlayerComparison(game, essence);
             effect.Draw();
         }
 
@@ -70,6 +77,12 @@ namespace KarmaPrototype
         {
             if (actor == null) return;
             transform.position = actor.position + Vector3.up * (guardian ? 1.6f : 0.5f);
+            if (!guardian)
+            {
+                DrawPlayerGathering();
+                DrawPlayerComparison();
+                return;
+            }
             float t = Mathf.Clamp01(age / duration);
             float gather = Mathf.SmoothStep(0, 1, Mathf.Clamp01(t / 0.48f));
             float release = Mathf.InverseLerp(0.45f, 1, t);

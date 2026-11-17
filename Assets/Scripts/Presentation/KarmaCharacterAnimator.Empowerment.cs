@@ -25,6 +25,7 @@ namespace KarmaPrototype
         public void Empower(Essence essence, float seconds, Sprite previousAppearance = null, bool fromNeutral = false,
             string previousForm = null)
         {
+            EndPersonalizationProof();
             deathAt = -1;
             empowermentAt = Time.time;
             empowermentUntil = Time.time + seconds;
@@ -64,10 +65,16 @@ namespace KarmaPrototype
         }
         bool EmpowermentPose()
         {
-            if (picture == null || Time.time >= empowermentUntil) return false;
+            if (picture == null || Time.time >= empowermentUntil)
+            { EndPersonalizationProof(); return false; }
             float t = Mathf.InverseLerp(empowermentAt, empowermentUntil, Time.time);
             if (sheet == "Player")
             {
+                if (Time.time - empowermentAt >= KarmaPersonalizationVFX.CeremonyDuration)
+                {
+                    SamplePersonalizationProof(empowermentEssence, Time.time - empowermentAt - KarmaPersonalizationVFX.CeremonyDuration);
+                    return true;
+                }
                 string pose = !nativePlayer24 ? "Transition" : empowermentEssence == Essence.SwordWave ? "PersonalizeWave"
                     : empowermentEssence == Essence.RisingSlash ? "PersonalizeRising" : "PersonalizeGuard";
                 SamplePlayerClip(pose);
@@ -79,8 +86,10 @@ namespace KarmaPrototype
             Color color = empowermentEssence == Essence.Guard
                 ? new Color(1, 0.9f, 0.4f) : empowermentEssence == Essence.RisingSlash
                 ? new Color(1, 0.65f, 0.35f) : new Color(0.4f, 1, 1);
-            picture.color = Color.Lerp(pictureColor, color, Mathf.Sin(t * Mathf.PI) * 0.55f);
-            float lift = sheet == "Player" && empowermentEssence == Essence.RisingSlash ? Mathf.Sin(t * Mathf.PI) * 0.35f : 0;
+            // Technique colour belongs to the separate effect. Multiplying the
+            // whole player sprite discoloured skin/clothes during personalization.
+            picture.color = sheet == "Player" ? pictureColor
+                : Color.Lerp(pictureColor, color, Mathf.Sin(t * Mathf.PI) * 0.55f);
             if (sheet != "Player")
             {
                 picture.transform.localRotation = Quaternion.identity;
@@ -89,7 +98,7 @@ namespace KarmaPrototype
                 float flash = Mathf.Clamp01(1 - Mathf.Abs(t - 0.5f) / 0.07f);
                 picture.color = Color.Lerp(picture.color, Color.white, flash);
             }
-            picture.transform.localPosition = pictureHome + Vector3.up * lift;
+            picture.transform.localPosition = pictureHome;
             transform.localRotation = Quaternion.identity;
             return true;
         }

@@ -79,6 +79,7 @@ namespace KarmaPrototype
             // Both the legacy profile and optional native profile can be reset
             // while parrying, hurt or dead; no prior pose may cross a room reset.
             if (sheet != "Player") return;
+            EndPersonalizationProof();
             CancelPlayerActionForControl(); ResetPlayerStatus();
             deathAt = -1; empowermentUntil = damageFlashUntil = 0; playerClip = null;
             wasAirborne = false; landedUntil = jumpVisualUntil = 0;

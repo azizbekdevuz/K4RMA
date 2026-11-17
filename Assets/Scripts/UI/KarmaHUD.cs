@@ -100,6 +100,7 @@ namespace KarmaPrototype
                 {
                     case RunPhase.Choosing: ChoiceScreen(); break;
                     case RunPhase.Transition: StageTransitionScreen(); break;
+                    case RunPhase.PlayerFallen: PlayerDefeatScreen(); break;
                     case RunPhase.Defeat: EndScreen(false); break;
                     case RunPhase.Victory: EndScreen(true); break;
                     case RunPhase.Gate:

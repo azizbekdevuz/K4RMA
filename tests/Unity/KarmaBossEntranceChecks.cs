@@ -81,7 +81,9 @@ public static class KarmaBossEntranceChecks
         float at=(float)Get(hud,"entranceAt");
         float fight=enemy.FightSeconds;
         game.TogglePause();Check(!game.Paused,"existing transition pause policy unchanged");
-        await Until(() => Time.time - at >= Mathf.Min(1.8f, duration * 0.65f));
+        // The card now follows the growth action. Hold Space during its reveal,
+        // before the independent transition-ready clock enables confirmation.
+        await Until(() => Time.time - at >= Mathf.Min(0.45f, duration * 0.4f));
         Check(enemy.FightSeconds == fight, "Boss AI remains idle behind reveal");
         var style = (GUIStyle)Get(hud, "entranceTitle");
         Check(style != null && style.font != null && style.font.HasCharacter('형'), "Korean font present");

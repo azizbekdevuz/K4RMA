@@ -71,6 +71,9 @@ namespace KarmaPrototype
         }
         IEnumerator RunPattern()
         {
+            var inherited = game.Player.Essences.PersonalizationOrder;
+            if (inherited.Count == 3 && behavior.IsUltimate(selected))
+                KarmaGuardianGrowth.RecallMastery(game, this, animator);
             yield return behavior.Execute(selected);
             if (!Active) yield break;
             ClearPatternObjects();

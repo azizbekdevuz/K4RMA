@@ -209,6 +209,25 @@ namespace KarmaPrototype
                 else usedQuarterHealthUltimate = true;
             }
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
+            public override KarmaGuardianGrowth.Technique GrowthTechnique(Essence essence)
+            {
+                if (essence == Essence.Guard)
+                    return new KarmaGuardianGrowth.Technique("Windup", "AirSlash", "Windup",
+                        KarmaRisingArt.Get("Shield"), KarmaGuardianGrowth.Motion.Surround, new Vector2(7, 7), realization: "이 몸을 감싼 채 벨 수 있다면…");
+                if (essence == Essence.SwordWave)
+                    return new KarmaGuardianGrowth.Technique("Windup", "Rising", "Windup",
+                        KarmaRisingArt.Get("Wave"), KarmaGuardianGrowth.Motion.Sweep, new Vector2(7, 4.5f), copy: "Slash", realization: "더 멀리까지 벨 수 있겠군.");
+                return new KarmaGuardianGrowth.Technique("Windup", "AirSlash", "Windup",
+                    KarmaRisingArt.Get("Slash"), KarmaGuardianGrowth.Motion.Dash, new Vector2(4.5f, 5), copy: "Rising");
+            }
+            public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
+                "Guard", "Guard", "Guard", KarmaArtwork.Sprite("GuardianVFX", "Rising"),
+                KarmaGuardianGrowth.Motion.Dash, new Vector2(5, 7));
+            public override string VictoryPose => "Landing";
+            public override string VictoryLine(int stage) => stage == 1 ? "네 움직임을 따라잡았다…"
+                : stage == 2 ? "네 다음 움직임까지… 따라잡았다." : "이번에는… 내가 먼저 닿았다.";
+            public override Sprite GrowthReflection => Resources.Load<Sprite>("RisingSlash/Growth/Reflection");
+            public override Vector2 GrowthInspectionAnchor => new Vector2(0.9f, 1.1f);
             public override void OnAttackParried(bool stun)
             {
                 if (stun) KarmaRisingPolish.ParryBreak(owner.effectsRoot, owner.game.Player.Position);

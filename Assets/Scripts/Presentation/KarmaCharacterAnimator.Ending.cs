@@ -83,17 +83,28 @@ namespace KarmaPrototype
 
         internal void PresentEndingDefeat(float elapsed)
         {
+            // The final guardian accepts the result while still present. Keep a
+            // grounded kneel and lower the head instead of reviving into combat.
+            deathAt = -1;
+            picture.transform.localPosition = pictureHome;
+            picture.transform.localScale = pictureScale;
+            picture.transform.localRotation = Quaternion.identity;
+            transform.localRotation = Quaternion.identity;
             if (elapsed < 0.32f)
             {
-                deathAt = -1;
                 ShowPose("Hurt");
-                picture.transform.localPosition = pictureHome;
                 picture.color = new Color(1, 0.8f, 0.65f);
             }
             else
             {
-                if (deathAt < 0) deathAt = Time.time;
-                Pose(0, false);
+                if (revivalFrames != null && revivalFrames.Length == 6)
+                    picture.sprite = revivalFrames[2];
+                else ShowPose(poses.ContainsKey("Kneel") ? "Kneel" : "Hurt");
+                float bow = KarmaGame.EndingEase(0.55f, 1.15f, elapsed);
+                float acknowledge = KarmaGame.EndingEase(2.65f, 3.15f, elapsed);
+                picture.transform.localRotation = Quaternion.Euler(0, 0, Mathf.Lerp(-5 * bow, 1.5f, acknowledge));
+                picture.color = Color.Lerp(new Color(0.72f, 0.72f, 0.76f), pictureColor, bow);
+                CurrentPose = acknowledge < 0.5f ? "Ending/Reflect" : "Ending/Acknowledge";
             }
         }
     }

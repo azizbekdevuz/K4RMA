@@ -14,6 +14,8 @@ K4RMA/
 │   │   │   │       ├── Moon.png
 │   │   │   │       └── Panorama.png
 │   │   │   ├── Guard/
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Effects/
 │   │   │   │   │   ├── Bash.png
 │   │   │   │   │   ├── DomeShield.png
@@ -203,6 +205,8 @@ K4RMA/
 │   │   │   │   ├── ParrySuccess.png
 │   │   │   │   └── Poses.png
 │   │   │   ├── RisingSlash/
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Effects/
 │   │   │   │   │   ├── Fragment0.png
 │   │   │   │   │   ├── Fragment1.png
@@ -259,6 +263,8 @@ K4RMA/
 │   │   │   │   ├── Props.png
 │   │   │   │   └── ReferencePoses.png
 │   │   │   ├── SwordWave/
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Forms/
 │   │   │   │   │   ├── Wave.png
 │   │   │   │   │   ├── WaveFinal.png
@@ -549,6 +555,7 @@ K4RMA/
 │       │   ├── KarmaCharacterAnimator.cs
 │       │   ├── KarmaCharacterAnimator.Empowerment.cs
 │       │   ├── KarmaCharacterAnimator.Ending.cs
+│       │   ├── KarmaCharacterAnimator.Growth.cs
 │       │   ├── KarmaCharacterAnimator.Guardian.cs
 │       │   ├── KarmaCharacterAnimator.Parry.cs
 │       │   ├── KarmaCharacterAnimator.Player.cs
@@ -558,7 +565,10 @@ K4RMA/
 │       │   ├── KarmaEndingPresentation.cs
 │       │   ├── KarmaMoonArtwork.cs
 │       │   ├── KarmaMoonProjection.cs
+│       │   ├── KarmaGuardianGrowth.cs
+│       │   ├── KarmaGrowthFocus.cs
 │       │   ├── KarmaPersonalizationVFX.cs
+│       │   ├── KarmaPersonalizationVFX.Player.cs
 │       │   ├── KarmaRemnantVFX.cs
 │       │   ├── KarmaSpriteLibrary.cs
 │       │   └── KarmaVisuals.cs
@@ -746,6 +756,7 @@ K4RMA/
 │   │   ├── KarmaBuildChecks.cs
 │   │   ├── KarmaCameraCoverageChecks.cs
 │   │   ├── KarmaFeatureChecks.cs
+│   │   ├── KarmaGrowthChecks.cs
 │   │   ├── KarmaIntegrationChecks.cs
 │   │   ├── KarmaPhysicsQueryChecks.cs
 │   │   ├── KarmaPresentationChecks.cs

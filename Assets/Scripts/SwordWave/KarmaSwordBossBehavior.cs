@@ -301,6 +301,28 @@ namespace KarmaPrototype
                 return result;
             }
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.SW05; }
+            public override KarmaGuardianGrowth.Technique GrowthTechnique(Essence essence)
+            {
+                if (essence == Essence.Guard)
+                    return new KarmaGuardianGrowth.Technique("Guard", "Guard", "Windup",
+                        KarmaArtwork.Sprite("SwordBossVFX", "SW04_OrbitingSwordGuard_Base"),
+                        KarmaGuardianGrowth.Motion.Surround, new Vector2(7, 7), realization: "검으로도 막을 수 있겠군.");
+                if (essence == Essence.RisingSlash)
+                    return new KarmaGuardianGrowth.Technique("Windup", "Rising", "Windup",
+                        KarmaWaveArtwork.Sprite("SW03_RisingBlade_v5"),
+                        KarmaGuardianGrowth.Motion.Rise, new Vector2(3.5f, 6), copy: "Rising", realization: "내 검을 솟구치게 한다면…");
+                return new KarmaGuardianGrowth.Technique("Windup", "Wave", "Windup",
+                    KarmaWaveArtwork.Sprite("SW01_CrescentWave_v4"),
+                    KarmaGuardianGrowth.Motion.Sweep, new Vector2(3.5f, 4.5f), copy: "Wave");
+            }
+            public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
+                "Windup", "Guard", "Windup", KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional"),
+                KarmaGuardianGrowth.Motion.Rise, new Vector2(2.8f, 6));
+            public override string VictoryPose => "Recovery";
+            public override string VictoryLine(int stage) => stage == 1 ? "그 움직임… 이제는 보인다."
+                : stage == 2 ? "네가 준 힘, 내 검에 익었다." : "내 검이… 너를 넘어섰구나.";
+            public override Sprite GrowthReflection => Resources.Load<Sprite>("SwordWave/Growth/Reflection");
+            public override Vector2 GrowthInspectionAnchor => new Vector2(1.4f, 2.8f);
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
                 if (ground.Running) return false;

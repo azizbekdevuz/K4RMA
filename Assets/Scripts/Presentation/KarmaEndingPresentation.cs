@@ -54,6 +54,9 @@ namespace KarmaPrototype
             if (fallen != null)
             {
                 fallen.position = origin;
+                var scale = fallen.localScale;
+                scale.x = Mathf.Abs(scale.x) * (game.Player.Position.x < origin.x ? -1 : 1);
+                fallen.localScale = scale;
                 ending.fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
                 ending.fallenPictures = fallen.GetComponentsInChildren<SpriteRenderer>();
                 if (ending.fallenPictures.Length > 0) finalDefeat = ending.fallenPictures[0].sprite;
@@ -427,7 +430,7 @@ namespace KarmaPrototype
             if (fallen != null && t < 6)
             {
                 fallenAnimator?.PresentEndingDefeat(t);
-                if (!seeded && t >= 1)
+                if (!seeded && t >= 3.4f)
                 {
                     var bounds = fallenPictures != null && fallenPictures.Length > 0 ? fallenPictures[0].bounds
                         : new Bounds(fallen.position, new Vector3(5, 4, 1));
@@ -444,14 +447,14 @@ namespace KarmaPrototype
                     foreach (var picture in fallenPictures)
                     {
                         picture.GetPropertyBlock(dissolveBlock);
-                        dissolveBlock.SetFloat("_Progress", Ease(1.1f, 5.2f, t));
+                        dissolveBlock.SetFloat("_Progress", Ease(3.5f, 5.3f, t));
                         picture.SetPropertyBlock(dissolveBlock);
                     }
             }
             if (fallen != null && t >= 5.5f) { fallen.gameObject.SetActive(false); Destroy(fallen.gameObject); fallen = null; }
             for (int i = 0; i < particles.Length; i++)
             {
-                float age = t - 1.2f - i * 0.055f;
+                float age = t - 3.55f - i * 0.022f;
                 float visible = age >= 0 && age < 1.65f ? Mathf.Sin(Mathf.Clamp01(age / 1.65f) * Mathf.PI) : 0;
                 particles[i].transform.position = particleOrigins[i]
                     + new Vector3(Mathf.Sin(i * 2.4f) * age * 0.65f, age * (1.4f + i % 4 * 0.25f), 0);

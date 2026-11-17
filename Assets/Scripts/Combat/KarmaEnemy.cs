@@ -63,6 +63,24 @@ namespace KarmaPrototype
             art.localScale = artworkScale;
             engaged = true;
         }
+        internal KarmaGuardianGrowth.Technique GrowthTechnique(Essence essence) => behavior.GrowthTechnique(essence);
+        internal KarmaGuardianGrowth.Technique UltimateForeshadow => behavior.UltimateForeshadow;
+        internal string VictoryLine => behavior.VictoryLine(game.StageIndex);
+        Vector3 victoryArtStart;
+        internal void BeginVictoryPresentation() { victoryArtStart = art.position; }
+        internal void PresentVictory(float elapsed)
+        {
+            float settle = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.25f, 1.05f, elapsed));
+            art.position = Vector3.Lerp(victoryArtStart,
+                new Vector3(victoryArtStart.x, KarmaSpace.GuardianGroundY, victoryArtStart.z), settle);
+            art.localScale = new Vector3((game.Player.Position.x < Position.x ? -1 : 1) * KarmaSpace.GuardianArtScale,
+                KarmaSpace.GuardianArtScale, 1);
+            animator.PresentVictory(behavior.VictoryPose, elapsed);
+        }
+        internal Sprite GrowthReflection => behavior.GrowthReflection;
+        internal Vector2 GrowthInspectionAnchor => behavior.GrowthInspectionAnchor;
+        internal KarmaGuardianGrowth BeginGrowth(Sprite fallen, string previousForm)
+            => KarmaGuardianGrowth.Play(game, this, animator, game.Player.Essences.PersonalizationOrder, fallen, previousForm);
         bool Active { get { return !stopped && Alive && game != null && game.Phase == RunPhase.Combat; } }
     }
 }

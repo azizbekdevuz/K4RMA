@@ -86,6 +86,18 @@ namespace KarmaPrototype
             if (Phase == RunPhase.Ending) { FrameEnding(); return; }
             if (EndingCompleted && Phase == RunPhase.Victory) return;
             if (Tutorial != null) { Tutorial.FrameCamera(); return; }
+            if (Phase == RunPhase.PlayerFallen && Enemies.Count > 0 && Enemies[0] != null)
+            {
+                float guardianX = Enemies[0].Position.x;
+                float size = Mathf.Max(12, Mathf.Abs(Player.Position.x - guardianX) / (2 * GameCamera.aspect) + 4);
+                var focus = new Vector3((Player.Position.x + guardianX) * 0.5f,
+                    hasStageBackground ? stageBackgroundBounds.center.y : 4.4f, -10);
+                float blend = 1 - Mathf.Exp(-3 * Time.deltaTime);
+                GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position - lastShake, focus, blend);
+                GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize, size, blend);
+                lastShake = Vector3.zero;
+                return;
+            }
             if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
                 || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)
             {
@@ -98,15 +110,49 @@ namespace KarmaPrototype
             {
                 var actor = GuardianInheriting && Enemies.Count > 0 ? Enemies[0].transform : Player.transform;
                 float height = GuardianInheriting ? 2.2f : 0.6f;
-                var focus = actor.position + new Vector3(0, height, -10);
-                float blend = 1 - Mathf.Exp(-5 * Time.deltaTime);
-                GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position - lastShake, focus, blend);
+                var focus = actor.position + new Vector3(GuardianInheriting ? 0 : Player.Facing * 2, height, -10);
+                bool growth = GuardianInheriting && guardianGrowth != null;
+                if (growth) focus = guardianGrowth.CameraFocus;
+                float blend = 1 - Mathf.Exp(-3 * Time.deltaTime);
                 float combatSize = hasStageBackground
                     ? Mathf.Max(stageBackgroundBounds.extents.y, 25 / Mathf.Max(GameCamera.aspect, 0.01f))
                     : 6.8f / Mathf.Min(1, Mathf.Max(0.4f, GameCamera.aspect));
+                float returnBlend = Mathf.SmoothStep(0, 1, GrowthReturnProgress);
+                var wideFocus = new Vector3(Player.Position.x + Player.Facing * KarmaSpace.Units(2),
+                    hasStageBackground ? stageBackgroundBounds.center.y : 4.4f, -10);
+                if (hasStageBackground)
+                {
+                    float left = Mathf.Max(KarmaStage.ArenaLeft, stageBackgroundBounds.min.x);
+                    float right = Mathf.Min(KarmaStage.ArenaRight, stageBackgroundBounds.max.x);
+                    float halfWidth = combatSize * GameCamera.aspect;
+                    wideFocus.x = right - left <= halfWidth * 2 ? (left + right) * 0.5f
+                        : Mathf.Clamp(wideFocus.x, left + halfWidth, right - halfWidth);
+                }
+                focus = Vector3.Lerp(focus, wideFocus, returnBlend);
+                GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position - lastShake, focus, blend);
+                float shotSize = Mathf.Max(GuardianInheriting ? 10.5f : 8.8f,
+                    combatSize * (GuardianInheriting ? 0.76f : 0.62f));
                 GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize,
-                    combatSize * (GuardianInheriting ? 0.8f : 0.75f), blend);
+                    Mathf.Lerp(shotSize, combatSize, returnBlend), blend);
+                // A guardian may fall at either wall. Keep the wider shot inside
+                // the existing panorama, including the original-skill memory.
+                if (hasStageBackground)
+                {
+                    float halfHeight = GameCamera.orthographicSize, halfWidth = halfHeight * GameCamera.aspect;
+                    var position = GameCamera.transform.position;
+                    position.x = stageBackgroundBounds.size.x <= halfWidth * 2 ? stageBackgroundBounds.center.x
+                        : Mathf.Clamp(position.x, stageBackgroundBounds.min.x + halfWidth, stageBackgroundBounds.max.x - halfWidth);
+                    position.y = stageBackgroundBounds.size.y <= halfHeight * 2 ? stageBackgroundBounds.center.y
+                        : Mathf.Clamp(position.y, stageBackgroundBounds.min.y + halfHeight, stageBackgroundBounds.max.y - halfHeight);
+                    GameCamera.transform.position = position;
+                }
                 lastShake = Vector3.zero;
+                if (!Paused && !GuardianInheriting && Time.time < presentationShakeUntil)
+                {
+                    lastShake = new Vector3(Mathf.Sin(Time.time * 83), Mathf.Sin(Time.time * 67) * 0.5f, 0)
+                        * Config.Techniques.hitShakeStrength * KarmaPreferences.ScreenShake * presentationShakeStrength;
+                    GameCamera.transform.position += lastShake;
+                }
                 return;
             }
             if (hasStageBackground)

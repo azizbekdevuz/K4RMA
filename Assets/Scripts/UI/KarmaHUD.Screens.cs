@@ -244,6 +244,17 @@ namespace KarmaPrototype
                 KeyPrompt(new Rect(300, 645, 680, 30), 16, true, KarmaAction.DialogueConfirm, "  전투 시작");
         }
 
+        void PlayerDefeatScreen()
+        {
+            float alpha = game.DefeatLineAlpha;
+            if (alpha <= 0 || string.IsNullOrEmpty(game.DefeatLine)) return;
+            Fill(new Rect(0, 622, 1280, 98), new Color(0.008f, 0.012f, 0.018f, alpha * 0.65f));
+            Color previous = GUI.color;
+            GUI.color = new Color(0.94f, 0.93f, 0.87f, alpha);
+            GUI.Label(new Rect(160, 658, 960, 36), game.DefeatLine, centered);
+            GUI.color = previous;
+        }
+
         void EndScreen(bool victory)
         {
             DrawHudShade(0.76f);

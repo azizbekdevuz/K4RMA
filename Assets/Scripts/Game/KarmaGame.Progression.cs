@@ -5,10 +5,20 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaGame
     {
-        const float GuardianFallDuration = 1.8f, PersonalizationDuration = 2.4f, InheritanceDuration = 3.2f;
-        const float PlayerFallDuration = 1.8f;
+        const float GuardianFallDuration = 1.8f, PersonalizationDuration = KarmaPersonalizationVFX.PlayerDuration;
+        const float PlayerFallDuration = 4.6f;
+        const float GrowthReturnDuration = 1.2f;
+        internal float GrowthReturnProgress => GuardianInheriting
+            ? Mathf.InverseLerp(GrowthReturnDuration, 0, transitionLeft) : 0;
+        float playerFallAge, playerFallSettledAt;
+        internal string DefeatLine => Enemies.Count > 0 && Enemies[0] != null ? Enemies[0].VictoryLine : null;
+        internal float DefeatLineAlpha => !playerFallSettled ? 0
+            : Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.5f, 0.85f, playerFallAge - playerFallSettledAt))
+                * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, 0.3f, 0.3f - transitionLeft)));
         bool playerFallSettled;
         bool guardianInheriting;
+        KarmaGuardianGrowth guardianGrowth;
+        internal KarmaGuardianGrowth GuardianGrowth => GuardianInheriting ? guardianGrowth : null;
         internal enum EncounterPrompt { None, BossName, WaitForRelease }
         internal EncounterPrompt CurrentEncounterPrompt { get; private set; }
         Transform fallenGuardian;
@@ -124,6 +134,7 @@ namespace KarmaPrototype
             guardianInheriting = false;
             CurrentEncounterPrompt = EncounterPrompt.None;
             Phase = RunPhase.Transition; transitionLeft = PersonalizationDuration;
+            KarmaGrowthFocus.Begin(this, fallenGuardian);
             KarmaPersonalizationVFX.Play(this, Player.transform, essence, PersonalizationDuration, false);
         }
         void UpdatePersonalization()
@@ -157,13 +168,15 @@ namespace KarmaPrototype
                 Phase = RunPhase.Transition;
                 guardianInheriting = true;
                 CurrentEncounterPrompt = EncounterPrompt.BossName;
-                transitionLeft = InheritanceDuration;
-                GetComponent<KarmaHUD>().BeginBossEntrance(Enemies[0]);
                 var previous = new List<Essence>(Player.Essences.PersonalizationOrder);
                 previous.RemoveAt(previous.Count - 1);
-                KarmaPersonalizationVFX.Play(this, Enemies[0].transform, LastPersonalizedEssence,
-                    InheritanceDuration, true, fallenAppearance != null ? fallenAppearance : KarmaArtwork.GuardianPreview(previous),
+                guardianGrowth = Enemies[0].BeginGrowth(
+                    fallenAppearance != null ? fallenAppearance : KarmaArtwork.GuardianPreview(previous),
                     KarmaArtwork.GuardianFormName(previous));
+                // The reveal follows the action; a fresh Space press/release still
+                // starts combat, so a held Jump cannot escape the transition.
+                transitionLeft = guardianGrowth.Duration + GrowthReturnDuration;
+                GetComponent<KarmaHUD>().BeginBossEntrance(Enemies[0], guardianGrowth.Duration - 0.2f);
             }
         }
 
@@ -192,21 +205,25 @@ namespace KarmaPrototype
             ResetHitFeedback();
             Phase = RunPhase.PlayerFallen;
             transitionLeft = PlayerFallDuration;
-            playerFallSettled = false;
+            playerFallSettled = false; playerFallAge = playerFallSettledAt = 0;
             Player.Essences.Cancel();
-            foreach (var enemy in Enemies.ToArray()) if (enemy != null) enemy.CancelCombat();
+            foreach (var enemy in Enemies.ToArray()) if (enemy != null)
+            { enemy.CancelCombat(); enemy.BeginVictoryPresentation(); }
             ClearProjectiles();
             Player.BeginDefeat();
         }
         void UpdatePlayerFall()
         {
             transitionLeft -= Time.deltaTime;
+            playerFallAge += Time.deltaTime;
+            foreach (var enemy in Enemies) if (enemy != null) enemy.PresentVictory(playerFallAge);
             if (!Player.ReadyForDefeat) return;
             if (!playerFallSettled)
             {
                 playerFallSettled = true;
                 // An airborne death must remain visible after landing, too.
-                transitionLeft = Mathf.Max(transitionLeft, 0.8f);
+                playerFallSettledAt = playerFallAge;
+                transitionLeft = Mathf.Max(transitionLeft, 3.4f);
             }
             if (transitionLeft <= 0) Phase = RunPhase.Defeat;
         }

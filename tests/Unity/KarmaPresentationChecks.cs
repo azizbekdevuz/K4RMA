@@ -62,19 +62,38 @@ public static class KarmaPresentationChecks
         ScreenCapture.CaptureScreenshot(path);
         await SymbolsUntil(() => File.Exists(path));
     }
+    static void CheckPlayerCeremony(Transform root, Action<bool, string> check)
+    {
+        var pictures = root.GetComponentsInChildren<SpriteRenderer>();
+        check(!pictures.Any(p => p.name == "Gathering halo" || p.name == "Absorbed sigil"
+            || p.name == "Awakening pulse" || p.name == "Technique symbol"), "Player learning remains free of large rings and skill marks");
+        var motes = pictures.Where(p => p.name == "Absorbing fragment").ToArray();
+        check(motes.Length == 6, "Only six small hand-level particles accompany the gesture");
+        check(root.GetComponentsInChildren<Collider2D>().Length == 0, "Personalization demonstrations cannot hit");
+        var proof = pictures.Single(p => p.name == "Personalized technique demonstration");
+        check(proof.sprite != null && proof.sortingOrder < 5, "The remade skill remains behind the player's body");
+        var effect = root.GetComponent<KarmaPersonalizationVFX>();
+        var completion = pictures.Single(p => p.name == "Personalization completion");
+        check(completion.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"),
+            "The original awakening effect confirms completion after the demonstration");
+        var fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        foreach (float seconds in new[] { 0f, 0.6f, 1.2f, 1.8f, 2.3f, 3f, 4.2f })
+        {
+            typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, seconds);
+            typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
+            check(motes.All(m => m.color.a <= 0.221f), "Particles never overwhelm the body gesture");
+            check(completion.color.a == 0, "Completion effect stays hidden while learning and demonstrating");
+        }
+        typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, 0f);
+    }
     static void CheckCeremony(bool guardian, Essence essence)
     {
-        var root = symbolGame.World.Find(guardian ? "Guardian inheritance ceremony" : "Player personalization ceremony");
-        Check(root != null, "Real ceremony exists for " + essence);
-        var pictures = root.GetComponentsInChildren<SpriteRenderer>();
-        var awakening = pictures.Where(p => p.name == "Absorbed sigil" || p.name == "Awakening pulse").ToArray();
-        Check(awakening.Length == 4 && awakening.All(p => p.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken")),
-            "Original awakening sigil and three pulses remain for " + essence);
-        var marks = pictures.Where(p => p.name == "Technique symbol").ToArray();
-        Check(marks.Length == 1 && marks[0].sprite == KarmaArtwork.SkillIcon(essence),
-            "One additional skill symbol for " + essence);
-        Check(marks.All(p => Mathf.Abs(p.transform.localScale.x - p.transform.localScale.y) < 0.001f),
-            "Ceremony preserves the source symbol proportions");
+        var root = symbolGame.World.Find(guardian ? "Guardian growth rehearsal" : "Player personalization ceremony");
+        Check(root != null, "Real growth presentation exists for " + essence);
+        if (!guardian) { CheckPlayerCeremony(root, Check); return; }
+        Check(root.GetComponent<KarmaGuardianGrowth>() != null, "Inheritance is expressed through guardian actions");
+        Check(!root.GetComponentsInChildren<SpriteRenderer>().Any(p => p.name == "Technique symbol" || p.name == "Original inheritance mark"),
+            "Guardian learning does not reintroduce a skill mark");
     }
     static async void RunSymbols()
     {
@@ -158,33 +177,37 @@ public static class KarmaPresentationChecks
                 try
                 {
                     var pictures = root.GetComponentsInChildren<SpriteRenderer>();
-                    var awaken = KarmaArtwork.Sprite("PersonalizationVFX", "Awaken");
-                    check(awaken != null && pictures.Count(p => p.sprite == awaken) == 4,
-                        "Original awakening artwork is restored: " + essence + "/" + guardian);
-                    var symbol = pictures.Single(p => p.name == "Technique symbol");
-                    check(symbol.sprite != null && symbol.sprite == KarmaArtwork.SkillIcon(essence), "One correct skill mark");
-                    var incoming = pictures.Single(p => p.name == "Inherited power");
-                    string oldPose = essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry";
-                    check(incoming.sprite != null && incoming.sprite == (guardian ? KarmaArtwork.SkillIcon(essence)
-                        : KarmaArtwork.Sprite("UI", oldPose)), "Original incoming power artwork is preserved");
-                    var effect = root.GetComponent<KarmaPersonalizationVFX>();
-                    var fields = BindingFlags.Instance | BindingFlags.NonPublic;
-                    foreach (float t in new[] { 0f, 0.3f, 0.55f, 0.6f, 0.65f, 0.75f, 0.9f })
+                    if (!guardian) CheckPlayerCeremony(root, check);
+                    else
                     {
-                        typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, t * 2.4f);
-                        typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
-                        check(pictures.Count(p => p.sprite == symbol.sprite && p.color.a > 0.001f) <= 1,
-                            "Never duplicate the visible skill mark: " + essence + "/" + guardian + "/" + t);
-                        if (t == 0.75f) check(symbol.color.a > 0.9f, "Skill mark is visible during awakening");
-                        check(Mathf.Abs(symbol.transform.localScale.x - symbol.transform.localScale.y) < 0.001f,
-                            "Skill mark preserves proportions");
-                        check(Quaternion.Angle(incoming.transform.rotation, Quaternion.identity) < 0.001f
-                            && Quaternion.Angle(symbol.transform.rotation, Quaternion.identity) < 0.001f,
-                            "Incoming and awakening marks stay upright throughout the ceremony");
-                        var sigil = pictures.Single(p => p.name == "Absorbed sigil");
-                        check(symbol.color.r == sigil.color.r && symbol.color.g == sigil.color.g && symbol.color.b == sigil.color.b
-                            && incoming.color.r == sigil.color.r && incoming.color.g == sigil.color.g && incoming.color.b == sigil.color.b,
-                            "Both marks match the original awakening effect color");
+                        var awaken = KarmaArtwork.Sprite("PersonalizationVFX", "Awaken");
+                        check(awaken != null && pictures.Count(p => p.sprite == awaken) == 4,
+                            "Original awakening artwork is restored: " + essence + "/" + guardian);
+                        var symbol = pictures.Single(p => p.name == "Technique symbol");
+                        check(symbol.sprite != null && symbol.sprite == KarmaArtwork.SkillIcon(essence), "One correct skill mark");
+                        var incoming = pictures.Single(p => p.name == "Inherited power");
+                        string oldPose = essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry";
+                        check(incoming.sprite != null && incoming.sprite == (guardian ? KarmaArtwork.SkillIcon(essence)
+                            : KarmaArtwork.Sprite("UI", oldPose)), "Original incoming power artwork is preserved");
+                        var effect = root.GetComponent<KarmaPersonalizationVFX>();
+                        var fields = BindingFlags.Instance | BindingFlags.NonPublic;
+                        foreach (float t in new[] { 0f, 0.3f, 0.55f, 0.6f, 0.65f, 0.75f, 0.9f })
+                        {
+                            typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, t * 2.4f);
+                            typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
+                            check(pictures.Count(p => p.sprite == symbol.sprite && p.color.a > 0.001f) <= 1,
+                                "Never duplicate the visible skill mark: " + essence + "/" + guardian + "/" + t);
+                            if (t == 0.75f) check(symbol.color.a > 0.9f, "Skill mark is visible during awakening");
+                            check(Mathf.Abs(symbol.transform.localScale.x - symbol.transform.localScale.y) < 0.001f,
+                                "Skill mark preserves proportions");
+                            check(Quaternion.Angle(incoming.transform.rotation, Quaternion.identity) < 0.001f
+                                && Quaternion.Angle(symbol.transform.rotation, Quaternion.identity) < 0.001f,
+                                "Incoming and awakening marks stay upright throughout the ceremony");
+                            var sigil = pictures.Single(p => p.name == "Absorbed sigil");
+                            check(symbol.color.r == sigil.color.r && symbol.color.g == sigil.color.g && symbol.color.b == sigil.color.b
+                                && incoming.color.r == sigil.color.r && incoming.color.g == sigil.color.g && incoming.color.b == sigil.color.b,
+                                "Both marks match the original awakening effect color");
+                        }
                     }
                 }
                 finally { UnityEngine.Object.DestroyImmediate(root.gameObject); }

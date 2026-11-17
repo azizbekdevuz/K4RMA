@@ -41,6 +41,12 @@ namespace KarmaPrototype
             { return target.AddComponent<KarmaBossAttack>(); }
             public virtual List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             { return new List<EnemyAttack> { EnemyAttack.GroundStrike }; }
+            public virtual KarmaGuardianGrowth.Technique GrowthTechnique(Essence essence) => default;
+            public virtual KarmaGuardianGrowth.Technique UltimateForeshadow => default;
+            public virtual string VictoryPose => "Idle";
+            public virtual string VictoryLine(int stage) => "다시 와라… 아직 끝난 것은 아니다.";
+            public virtual Sprite GrowthReflection => null;
+            public virtual Vector2 GrowthInspectionAnchor => Vector2.zero;
             public virtual bool IsUltimate(EnemyAttack attack) { return false; }
             public virtual float PatternTimeout { get { return 5; } }
             public virtual void OnParried() { }

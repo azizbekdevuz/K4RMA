@@ -46,7 +46,8 @@ namespace KarmaPrototype
         }
 
         static readonly EndingCaption[] endingCaptions = {
-            new EndingCaption(1.62f, 6.04f, "제자", "마지막 수호자까지 넘어섰습니다."),
+            new EndingCaption(0.7f, 2.95f, "마지막 수호자", "네 힘을 모두 내 것으로 만들었는데도…"),
+            new EndingCaption(3.05f, 5.25f, "마지막 수호자", "끝내 널 넘지 못했구나."),
             new EndingCaption(10.84f, 14.85f, "스승", "내게 배운 세 기술의 원형은 이제 네 손에 없구나."),
             new EndingCaption(14.91f, 18.35f, "스승", "그래도 그 가르침은 네 검에 남아 있다."),
             new EndingCaption(18.45f, 20.84f, "스승", "어떻게 네 것이 되었는지 보여 다오."),

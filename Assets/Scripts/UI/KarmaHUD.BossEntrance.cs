@@ -14,12 +14,12 @@ namespace KarmaPrototype
 
         // Called only by the existing safe inheritance transition, never LoadRoom.
         // Practice rooms therefore bypass this presentation without an editor dependency.
-        internal void BeginBossEntrance(KarmaEnemy boss)
+        internal void BeginBossEntrance(KarmaEnemy boss, float delay = 0.2f)
         {
             if (boss == null || !boss.PrimaryType.HasValue || entranceBoss == boss) return;
             entranceBoss = boss;
             entranceDuration = introducedBosses.Add(boss.PrimaryType.Value) ? 2.8f : 0.9f;
-            entranceAt = Time.time + 0.2f;
+            entranceAt = Time.time + delay;
             entranceName = GuardianEncounterTitle(game.Player.Essences.PersonalizationOrder);
             entranceAccent = EntranceColor(boss.PrimaryType.Value);
         }
@@ -44,7 +44,23 @@ namespace KarmaPrototype
             if (!game.GuardianInheriting || entranceBoss == null || !entranceBoss.Alive
                 || game.Enemies.Count == 0 || game.Enemies[0] != entranceBoss) return false;
             float elapsed = Time.time - entranceAt;
-            if (elapsed < 0) return true;
+            if (elapsed < 0)
+            {
+                var growth = game.GuardianGrowth;
+                if (growth != null && growth.CaptionAlpha > 0 && !string.IsNullOrEmpty(growth.Caption))
+                {
+                    float opacity = growth.CaptionAlpha;
+                    // A quiet subtitle below the action, with no dialog window,
+                    // extra input, or large explanation obscuring the gesture.
+                    for (int i = 0; i < 8; i++)
+                        Fill(new Rect(0, 616 + i * 13, 1280, 13), new Color(0.008f, 0.012f, 0.018f, i / 7f * 0.45f * opacity));
+                    Color before = GUI.color;
+                    GUI.color = new Color(0.94f, 0.93f, 0.87f, opacity);
+                    GUI.Label(new Rect(160, 658, 960, 36), growth.Caption, centered);
+                    GUI.color = before;
+                }
+                return true;
+            }
             float t = Mathf.Min(2.2f, elapsed * (2.8f / entranceDuration));
             float frame = Ease(t / 0.4f);
             float reveal = Ease((t - 0.4f) / 0.6f);

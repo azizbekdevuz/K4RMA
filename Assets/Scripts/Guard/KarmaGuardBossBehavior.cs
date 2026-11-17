@@ -56,6 +56,28 @@ namespace KarmaPrototype
                 return result;
             }
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.GD05; }
+            public override KarmaGuardianGrowth.Technique GrowthTechnique(Essence essence)
+            {
+                if (essence == Essence.SwordWave)
+                    return new KarmaGuardianGrowth.Technique("Guard", "Thrust", "Guard",
+                        KarmaArtwork.Sprite("GuardBossVFX", "WholeHot"),
+                        KarmaGuardianGrowth.Motion.Return, new Vector2(3.6f, 3.6f), copy: "Thrust", realization: "방패를 날리면…");
+                if (essence == Essence.RisingSlash)
+                    return new KarmaGuardianGrowth.Technique("Windup", "ShieldBash", "Guard",
+                        KarmaArtwork.Sprite("GuardSlamFan", "Impact"),
+                        KarmaGuardianGrowth.Motion.Slam, new Vector2(7, 4), realization: "이 힘을 지면으로 전하면…");
+                return new KarmaGuardianGrowth.Technique("Guard", "ShieldBash", "Guard",
+                    KarmaArtwork.Sprite("PlayerVFX", "Barrier"),
+                    KarmaGuardianGrowth.Motion.Surround, new Vector2(5, 6));
+            }
+            public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
+                "Guard", "Guard", "Guard", KarmaArtwork.Sprite("GuardBossVFX", "Seal"),
+                KarmaGuardianGrowth.Motion.Surround, new Vector2(11, 3));
+            public override string VictoryPose => "Guard";
+            public override string VictoryLine(int stage) => stage == 1 ? "그 힘만으로는… 뚫을 수 없다."
+                : stage == 2 ? "막는 것만 배운 줄 알았나…" : "끝내 무너지지 않은 건… 나였구나.";
+            public override Sprite GrowthReflection => Resources.Load<Sprite>("Guard/Growth/Reflection");
+            public override Vector2 GrowthInspectionAnchor => new Vector2(1.25f, 1.8f);
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
                 if (attack == EnemyAttack.GD05 || !base.Eligible(attack, distance, sight, escape)) return false;

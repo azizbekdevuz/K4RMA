@@ -91,7 +91,7 @@ public static class KarmaSwordFinalPolishChecks
                 validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_" + sequence + "_" + i);
             Check(validFrame, "released shot uses a registered frame from its electric flight sequence");
             Vector2 footprint = rangedBasic
-                ? (Vector2)Behavior.GetType().GetMethod("SwordSize", F).Invoke(Behavior, new object[] { EnemyAttack.SW01 }) * 0.5f
+                ? (Vector2)Behavior.GetType().GetMethod("SwordSize", F).Invoke(Behavior, new object[] { EnemyAttack.SW01 })
                 : size;
             Vector2 coreFraction = pattern == EnemyAttack.SW02 ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f);
             var actual = Vector2.Scale(visual.sprite.bounds.size, visual.transform.localScale);

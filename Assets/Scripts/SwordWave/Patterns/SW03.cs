@@ -129,8 +129,7 @@ namespace KarmaPrototype
                     }
                     CurrentPlan = plan; previousSafe = plan.SafeX;
                     previousPlacement = (float[])plan.Positions.Clone();
-                    var chargeCue = KarmaSwordAttackPolish.Charge(owner.game, owner, owner.art, owner.Position, warning, true);
-                    chargeCue.transform.SetParent(roundRoot, true);
+                    // Ground marks carry the warning; omit the rotating body ring.
                     var releaseRoot = ReleaseRoot(round);
                     float releaseAt = float.PositiveInfinity;
                     var contacts = new KarmaAttackContact[plan.ContactCount];
@@ -142,8 +141,8 @@ namespace KarmaPrototype
                     warningRoot.SetParent(releaseRoot, false);
                     // One synchronous warning pass, one countdown, one release.
                     var marks = MarkRound(warningRoot, size, warning);
+                    if (owner.game.IsCombat && owner.Alive) KarmaAudio.Play(KarmaSfxId.SwEnergyCharge, warning, marks[0]);
                     float elapsed = 0;
-                    bool slammed = false;
                     float rest = round + 1 < KarmaSwordScarPlanner.Rounds ? Mathf.Clamp(Settings.scarRoundGap, 0.3f, 0.8f) : 0.24f;
                     while (owner.Active && elapsed < releaseAt + active + rest)
                     {
@@ -159,16 +158,6 @@ namespace KarmaPrototype
                             continue;
                         }
                         elapsed += Time.deltaTime;
-                        if (!slammed && elapsed >= warning - 0.18f)
-                        {
-                            slammed = true;
-                            if (!owner.running && owner.animator.CurrentPose != "Backstep" && owner.animator.CurrentPose != "Move")
-                            {
-                                var swing = new GameObject("SW03 overhead ground slam / no damage");
-                                swing.transform.SetParent(roundRoot, false);
-                                swing.AddComponent<KarmaSwordGroundSlam>().Initialize(owner.game, owner);
-                            }
-                        }
                         if (float.IsPositiveInfinity(releaseAt))
                         {
                             float progress = Mathf.Clamp01(elapsed / warning);

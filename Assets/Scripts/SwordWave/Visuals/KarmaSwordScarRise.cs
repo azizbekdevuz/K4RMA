@@ -277,35 +277,4 @@ namespace KarmaPrototype
         }
     }
 
-    // Existing sword artwork swings from above the hand into the floor. The
-    // actor image and incoming-damage silhouette are untouched.
-    public sealed class KarmaSwordGroundSlam : MonoBehaviour
-    {
-        KarmaGame game;
-        KarmaEnemy owner;
-        SpriteRenderer blade;
-        float age;
-        public void Initialize(KarmaGame director, KarmaEnemy enemy)
-        {
-            game = director; owner = enemy;
-            blade = KarmaVisuals.Box(transform, "SW03 downward blade", Vector2.zero, Vector2.one, Color.white, 30);
-            KarmaWaveArtwork.Apply(blade, "SW04_CounterBlade_v6", new Vector2(4.4f, 0.42f), Vector2.zero);
-            Paint();
-        }
-        void Paint()
-        {
-            float t = Mathf.Clamp01(age / 0.18f);
-            float angle = Mathf.Lerp(78, -78, t * t);
-            Vector2 axis = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad) * owner.Facing, Mathf.Sin(angle * Mathf.Deg2Rad));
-            transform.position = owner.Position + new Vector2(owner.Facing * 0.65f, 0.1f) + axis * 1.6f;
-            transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(axis.y, axis.x) * Mathf.Rad2Deg);
-        }
-        void Update()
-        {
-            if (owner == null || !owner.PresentationActive || owner.Stunned) { Destroy(gameObject); return; }
-            if (game.Paused) return;
-            age += Time.deltaTime; Paint();
-            if (age >= 0.18f) Destroy(gameObject);
-        }
-    }
 }

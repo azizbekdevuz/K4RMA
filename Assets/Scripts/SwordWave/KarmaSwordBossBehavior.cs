@@ -5,6 +5,13 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
+#if UNITY_EDITOR
+        public bool SwordGroundPracticeActive => behavior is SwordBossBehavior sword
+            && (sword.GroundPatternRunning || pendingParry || Stunned);
+        public bool SwordCounterPracticeActive => behavior is SwordBossBehavior sword
+            && (sword.CounterWardFormed || pendingParry || Stunned);
+#endif
+
         // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
         [BossKind(Essence.SwordWave)]
         [UnityEngine.Scripting.Preserve]
@@ -173,6 +180,8 @@ namespace KarmaPrototype
             public Transform PersistentRoot { get { return persistentRoot; } }
 #if UNITY_EDITOR
             public bool PracticeHold;
+            public bool GroundPatternRunning => ground.Running;
+            public bool CounterWardFormed => counter.Formed;
 #endif
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
             public override Sprite StunSprite { get { return stunFeedback != null && stunFeedback.Electrocuted ? null

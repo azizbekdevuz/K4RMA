@@ -284,8 +284,8 @@ namespace KarmaPrototype
         }
     }
 
-    // Basic-only presentation. Its own recycled mesh buffers and the existing
-    // sprite pool keep it independent of SW01/SW02's electrical random seeds.
+    // Basic charge and melee use recycled meshes. Ranged release delegates
+    // to the unchanged SW01 flight presentation without attaching this component.
     [DefaultExecutionOrder(375)]
     public sealed class KarmaSwordBasicPresentation : MonoBehaviour
     {
@@ -311,23 +311,15 @@ namespace KarmaPrototype
             }
         }
         static readonly System.Collections.Generic.Stack<Buffers> spare = new System.Collections.Generic.Stack<Buffers>(4);
-        static readonly Sprite[] rangedFrames = new Sprite[5];
         static readonly Color Cyan = new Color(0.18f, 1.05f, 1.7f, 1), White = new Color(0.85f, 1.25f, 1.6f, 1);
         KarmaGame game; KarmaEnemy owner; KarmaSwordVfxPool pool;
         SpriteRenderer sword, source; KarmaCharacterAnimator animator;
         Transform scope;
         MeshRenderer geometry; MeshFilter filter; Buffers buffer;
-        Vector2 size, velocity, rangedFootprint;
-        float age, life, nextEcho;
+        Vector2 size;
+        float age, life;
         int stroke;
-        bool preparing, melee, released, boundaryFlight;
-
-        static Sprite RangedFrame(int index)
-        {
-            if (rangedFrames[index] == null)
-                rangedFrames[index] = KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_" + index);
-            return rangedFrames[index];
-        }
+        bool preparing, released;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ClearBuffers()
@@ -351,7 +343,7 @@ namespace KarmaPrototype
         }
         public static void Charge(KarmaGame game, KarmaEnemy owner, Transform marker, float seconds)
         {
-            for (int i = 0; i < rangedFrames.Length; i++) RangedFrame(i);
+            KarmaWaveArtwork.Sprite("Sword_Crescent_v6");
             var node = new GameObject("SWBasic sword preparation / no damage"); node.transform.SetParent(game.World, false);
             var fx = node.AddComponent<KarmaSwordBasicPresentation>(); fx.Initialize(game, owner);
             fx.preparing = true; fx.scope = marker; fx.life = seconds;
@@ -360,38 +352,17 @@ namespace KarmaPrototype
             Vector2 velocity, Vector2 size, Vector2 sw01Footprint)
         {
             KarmaSwordAttackPolish.Core(shot);
-            Projectile(game, owner, shot, velocity, size);
-            var fx = shot.GetComponent<KarmaSwordBasicPresentation>();
-            fx.boundaryFlight = true; fx.rangedFootprint = sw01Footprint * 0.5f;
-            fx.PaintRangedSprite();
-        }
-        void PaintRangedSprite()
-        {
-            // Read the existing frames without changing SW01's assets or VFX.
-            // Use its exact source-frame fit at half the world-space dimensions,
-            // so the rendered crescent matches at corresponding playback frames.
-            source.sprite = RangedFrame((int)(age * 30) % rangedFrames.Length);
-            var bounds = source.sprite.bounds.size;
-            source.transform.localScale = new Vector3(rangedFootprint.x / (bounds.x * 0.65f),
-                rangedFootprint.y / (bounds.y * 0.81f), 1);
+            // Share SW01's actual sprite renderer, frame fitting, material,
+            // electrical geometry and echoes. The shot retains Basic's size,
+            // speed, source ID and contact rules; size is never a visual scale.
+            KarmaSwordWaveAnimation.Flight(game, owner, shot, velocity, sw01Footprint);
+            KarmaSwordWaveAnimation.Release(game, owner, shot.transform.position, sw01Footprint, false, velocity.x);
         }
         public static void Projectile(KarmaGame game, KarmaEnemy owner, KarmaBossAttack shot, Vector2 velocity, Vector2 size)
         {
             var fx = shot.gameObject.AddComponent<KarmaSwordBasicPresentation>(); fx.Initialize(game, owner);
-            fx.source = shot.Visual; fx.size = size; fx.velocity = velocity; fx.scope = shot.transform;
-            fx.melee = velocity.sqrMagnitude < 0.001f;
-            if (fx.melee) fx.source.enabled = false;
-            else
-            {
-                // Use a compact portrait crescent inside the existing hitbox,
-                // not the horizontal shard/shaft that read as an arrow.
-                Vector2 footprint = new Vector2(Mathf.Min(size.x * 0.42f, size.y * 0.60f), size.y * 0.94f);
-                KarmaWaveArtwork.Apply(fx.source, "Sword_Crescent_v6", footprint, Vector2.right);
-                fx.source.flipX = velocity.x < 0;
-                float angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg - (velocity.x < 0 ? 180 : 0);
-                fx.source.transform.localRotation = Quaternion.Euler(0, 0, angle);
-                fx.source.color = Color.white;
-            }
+            fx.source = shot.Visual; fx.size = size; fx.scope = shot.transform;
+            fx.source.enabled = false;
         }
         public static void Impact(KarmaGame game, KarmaEnemy owner, Vector2 at)
         {
@@ -466,45 +437,13 @@ namespace KarmaPrototype
                 Stroke(0.075f, Alpha(Cyan, (1 - age / 0.09f) * 0.55f));
             }
         }
-        void PaintRanged()
-        {
-            if (boundaryFlight) PaintRangedSprite();
-            Vector2 axis = velocity.normalized, normal = new Vector2(-axis.y, axis.x) * (velocity.x < 0 ? -1 : 1);
-            // Occlude the first few frames inside the boss body, then reveal the
-            // real projectile as it clears the sword. Spawn/contact stay intact.
-            source.sortingOrder = geometry.sortingOrder = age < 0.05f ? 4 : 26;
-            float width = boundaryFlight ? rangedFootprint.x : Mathf.Min(size.x * 0.42f, size.y * 0.60f);
-            float height = boundaryFlight ? rangedFootprint.y : size.y * 0.94f;
-            for (int p = 0; p < Points; p++)
-            {
-                float y = p / (float)(Points - 1) * 2 - 1;
-                buffer.path[p] = axis * (width * (0.37f - 0.54f * y * y)) + normal * (height * y * 0.48f);
-            }
-            Edge(0.065f, 0.9f);
-            for (int a = -1; a <= 1; a += 2)
-            {
-                // Short, changing zigzags hug the curved blade. No shaft,
-                // arrowhead, trailing ribbon or long horizontal core.
-                for (int p = 0; p < Points; p++)
-                {
-                    float t = p / (float)(Points - 1), y = a * (0.18f + t * 0.24f);
-                    float jag = p % 2 == 0 ? 0 : Mathf.Sin(Mathf.Floor(age * 28) * 2.3f + p + a) * 0.055f;
-                    buffer.path[p] = axis * (width * (0.37f - 0.54f * y * y * 4) + jag)
-                        + normal * (height * y);
-                }
-                Edge(0.035f, 0.65f);
-            }
-            if (age >= nextEcho)
-            { pool.Echo(owner, source, 0.16f, 0.045f, transform); nextEcho = age + 0.05f; }
-        }
         void LateUpdate()
         {
             if (game == null || owner == null || !owner.PresentationActive || owner.Stunned
-                || !boundaryFlight && owner.CurrentPattern != (int)EnemyAttack.SWBasic
+                || owner.CurrentPattern != (int)EnemyAttack.SWBasic
                 || scope == null || !scope.gameObject.activeInHierarchy)
             {
                 if (preparing) Destroy(gameObject);
-                else if (boundaryFlight) { gameObject.SetActive(false); Destroy(gameObject); }
                 else { if (source != null) source.enabled = false; enabled = false; }
                 return;
             }
@@ -517,12 +456,12 @@ namespace KarmaPrototype
             {
                 if (!released)
                 {
-                    released = true; Vector2 axis = melee ? new Vector2(owner.Facing, -0.25f).normalized : velocity.normalized;
+                    released = true; Vector2 axis = new Vector2(owner.Facing, -0.25f).normalized;
                     pool.Flash(owner, "Sword_Release_v6", SwordAnchor(), new Vector2(1.55f, 0.22f), 0.08f,
                         Mathf.Atan2(axis.y, axis.x) * Mathf.Rad2Deg, transform);
                     pool.Sparks(owner, SwordAnchor(), axis, 2, 4, transform);
                 }
-                if (melee) PaintMelee(); else PaintRanged();
+                PaintMelee();
             }
             buffer.mesh.SetVertices(buffer.vertices, 0, buffer.vertices.Length, UnityEngine.Rendering.MeshUpdateFlags.DontRecalculateBounds);
             buffer.mesh.SetColors(buffer.colors);

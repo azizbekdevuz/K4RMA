@@ -122,8 +122,8 @@ namespace KarmaPrototype
                 || !path.StartsWith("<Keyboard>/", StringComparison.OrdinalIgnoreCase))
             { message = "키보드 키만 지정할 수 있습니다."; return false; }
             string key = path.Substring(path.LastIndexOf('/') + 1).ToLowerInvariant();
-            if (key == "escape" || key == "o" || key == "p" || key == "anykey")
-            { message = "Esc·O·P는 메뉴·테스트 조작에 사용합니다."; return false; }
+            if (key == "escape" || key == "o" || key == "p" || key == "semicolon" || key == "anykey")
+            { message = "Esc·O·P·;는 메뉴·테스트 조작에 사용합니다."; return false; }
             foreach (var other in ConfigurableActions)
             {
                 if (other == id || SharesTechnique(id, other)) continue;

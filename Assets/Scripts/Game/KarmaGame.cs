@@ -93,6 +93,8 @@ namespace KarmaPrototype
             if (KarmaInput.Pressed(KarmaAction.Title) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat || Phase == RunPhase.Ending)) { ReturnToTitle(); return; }
             if (KarmaInput.Pressed(KarmaAction.Restart) && (Paused || Phase == RunPhase.Victory || Phase == RunPhase.Defeat || Phase == RunPhase.Ending)) { RestartSession(); return; }
             if (Paused) { ResetCinematicSkip(); return; }
+            if (CanMove && Player != null && Player.Health > 0 && KarmaInput.Pressed(KarmaAction.RestoreHealth))
+                Player.Heal(config.playerHealth);
             if (UpdateCinematicSkip()) return;
             if (Phase == RunPhase.Ending) { UpdateEnding(); return; }
             if (Phase == RunPhase.Tutorial) { Tutorial.Tick(); return; }

@@ -86,7 +86,7 @@ namespace KarmaPrototype
             if (game.StageIndex == 0) DrawFirstChoiceWarning();
             if (count > 0)
             {
-                DrawChoicePortrait(preview);
+                DrawChoicePortrait();
                 DrawChoiceDetails(preview, pending.HasValue);
             }
             const float left = 76, right = 1204, gap = 12;
@@ -118,10 +118,10 @@ namespace KarmaPrototype
             foreach (var essence in acquired) choicePreviewOrder.Add(essence);
             choicePreviewOrder.Add(preview);
             choicePortrait = KarmaArtwork.GuardianPreview(choicePreviewOrder);
-            choiceGuardianName = KarmaPatternCatalog.TypeName(choicePreviewOrder) + " 수호자";
+            choiceGuardianName = GuardianEncounterTitle(choicePreviewOrder);
         }
 
-        void DrawChoicePortrait(Essence preview)
+        void DrawChoicePortrait()
         {
             if (Event.current.type != EventType.Repaint) return;
             float reveal = Ease((Time.unscaledTime - choiceChangedAt) / 0.2f);
@@ -157,10 +157,15 @@ namespace KarmaPrototype
                     KarmaAction.Left, " ", KarmaAction.Up, " ", KarmaAction.Down, " ", KarmaAction.Right,
                     "  +  ", uniqueSkillKeys[i]);
             Fill(new Rect(x, 448, width, 1), HudRule);
+            const float labelWidth = 68;
+            choiceNote.normal.textColor = HudBrass;
+            Label(x, 455, labelWidth, 35, "플레이어", choiceNote);
+            Label(x, 493, labelWidth, 35, "보스", choiceNote);
+
             choiceNote.normal.textColor = HudMuted;
-            Label(x, 456, width, 30, uniqueSkillChanges[i], choiceNote);
-            string next = game.StageIndex == 0 ? guardianTraits[i] : "다음 수호자가 " + names[i] + " 원형을 계승합니다.";
-            Label(x, 493, width, 29, next, choiceNote);
+            Label(x + labelWidth, 455, width - labelWidth, 35, uniqueSkillChanges[i], choiceNote);
+            string next = game.StageIndex == 0 ? guardianTraits[i] : names[i] + " 원형을 계승해 새 패턴을 사용합니다.";
+            Label(x + labelWidth, 493, width - labelWidth, 35, next, choiceNote);
         }
 
         void DrawChoiceOption(Rect bounds, Essence option, bool selected)
@@ -231,51 +236,12 @@ namespace KarmaPrototype
                     "고유화 · " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence), centered);
                 return;
             }
-            if (game.CurrentEncounterPrompt == KarmaGame.EncounterPrompt.BossName)
-            {
-                if (!DrawBossEntrance())
-                {
-                    string guardian = game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자";
-                    Label(300, 594, 680, 35, guardian, centered);
-                    if (game.EncounterPromptReady)
-                        KeyPrompt(new Rect(300, 645, 680, 30), 16, true, KarmaAction.DialogueConfirm, "  계속");
-                }
-                return;
-            }
-            PersonalizationGuide(game.LastPersonalizedEssence);
-        }
-        void PersonalizationGuide(Essence essence)
-        {
-            Panel(new Rect(190, 515, 900, 174));
-            SpriteArt(new Rect(214, 549, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
-            Label(310, 530, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
-            string technique = KarmaPatternCatalog.Name(essence);
-            string guide = PersonalizationGuideText(essence)
-                + $"\n이 수호자는 {technique}를 계승해 새로운 {technique} 패턴을 사용합니다.";
-            Label(310, 572, 750, 68, guide, text);
-            KeyPrompt(new Rect(310, 644, 750, 30), 16, false, KarmaAction.DialogueConfirm, "  전투 시작");
-        }
+            if (DrawBossEntrance()) return;
 
-        static string PersonalizationGuideText(Essence essence)
-        {
-            switch (essence)
-            {
-                case Essence.SwordWave:
-                    string pierce = KarmaInput.BindingLabel(KarmaAction.Pierce);
-                    string pierceKey = pierce == "L" ? "L을" : pierce + " 키를";
-                    return "방향키와 " + pierceKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있습니다.";
-                case Essence.RisingSlash:
-                    string attack = KarmaInput.BindingLabel(KarmaAction.Attack);
-                    string attackKey = attack == "J" ? "J를" : attack + " 키를";
-                    return "공중에서 방향키와 " + attackKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있습니다.\n아래 방향을 선택하면 잠시 체공할 수 있습니다.";
-                default:
-                    string counter = KarmaInput.BindingLabel(KarmaAction.Counter);
-                    string counterKey = counter == "K" ? "K를" : counter + " 키를";
-                    return "적의 공격이 닿는 순간 " + counterKey
-                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있습니다.";
-            }
+            string guardian = GuardianEncounterTitle(game.Player.Essences.PersonalizationOrder);
+            Label(300, 594, 680, 35, guardian, centered);
+            if (game.AwaitingBossNameConfirmation)
+                KeyPrompt(new Rect(300, 645, 680, 30), 16, true, KarmaAction.DialogueConfirm, "  전투 시작");
         }
 
         void EndScreen(bool victory)

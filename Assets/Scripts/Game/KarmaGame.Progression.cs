@@ -9,7 +9,7 @@ namespace KarmaPrototype
         const float PlayerFallDuration = 1.8f;
         bool playerFallSettled;
         bool guardianInheriting;
-        internal enum EncounterPrompt { None, BossName, SkillGuide, WaitForRelease }
+        internal enum EncounterPrompt { None, BossName, WaitForRelease }
         internal EncounterPrompt CurrentEncounterPrompt { get; private set; }
         Transform fallenGuardian;
         readonly Sprite[] defeatedGuardianSprites = new Sprite[3];
@@ -168,6 +168,7 @@ namespace KarmaPrototype
         }
 
         internal bool EncounterPromptReady => GuardianInheriting && transitionLeft <= 0;
+        internal bool AwaitingBossNameConfirmation => EncounterPromptReady && CurrentEncounterPrompt == EncounterPrompt.BossName;
 
         void AdvanceEncounterPrompt()
         {
@@ -182,8 +183,7 @@ namespace KarmaPrototype
             }
             if (!KarmaInput.Pressed(KarmaAction.DialogueConfirm)) return;
             KarmaAudio.Play(KarmaSfxId.UiConfirm);
-            CurrentEncounterPrompt = CurrentEncounterPrompt == EncounterPrompt.BossName
-                ? EncounterPrompt.SkillGuide : EncounterPrompt.WaitForRelease;
+            CurrentEncounterPrompt = EncounterPrompt.WaitForRelease;
         }
 
         public void PlayerDied()

@@ -20,19 +20,19 @@ namespace KarmaPrototype
             entranceBoss = boss;
             entranceDuration = introducedBosses.Add(boss.PrimaryType.Value) ? 2.8f : 0.9f;
             entranceAt = Time.time + 0.2f;
-            var order = game.Player.Essences.PersonalizationOrder;
-            entranceName = KarmaPatternCatalog.TypeName(order);
+            entranceName = GuardianEncounterTitle(game.Player.Essences.PersonalizationOrder);
             entranceAccent = EntranceColor(boss.PrimaryType.Value);
-            if (order.Count > 1)
-            {
-                var inherited = new List<string>();
-                for (int i = 1; i < order.Count; i++)
-                {
-                    string name = KarmaPatternCatalog.Name(order[i]);
-                    inherited.Add(name);
-                }
-                entranceName += " : " + string.Join("·", inherited) + " 계승";
-            }
+        }
+
+        static string GuardianEncounterTitle(IReadOnlyList<Essence> order)
+        {
+            string title = KarmaPatternCatalog.TypeName(order);
+            if (order.Count <= 1) return title;
+
+            var inherited = new string[order.Count - 1];
+            for (int i = 1; i < order.Count; i++)
+                inherited[i - 1] = KarmaPatternCatalog.Name(order[i]);
+            return title + " : " + string.Join("·", inherited) + " 계승";
         }
 
         static Color EntranceColor(Essence type) => type == Essence.SwordWave
@@ -99,8 +99,8 @@ namespace KarmaPrototype
             }
             float glint = Mathf.Clamp01((t - 0.9f) / 0.35f);
             Fill(new Rect(148 + 680 * glint, 628, 12, 2), new Color(1, 0.96f, 0.83f, Mathf.Sin(glint * Mathf.PI) * alpha));
-            if (game.EncounterPromptReady)
-                KeyPrompt(new Rect(148, 645, 278, 30), 16, false, KarmaAction.DialogueConfirm, "  계속");
+            if (game.AwaitingBossNameConfirmation)
+                KeyPrompt(new Rect(148, 645, 278, 30), 16, false, KarmaAction.DialogueConfirm, "  전투 시작");
             return true;
         }
         static float Ease(float t) { t = Mathf.Clamp01(t); return t * t * (3 - 2 * t); }

@@ -92,7 +92,7 @@ namespace KarmaPrototype
         void DrawTrainingTarget(Bounds bounds, bool approach)
         {
             if (Event.current.type != EventType.Repaint) return;
-            var world = new Vector3(bounds.center.x, bounds.max.y + 0.35f, bounds.center.z);
+            var world = new Vector3(bounds.center.x, bounds.max.y + 1.15f, bounds.center.z);
             Vector3 point = game.GameCamera.WorldToViewportPoint(world);
             if (point.z <= 0) return;
             if (trainingTargetLabel == null)

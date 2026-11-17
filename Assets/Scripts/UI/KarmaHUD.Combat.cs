@@ -8,7 +8,6 @@ namespace KarmaPrototype
         void TopBar()
         {
             if (game.Player == null) return;
-            Panel(new Rect(31, 29, 142, game.Player.Essences.PersonalizationOrder.Count > 0 ? 83 : 47));
             var healthDiamond = KarmaArtwork.Sprite("UI", "Health");
             var healthOutline = KarmaArtwork.Sprite("UI", "HealthOutline");
             float health = Mathf.Clamp01(game.Player.Health / Mathf.Max(1, game.Config.playerHealth)) * 5;

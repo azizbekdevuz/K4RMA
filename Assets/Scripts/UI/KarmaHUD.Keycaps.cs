@@ -189,9 +189,10 @@ namespace KarmaPrototype
             GUIStyle style = game.SettingsOpen
                 ? (settingsShortcutButton ??= CreateShortcutStyle(settingsButton, shortcutColumn))
                 : (shortcutButton ??= CreateShortcutStyle(menuButton, shortcutColumn));
-            bool clicked = GUI.Button(bounds, label, style);
+            bool clicked = GUI.Button(bounds, GUIContent.none, GUIStyle.none);
             if (Event.current.type == EventType.Repaint)
             {
+                GUI.Label(bounds, label, style);
                 KeycapStyles();
                 var cap = new Keycap(KarmaInput.BindingLabel(action));
                 var size = KeycapSize(cap, Mathf.Min(32, bounds.height - 8));

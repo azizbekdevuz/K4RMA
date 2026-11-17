@@ -40,8 +40,6 @@ namespace KarmaPrototype
             { return target.AddComponent<KarmaBossAttack>(); }
             public virtual List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             { return new List<EnemyAttack> { EnemyAttack.GroundStrike }; }
-            public virtual Essence? InheritanceCueFor(EnemyAttack attack) => null;
-            public virtual Essence? AdditionalInheritanceCueFor(EnemyAttack attack) => null;
             public virtual bool IsUltimate(EnemyAttack attack) { return false; }
             public virtual float PatternTimeout { get { return 5; } }
             public virtual void OnParried() { }

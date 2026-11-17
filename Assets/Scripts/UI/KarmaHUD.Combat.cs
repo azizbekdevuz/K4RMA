@@ -51,35 +51,6 @@ namespace KarmaPrototype
             Fill(new Rect(left, y, width * ratio, 8), HudIvory);
             Fill(new Rect(left - 3, y - 5, 1.2f, 20), track);
             Fill(new Rect(left + width + 2, y - 5, 1.2f, 20), track);
-            if (game.IsCombat && Event.current.type == EventType.Repaint)
-                DrawInheritanceCue(enemy);
-        }
-
-        void DrawInheritanceCue(KarmaEnemy enemy)
-        {
-            if (!enemy.TryGetInheritanceCue(out int mask, out Vector3 shoulder, out float opacity)) return;
-            Vector3 viewport = game.GameCamera.WorldToViewportPoint(shoulder);
-            if (viewport.z <= 0 || viewport.x < 0 || viewport.x > 1 || viewport.y < 0 || viewport.y > 1) return;
-
-            var order = game.Player.Essences.PersonalizationOrder;
-            int count = 0;
-            foreach (var essence in order)
-                if ((mask & (1 << (int)essence)) != 0) count++;
-
-            const float iconSize = 42, spacing = 5;
-            float width = count * (iconSize + spacing) - spacing;
-            float x = Mathf.Clamp(viewport.x * 1280 - width * 0.5f, 12, 1268 - width);
-            float y = Mathf.Max(84, (1 - viewport.y) * 720 - iconSize - 6);
-            foreach (var essence in order)
-            {
-                if ((mask & (1 << (int)essence)) == 0) continue;
-                var icon = KarmaArtwork.SkillIcon(essence);
-                SpriteArt(new Rect(x + 1, y + 2, iconSize, iconSize), icon, new Color(0, 0, 0, 0.7f * opacity));
-                Color tint = KarmaPersonalizationVFX.TechniqueColor(game, essence);
-                tint.a = opacity;
-                SpriteArt(new Rect(x, y, iconSize, iconSize), icon, tint);
-                x += iconSize + spacing;
-            }
         }
 
     }

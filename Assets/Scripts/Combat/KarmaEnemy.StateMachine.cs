@@ -71,11 +71,6 @@ namespace KarmaPrototype
         }
         IEnumerator RunPattern()
         {
-            var inherited = game.Player.Essences.PersonalizationOrder;
-            if (inherited.Count == 3 && behavior.IsUltimate(selected))
-                StartInheritanceCue((1 << inherited.Count) - 1);
-            else if (behavior.InheritanceCueFor(selected) is Essence essence)
-                ShowInheritanceCue(essence, behavior.AdditionalInheritanceCueFor(selected));
             yield return behavior.Execute(selected);
             if (!Active) yield break;
             ClearPatternObjects();
@@ -109,45 +104,6 @@ namespace KarmaPrototype
                 if (hit.collider.GetComponent<KarmaSurface>() != null && hit.collider.GetComponent<PlatformEffector2D>() == null) return false;
             return true;
         }
-        const float inheritanceCueHold = 0.5f;
-        const float inheritanceCueFade = 0.22f;
-        int inheritanceCueMask;
-        float inheritanceCueStarted;
-        Vector3 inheritanceCueOffset;
-
-        void ShowInheritanceCue(Essence essence, Essence? additional = null)
-        {
-            int mask = 0;
-            foreach (var owned in game.Player.Essences.PersonalizationOrder)
-            {
-                if (owned == essence || owned == additional)
-                    mask |= 1 << (int)owned;
-            }
-            if (mask != 0) StartInheritanceCue(mask);
-        }
-
-        void StartInheritanceCue(int mask)
-        {
-            var body = DamageBounds;
-            float awayFromPlayer = game.Player.Position.x < Position.x ? 1 : -1;
-            var shoulder = new Vector3(body.center.x + awayFromPlayer * body.extents.x * 0.55f, body.max.y, 0);
-            inheritanceCueOffset = shoulder - transform.position;
-            inheritanceCueMask = mask;
-            inheritanceCueStarted = FightSeconds;
-        }
-
-        internal bool TryGetInheritanceCue(out int mask, out Vector3 anchor, out float opacity)
-        {
-            mask = inheritanceCueMask;
-            anchor = transform.position + inheritanceCueOffset;
-            float age = FightSeconds - inheritanceCueStarted;
-            float fadeIn = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, 0.08f, age));
-            float fadeOut = 1 - Mathf.SmoothStep(0, 1,
-                Mathf.InverseLerp(inheritanceCueHold, inheritanceCueHold + inheritanceCueFade, age));
-            opacity = fadeIn * fadeOut;
-            return PresentationActive && mask != 0 && opacity > 0;
-        }
-
         Transform stunCue;
         bool stunCueSoundStarted;
         void ShowStunCue()
@@ -184,7 +140,6 @@ namespace KarmaPrototype
         void InterruptPattern() { InterruptPatternCore(false); }
         void InterruptPatternCore(bool preservePressure)
         {
-            inheritanceCueMask = 0;
             StopAllCoroutines(); behavior?.Interrupt(preservePressure); ClearPatternObjects(); HideStunCue();
             behavior?.OnInterrupted();
             fullShield = running = pendingParry = false;

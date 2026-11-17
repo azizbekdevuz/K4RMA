@@ -208,16 +208,6 @@ namespace KarmaPrototype
                 if (!usedHalfHealthUltimate) usedHalfHealthUltimate = true;
                 else usedQuarterHealthUltimate = true;
             }
-            public override Essence? InheritanceCueFor(EnemyAttack attack) => attack switch
-            {
-                EnemyAttack.GroundStrike when GuardEmpowered => Essence.Guard,
-                EnemyAttack.UP01 or EnemyAttack.UP02 or EnemyAttack.UP04 => Essence.RisingSlash,
-                EnemyAttack.UP03 => Essence.SwordWave,
-                _ => null
-            };
-            public override Essence? AdditionalInheritanceCueFor(EnemyAttack attack)
-                => GuardEmpowered && (attack is EnemyAttack.UP01 or EnemyAttack.UP02 or EnemyAttack.UP04)
-                    ? Essence.Guard : (Essence?)null;
             public override bool IsUltimate(EnemyAttack attack) { return attack == EnemyAttack.UP05; }
             public override void OnAttackParried(bool stun)
             {

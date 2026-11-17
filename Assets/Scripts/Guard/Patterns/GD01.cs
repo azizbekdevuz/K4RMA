@@ -17,7 +17,6 @@ namespace KarmaPrototype
                     announceShield = false;
                     if (owner.FightSeconds < owner.shieldUntil)
                     {
-                        owner.ShowInheritanceCue(Essence.Guard);
                         KarmaAudio.Play(KarmaSfxId.GdShieldActivate);
                     }
                 }
@@ -32,7 +31,6 @@ namespace KarmaPrototype
                 if (!owner.running && owner.FightSeconds >= owner.nextShield && owner.FightSeconds >= owner.shieldUntil)
                 {
                     owner.shieldWarningUntil = owner.FightSeconds + Mathf.Max(0.3f, Settings.autoShieldWarning);
-                    owner.ShowInheritanceCue(Essence.Guard);
                     KarmaAudio.Play(KarmaSfxId.GdProtectionPulse, owner.shieldWarningUntil - owner.FightSeconds);
                 }
                 if (owner.shieldWarningUntil > 0)

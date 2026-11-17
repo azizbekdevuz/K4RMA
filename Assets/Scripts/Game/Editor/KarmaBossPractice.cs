@@ -18,7 +18,6 @@ namespace KarmaPrototype.EditorTools
             public readonly EnemyAttack Attack;
             public readonly string Label;
             public readonly Essence[] Inherited;
-            public Func<KarmaEnemy, bool> HasPendingEffects { get; set; }
             public Pattern(EnemyAttack attack, string label, params Essence[] inherited)
             { Attack = attack; Label = label; Inherited = inherited; }
         }
@@ -130,8 +129,7 @@ namespace KarmaPrototype.EditorTools
             if (enemy.Alive) SetProperty(enemy, "Health", enemy.MaxHealth);
             if (awaiting)
             {
-                if (!(bool)Get(enemy, "running") && EditorApplication.timeSinceStartup >= nextRunAt
-                    && active.Patterns[index].HasPendingEffects?.Invoke(enemy) != true)
+                if (!(bool)Get(enemy, "running") && EditorApplication.timeSinceStartup >= nextRunAt)
                 {
                     awaiting = false;
                     if (mode == Mode.Sequence && ++index >= active.Patterns.Length)

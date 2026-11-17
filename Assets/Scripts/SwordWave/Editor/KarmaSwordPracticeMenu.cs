@@ -11,8 +11,7 @@ namespace KarmaPrototype.EditorTools
                 new KarmaBossPractice.Pattern(EnemyAttack.SW01, "SW01"),
                 new KarmaBossPractice.Pattern(EnemyAttack.SW02, "SW02"),
                 new KarmaBossPractice.Pattern(EnemyAttack.SW03, "SW03", Essence.RisingSlash),
-                new KarmaBossPractice.Pattern(EnemyAttack.SW04, "SW04", Essence.Guard)
-                { HasPendingEffects = enemy => enemy.SwordCounterPracticeActive },
+                new KarmaBossPractice.Pattern(EnemyAttack.SW04, "SW04", Essence.Guard),
                 new KarmaBossPractice.Pattern(EnemyAttack.SW05, "SW05", Essence.RisingSlash, Essence.Guard),
             }));
         }

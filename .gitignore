@@ -1,4 +1,7 @@
-# Unity caches and local editor state
+# K4RMA — combined ignore rules
+# Planning files and Unity prototype development.
+
+# Unity-generated folders
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
@@ -6,63 +9,87 @@
 /[Uu]ser[Ss]ettings/
 /[Mm]emoryCaptures/
 /[Rr]ecordings/
-/Assets/AssetStoreTools*
-
-# Builds, validation reports and .NET test intermediates
 /[Bb]uild/
 /[Bb]uilds/
+/[Cc]rashReports/
+/[Tt]est[Rr]esults/
+
+# Unity Asset Store tools
+/[Aa]ssets/AssetStoreTools*
+/Assets/AssetStoreTools*
+
+# Builds, validation reports and .NET test intermediates from the prototype
 /output/
 /tests/**/bin/
 /tests/**/obj/
+/Game/
 
 # IDE state and Unity-generated solution/project files
+.vs/
 .vscode/
 .idea/
-.vs/
+.gradle/
 .consulo/
 /*.csproj
 /*.sln
 /*.slnx
 /*.sln.DotSettings
+*.csproj
+*.sln
+*.slnx
 *.suo
 *.user
 *.userprefs
 *.pidb
-*.pidb.meta
 *.booproj
 *.svd
 *.pdb
-*.pdb.meta
 *.mdb
-*.mdb.meta
 *.opendb
 *.VC.db
-/Game/
+*.VC.VC.opendb
 
-# OS files and local secrets
+# Unity-generated metadata for those project files
+*.csproj.meta
+*.sln.meta
+*.slnx.meta
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Unity recovery output
+sysinfo.txt
+/sysinfo.txt
+/Assets/StreamingAssets/aa.meta
+/Assets/StreamingAssets/aa/
+
+# OS-generated files
 .DS_Store
 ._*
 Thumbs.db
 Desktop.ini
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.swo
+*~
+
+# Local environment and secrets
 .env
 .env.*
 !.env.example
 /.aws/
+*.pem
+*.p12
+*.pfx
+*.keystore
 
-# Unity recovery output
-/sysinfo.txt
-/[Cc]rashReports/
-/Assets/StreamingAssets/aa.meta
-/Assets/StreamingAssets/aa/
-
-
-# Python caches and temporary backups
+# Python validation and local Unity backups
 __pycache__/
 *.py[cod]
-*.bak
-*.orig
 *.rej
-*~
-
-# Preserved local copies; never imported as Unity source
 /backups/

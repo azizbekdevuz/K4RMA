@@ -72,6 +72,8 @@ namespace KarmaPrototype
         MenuGuardians,
         MenuFourGuardiansB,
         CombatBossSpinningStars,
+        Sw04PlayerShock,
+        Sw04BossShock,
         Count
     }
 
@@ -170,7 +172,7 @@ namespace KarmaPrototype
             music = KarmaPreferences.MusicVolume;
         }
 
-        public static void Play(KarmaSfxId id, float window = 0f, Component lifetimeOwner = null)
+        public static void Play(KarmaSfxId id, float window = 0f, Component lifetimeOwner = null, float gainScale = 1f, bool playOnce = false)
         {
             if (!Application.isPlaying || id < 0 || id >= KarmaSfxId.Count) return;
             if (LifetimeEnded(lifetimeOwner)) return;
@@ -203,20 +205,21 @@ namespace KarmaPrototype
             voice.Bus = cue.Bus;
             voice.LifetimeOwner = lifetimeOwner;
             voice.Slot = cue.Slot;
-            voice.Gain = cue.Gain;
+            voice.Gain = cue.Gain * Mathf.Clamp01(gainScale);
             voice.Life = window > 0f ? window : -1f;
             voice.Priority = cue.Priority;
             voice.StartedFrame = Time.frameCount;
             voice.Live = true;
-            voice.Envelope = cue.Loop || cue.Bus == KarmaSfxBus.Ambience ? 0f : 1f;
+            bool loop = !playOnce && (cue.Loop || cue.Bus == KarmaSfxBus.Ambience);
+            voice.Envelope = loop ? 0f : 1f;
             voice.FadeOut = 0;
             voice.Held = ShouldPause(cue.Bus);
             var source = voice.Source;
             source.clip = clip;
             source.pitch = pitch;
             source.priority = 128 - cue.Priority;
-            source.loop = cue.Loop || cue.Bus == KarmaSfxBus.Ambience;
-            source.volume = cue.Gain * BusLevel(cue.Bus) * voice.Envelope;
+            source.loop = loop;
+            source.volume = voice.Gain * BusLevel(cue.Bus) * voice.Envelope;
             source.Play();
             if (voice.Held) source.Pause();
         }
@@ -549,7 +552,7 @@ namespace KarmaPrototype
             AddBoss(KarmaSfxId.GdCounter, "Guard/GD_Counter.wav", 0.48f, 0.1f, 0.29f, 80, "gd-pattern");
             AddBoss(KarmaSfxId.GdProtectionPulse, "Guard/GD_Protection_Pulse.wav", 0.34f, 0.2f, 0.22f, 76, "gd-pattern", warning: true);
             AddBoss(KarmaSfxId.GdUltimate, "Guard/GD_Ultimate.wav", 0.36f, 0.25f, 0.38f, 90, "gd-pattern", warning: true);
-            Add(KarmaSfxId.PlSwordSwing, "Player/PL_Sword_Swing.wav", 0.5f, 0.06f, 0.53f, 58, KarmaSfxBus.Gameplay, "pl-swing");
+            Add(KarmaSfxId.PlSwordSwing, "Player/PL_Sword_Swing.wav", 0.43f, 0.06f, 0.53f, 58, KarmaSfxBus.Gameplay, "pl-swing");
             Add(KarmaSfxId.PlRisingSlash, "Player/PL_Rising_Slash.wav", 0.52f, 0.08f, 0.53f, 66, KarmaSfxBus.Gameplay, "pl-swing");
             Add(KarmaSfxId.PlDash, "Player/PL_Dash.wav", 0.4f, 0.08f, 0.45f, 60, KarmaSfxBus.Gameplay);
             Add(KarmaSfxId.PlLand, "Player/PL_Land.wav", 0.55f, 0.08f, 0f, 40, KarmaSfxBus.Gameplay);
@@ -569,8 +572,8 @@ namespace KarmaPrototype
             table[(int)KarmaSfxId.SwPerSwordThunder].MaxVoices = 3;
             AddBoss(KarmaSfxId.GdBasicSwing, "Guard/GD_Basic_Swing.wav", 0.42f, 0f, 0f, 60, "gd-pattern");
             AddBoss(KarmaSfxId.GdBasicHit, "Guard/GD_Basic_Hit.wav", 0.44f, 0f, 0f, 80);
-            AddBoss(KarmaSfxId.GdHeavySwing, "Guard/GD02_Heavy_Swing.wav", 0.57f, 0f, 0f, 68, "gd-pattern");
-            AddBoss(KarmaSfxId.GdHeavyHit, "Guard/GD02_Heavy_Hit_v2.wav", 0.48f, 0f, 0f, 84);
+            AddBoss(KarmaSfxId.GdHeavySwing, "Guard/GD02_Heavy_Swing.wav", 0.69f, 0f, 0f, 68, "gd-pattern");
+            AddBoss(KarmaSfxId.GdHeavyHit, "Guard/GD02_Heavy_Hit_v2.wav", 0.66f, 0f, 0f, 84);
             AddBoss(KarmaSfxId.SwElectricDischarge, "SwordWave/SW_Electric_Discharge.wav", 0.42f, 0f, 0f, 64, "sw-wave");
             AddBoss(KarmaSfxId.SwAscensionIgnition, "SwordWave/SW05_Ascension_Ignition.wav", 0.5f, 0f, 0f, 76, "sw-ascension");
             AddBoss(KarmaSfxId.SwSummoningEnergy, "SwordWave/SW05_Summoning_Energy.wav", 0.10f, 0f, 0f, 50, "sw-summon");
@@ -590,6 +593,8 @@ namespace KarmaPrototype
             Add(KarmaSfxId.CombatBossSpinningStars, "Combat/Boss_Spinning_Stars.wav", 0.29f, 0f, 0f, 77, KarmaSfxBus.Gameplay);
             table[(int)KarmaSfxId.CombatBossSpinningStars].Loop = true;
             table[(int)KarmaSfxId.CombatBossSpinningStars].MaxVoices = 1;
+            AddBoss(KarmaSfxId.Sw04PlayerShock, "SwordWave/SW04_Player_Shock.wav", 0.48f, 0f, 0f, 84);
+            AddBoss(KarmaSfxId.Sw04BossShock, "SwordWave/SW04_Boss_Shock.wav", 0.50f, 0f, 0f, 86);
             return table;
         }
     }

@@ -184,7 +184,8 @@ namespace KarmaPrototype
             public bool CounterWardFormed => counter.Formed;
 #endif
             new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
-            public override Sprite StunSprite { get { return stunFeedback != null && stunFeedback.Electrocuted ? null
+            public override bool PlaysOwnStunSound => stunFeedback != null && stunFeedback.Electrocuted;
+            public override Sprite StunSprite { get { return PlaysOwnStunSound ? null
                 : KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             [UnityEngine.Scripting.Preserve]
@@ -262,8 +263,14 @@ namespace KarmaPrototype
                     }
                     if (parried) { counter.OnParried(contact); sw04ParryContact = true; }
                 }
-                if (damaged && (pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SW05 && IsFinalDetonation(contact)))
-                    KarmaSwordElectrocution.ShowPlayer(owner.game);
+                bool sw04Shock = false;
+                if (damaged && !parried)
+                {
+                    if (pattern == EnemyAttack.SW04)
+                        sw04Shock = KarmaSwordElectrocution.ShowPlayer(owner.game, playShockSound: true);
+                    else if (pattern == EnemyAttack.SW05 && IsFinalDetonation(contact))
+                        KarmaSwordElectrocution.ShowPlayer(owner.game);
+                }
                 if (damaged && pattern != EnemyAttack.SW05 && pattern != EnemyAttack.SW03)
                 {
                     if (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02)
@@ -272,12 +279,12 @@ namespace KarmaPrototype
                     else KarmaSwordHitFeedback.ShowPlayerImpact(owner.game.World, point);
                 }
                 if (damaged && !parried && (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SW02
-                    || pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SWBasic && !BasicMeleeSelected))
+                    || pattern == EnemyAttack.SW04 && !sw04Shock || pattern == EnemyAttack.SWBasic && !BasicMeleeSelected))
                     KarmaAudio.Play(KarmaSfxId.SwWaveImpact);
             }
             public override bool Armored { get { return counter.Guarding; } }
             public override bool ReduceDamage(Vector2 source) { return counter.Guarding; }
-            public override void ReducedDamageFeedback()
+            public override void ReducedDamageFeedback(bool basicMelee)
             {
                 KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
                 KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);

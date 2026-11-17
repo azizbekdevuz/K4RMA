@@ -63,7 +63,11 @@ public static class KarmaBossEntranceChecks
         }
         game.Enemies[0].TakeDamage(1000000);
         await Until(()=>game.Phase==RunPhase.Choosing);
-        game.Choose(order[order.Length-1]);game.ConfirmChoice();
+        game.Choose(order[order.Length-1]);
+        typeof(KarmaHUD).GetMethod("UpdateChoicePreview", F)
+            .Invoke(hud, new object[] { game.Player.Essences.PersonalizationOrder, order[order.Length - 1] });
+        Check((string)Get(hud, "choiceGuardianName") == expected, "Choice preview matches entrance title: " + expected);
+        game.ConfirmChoice();
         await Until(()=>game.GuardianInheriting);
         var enemy=game.Enemies[0];
         Check(ReferenceEquals(Get(hud,"entranceBoss"),enemy),"real transition hooks correct boss");
@@ -94,32 +98,11 @@ public static class KarmaBossEntranceChecks
             "Waiting on the name cannot start combat or advance the run clock");
         await SetSpace(keyboard, false);
         await SetSpace(keyboard, true);
-        await Until(() => PromptProperty("CurrentEncounterPrompt").ToString() == "SkillGuide");
-        var essence = order[order.Length - 1];
-        var guide = (string)typeof(KarmaHUD).GetMethod("PersonalizationGuideText", BindingFlags.Static | BindingFlags.NonPublic)
-            .Invoke(null, new object[] { essence });
-        var action = essence == Essence.SwordWave ? KarmaAction.Pierce
-            : essence == Essence.RisingSlash ? KarmaAction.Attack : KarmaAction.Counter;
-        string binding = KarmaInput.BindingLabel(action);
-        string defaultKey = essence == Essence.SwordWave ? "L" : essence == Essence.RisingSlash ? "J" : "K";
-        string markedKey = binding == defaultKey ? binding + (essence == Essence.SwordWave ? "을" : "를") : binding + " 키를";
-        string expectedGuide = essence switch
-        {
-            Essence.SwordWave => $"방향키와 {markedKey} 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있다.",
-            Essence.RisingSlash => $"공중에서 방향키와 {markedKey} 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있다. 아래 방향을 선택하면 잠시 체공할 수 있다.",
-            _ => $"적의 공격이 닿는 순간 {markedKey} 눌러 받아내면 그 힘을 되돌려줄 수 있다."
-        };
-        Check(guide == expectedGuide, "Skill guide shows the agreed Korean copy and bound key");
-        Check(((GUIStyle)Get(hud, "text")).CalcHeight(new GUIContent(guide), 750) <= 64, "Skill guide fits the panel");
+        await Until(() => PromptProperty("CurrentEncounterPrompt").ToString() == "WaitForRelease");
+        Check(!(bool)PromptProperty("AwaitingBossNameConfirmation"), "One fresh Space press dismisses the confirmation");
         waitStarted = Time.time;
         await Until(() => Time.time > waitStarted + 0.24f);
-        Check(PromptProperty("CurrentEncounterPrompt").ToString() == "SkillGuide" && !game.IsCombat,
-            "Holding the first press cannot dismiss the guide");
-        await SetSpace(keyboard, false);
-        Check(!game.IsCombat, "Releasing the first press keeps the guide on screen");
-        await SetSpace(keyboard, true);
-        await Until(() => PromptProperty("CurrentEncounterPrompt").ToString() == "WaitForRelease");
-        Check(!game.IsCombat, "Second Space press cannot jump into combat");
+        Check(!game.IsCombat && enemy.FightSeconds == fight, "Holding Space cannot start combat or make the player jump");
         await SetSpace(keyboard, false);
         await Until(() => game.IsCombat);
         game.TogglePause();Check(game.Paused,"combat pause still works");game.TogglePause();
@@ -154,7 +137,7 @@ public static class KarmaBossEntranceChecks
             game.PlayerDied();await Until(()=>game.Phase==RunPhase.Defeat);game.RetryRoom();
             Check(game.IsCombat && !ReferenceEquals(Get(hud,"entranceBoss"),game.Enemies[0]),"retry does not introduce a combat overlay");
             game.ReturnToTitle();Check(failure==null,"no runtime errors");
-            verdict="PASS: "+checks+" white Korean inheritance names, blue/red/yellow accents, retained English label, revival, two fresh Space presses, run clock, practice and retry checks";
+            verdict="PASS: "+checks+" matching Korean inheritance names, blue/red/yellow accents, revival, one fresh Space press and release, run clock, practice and retry checks";
         }
         catch(Exception e){code=1;verdict="FAIL: "+e;Debug.LogException(e);}
         if (keyboard != null) InputSystem.RemoveDevice(keyboard);

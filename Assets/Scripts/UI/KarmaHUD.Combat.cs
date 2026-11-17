@@ -32,7 +32,7 @@ namespace KarmaPrototype
                 bool cooling = game.Player.Essences.Cooldown(essence) > 0;
                 Color color = HudIvory;
                 color.a = cooling ? 0.35f : 1;
-                if (game.Player.Essences.JustTriggered(essence)) color = Color.white;
+                if (game.Player.Essences.JustTriggered(essence)) color = HudBrass;
                 SpriteArt(r, KarmaArtwork.SkillIcon(essence), color);
 
             }
@@ -45,10 +45,10 @@ namespace KarmaPrototype
             const float left = 330, width = 620, y = 56;
             Panel(new Rect(left - 16, 16, width + 32, 62));
             Label(left, 20, width, 27, enemy.DisplayName, centered);
-            Color track = new Color(HudIvory.r, HudIvory.g, HudIvory.b, DialoguePanelOpacity);
+            Color track = HudRule;
             Fill(new Rect(left, y - 2, width, 0.8f), track);
             Fill(new Rect(left, y + 9.2f, width, 0.8f), track);
-            Fill(new Rect(left, y, width * ratio, 8), HudIvory);
+            Fill(new Rect(left, y, width * ratio, 8), HudBrass);
             Fill(new Rect(left - 3, y - 5, 1.2f, 20), track);
             Fill(new Rect(left + width + 2, y - 5, 1.2f, 20), track);
         }

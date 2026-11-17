@@ -154,16 +154,16 @@ public static class KarmaTutorialChecks
             float barrierX = roomEnd - 0.3f;
             Check(Mathf.Abs(game.World.GetComponentsInChildren<KarmaTutorialGate>()[lesson].transform.position.x - barrierX) < 0.01f,
                 "Training barrier sits at the room exit " + lesson);
-            Place(roomEnd - 4);
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState(KeyFor(KarmaAction.Right)));
-            await Wait(550);
-            Check(game.Player.Position.x < barrierX, "Unfinished training blocks the room exit " + lesson);
-            Check(tutorial.BlockedMessage.Contains("먼저 훈련"), "Blocked travel explains required training " + lesson);
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-            Place(0); await Wait();
-            Capture("lesson-" + lesson);
             if (lesson < 3)
             {
+                Place(roomEnd - 4);
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(KeyFor(KarmaAction.Right)));
+                await Wait(550);
+                Check(game.Player.Position.x < barrierX, "Unfinished training blocks the room exit " + lesson);
+                Check(tutorial.BlockedMessage.Contains("먼저 훈련"), "Blocked travel explains required training " + lesson);
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                Place(0); await Wait();
+                Capture("lesson-" + lesson);
                 Place(13 - (lesson == 1 ? 12 : 2.7f)); await Wait();
                 if (lesson > 0) { await Press(KarmaAction.Attack); Check(tutorial.Successes == 0, "Wrong attack excluded " + lesson); }
                 if (lesson == 1)
@@ -190,8 +190,9 @@ public static class KarmaTutorialChecks
             }
             else
             {
-                Place(KarmaTutorial.Stations[3] - 5); InputSystem.QueueStateEvent(keyboard, new KeyboardState(KeyFor(KarmaAction.Guard)));
-                await WaitFor(() => typeof(KarmaTutorial).GetField("strikeCharge", Private).GetValue(tutorial) != null, "Dummy begins visible charge after guard cooldown", 12000);
+                Place(KarmaTutorial.Stations[3] - 5);
+                Capture("lesson-" + lesson);
+                await WaitFor(() => typeof(KarmaTutorial).GetField("strikeCharge", Private).GetValue(tutorial) != null, "Dummy begins the first charge promptly", 3500);
                 var charge = (SpriteRenderer)typeof(KarmaTutorial).GetField("strikeCharge", Private).GetValue(tutorial);
                 Check(charge.enabled && Mathf.Abs(charge.transform.position.x - 13) < 1, "Charge is visibly anchored to the shared dummy");
                 Check(!((SpriteRenderer)typeof(KarmaTutorial).GetField("strike", Private).GetValue(tutorial)).enabled, "Wave launches after gathering energy");
@@ -202,8 +203,8 @@ public static class KarmaTutorialChecks
                 KarmaRemnantVFX.ProjectileLook(reference, Vector2.right);
                 Check(strike.sprite == reference.sprite && strike.transform.localScale == reference.transform.localScale && strike.GetComponent<KarmaCombatVFX>() != null, "Guard training uses the player's projectile sprite, size and attack effects");
                 UnityEngine.Object.Destroy(reference.gameObject);
-                await Wait(400); Check(tutorial.WaitingForGuard && !game.Player.Shielded, "Held key without an active shield cannot resume training");
-                InputSystem.QueueStateEvent(keyboard, new KeyboardState()); await Wait(); Capture("guard");
+                await Wait(400); Check(tutorial.WaitingForGuard && !game.Player.Shielded, "Training waits for a fresh guard press");
+                Capture("guard");
                 float time = Time.time; Vector2 player = game.Player.Position;
                 await Press(KarmaAction.Attack); await Wait(500);
                 Check(tutorial.WaitingForGuard && Time.time == time && game.Player.Position == player && tutorial.Successes == 0, "Wrong input cannot resume frozen world");
@@ -227,13 +228,11 @@ public static class KarmaTutorialChecks
                     tutorial.GuardBlocked(); Check(tutorial.Successes == count, "No duplicate defense contact");
                     if (count < 3)
                     {
-                        if (count > 1) Check(game.Player.Essences.Cooldown(Essence.Guard) > 0, "Successful defense starts its real cooldown");
-                        await WaitFor(() => game.Player.Essences.Cooldown(Essence.Guard) <= 0, "Defense cooldown ends", 10000);
-                        float readyAt = Time.time;
-                        await Wait(250);
-                        Check(typeof(KarmaTutorial).GetField("strikeCharge", Private).GetValue(tutorial) == null, "Dummy waits after cooldown before gathering energy");
+                        Check(game.Player.Shielded && typeof(KarmaTutorial).GetField("strikeCharge", Private).GetValue(tutorial) == null,
+                            "Dummy waits for the previous shield to expire");
                         await WaitFor(() => typeof(KarmaTutorial).GetField("strikeCharge", Private).GetValue(tutorial) != null, "Next charge", 2500);
-                        Check(Time.time - readyAt >= 0.45f, "Charge begins half a second after cooldown");
+                        Check(!game.Player.Shielded, "The previous shield cannot block the next strike");
+                        if (count > 1) Check(game.Player.Essences.Cooldown(Essence.Guard) > 0, "Next charge starts before combat cooldown ends");
                         await WaitFor(() => tutorial.WaitingForGuard, "Next defense", 4000);
                     }
                 }

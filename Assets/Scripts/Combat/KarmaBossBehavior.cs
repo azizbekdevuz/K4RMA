@@ -33,6 +33,7 @@ namespace KarmaPrototype
             protected bool PatternCanReach(EnemyAttack attack, Vector2 from, Vector2 target)
             { return patterns.TryGetValue(attack, out var pattern) && pattern.CanReach(from, target); }
             public virtual bool CanEngage { get { return owner.game.Player.Position.x >= 12; } }
+            public virtual bool PlaysOwnStunSound => false;
             public virtual Sprite StunSprite { get { return KarmaArtwork.Sprite("HitVFX", "Burst"); } }
             public virtual float ParryStunSeconds { get { return 2; } }
             public virtual void Initialize() { }
@@ -85,7 +86,7 @@ namespace KarmaPrototype
             }
             public virtual void Tick() { }
             public virtual void OnDamaged() { }
-            public virtual void ReducedDamageFeedback() { }
+            public virtual void ReducedDamageFeedback(bool basicMelee) { }
             public virtual Bounds DamageBounds(SpriteRenderer renderer) { return renderer.bounds; }
             // Opt in per contact; the damage-inclusive player API still decides
             // whether defenses reject the hit and whether CC can be applied.

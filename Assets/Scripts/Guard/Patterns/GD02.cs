@@ -25,10 +25,13 @@ namespace KarmaPrototype
                 {
                     Vector2 waveAt = new Vector2(owner.Position.x, KarmaSpace.Units(0.65f));
                     Vector2 waveSize = KarmaSpace.Units(new Vector2(1.2f, 0.65f));
-                    var warning = owner.PathMark(waveAt, waveAt + Vector2.right * owner.direction * KarmaSpace.Units(10), waveSize);
+                    Vector2 velocity = Vector2.right * owner.direction * KarmaSpace.Units(14);
+                    const float flightTime = 0.7f;
+                    var warning = owner.PathMark(waveAt, waveAt + velocity * flightTime, waveSize);
 
-                    yield return owner.Wait(owner.Warning(0.6f)); Destroy(warning.gameObject);
-                    owner.Attack(waveAt, Vector2.right * owner.direction * KarmaSpace.Units(14), waveSize, 0.7f, 0.75f);
+                    yield return owner.Wait(owner.Warning(0.6f));
+                    warning.gameObject.SetActive(false); Destroy(warning.gameObject);
+                    owner.Attack(waveAt, velocity, waveSize, flightTime, 0.75f);
                     yield return owner.Wait(0.75f);
                 }
                 // Do not remove steps while their child coroutines are still building colliders.

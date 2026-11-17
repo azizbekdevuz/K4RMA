@@ -215,8 +215,10 @@ public static partial class KarmaSfxCompletionChecks
         await Until(() => Count(KarmaSfxId.SwWaveLaunch) == 4, 15, "All four SW04 counter projectiles");
         await Wait(1.2f);
         Check(Count(KarmaSfxId.SwWaveLaunch) == 4 && Count(KarmaSfxId.SwElectricDischarge) == 0, "SW04 one launch cue per shot");
-        Check(Count(KarmaSfxId.PlDamage) > 0 && Count(KarmaSfxId.PlDamage) == Count(KarmaSfxId.SwWaveImpact),
-            "SW04 real projectile contacts have one damage accent");
+        Check(Count(KarmaSfxId.PlDamage) > 0 && Count(KarmaSfxId.Sw04PlayerShock) > 0
+            && Count(KarmaSfxId.Sw04PlayerShock) <= Count(KarmaSfxId.PlDamage) && Count(KarmaSfxId.SwWaveImpact) == 0,
+            "SW04 real projectile contacts use player shock feedback without stacking the wave impact");
+        Check(Count(KarmaSfxId.Sw04BossShock) == 0, "SW04 player damage never plays the boss shock cue");
 
         await Prepare(Essence.SwordWave);
         watchRain = true;
@@ -330,6 +332,12 @@ public static partial class KarmaSfxCompletionChecks
         {
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             Check(game != null, "Game exists in Play Mode");
+            if (SessionState.GetBool(Key + ".PlaytestGuard", false))
+            {
+                await CheckPlaytestGuard();
+                Finish("PASS: " + assertions + " Guard playtest gain and stun assertions.", 0);
+                return;
+            }
             if (SessionState.GetBool(Key + ".SundayContacts", false))
             {
                 await CheckSundayContacts();
@@ -373,6 +381,7 @@ public static partial class KarmaSfxCompletionChecks
             enemy.TakeDamage(1);
             await Wait(6);
             Check(observed.Contains("SW_Wave_Launch"), "SW04 counter projectile launch");
+            await Until(() => !game.Player.Shocked, 1, "Previous player shock clears");
             Clear();
             var playerPoint = (Vector2)game.Player.GetComponent<Collider2D>().bounds.center;
             typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
@@ -380,10 +389,11 @@ public static partial class KarmaSfxCompletionChecks
             float health = game.Player.Health;
             var contact = new KarmaAttackContact();
             enemy.TryAttackHit(playerPoint, playerPoint, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.SW04);
-            Check(game.Player.Health < health && Playing("SW_Wave_Impact"), "SW04 actual damaging impact");
+            Check(game.Player.Health < health && game.Player.Shocked && Playing("SW04_Player_Shock")
+                && !Playing("SW_Wave_Impact"), "SW04 actual damaging shock uses its dedicated cue");
             KarmaAudio.StopBus(KarmaSfxBus.Gameplay);
             enemy.TryAttackHit(playerPoint, playerPoint, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.SW04);
-            Check(!Playing("SW_Wave_Impact"), "Consumed SW04 contact stays silent");
+            Check(!Playing("SW04_Player_Shock") && !Playing("SW_Wave_Impact"), "Consumed SW04 contact stays silent");
             typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, true);
 
             await Prepare(Essence.SwordWave);
@@ -512,12 +522,15 @@ public static partial class KarmaSfxCompletionChecks
         Application.logMessageReceived -= CaptureError;
         bool contacts = SessionState.GetBool(Key + ".SundayContacts", false);
         SessionState.EraseBool(Key + ".SundayContacts");
+        bool playtestGuard = SessionState.GetBool(Key + ".PlaytestGuard", false);
+        SessionState.EraseBool(Key + ".PlaytestGuard");
         SessionState.EraseBool(Key + ".Followup");
         SessionState.EraseBool(Key + ".Release");
         SessionState.EraseBool(Key + ".Sunday");
         SessionState.SetBool(Key, false);
         Directory.CreateDirectory("output/validation");
-        File.WriteAllText("output/validation/" + (contacts ? "sfx-sunday-contacts.txt" : "sfx-completion.txt"), result);
+        string report = playtestGuard ? "sfx-playtest-guard.txt" : contacts ? "sfx-sunday-contacts.txt" : "sfx-completion.txt";
+        File.WriteAllText("output/validation/" + report, result);
         Debug.Log(result);
         if (SessionState.GetBool(Key + ".Editor", false))
         {

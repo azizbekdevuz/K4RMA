@@ -10,6 +10,15 @@ namespace KarmaPrototype
         KarmaGame game;
         GUIStyle title, heading, text, small, menuButton, centered;
         Font runtimeFont;
+        Texture2D hudShade;
+        int hudView = -1;
+        float hudViewAt;
+        Rect hoverBounds;
+        float hoverAt;
+        static readonly Color HudInk = new Color32(15, 22, 32, 245);
+        static readonly Color HudBrass = new Color32(226, 196, 138, 255);
+        static readonly Color HudMuted = new Color32(203, 196, 183, 255);
+        static readonly Color HudRule = new Color32(185, 150, 96, 120);
         readonly string[] names = { "검기", "상승베기", "방어" };
         public void Initialize(KarmaGame director) { game = director; }
         Font ResolveFont()
@@ -50,7 +59,7 @@ namespace KarmaPrototype
             menuButton.hover.textColor = Color.white;
             menuButton.active.textColor = Color.white;
             menuButton.focused.textColor = menuButton.normal.textColor;
-            foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = new Color(0.9f, 0.91f, 0.94f);
+            foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = HudIvory;
             centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
             foreach (var s in new[] { title, heading, text, small, menuButton, centered }) if (font != null) s.font = font;
         }
@@ -58,6 +67,15 @@ namespace KarmaPrototype
         {
             if (game == null) return;
             Styles();
+            int view = game.SettingsOpen ? game.DisplayConfirmationPending ? 101 : 100
+                : game.Paused ? 102 : game.EndingCompleted ? 103 : (int)game.Phase;
+            if (hudView != view)
+            {
+                hudView = view;
+                hudViewAt = Time.unscaledTime;
+                hoverBounds = default;
+                if (view == (int)RunPhase.Choosing) choicePreviewRoute = 0;
+            }
             Matrix4x4 saved = GUI.matrix;
             DrawViewportBorders();
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
@@ -74,10 +92,9 @@ namespace KarmaPrototype
             if (game.Phase == RunPhase.Title) TitleScreen();
             else
             {
-                if (game.Tutorial != null) TutorialScreen(); else TopBar();
-                if (!game.Paused && (game.Phase == RunPhase.Choosing
-                    || game.Phase == RunPhase.Defeat || game.Phase == RunPhase.Victory))
-                    FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
+                if (game.Tutorial != null) TutorialScreen();
+                else if (game.Phase != RunPhase.Choosing && game.Phase != RunPhase.Defeat && game.Phase != RunPhase.Victory)
+                    TopBar();
                 if (game.Paused) DrawPauseOverlay();
                 else switch (game.Phase)
                 {
@@ -109,6 +126,7 @@ namespace KarmaPrototype
         {
             ((IDisposable)keycapText).Dispose();
             if (runtimeFont != null) Destroy(runtimeFont);
+            if (hudShade != null) Destroy(hudShade);
             if (tutorialRouteArrow != null) Destroy(tutorialRouteArrow);
         }
 
@@ -152,11 +170,11 @@ namespace KarmaPrototype
             if (speakerNameplate == null)
                 speakerNameplate = new GUIStyle(centered) { fontSize = 16, fontStyle = FontStyle.Bold };
 
-            var accent = new Color32(240, 223, 201, 255);
+            var accent = (Color32)HudBrass;
             speakerNameplate.normal.textColor = accent;
             var tab = new Rect(x, y, 88, 28);
             byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(opacity) * 255f);
-            Fill(tab, new Color32(57, 50, 45, alpha));
+            Fill(tab, new Color32(31, 27, 27, alpha));
             accent.a = alpha;
             Fill(new Rect(tab.x, tab.y, tab.width, 2), accent);
             Color saved = GUI.color;
@@ -166,7 +184,64 @@ namespace KarmaPrototype
         }
 
         const float DialoguePanelOpacity = 0.7f;
-        static void Panel(Rect rect) { Fill(rect, new Color(0.045f, 0.052f, 0.09f, DialoguePanelOpacity)); }
+        static void Panel(Rect rect)
+        {
+            Fill(rect, WithOpacity(HudInk, 0.93f));
+            Fill(new Rect(rect.x, rect.y, rect.width, 1), HudRule);
+            Fill(new Rect(rect.x, rect.yMax - 1, rect.width, 1), HudRule);
+        }
+
+        static Color WithOpacity(Color color, float opacity)
+        {
+            color.a *= opacity;
+            return color;
+        }
+
+        float HudReveal => Ease((Time.unscaledTime - hudViewAt) / 0.22f);
+
+        void DrawHudShade(float density)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (hudShade == null)
+            {
+                hudShade = new Texture2D(1, 64, TextureFormat.RGBA32, false)
+                    { name = "K4RMA HUD shade", wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
+                var pixels = new Color32[64];
+                for (int y = 0; y < pixels.Length; y++)
+                    pixels[y] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(255 * Ease(1 - y / 63f)));
+                hudShade.SetPixels32(pixels);
+                hudShade.Apply(false, true);
+            }
+            float appear = Mathf.Lerp(0.68f, 1, HudReveal);
+            Fill(new Rect(0, 0, 1280, 720), WithOpacity(HudInk, density * appear));
+            var color = GUI.color;
+            GUI.color = WithOpacity(HudInk, 0.83f * appear);
+            GUI.DrawTexture(new Rect(0, 0, 1280, 720), hudShade);
+            GUI.color = color;
+        }
+
+        void DrawHudButtonPlate(Rect rect, bool primary, bool selected, bool pressed)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            bool hovered = GUI.enabled && rect.Contains(Event.current.mousePosition);
+            if (hovered && hoverBounds != rect)
+            {
+                hoverBounds = rect;
+                hoverAt = Time.unscaledTime;
+            }
+            else if (!hovered && hoverBounds == rect) hoverBounds = default;
+            float hover = hovered ? Ease((Time.unscaledTime - hoverAt) / 0.12f) : 0;
+            float emphasis = GUI.enabled ? (pressed && (primary || selected || hovered) ? 1 : hover) : 0;
+            var surface = primary ? new Color32(75, 53, 34, 255)
+                : selected ? new Color32(49, 41, 37, 255) : HudInk;
+            Fill(rect, WithOpacity(Color.Lerp(surface, new Color32(100, 70, 43, 255), emphasis * 0.5f),
+                GUI.enabled ? 1 : 0.6f));
+            var rule = primary || selected ? HudBrass : Color.Lerp(HudRule, HudBrass, hover);
+            Fill(new Rect(rect.x, rect.y, rect.width, 1), rule);
+            Fill(new Rect(rect.x, rect.yMax - 1, rect.width, 1), rule);
+            Fill(new Rect(rect.x, rect.y, selected ? 3 : 1, rect.height), rule);
+            Fill(new Rect(rect.xMax - 1, rect.y, 1, rect.height), rule);
+        }
         static void DrawViewportBorders()
         {
             Matrix4x4 saved = GUI.matrix;

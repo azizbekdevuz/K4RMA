@@ -20,7 +20,7 @@ namespace KarmaPrototype
             {
                 owner.state = ActionState.Stunned;
                 owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialParryStunSeconds);
-                owner.ShowStunCue();
+                owner.ShowStunVisual();
             }
 
             public override IEnumerator Execute()
@@ -101,7 +101,8 @@ namespace KarmaPrototype
                 shield.gameObject.SetActive(false);
                 owner.animator.SetGuardTrialShield(null);
                 heavy.Interrupt();
-                owner.HideStunCue();
+                // Keep a late parry's stars and their sound through a successful dissolve.
+                if (!trial.Passed || !owner.Stunned) owner.HideStunCue();
                 owner.state = ActionState.Recover;
                 if (!trial.Passed)
                 {
@@ -119,11 +120,7 @@ namespace KarmaPrototype
                         KarmaCombatVFX.SpawnSprite(owner.effectsRoot, player.Position, "HitVFX", "Burst", KarmaSpace.Units(Vector2.one * 1.8f), 0.25f);
                     if (!owner.Active) yield break;
                 }
-                else
-                {
-                    dome.Dissolve();
-                    KarmaAudio.Play(KarmaSfxId.GdDomeSuccess, lifetimeOwner: owner);
-                }
+                else dome.Dissolve();
                 owner.game.Player.ReleaseArena();
                 yield return owner.Wait(0.4f);
                 if (!owner.Active) yield break;
@@ -133,7 +130,7 @@ namespace KarmaPrototype
                     owner.fullShield = false;
                     owner.state = ActionState.Stunned;
                     owner.stunnedUntil = owner.FightSeconds + Mathf.Max(0.1f, Settings.trialSuccessStunSeconds);
-                    owner.ShowStunCue();
+                    owner.ShowStunVisual();
                     yield return owner.Wait(Mathf.Max(0.1f, Settings.trialSuccessStunSeconds));
                     if (!owner.Active) yield break;
                     owner.HideStunCue();

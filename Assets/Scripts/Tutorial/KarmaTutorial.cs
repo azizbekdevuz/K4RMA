@@ -11,6 +11,7 @@ namespace KarmaPrototype
         public bool WaitingForGuard { get; private set; }
         public bool Frozen => WaitingForGuard || Step == KarmaTutorialStep.Lesson
             || Step == KarmaTutorialStep.FinalDialogue || Step == KarmaTutorialStep.Fade;
+        const float GuardDrillDelay = 0.25f;
         bool preparingGuard, inputReleaseRequired, completionConfirmed;
         int inputFrame = -1, freezeFrame, completionFrame, dialogue, strikeId, contactId, countedStrike;
         bool strikePaused;
@@ -24,6 +25,7 @@ namespace KarmaPrototype
         KarmaTrainingTarget[] targets;
         public bool CanAct => preparingGuard || !Frozen && !inputReleaseRequired && inputFrame != Time.frameCount && Step != KarmaTutorialStep.Fade;
         public float Fade => fade;
+        internal Bounds ActiveTargetBounds => targets[Lesson].HitBounds;
         public static readonly float[] Stations = { 8, 8, 8, 8 };
         public string BlockedMessage => Time.unscaledTime < blockedUntil ? "먼저 훈련을 마쳐라. 허수아비 앞에서 수련을 끝내고 이동하거라." : "";
         public void WarnUnfinished()
@@ -118,7 +120,7 @@ namespace KarmaPrototype
                 else
                 {
                     Step = KarmaTutorialStep.Practice;
-                    if (Lesson == 3) attackAt = Time.time + Game.Player.Essences.Cooldown(Essence.Guard) + 0.5f;
+                    if (Lesson == 3) attackAt = Time.time + GuardDrillDelay;
                     KarmaCombatVFX.SpawnSprite(transform, Game.Player.Position, "PlayerVFX", "Barrier", Vector2.one * 3, 0.35f);
                 }
                 Time.timeScale = Frozen ? 0 : 1;
@@ -156,7 +158,7 @@ namespace KarmaPrototype
                     for (int i = 0; i < targets.Length; i++) targets[i].enabled = i == next;
                     Game.Player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
                     Game.Player.Essences.ResetTemporaryState();
-                    attackAt = Time.time + 1.4f; Time.timeScale = Frozen ? 0 : 1;
+                    Time.timeScale = Frozen ? 0 : 1;
                 }
             }
             if (Step == KarmaTutorialStep.Practice && Lesson == 3) TickTrainingStrike();
@@ -167,9 +169,9 @@ namespace KarmaPrototype
         {
             if (strike == null)
             {
-                float cooldown = Game.Player.Essences.Cooldown(Essence.Guard);
-                if (cooldown > 0) attackAt = Mathf.Max(attackAt, Time.time + cooldown + 0.5f);
-                if (Time.time < attackAt) return;
+                // The frozen prompt readies Guard for the next press. Wait for the
+                // previous shield to expire so it cannot also block the next strike.
+                if (Time.time < attackAt || Game.Player.Shielded) return;
                 strikeId++;
                 Vector2 dummy = targets[3].HitBounds.center;
                 float side = Game.Player.Position.x < dummy.x ? -1 : 1;
@@ -222,7 +224,7 @@ namespace KarmaPrototype
             contactId = strikeId;
             if (contact) Game.Player.TakeDamage(1);
             contactId = 0;
-            Destroy(strike.gameObject); strike = null; attackAt = Time.time + Game.Player.Essences.Cooldown(Essence.Guard) + 0.5f;
+            Destroy(strike.gameObject); strike = null; attackAt = Time.time + GuardDrillDelay;
         }
         public void FrameCamera()
         {

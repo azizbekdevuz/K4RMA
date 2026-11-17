@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 186" role="img" aria-labelledby="title desc">
+<title id="title">K4RMA core game loop</title>
+<desc id="desc">Choose a loadout, fight a boss, earn score, sacrifice a skill, and return to battle with enemies empowered by that sacrifice.</desc>
+<defs>
+<linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101923"/><stop offset="1" stop-color="#19131e"/></linearGradient>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#ef5a64"/></marker>
+</defs>
+<rect x="1" y="1" width="998" height="184" rx="20" fill="url(#bg)" stroke="#475569"/>
+<g font-family="Arial, sans-serif" text-anchor="middle">
+<g fill="#1f2937" stroke="#475569"><rect x="22" y="32" width="168" height="92" rx="12"/><rect x="219" y="32" width="168" height="92" rx="12"/><rect x="416" y="32" width="168" height="92" rx="12"/><rect x="613" y="32" width="168" height="92" rx="12"/><rect x="810" y="32" width="168" height="92" rx="12"/></g>
+<g font-size="17" font-weight="700" fill="#f8fafc"><text x="106" y="67">LOADOUT</text><text x="303" y="67">FIGHT</text><text x="500" y="67">SCORE</text><text x="697" y="67">SACRIFICE</text><text x="894" y="67">INHERIT</text></g>
+<g font-size="11.5" fill="#cbd5e1"><text x="106" y="90">Choose abilities</text><text x="303" y="90">Defeat the boss</text><text x="500" y="90">Earn progression</text><text x="697" y="90">Lose one skill</text><text x="894" y="90">Enemy gains skill</text></g>
+<g fill="none" stroke="#ef5a64" stroke-width="2.5" marker-end="url(#arrow)"><path d="M190 78h26"/><path d="M387 78h26"/><path d="M584 78h26"/><path d="M781 78h26"/><path d="M894 124v33H106v-31"/></g>
+<text x="500" y="151" fill="#ef9aa0" font-size="11.5">NEXT STAGE · Fewer abilities, stronger enemies</text>
+</g>
+</svg>

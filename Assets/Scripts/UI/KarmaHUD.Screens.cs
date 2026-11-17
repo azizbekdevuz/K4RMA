@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
 {
@@ -5,119 +6,223 @@ namespace KarmaPrototype
     {
         void TitleScreen()
         {
-            FillScreen(new Color(0.02f, 0.03f, 0.07f, 0.25f));
-            Label(330, 160, 620, 100, "K4RMA", title);
-            Label(330, 270, 620, 35, "네 수호자 · 세 번의 고유화", centered);
-            SpriteArt(new Rect(460, 320, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            if (ShortcutButton(new Rect(480, 365, 320, 55), "시작", KarmaAction.Confirm)) game.StartOpening();
-            if (ShortcutButton(new Rect(480, 430, 320, 55), "환경설정", KarmaAction.Settings)) game.OpenSettings();
+            DrawHudShade(0.15f);
+            float settle = 1 - HudReveal;
+            choiceTitle ??= new GUIStyle(title) { fontSize = 46, alignment = TextAnchor.MiddleLeft };
+            Label(116, 181 + 8 * settle, 460, 88, "K4RMA", choiceTitle);
+            Label(121, 274, 450, 33, "네 수호자 · 세 번의 고유화", text);
+            Fill(new Rect(122, 320, 326 * HudReveal, 1), HudBrass);
+            if (ShortcutButton(new Rect(120, 351, 350, 52), "시작", KarmaAction.Confirm, true)) game.StartOpening();
+            if (ShortcutButton(new Rect(120, 414, 350, 52), "환경설정", KarmaAction.Settings)) game.OpenSettings();
         }
+
         static readonly KarmaAction[] choiceKeys = {
             KarmaAction.ChooseSwordWave, KarmaAction.ChooseRisingSlash, KarmaAction.ChooseGuard
         };
+        static readonly KarmaAction[] originalSkillKeys = {
+            KarmaAction.SwordWave, KarmaAction.RisingSlash, KarmaAction.Guard
+        };
+        static readonly KarmaAction[] uniqueSkillKeys = {
+            KarmaAction.Pierce, KarmaAction.Attack, KarmaAction.Counter
+        };
+        static readonly string[] uniqueSkillDescriptions = {
+            "여덟 방향으로 돌진하며 적을 관통합니다.",
+            "공중에서 방향을 정해 베고 한 번 더 도약합니다.\n아래 방향을 누르면 잠시 체공합니다.",
+            "공격이 닿는 순간 받아내고 상대에게 되돌려줍니다."
+        };
+        static readonly string[] uniqueSkillChanges = {
+            "검기를 발사하던 기술이 몸으로 돌진하는 기술로 바뀝니다.",
+            "지상에서 올려베던 기술이 공중 추가 도약으로 바뀝니다.",
+            "방패를 펼치던 기술이 타이밍에 맞춘 반격으로 바뀝니다."
+        };
+        static readonly string[] guardianTraits = {
+            "원거리 검기로 압박합니다.", "공중에서 추격하고 내려찍습니다.", "방패를 두르고 강공격을 가합니다."
+        };
 
-        static readonly Color choiceWarningColor = new Color32(255, 155, 143, 255);
-        GUIStyle choiceWarningText;
-        GUIStyle choiceProgressText;
+        readonly List<Essence> choicePreviewOrder = new List<Essence>(3);
+        int choicePreviewRoute;
+        Sprite choicePortrait;
+        string choiceGuardianName;
+        Essence? lastPendingChoice;
+        float choiceChangedAt;
+        GUIStyle choiceTitle, choiceName, choiceProgressText, choiceNote;
         Texture2D choiceWarningIcon;
 
         void ChoiceScreen()
         {
-            DrawChoiceProgress();
-            bool firstChoice = game.StageIndex == 0;
-            Label(280, firstChoice ? 152 : 180, 720, 48, "시련 완료 · 고유화", title);
-            if (firstChoice) DrawFirstChoiceWarning();
+            DrawHudShade(0.38f);
+            choiceTitle ??= new GUIStyle(title) { fontSize = 46, alignment = TextAnchor.MiddleLeft };
+            if (choiceName == null)
+            {
+                choiceName = new GUIStyle(title) { fontSize = 46, alignment = TextAnchor.MiddleLeft, wordWrap = false };
+                if (choiceName.font != null && choiceName.font.dynamic)
+                    for (int i = 0; i < choiceKeys.Length; i++)
+                        choiceName.font.RequestCharactersInTexture(KarmaPatternCatalog.UniqueName((Essence)i), choiceName.fontSize, choiceName.fontStyle);
+            }
+            choiceNote ??= new GUIStyle(small) { fontSize = 15, alignment = TextAnchor.MiddleLeft };
+            choiceNote.normal.textColor = HudMuted;
+
+            var pending = game.PendingChoice;
+            if (lastPendingChoice != pending)
+            {
+                lastPendingChoice = pending;
+                choiceChangedAt = Time.unscaledTime;
+            }
+            var essences = game.Player.Essences;
             int count = 0;
-            for (int i = 0; i < 3; i++) if (game.Player.Essences.HasActive((Essence)i)) count++;
-            int slot = 0;
-            for (int i = 0; i < 3; i++)
+            Essence preview = default;
+            for (int i = 0; i < choiceKeys.Length; i++)
             {
-                var e = (Essence)i;
-                if (!game.Player.Essences.HasActive(e)) continue;
-                float centerX = 640 + (slot++ - (count - 1) * 0.5f) * 180;
-                bool selected = game.PendingChoice == e;
-                if (GUI.Button(new Rect(centerX - 80, 335, 160, 145), "", GUIStyle.none)) game.Choose(e);
-                SpriteArt(new Rect(centerX - 45, 340, 90, 80), KarmaArtwork.SkillIcon(e));
-                KeyPrompt(new Rect(centerX - 80, 430, 160, 35), 18, true, choiceKeys[i], "  " + names[i]);
-                if (selected) SpriteArt(new Rect(centerX - 10, 480, 20, 25), KarmaArtwork.Settings.selectionCrescent);
-                SpriteArt(new Rect(centerX - 12, 312, 24, 24), KarmaArtwork.Sprite("UI", selected ? "FilledSlot" : "EmptySlot"));
+                var option = (Essence)i;
+                if (!essences.HasActive(option)) continue;
+                if (count++ == 0) preview = option;
             }
-            if (game.PendingChoice.HasValue)
+            preview = pending ?? preview;
+            if (count > 0) UpdateChoicePreview(essences.PersonalizationOrder, preview);
+
+            DrawChoiceProgress();
+            Label(76, 31, 580, 64, "기술 고유화", choiceTitle);
+            Label(79, 101, 590, 29, "원형 기술 하나를 골라 나만의 기술로 바꾸세요.", text);
+            if (game.StageIndex == 0) DrawFirstChoiceWarning();
+            if (count > 0)
             {
-                var e = game.PendingChoice.Value;
-                string preview = names[(int)e] + " → " + KarmaPatternCatalog.UniqueName(e);
-                if (firstChoice) preview += "   ·   다음 상대  " + names[(int)e] + "형 수호자";
-                Label(280, 520, 720, 35, preview, centered);
+                DrawChoicePortrait();
+                DrawChoiceDetails(preview, pending.HasValue);
             }
-            else Label(280, 520, 720, 35, "고유화할 기술을 선택하면 결과를 미리 확인할 수 있습니다.", centered);
-            GUI.enabled = game.PendingChoice.HasValue;
-            if (ShortcutButton(new Rect(440, 568, 400, 45), "고유화", KarmaAction.Confirm)) game.ConfirmChoice();
+            const float left = 76, right = 1204, gap = 12;
+            float width = count > 0 ? Mathf.Min(368, (right - left - gap * (count - 1)) / count) : 0;
+            float x = 640 - (width * count + gap * (count - 1)) * 0.5f;
+            for (int i = 0; i < choiceKeys.Length; i++)
+            {
+                var option = (Essence)i;
+                if (!essences.HasActive(option)) continue;
+                DrawChoiceOption(new Rect(x, 571, width, 58), option, pending == option);
+                x += width + gap;
+            }
+            Fill(new Rect(left, 645, right - left, 1), HudRule);
+            GUI.enabled = pending.HasValue;
+            if (ShortcutButton(new Rect(left, 658, 300, 42), "선택 취소", KarmaAction.Pause)) game.CancelChoice();
+            if (ShortcutButton(new Rect(904, 658, 300, 42), "고유화 확정", KarmaAction.Confirm, true)) game.ConfirmChoice();
             GUI.enabled = true;
-            if (ShortcutButton(new Rect(440, 626, 400, 40), "선택 취소", KarmaAction.Pause)) game.CancelChoice();
         }
-        void DrawChoiceProgress()
+
+        void UpdateChoicePreview(IReadOnlyList<Essence> acquired, Essence preview)
+        {
+            int route = 1;
+            foreach (var essence in acquired) route = route * 4 + (int)essence + 1;
+            route = route * 4 + (int)preview + 1;
+            if (choicePreviewRoute == route) return;
+            choicePreviewRoute = route;
+            choiceChangedAt = Time.unscaledTime;
+            choicePreviewOrder.Clear();
+            foreach (var essence in acquired) choicePreviewOrder.Add(essence);
+            choicePreviewOrder.Add(preview);
+            choicePortrait = KarmaArtwork.GuardianPreview(choicePreviewOrder);
+            choiceGuardianName = GuardianEncounterTitle(choicePreviewOrder);
+        }
+
+        void DrawChoicePortrait()
         {
             if (Event.current.type != EventType.Repaint) return;
-            if (choiceProgressText == null)
-                choiceProgressText = new GUIStyle(centered) { fontSize = 16 };
+            float reveal = Ease((Time.unscaledTime - choiceChangedAt) / 0.2f);
+            float opacity = Mathf.Lerp(0.64f, 1, reveal);
+            SpriteArt(new Rect(84 + 10 * (1 - reveal), 155, 524, 346), choicePortrait, WithOpacity(Color.white, opacity));
+            Panel(new Rect(107, 495, 476, 60));
+            string caption = game.StageIndex == 2 ? "다음 상대 · 최종 시련" : "다음 상대";
+            Label(107, 495, 476, 21, caption, choiceProgressText);
+            Label(107, 516, 476, 36, choiceGuardianName, choicePortraitName ??= new GUIStyle(title) { fontSize = 27 });
+        }
 
-            const float centerX = 640, nodeY = 84, spacing = 110, diameter = 16;
-            int stageCount = game.BossSplits.Length;
-            // Choosing begins after the guardian falls, so the current stage is cleared too.
-            int clearedCount = game.StageIndex + 1;
-            float firstX = centerX - (stageCount - 1) * spacing * 0.5f;
-            var muted = new Color(HudIvory.r, HudIvory.g, HudIvory.b, 0.42f);
-            for (int i = 0; i < stageCount; i++)
+        GUIStyle choicePortraitName;
+
+        void DrawChoiceDetails(Essence preview, bool selected)
+        {
+            int i = (int)preview;
+            const float x = 681, width = 495;
+            Panel(new Rect(652, 176, 552, 371));
+            Color highlight = selected ? HudBrass : HudRule;
+            Fill(new Rect(652, 176, 2, 371), highlight);
+            choiceNote.normal.textColor = HudBrass;
+            Label(x, 193, width, 25, selected ? "선택한 기술  ·  " + names[i] : "미리보기  ·  " + names[i], choiceNote);
+            float reveal = Ease((Time.unscaledTime - choiceChangedAt) / 0.2f);
+            Label(x, 227 + 5 * (1 - reveal), width, 65, KarmaPatternCatalog.UniqueName(preview), choiceName);
+            Label(x, 308, width, 61, uniqueSkillDescriptions[i], text);
+            string original = "원형   " + names[i] + "  ";
+            KeyPrompt(new Rect(x, 366, width, 31), 17, false, original, originalSkillKeys[i]);
+            var useKeys = new Rect(x, 402, width, 32);
+            if (preview == Essence.Guard)
+                KeyPrompt(useKeys, 17, false, "고유화   공격이 닿는 순간  ", uniqueSkillKeys[i]);
+            else
+                KeyPrompt(useKeys, 17, false, preview == Essence.RisingSlash ? "고유화   공중  " : "고유화   ",
+                    KarmaAction.Left, " ", KarmaAction.Up, " ", KarmaAction.Down, " ", KarmaAction.Right,
+                    "  +  ", uniqueSkillKeys[i]);
+            Fill(new Rect(x, 448, width, 1), HudRule);
+            const float labelWidth = 68;
+            choiceNote.normal.textColor = HudBrass;
+            Label(x, 455, labelWidth, 35, "플레이어", choiceNote);
+            Label(x, 493, labelWidth, 35, "보스", choiceNote);
+
+            choiceNote.normal.textColor = HudMuted;
+            Label(x + labelWidth, 455, width - labelWidth, 35, uniqueSkillChanges[i], choiceNote);
+            string next = game.StageIndex == 0 ? guardianTraits[i] : names[i] + " 원형을 계승해 새 패턴을 사용합니다.";
+            Label(x + labelWidth, 493, width - labelWidth, 35, next, choiceNote);
+        }
+
+        void DrawChoiceOption(Rect bounds, Essence option, bool selected)
+        {
+            DrawHudButtonPlate(bounds, false, selected, KarmaInput.Held(choiceKeys[(int)option]));
+            if (GUI.Button(bounds, GUIContent.none, GUIStyle.none)) game.Choose(option);
+            KeyPrompt(new Rect(bounds.x + 13, bounds.y + 10, 64, 38), 18, false, choiceKeys[(int)option]);
+            SpriteArt(new Rect(bounds.x + 66, bounds.y + 12, 37, 34), KarmaArtwork.SkillIcon(option));
+            Label(bounds.x + 115, bounds.y + 8, bounds.width - 182, 25, names[(int)option], text);
+            Label(bounds.x + 115, bounds.y + 31, bounds.width - 125, 22, KarmaPatternCatalog.UniqueName(option) + " 획득", small);
+            if (selected)
             {
-                float x = firstX + i * spacing;
-                bool cleared = i < clearedCount;
-                if (i + 1 < stageCount)
-                    Fill(new Rect(x + diameter * 0.5f, nodeY - 1, spacing - diameter, 2),
-                        i + 1 < clearedCount ? HudIvory : muted);
-
-                var node = new Rect(x - diameter * 0.5f, nodeY - diameter * 0.5f, diameter, diameter);
-                GUI.DrawTexture(node, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0,
-                    cleared ? HudIvory : muted, cleared ? 0 : 2, diameter * 0.5f);
-
-                choiceProgressText.normal.textColor = cleared ? HudIvory : muted;
-                Label(x - spacing * 0.5f, nodeY + 14, spacing, 26, "시련 " + (i + 1), choiceProgressText);
+                choiceNote.normal.textColor = HudBrass;
+                Label(bounds.xMax - 68, bounds.y + 7, 65, 24, "선택됨", choiceNote);
             }
+        }
+
+        void DrawChoiceProgress()
+        {
+            choiceProgressText ??= new GUIStyle(centered) { fontSize = 13 };
+            if (Event.current.type != EventType.Repaint) return;
+            const float first = 882, top = 63, spacing = 88, diameter = 23;
+            int clearedCount = game.StageIndex + 1;
+            for (int i = 0; i < game.BossSplits.Length; i++)
+            {
+                float x = first + i * spacing;
+                bool cleared = i < clearedCount;
+                bool next = i == clearedCount;
+                Color color = cleared || next ? HudBrass : WithOpacity(HudMuted, 0.63f);
+                if (i + 1 < game.BossSplits.Length)
+                    Fill(new Rect(x + diameter / 2, top, spacing - diameter, 1), HudRule);
+                var node = new Rect(x - diameter / 2, top - diameter / 2, diameter, diameter);
+                GUI.DrawTexture(node, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, color, cleared ? 0 : 1, diameter / 2);
+                choiceProgressText.normal.textColor = cleared ? HudInk : color;
+                GUI.Label(node, cleared ? "✓" : (i + 1).ToString(), choiceProgressText);
+                choiceProgressText.normal.textColor = color;
+                Label(x - 42, top + 15, 84, 22, next ? "다음 시련" : "시련 " + (i + 1), choiceProgressText);
+            }
+            choiceProgressText.normal.textColor = HudBrass;
         }
 
         void DrawFirstChoiceWarning()
         {
             if (Event.current.type != EventType.Repaint) return;
-            if (choiceWarningText == null)
-            {
-                choiceWarningText = new GUIStyle(centered) { alignment = TextAnchor.MiddleLeft, fontStyle = FontStyle.Bold };
-                choiceWarningText.normal.textColor = choiceWarningColor;
-                choiceWarningIcon = Resources.Load<Texture2D>("UI/CautionIcon");
-            }
-            const string warning = "첫 고유화 선택에 따라 이후 수호자의 유형이 결정됩니다.";
-            promptContent.text = warning;
-            float width = Mathf.Min(800, choiceWarningText.CalcSize(promptContent).x + 63);
-            var banner = new Rect(640 - width * 0.5f, 221, width, 43);
-            Fill(banner, new Color(0.103f, 0.047f, 0.066f, 0.94f));
-            if (choiceWarningIcon != null)
-            {
-                Color previous = GUI.color;
-                GUI.color = Color.white;
-                GUI.DrawTexture(new Rect(banner.x + 9, banner.center.y - 13, 26, 26),
-                    choiceWarningIcon, ScaleMode.ScaleToFit);
-                GUI.color = previous;
-            }
-            choiceWarningText.Draw(new Rect(banner.x + 47, banner.y, banner.width - 63, banner.height),
-                promptContent, false, false, false, false);
-            SpriteArt(new Rect(513, banner.yMax - 3, 254, 6), KarmaArtwork.Sprite("UI", "LongRule"),
-                new Color(choiceWarningColor.r, choiceWarningColor.g, choiceWarningColor.b, 0.45f));
+            if (choiceWarningIcon == null) choiceWarningIcon = Resources.Load<Texture2D>("UI/CautionIcon");
+            choiceNote.normal.textColor = new Color32(255, 186, 156, 255);
+            if (choiceWarningIcon != null) GUI.DrawTexture(new Rect(80, 139, 19, 19), choiceWarningIcon, ScaleMode.ScaleToFit);
+            Label(107, 136, 672, 26, "첫 고유화로 이후 수호자의 유형이 결정됩니다.", choiceNote);
         }
 
         void DrawPauseOverlay()
         {
-            FillScreen(new Color(0.015f, 0.025f, 0.07f, 0.78f));
+            DrawHudShade(0.74f);
+            Panel(new Rect(420, 212, 440, 449));
             Label(280, 245, 720, 55, "일시정지", title);
             SpriteArt(new Rect(460, 315, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            if (ShortcutButton(new Rect(440, 350, 400, 55), "계속하기", KarmaAction.Pause)) game.TogglePause();
+            if (ShortcutButton(new Rect(440, 350, 400, 55), "계속하기", KarmaAction.Pause, true)) game.TogglePause();
             if (ShortcutButton(new Rect(440, 425, 400, 55), "처음부터", KarmaAction.Restart)) game.RestartSession();
             if (ShortcutButton(new Rect(440, 500, 400, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
             if (ShortcutButton(new Rect(440, 575, 400, 55), "환경설정", KarmaAction.Settings)) game.OpenSettings();
@@ -126,60 +231,23 @@ namespace KarmaPrototype
         {
             if (!game.GuardianInheriting)
             {
-                Fill(new Rect(280, 590, 720, 82), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
+                Panel(new Rect(280, 590, 720, 82));
                 Label(300, 609, 680, 44,
                     "고유화 · " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence), centered);
                 return;
             }
-            if (game.CurrentEncounterPrompt == KarmaGame.EncounterPrompt.BossName)
-            {
-                if (!DrawBossEntrance())
-                {
-                    string guardian = game.Enemies.Count > 0 ? game.Enemies[0].DisplayName : "다음 수호자";
-                    Label(300, 594, 680, 35, guardian, centered);
-                    if (game.EncounterPromptReady)
-                        KeyPrompt(new Rect(300, 645, 680, 30), 16, true, KarmaAction.DialogueConfirm, "  계속");
-                }
-                return;
-            }
-            PersonalizationGuide(game.LastPersonalizedEssence);
-        }
-        void PersonalizationGuide(Essence essence)
-        {
-            Fill(new Rect(190, 515, 900, 174), new Color(0.015f, 0.025f, 0.07f, DialoguePanelOpacity));
-            SpriteArt(new Rect(214, 549, 74, 74), KarmaArtwork.SkillIcon(essence), HudIvory);
-            Label(310, 530, 750, 35, KarmaPatternCatalog.UniqueName(essence), heading);
-            string technique = KarmaPatternCatalog.Name(essence);
-            string guide = PersonalizationGuideText(essence)
-                + $"\n이 수호자는 {technique}를 계승해 새로운 {technique} 패턴을 사용합니다.";
-            Label(310, 572, 750, 68, guide, text);
-            KeyPrompt(new Rect(310, 644, 750, 30), 16, false, KarmaAction.DialogueConfirm, "  전투 시작");
-        }
+            if (DrawBossEntrance()) return;
 
-        static string PersonalizationGuideText(Essence essence)
-        {
-            switch (essence)
-            {
-                case Essence.SwordWave:
-                    string pierce = KarmaInput.BindingLabel(KarmaAction.Pierce);
-                    string pierceKey = pierce == "L" ? "L을" : pierce + " 키를";
-                    return "방향키와 " + pierceKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 돌진해 적을 관통할 수 있습니다.";
-                case Essence.RisingSlash:
-                    string attack = KarmaInput.BindingLabel(KarmaAction.Attack);
-                    string attackKey = attack == "J" ? "J를" : attack + " 키를";
-                    return "공중에서 방향키와 " + attackKey
-                        + " 함께 누르면 여덟 방향 중 원하는 방향으로 베며 한 번 더 도약할 수 있습니다.\n아래 방향을 선택하면 잠시 체공할 수 있습니다.";
-                default:
-                    string counter = KarmaInput.BindingLabel(KarmaAction.Counter);
-                    string counterKey = counter == "K" ? "K를" : counter + " 키를";
-                    return "적의 공격이 닿는 순간 " + counterKey
-                        + " 눌러 받아내면 그 힘을 되돌려줄 수 있습니다.";
-            }
+            string guardian = GuardianEncounterTitle(game.Player.Essences.PersonalizationOrder);
+            Label(300, 594, 680, 35, guardian, centered);
+            if (game.AwaitingBossNameConfirmation)
+                KeyPrompt(new Rect(300, 645, 680, 30), 16, true, KarmaAction.DialogueConfirm, "  전투 시작");
         }
 
         void EndScreen(bool victory)
         {
+            DrawHudShade(0.76f);
+            Panel(new Rect(250, 143, 780, 519));
             if (victory)
             {
                 Label(280, 180, 720, 60, "시련의 끝", title);
@@ -190,7 +258,7 @@ namespace KarmaPrototype
                 Label(443, 401, 610, 28, "이제 그 기술들은 누구의 것이냐?", text);
                 DrawSpeakerNameplate(340, 439, "제자");
                 Label(443, 439, 610, 28, "배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", text);
-                if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart)) game.RestartSession();
+                if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart, true)) game.RestartSession();
                 if (ShortcutButton(new Rect(420, 585, 440, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
                 return;
             }
@@ -199,7 +267,7 @@ namespace KarmaPrototype
             Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
             Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
             Label(180, 405, 920, 55, "원형과 고유화 순서를 초기화하고\n첫 번째 시련부터 다시 도전합니다.", centered);
-            if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart)) game.RestartSession();
+            if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart, true)) game.RestartSession();
             if (ShortcutButton(new Rect(420, 585, 440, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
         }
     }

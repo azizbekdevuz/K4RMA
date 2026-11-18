@@ -117,10 +117,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 768
-        width: 1024
+        width: 1088
         height: 768
       alignment: 9
-      pivot: {x: 0.48958, y: 0.10561}
+      pivot: {x: 0.490192941, y: 0.10561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -137,12 +137,12 @@ TextureImporter:
       name: PersonalizeWave_01
       rect:
         serializedVersion: 2
-        x: 1024
+        x: 1088
         y: 768
-        width: 1024
+        width: 1088
         height: 768
       alignment: 9
-      pivot: {x: 0.48958, y: 0.10561}
+      pivot: {x: 0.490192941, y: 0.10561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -159,12 +159,12 @@ TextureImporter:
       name: PersonalizeWave_02
       rect:
         serializedVersion: 2
-        x: 2048
+        x: 2176
         y: 768
-        width: 1024
+        width: 1088
         height: 768
       alignment: 9
-      pivot: {x: 0.48958, y: 0.10561}
+      pivot: {x: 0.490192941, y: 0.10561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -183,10 +183,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1024
+        width: 1088
         height: 768
       alignment: 9
-      pivot: {x: 0.48958, y: 0.10561}
+      pivot: {x: 0.490192941, y: 0.10561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -203,12 +203,12 @@ TextureImporter:
       name: PersonalizeWave_04
       rect:
         serializedVersion: 2
-        x: 1024
+        x: 1088
         y: 0
-        width: 1024
+        width: 1088
         height: 768
       alignment: 9
-      pivot: {x: 0.48958, y: 0.10561}
+      pivot: {x: 0.490192941, y: 0.10561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -225,12 +225,12 @@ TextureImporter:
       name: PersonalizeWave_05
       rect:
         serializedVersion: 2
-        x: 2048
+        x: 2176
         y: 0
-        width: 1024
+        width: 1088
         height: 768
       alignment: 9
-      pivot: {x: 0.48958, y: 0.10561}
+      pivot: {x: 0.490192941, y: 0.10561}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

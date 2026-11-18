@@ -30,6 +30,7 @@ namespace KarmaPrototype.EditorTools
                 {
                     var f = line.Split('\t');
                     string path = "Motions12/" + f[0] + "/" + f[1];
+                    CheckCellEdges("Assets/Arts/Resources/" + path + ".png", f);
                     var sprites = Resources.LoadAll<Sprite>(path).OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
                     if (sprites.Length != int.Parse(f[4])) throw new Exception(path + ": count");
                     var scales = f[10].Split(',').Select(v => float.Parse(v, CultureInfo.InvariantCulture)).ToArray();
@@ -52,6 +53,36 @@ namespace KarmaPrototype.EditorTools
             File.WriteAllLines("output/validation/motions12/sheets.csv", rows);
             KarmaMotionRouteChecks.Run();
             Debug.Log("Verified " + (rows.Count-1) + " Resources sheets and both player clip libraries.");
+        }
+
+        // Read source PNG alpha before platform texture compression. Neighboring
+        // cells must have a clear gutter, including around sword tips and ribbons.
+        static void CheckCellEdges(string path, string[] fields)
+        {
+            int columns = int.Parse(fields[2]), rows = int.Parse(fields[3]), used = int.Parse(fields[4]);
+            int width = int.Parse(fields[5]), height = int.Parse(fields[6]);
+            var image = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            try
+            {
+                if (!image.LoadImage(File.ReadAllBytes(path)) || image.width != columns * width
+                    || image.height != rows * height)
+                    throw new InvalidDataException(path + ": source PNG does not match its catalog grid");
+                var pixels = image.GetPixels32();
+                for (int cell = 0; cell < rows * columns; cell++)
+                {
+                    int left = cell % columns * width;
+                    int bottom = (rows - 1 - cell / columns) * height;
+                    for (int y = 0; y < height; y++)
+                    {
+                        bool fullRow = cell >= used || y == 0 || y == height - 1;
+                        int start = (bottom + y) * image.width + left;
+                        for (int x = 0; x < width; x += fullRow ? 1 : Mathf.Max(1, width - 1))
+                            if (pixels[start + x].a >= 16)
+                                throw new InvalidDataException($"{path} cell {cell + 1} contains visible artwork at ({x},{y}) in the gutter or an unused cell");
+                    }
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(image); }
         }
 
         static void CheckGeometry(Sprite sprite, float expectedScale, Vector2 pivot)

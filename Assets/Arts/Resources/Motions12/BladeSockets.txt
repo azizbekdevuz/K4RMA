@@ -7,9 +7,9 @@ WaveRise/Windup_02	42	53	4	68
 WaveWard/Windup_00	36	54	9	86
 WaveWard/Windup_01	35	53	8	83
 WaveWard/Windup_02	36	55	6	81
-WaveFinal/Windup_00	39	55	6	83
-WaveFinal/Windup_01	37	53	4	76
-WaveFinal/Windup_02	38	54	3	71
+WaveFinal/Windup_00	42	55	9	83
+WaveFinal/Windup_01	40	53	7	76
+WaveFinal/Windup_02	41	54	6	71
 Wave/SW01_00	41	32	8	24
 Wave/SW01_01	54	40	88	40
 Wave/SW01_02	56	39	92	44

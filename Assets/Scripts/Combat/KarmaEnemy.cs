@@ -58,6 +58,7 @@ namespace KarmaPrototype
             state = ActionState.Approach;
             behavior.Initialize();
             animator.ShowStandingArt();
+            KarmaArtwork.PrepareLibrary(PrimaryType);
         }
         public void PrepareRevival(Vector3 position, Vector3 artworkScale)
         {

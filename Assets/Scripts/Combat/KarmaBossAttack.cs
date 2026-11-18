@@ -40,7 +40,8 @@ namespace KarmaPrototype
             {
                 var burst = KarmaCombatVFX.Burst(root, at, sr.sprite, "Guardian launch/" + pose,
                     new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y)
-                        * (restrainedVisual ? 0.8f : 1.15f), 0.24f, angle, color, restrainedVisual);
+                        * (restrainedVisual ? 0.8f : 1.15f), 0.24f, angle, color, restrainedVisual,
+                    emitSparks: owner.PrimaryType.HasValue);
                 burst.transform.parent.localScale = new Vector3(sr.flipX ? -1 : 1, 1, 1);
             }
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;

@@ -37,14 +37,14 @@ namespace KarmaPrototype
             return true;
         }
         public static SpriteRenderer SpawnSprite(Transform parent, Vector2 at, string sheet, string pose,
-            Vector2 size, float seconds, float angle = 0)
+            Vector2 size, float seconds, float angle = 0, bool emitSparks = true)
         {
             var sprite = KarmaArtwork.Sprite(sheet, pose);
             if (sprite == null) return null;
             Color tint = sheet == "HitVFX" ? new Color(1, 0.75f, 0.32f)
                 : sheet == "PersonalizationVFX" ? new Color(0.58f, 0.85f, 1)
                 : new Color(0.35f, 0.7f, 1);
-            return Burst(parent, at, sprite, sheet + "/" + pose, size, seconds, angle, tint);
+            return Burst(parent, at, sprite, sheet + "/" + pose, size, seconds, angle, tint, emitSparks: emitSparks);
         }
 
         static SpriteRenderer Layer(Transform parent, string name, Sprite sprite, int order, Color color, bool additive)
@@ -55,7 +55,7 @@ namespace KarmaPrototype
             if (additive && GlowMaterial != null) sr.sharedMaterial = GlowMaterial;
             return sr;
         }
-        public static SpriteRenderer Burst(Transform parent, Vector2 at, Sprite sprite, string name, Vector2 size, float seconds, float angle, Color color, bool restrained = false)
+        public static SpriteRenderer Burst(Transform parent, Vector2 at, Sprite sprite, string name, Vector2 size, float seconds, float angle, Color color, bool restrained = false, bool emitSparks = true)
         {
             var root = new GameObject(name); root.transform.SetParent(parent, false);
             root.transform.localPosition = at; root.transform.localRotation = Quaternion.Euler(0, 0, angle);
@@ -69,6 +69,7 @@ namespace KarmaPrototype
             fx.glow.transform.localScale = fx.scale * (restrained ? 1.04f : 1.16f);
             fx.echo = Layer(root.transform, "Sweeping echo", sprite, 20, new Color(color.r, color.g, color.b, restrained ? 0.1f : 0.6f), true);
             fx.echo.transform.localScale = fx.scale * (restrained ? 1.06f : 1.28f);
+            if (!emitSparks) return fx.core;
             int particles = restrained ? 2 : name.Contains("Hit") || name.Contains("Impact") ? 9 : 5;
             fx.motes = new Mote[particles];
             for (int i = 0; i < particles; i++)

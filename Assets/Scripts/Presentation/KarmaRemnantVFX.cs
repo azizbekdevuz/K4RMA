@@ -81,7 +81,8 @@ namespace KarmaPrototype
         {
             string pose = essence == Essence.Guard ? "Counter" : essence == Essence.SwordWave ? "Pierce" : "AirSlash";
             var procVisual = KarmaCombatVFX.SpawnSprite(game.World, p, "PersonalizationVFX", pose,
-                KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, essence == Essence.SwordWave && facing < 0 ? 180 : 0);
+                KarmaSpace.Units(new Vector2(2.5f, 2)), 0.35f, essence == Essence.SwordWave && facing < 0 ? 180 : 0,
+                emitSparks: essence != Essence.SwordWave);
             if (procVisual != null && essence != Essence.SwordWave)
                 procVisual.transform.parent.localScale = new Vector3(facing, 1, 1);
             Color color = game.Config.ColorOf(essence);
@@ -102,7 +103,7 @@ namespace KarmaPrototype
             }
         }
         public static void SwordSlash(Transform parent, Vector2 origin, Vector2 direction,
-            float reach, float height, float seconds)
+            float reach, float height, float seconds, bool emitSparks = true)
         {
             direction.Normalize();
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -110,7 +111,7 @@ namespace KarmaPrototype
             Vector2 effectSize = pose == "Rising" ? new Vector2(height, reach * 1.3f) : new Vector2(reach * 1.3f, height);
             float effectAngle = angle - (pose == "Rising" ? 90 : 0);
             if (KarmaCombatVFX.SpawnSprite(parent, origin + direction * (reach * 0.48f), "PlayerVFX", pose,
-                effectSize, seconds, effectAngle) != null) return;
+                effectSize, seconds, effectAngle, emitSparks: emitSparks) != null) return;
             // Broad cool silhouette under a crisp ivory blade; visible against dark wood.
             var rim = Draw(parent, origin + direction * (reach * 0.48f), new Vector2(reach * 1.3f, height),
                 new Color(0.4f, 0.76f, 1, 0.7f), 1);

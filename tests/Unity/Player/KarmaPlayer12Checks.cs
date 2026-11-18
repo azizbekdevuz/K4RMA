@@ -145,7 +145,14 @@ public static class KarmaPlayer12Checks
             {
                 await Keys();player.ResetForRoom(new Vector2(12,12),true);
                 Vector2 from=player.Position;
+                int childrenBefore = game.World.childCount;
                 typeof(KarmaPlayer).GetMethod("BeginDirectionalSlash",F).Invoke(player,new object[]{direction,game.Config.Techniques.pierceDistance,Essence.SwordWave});
+                var newEffects = game.World.Cast<Transform>().Skip(childrenBefore).ToArray();
+                var bursts = newEffects.Where(t => t.GetComponent<KarmaCombatVFX>() != null).ToArray();
+                Check(newEffects.Any(t => t.name == "Directional slash") && bursts.Length == 2 &&
+                    bursts.All(t => t.Find("Ivory edge") != null && t.Find("Colored light") != null &&
+                        t.Find("Sweeping echo") != null && t.Find("Spark") == null),
+                    "Teleport keeps the trail and both slash flashes without loose sparks");
                 string pose=direction.y>0.75f?"PierceUp":direction.y<-.25f?"PierceDown":direction.y>.25f?"PierceDiagonal":"Pierce";
                 Check(animator.CurrentPose==pose,"Directional dash selects "+pose);
                 Check(Vector2.Distance(player.Position,from+direction*game.Config.Techniques.pierceDistance)<0.06f,"Dash keeps configured atomic travel");
@@ -320,6 +327,20 @@ public static class KarmaPlayer12Checks
             Check(Mathf.Abs(master.transform.TransformPoint(support).y) < 0.005f, "Master sandal support touches floor y=0");
             await Task.Delay(700);
             ScreenCapture.CaptureScreenshot("output/validation/player12/tutorial.png"); await Task.Delay(150);
+            game.StartRun();
+            game.Player.ResetForRoom(new Vector2(game.Enemies[0].Position.x - 4, KarmaSpace.PlayerHalfHeight + 0.05f), true);
+            if (!game.Player.TestInvincible) game.Player.ToggleTestInvincibility();
+            var neutralSwings = new HashSet<KarmaCombatVFX>();
+            await Await(() => {
+                foreach (var burst in game.World.GetComponentsInChildren<KarmaCombatVFX>())
+                {
+                    if (!burst.name.StartsWith("Guardian launch/") || !neutralSwings.Add(burst)) continue;
+                    Check(burst.transform.Find("Ivory edge") != null && burst.transform.Find("Colored light") != null &&
+                        burst.transform.Find("Sweeping echo") != null && burst.transform.Find("Spark") == null,
+                        "Neutral ground strike keeps its artwork without loose sparks");
+                }
+                return neutralSwings.Count >= 2;
+            }, "Both neutral ground strikes should play");
             game.ReturnToTitle();
             result = "PASS: " + checks + " native player 12FPS, CC, facing and original tutorial artwork checks";
         }

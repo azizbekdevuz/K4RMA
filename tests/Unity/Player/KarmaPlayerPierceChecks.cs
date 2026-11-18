@@ -82,7 +82,7 @@ public static class KarmaPlayerPierceChecks
             if (player.TestInvincible) player.ToggleTestInvincibility();
             foreach (var enemy in game.Enemies) enemy.gameObject.SetActive(false);
             var animator = player.GetComponentInChildren<KarmaCharacterAnimator>();
-            Check(Application.targetFrameRate == 12 && Mathf.Approximately(Time.fixedDeltaTime, 1f / 12), "Game clocks");
+            Check(Application.targetFrameRate != 12 && Mathf.Abs(Time.fixedDeltaTime - 0.02f) < 0.00001f, "Game clocks");
             var picture = (SpriteRenderer)typeof(KarmaCharacterAnimator).GetField("picture", Private).GetValue(animator);
             var sample = typeof(KarmaCharacterAnimator).GetMethod("SamplePlayerClip", Private);
             var clock = typeof(KarmaCharacterAnimator).GetField("playerClipAt", Private);

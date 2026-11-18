@@ -78,7 +78,8 @@ namespace KarmaPrototype
                 new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f)));
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
-            KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f), game.Config.Techniques.slashLife);
+            KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f),
+                game.Config.Techniques.slashLife, emitSparks: false);
             Essences.NotifyUnique(essence);
             foreach (var enemy in game.Enemies.ToArray())
             {

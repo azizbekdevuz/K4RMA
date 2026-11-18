@@ -23,7 +23,8 @@ namespace KarmaPrototype
             if (Enraged && !announcedEnrage)
             {
                 announcedEnrage = true;
-                KarmaCombatVFX.SpawnSprite(effectsRoot, Position, "PersonalizationVFX", "Fusion", KarmaSpace.Units(new Vector2(4, 4)), 0.7f);
+                KarmaCombatVFX.SpawnSprite(effectsRoot, Position, "PersonalizationVFX", "Fusion",
+                    KarmaSpace.Units(new Vector2(4, 4)), 0.7f, emitSparks: PrimaryType.HasValue);
             }
             if (pendingParry)
             {

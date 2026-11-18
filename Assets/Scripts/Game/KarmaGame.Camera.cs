@@ -97,7 +97,7 @@ namespace KarmaPrototype
         }
         void UpdateHitFeedback()
         {
-            Time.timeScale = GameplayFrozen ? 0 : hitFeedback.TimeScale(Time.unscaledTime, IsCombat, Paused, KarmaBootstrap.Step);
+            Time.timeScale = GameplayFrozen ? 0 : hitFeedback.TimeScale(Time.unscaledTime, IsCombat, Paused, Time.unscaledDeltaTime);
         }
         void ResetHitFeedback()
         {

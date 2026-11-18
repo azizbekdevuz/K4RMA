@@ -137,6 +137,7 @@ namespace KarmaPrototype
             Phase = RunPhase.Transition; transitionLeft = PersonalizationDuration;
             KarmaGrowthFocus.Begin(this, fallenGuardian);
             KarmaPersonalizationVFX.Play(this, Player.transform, essence, PersonalizationDuration, false);
+            KarmaArtwork.PrepareLibrary(KarmaPatternCatalog.Primary(Player.Essences.PersonalizationOrder));
         }
         void UpdatePersonalization()
         {

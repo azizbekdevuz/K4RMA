@@ -18,6 +18,36 @@ namespace KarmaPrototype
         // Enlarge the foot-pivoted artwork for the full-arena camera view.
         const float CharacterPictureScale = KarmaSpace.Scale;
         static KarmaArtworkSettings settings;
+        const string SwordLibrary = "BossArtwork/KarmaSwordBossSprites";
+        const string RisingLibrary = "BossArtwork/KarmaRisingBossSprites";
+        const string GuardLibrary = "BossArtwork/KarmaGuardBossSprites";
+        static readonly Dictionary<string, ResourceRequest> pendingLibraries = new Dictionary<string, ResourceRequest>();
+        static readonly Dictionary<string, KarmaSpriteLibrary> loadedLibraries = new Dictionary<string, KarmaSpriteLibrary>();
+
+        // These sheet IDs are owned by one library. Shared and extension sheets use the normal lookup below.
+        static string EffectLibrary(string sheet)
+        {
+            if (sheet == "SwordBossVFX" || sheet == "BossStun") return SwordLibrary;
+            if (sheet == "RisingBossVFX" || sheet == "RisingStunStars") return RisingLibrary;
+            if (sheet != null && sheet.StartsWith("Guard", StringComparison.Ordinal) && sheet != "GuardianVFX") return GuardLibrary;
+            return null;
+        }
+        internal static void PrepareLibrary(Essence? primary)
+        {
+            if (!primary.HasValue) return;
+            string path = primary == Essence.Guard ? GuardLibrary : primary == Essence.RisingSlash ? RisingLibrary : SwordLibrary;
+            if (!loadedLibraries.ContainsKey(path) && !pendingLibraries.ContainsKey(path))
+                pendingLibraries.Add(path, Resources.LoadAsync<KarmaSpriteLibrary>(path));
+        }
+        static KarmaSpriteLibrary LoadLibrary(string path)
+        {
+            if (loadedLibraries.TryGetValue(path, out var library)) return library;
+            library = pendingLibraries.TryGetValue(path, out var request) && request.isDone
+                ? (KarmaSpriteLibrary)request.asset : Resources.Load<KarmaSpriteLibrary>(path);
+            pendingLibraries.Remove(path);
+            if (library == null) throw new InvalidOperationException("Missing boss sprite library " + path);
+            return loadedLibraries[path] = library;
+        }
         static KarmaSpriteLibrary[] bossLibraries;
         static KarmaSpriteLibrary[] BossLibraries
         {
@@ -47,6 +77,7 @@ namespace KarmaPrototype
         {
             // Imported textures and sprites belong to Unity, not this runtime cache.
             settings = null; bossLibraries = null;
+            pendingLibraries.Clear(); loadedLibraries.Clear();
             failures.Clear();
         }
         public static Texture2D Texture(string name)
@@ -67,6 +98,8 @@ namespace KarmaPrototype
             if (body != null) return body;
             var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
             if (common != null) return common;
+            var path = EffectLibrary(sheet);
+            if (path != null) return LoadLibrary(path).Get(sheet, pose);
             foreach (var library in BossLibraries)
             {
                 var sprite = library.Get(sheet, pose);
@@ -88,7 +121,9 @@ namespace KarmaPrototype
             // These character sheets are wholly owned by the shared library.
             if (sheet == "Player" || sheet == "Neutral") return common;
             var sprites = new List<Sprite>();
-            foreach (var library in BossLibraries) sprites.AddRange(library.All(sheet));
+            var path = EffectLibrary(sheet);
+            if (path != null) sprites.AddRange(LoadLibrary(path).All(sheet));
+            else foreach (var library in BossLibraries) sprites.AddRange(library.All(sheet));
             sprites.AddRange(common);
             return sprites.ToArray();
         }
@@ -157,7 +192,8 @@ namespace KarmaPrototype
         }
         public static Transform Guardian(Transform parent, IReadOnlyList<Essence> order, bool final)
         {
-            var sprite = order.Count == 0 ? Sprite("Neutral", "Idle") : Settings.Guardian(KarmaPatternCatalog.Primary(order));
+            var primary = KarmaPatternCatalog.Primary(order);
+            var sprite = order.Count == 0 ? Sprite("Neutral", "Idle") : Settings.Guardian(primary);
             if (sprite == null) throw new InvalidOperationException("수호자 Sprite 슬롯이 비어 있습니다. KarmaArtworkSettings를 확인하세요.");
             var root = new GameObject("Artwork").transform; root.SetParent(parent, false);
             var picture = new GameObject("Guardian sprite"); picture.transform.SetParent(root, false);
@@ -166,7 +202,6 @@ namespace KarmaPrototype
             var renderer = picture.AddComponent<SpriteRenderer>(); renderer.sortingOrder = 5; KarmaVisuals.ApplyMaterial(renderer);
             var animator = root.gameObject.AddComponent<KarmaCharacterAnimator>();
             animator.ConfigureSprites(renderer, new[] { sprite });
-            var primary = KarmaPatternCatalog.Primary(order);
             animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward");
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
             string form = GuardianFormName(order);

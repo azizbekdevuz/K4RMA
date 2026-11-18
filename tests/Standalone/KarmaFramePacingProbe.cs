@@ -7,11 +7,14 @@ using System.Linq;
 using System.Reflection;
 using KarmaPrototype;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 // Included in the standalone validation build. Launch with -karmaFrameReport <file>.
 public sealed class KarmaFramePacingProbe : MonoBehaviour
 {
     static string report;
+    static bool activeCombat;
     int ticks;
     readonly WaitForEndOfFrame endOfFrame = new WaitForEndOfFrame();
 
@@ -20,6 +23,8 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
     {
         var args = Environment.GetCommandLineArgs();
         int index = Array.IndexOf(args, "-karmaFrameReport");
+        activeCombat = Array.IndexOf(args, "-karmaCombatReport") >= 0;
+        if (activeCombat) index = Array.IndexOf(args, "-karmaCombatReport");
         if (index < 0 || index + 1 >= args.Length) return;
         report = args[index + 1];
         new GameObject("Standalone frame pacing probe").AddComponent<KarmaFramePacingProbe>();
@@ -38,7 +43,14 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
     IEnumerator Start()
     {
         Application.runInBackground = true;
+        Debug.Log($"Display probe: focused={Application.isFocused}, refresh={Screen.currentResolution.refreshRateRatio}, " +
+            $"vSync={QualitySettings.vSyncCount}, targetFrameRate={Application.targetFrameRate}, fixedDeltaTime={Time.fixedDeltaTime}");
         var game = FindAnyObjectByType<KarmaGame>();
+        if (activeCombat)
+        {
+            yield return MeasureActiveCombat(game);
+            yield break;
+        }
         File.WriteAllText(report, "phase,frame,real_seconds,interval_ms,fixed_updates,time_scale\n");
         yield return Measure(game, RunPhase.Title, "TitleCold");
         yield return Measure(game, RunPhase.Title);
@@ -105,6 +117,91 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
         results.Add(failures.Count == 0 ? "PASS" : "FAIL");
         File.WriteAllLines(Path.ChangeExtension(report, ".checks.txt"), results);
         Application.Quit(failures.Count == 0 ? 0 : 1);
+    }
+
+    IEnumerator MeasureActiveCombat(KarmaGame game)
+    {
+        // Include the operation and its first presented frame, not just the steady state afterwards.
+        var rows = new List<string>();
+        rows.Add("section,frame,real_seconds,interval_ms,fixed_updates,time_scale,player_x,guardian_x,player_pose,guardian_pose,fight_seconds");
+        var keyboard = InputSystem.AddDevice<Keyboard>();
+        bool finished = false;
+        try
+        {
+            yield return endOfFrame;
+            double previous = Time.realtimeSinceStartupAsDouble;
+            int previousTicks = ticks;
+            game.StartRun();
+            game.Player.ToggleTestInvincibility();
+            yield return endOfFrame;
+            void Record(string section, int frame, KarmaCharacterAnimator actor, KarmaCharacterAnimator boss)
+            {
+                double now = Time.realtimeSinceStartupAsDouble;
+                var enemy = game.Enemies[0];
+                rows.Add(FormattableString.Invariant($"{section},{frame},{now:F5},{(now-previous)*1000:F3},{ticks-previousTicks},{Time.timeScale:F3},{game.Player.Position.x:F4},{enemy.Position.x:F4},{actor.CurrentPose},{boss.CurrentPose},{enemy.FightSeconds:F4}"));
+                previous = now;
+                previousTicks = ticks;
+            }
+            var player = game.Player.GetComponentInChildren<KarmaCharacterAnimator>(true);
+            var guardian = game.Enemies[0].GetComponentInChildren<KarmaCharacterAnimator>(true);
+            Record("StartRun", 0, player, guardian);
+            foreach (var essence in new[] { Essence.SwordWave, Essence.RisingSlash, Essence.Guard })
+            {
+                game.Player.Essences.Preview(essence);
+                game.Player.Essences.Confirm(out _);
+            }
+            typeof(KarmaGame).GetProperty("StageIndex").SetValue(game, 3);
+            typeof(KarmaGame).GetMethod("LoadRoom", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(game, new object[] { true });
+            guardian = game.Enemies[0].GetComponentInChildren<KarmaCharacterAnimator>(true);
+            yield return endOfFrame;
+            Record("EnterWaveFinal", 0, player, guardian);
+            double combatStart = previous;
+            for (int i = 0; previous - combatStart < 25; i++)
+            {
+                if (game.Phase != RunPhase.Combat || game.Enemies.Count == 0) throw new InvalidOperationException("Combat ended before capture");
+                bool approach = game.Enemies[0].Position.x >= game.Player.Position.x;
+                int sample = (int)((previous - combatStart) * 12);
+                var move = (sample % 48 < 32) == approach ? Key.D : Key.A;
+                int step = sample % 36;
+                var keys = step < 3 ? new KeyboardState(move, Key.Space)
+                    : step < 15 ? new KeyboardState(move, Key.J) : new KeyboardState(move);
+                InputSystem.QueueStateEvent(keyboard, keys);
+                yield return endOfFrame;
+                Record("Combat", i + 1, player, guardian);
+            }
+            var args = Environment.GetCommandLineArgs();
+            int captureIndex = Array.IndexOf(args, "-karmaSkillFrames");
+            if (captureIndex >= 0 && captureIndex + 1 < args.Length)
+            {
+                string directory = args[captureIndex + 1];
+                Directory.CreateDirectory(directory);
+                game.Enemies[0].gameObject.SetActive(false);
+                game.Player.ResetForRoom(KarmaStage.Spawn, true);
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                for (int i = 0; i < 6; i++) yield return endOfFrame;
+                var capture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+                float previousCaptureStep = Time.captureDeltaTime;
+                Time.captureDeltaTime = KarmaBootstrap.Step;
+                for (int i = 0; i < 32; i++)
+                {
+                    var keys = i == 3 ? new KeyboardState(Key.Space)
+                        : i == 23 ? new KeyboardState(Key.L) : new KeyboardState();
+                    InputSystem.QueueStateEvent(keyboard, keys);
+                    yield return endOfFrame;
+                    capture.ReadPixels(new Rect(0, 0, capture.width, capture.height), 0, 0, false);
+                    File.WriteAllBytes(Path.Combine(directory, i.ToString("D3") + ".jpg"), capture.EncodeToJPG(85));
+                }
+                Destroy(capture);
+                Time.captureDeltaTime = previousCaptureStep;
+            }
+            finished = true;
+        }
+        finally
+        {
+            File.WriteAllLines(report, rows);
+            InputSystem.RemoveDevice(keyboard);
+            Application.Quit(finished ? 0 : 1);
+        }
     }
 
     IEnumerator Measure(KarmaGame game, RunPhase expected, string label = null)

@@ -6,8 +6,8 @@ namespace KarmaPrototype
     // Animates the host-owned cue; HideStunCue still owns stun/interrupt/death cleanup.
     public sealed class KarmaGuardStunStars : MonoBehaviour
     {
-        const int FrameCount = 48;
-        const float FramesPerSecond = 24;
+        const int FrameCount = 24;
+        const float FramesPerSecond = KarmaBootstrap.FramesPerSecond;
         const float CycleSeconds = FrameCount / FramesPerSecond;
         // Approved preview: 160px cue canvas / 250px crouched body;
         // the orbit centre is 15px above the body's top after lowering by 25px.
@@ -31,7 +31,7 @@ namespace KarmaPrototype
             this.playOnce = playOnce;
             for (int i = 0; i < FrameCount; i++)
             {
-                frames[i] = KarmaArtwork.Sprite("GuardStunStars", "Frame" + i.ToString("00"));
+                frames[i] = KarmaArtwork.Sprite("GuardStunStars", "Frame" + (2 * i).ToString("00"));
                 if (frames[i] == null)
                     throw new InvalidOperationException("방어형 기절 별 프레임 누락: " + i);
             }

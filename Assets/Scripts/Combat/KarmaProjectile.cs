@@ -10,7 +10,7 @@ namespace KarmaPrototype
         int trainingId;
         KarmaGame game;
         Vector2 velocity;
-        float damage, radius, expiresAt;
+        float damage, radius, remaining;
         public static void Spawn(KarmaGame game, Vector2 position, Vector2 velocity, float damage,
             Color color, float radius = 0.2f * KarmaSpace.Scale)
         {
@@ -19,21 +19,22 @@ namespace KarmaPrototype
             var shot = sr.gameObject.AddComponent<KarmaProjectile>();
             shot.trainingId = ++nextTrainingId;
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
-            shot.radius = radius; shot.expiresAt = Time.time + 3;
+            shot.radius = radius; shot.remaining = 3;
             KarmaRemnantVFX.ProjectileLook(sr, velocity);
             KarmaCombatVFX.AttachAttack(sr, velocity, new Color(0.35f, 0.75f, 1));
             game.Projectiles.Add(shot);
             KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shot);
         }
-        void Update()
+        void FixedUpdate()
         {
-            if (game == null) { Destroy(gameObject); return; }
+            if (game == null) { enabled = false; Destroy(gameObject); return; }
             if (game.GameplayFrozen) return;
-            if (!game.AllowsPlayerActions || Time.time > expiresAt) { Destroy(gameObject); return; }
+            if (!game.AllowsPlayerActions) { enabled = false; Destroy(gameObject); return; }
             Vector2 from = transform.position;
-            Vector2 to = from + velocity * Time.deltaTime;
+            float travelTime = Mathf.Min(remaining, Time.fixedDeltaTime);
+            remaining -= travelTime;
+            Vector2 to = from + velocity * travelTime;
             transform.position = to;
-            if (to.x < KarmaStage.ArenaLeft || to.x > (game.Tutorial != null ? KarmaTutorialStage.Right : KarmaStage.ArenaRight) || to.y < 0 || to.y > KarmaSpace.Units(12)) { Destroy(gameObject); return; }
             if (game.Tutorial != null && game.Tutorial.HitProjectile(trainingId, from, to, radius))
             { enabled = false; Destroy(gameObject); return; }
             // Damage can remove the hit enemy; this path returns immediately afterward.
@@ -47,6 +48,7 @@ namespace KarmaPrototype
                 // Current player projectiles stop at their first target; piercing is a melee move.
                 enabled = false; Destroy(gameObject); return;
             }
+            if (remaining <= 0 || to.x < KarmaStage.ArenaLeft || to.x > (game.Tutorial != null ? KarmaTutorialStage.Right : KarmaStage.ArenaRight) || to.y < 0 || to.y > KarmaSpace.Units(12)) { enabled = false; Destroy(gameObject); return; }
         }
         void OnDestroy() { if (game != null) game.Projectiles.Remove(this); }
     }

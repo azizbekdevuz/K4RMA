@@ -37,7 +37,8 @@ namespace KarmaPrototype
         public bool Invulnerable { get { return fullShield; } }
         public bool Armored { get { return fullShield || behavior != null && behavior.Armored; } }
         public bool AutoShieldActive { get { return behavior != null && behavior.AutoShieldActive; } }
-        public bool TryQueueParry() { return behavior != null && behavior.TryQueueParry(); }
+        public bool TryQueueParry() => TryQueueParry(Time.time);
+        internal bool TryQueueParry(float pressedAt) { return behavior != null && behavior.TryQueueParry(pressedAt); }
         internal Vector3? CameraFocus { get { return behavior?.CameraFocus; } }
         internal float CameraSize(float aspect) { return behavior != null ? behavior.CameraSize(aspect) : 0; }
         public void Initialize(KarmaGame director, int stage)
@@ -56,6 +57,7 @@ namespace KarmaPrototype
             timer = 1.4f; nextUltimate = Tuning.ultimateCooldown;
             state = ActionState.Approach;
             behavior.Initialize();
+            animator.ShowStandingArt();
         }
         public void PrepareRevival(Vector3 position, Vector3 artworkScale)
         {

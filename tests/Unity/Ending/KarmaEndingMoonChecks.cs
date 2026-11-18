@@ -502,7 +502,7 @@ public static class KarmaEndingMoonChecks
         var picture = (SpriteRenderer)Get(animator, "picture");
         Check(presentation != null && game.EndingSpeaker == "스승" && game.EndingMemoryDim > 0.1f,
             "Master memory and teaching share the same shot");
-        Check(animator.CurrentPose == "Kneel" && picture.sprite.name.StartsWith("Kneel_"), "Approved Native24 kneeling frames are active");
+        Check(animator.CurrentPose == "Kneel" && picture.sprite.name.StartsWith("Kneel_"), "Approved Native12 kneeling frames are active");
         Check(game.EndingLine.Contains("네 검에 남아 있다"),
             "The lesson recognizes what the apprentice retained");
         Check(Array.Exists(UnityEngine.Object.FindObjectsByType<AudioSource>(),
@@ -559,7 +559,7 @@ public static class KarmaEndingMoonChecks
         {
             Check(game.EndingLine == KarmaPatternCatalog.UniqueName(essence), "The caption names " + essence + " personalization");
             Check(animator.CurrentPose == pose && picture.sprite.name.StartsWith(pose + "_"),
-                "The apprentice performs " + pose + " with Native24 frames");
+                "The apprentice performs " + pose + " with Native12 frames");
             for (int i = 0; i < skillSymbols.Length; i++)
                 Check(i == (int)essence ? skillSymbols[i].color.a > 0.4f : skillSymbols[i].color.a < 0.01f,
                     "Only the current skill mark is visible");
@@ -678,7 +678,7 @@ public static class KarmaEndingMoonChecks
         try
         {
             Directory.CreateDirectory(Output);
-            Application.runInBackground = true; Time.captureDeltaTime = 1f / 24;
+            Application.runInBackground = true; Time.captureDeltaTime = 1f / 12;
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             target = new RenderTexture(1280, 720, 24); image = new Texture2D(1280, 720, TextureFormat.RGBA32, false);
             Application.logMessageReceived += Log;

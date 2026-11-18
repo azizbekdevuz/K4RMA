@@ -8,6 +8,13 @@ namespace KarmaPrototype
     public static class KarmaArtwork
     {
         public const string SettingsResourcePath = "KarmaArtworkSettings";
+        public const string StageArt = "Reference/GameScale_HD_StageStyle/";
+        public static Sprite StageIdle(string form)
+        {
+            var sprite = Resources.Load<Sprite>(StageArt + form + "_Idle");
+            if (sprite == null) throw new InvalidOperationException("Missing StageStyle Idle: " + form);
+            return sprite;
+        }
         // Enlarge the foot-pivoted artwork for the full-arena camera view.
         const float CharacterPictureScale = KarmaSpace.Scale;
         static KarmaArtworkSettings settings;
@@ -56,6 +63,8 @@ namespace KarmaPrototype
         }
         public static Sprite Sprite(string sheet, string pose)
         {
+            var body = KarmaBodyPoses.Get(sheet, pose);
+            if (body != null) return body;
             var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.Get(sheet, pose) : null;
             if (common != null) return common;
             foreach (var library in BossLibraries)
@@ -73,6 +82,8 @@ namespace KarmaPrototype
         }
         public static Sprite[] Sprites(string sheet)
         {
+            var body = KarmaBodyPoses.All(sheet);
+            if (body.Length > 0 && sheet != "Inheritance") return body;
             var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.All(sheet) : Array.Empty<Sprite>();
             // These character sheets are wholly owned by the shared library.
             if (sheet == "Player" || sheet == "Neutral") return common;
@@ -81,18 +92,42 @@ namespace KarmaPrototype
             sprites.AddRange(common);
             return sprites.ToArray();
         }
+        static readonly string[] WavePoseNames = {
+            "Idle", "Side", "Back", "Move", "Windup", "Slash", "FollowThrough", "Wave",
+            "Guard", "Rising", "Hurt", "Death", "RevivePush", "ReviveKneel", "ReviveRise", "ReviveStand"
+        };
+
+        static readonly string[] RisePoseNames = {
+            "Idle", "Side", "Back", "Dash", "Windup", "Rising", "AirSlash", "Fall",
+            "Landing", "Slash", "Hurt", "Death", "RevivePush", "ReviveKneel", "ReviveRise", "ReviveStand"
+        };
+        static readonly string[] WardPoseNames = {
+            "Idle", "Side", "Back", "Guard", "Move", "ShieldBash", "Hurt", "Thrust",
+            "Crouch", "Windup", "Recover", "Death", "RevivePush", "ReviveKneel", "ReviveRise", "ReviveStand"
+        };
         public static Sprite[] InheritedPoses(string form)
         {
             // Base forms share the Forms folder but are not inherited pose sets.
             if (form == "Neutral" || form == "Ward" || form == "Wave" || form == "Rise")
                 return Array.Empty<Sprite>();
             var folder = GuardianFolder(form);
-            return folder == null ? Array.Empty<Sprite>() : Resources.LoadAll<Sprite>(folder + "/Forms/" + form);
+            if (folder == null) return Array.Empty<Sprite>();
+            var drawings = KarmaBodyPoses.All("@" + folder + "/Forms/" + form);
+            if (drawings.Length == 0) return drawings;
+            var names = folder == "Guard" ? WardPoseNames : folder == "RisingSlash" ? RisePoseNames : WavePoseNames;
+            var poses = new Sprite[names.Length];
+            for (int i = 0; i < poses.Length; i++)
+            {
+                string name = names[i];
+                poses[i] = Array.Find(drawings, sprite => sprite.name == name);
+                if (poses[i] == null) throw new InvalidOperationException(form + " missing inherited pose " + name);
+            }
+            return poses;
         }
         internal static Sprite[] RevivalPoses(string form)
         {
             var folder = GuardianFolder(form);
-            return folder == null ? Array.Empty<Sprite>() : Resources.LoadAll<Sprite>(folder + "/Revival/" + form);
+            return folder == null ? Array.Empty<Sprite>() : KarmaBodyPoses.All("@" + folder + "/Revival/" + form);
         }
         static string GuardianFolder(string form)
         {
@@ -105,11 +140,7 @@ namespace KarmaPrototype
         }
         public static Sprite[] PlayerFrames()
         {
-            var frames = Settings.PlayerFrames();
-            for (int i = 0; i < frames.Length; i++)
-                if (frames[i] == null) throw new InvalidOperationException(
-                    "플레이어 동작 슬롯이 비어 있습니다: " + i + " / KarmaArtworkSettings를 확인하세요.");
-            return frames;
+            return Settings.PlayerFrames();
         }
         public static Transform Player(Transform parent)
         {
@@ -126,7 +157,7 @@ namespace KarmaPrototype
         }
         public static Transform Guardian(Transform parent, IReadOnlyList<Essence> order, bool final)
         {
-            var sprite = Settings.Guardian(KarmaPatternCatalog.Primary(order));
+            var sprite = order.Count == 0 ? Sprite("Neutral", "Idle") : Settings.Guardian(KarmaPatternCatalog.Primary(order));
             if (sprite == null) throw new InvalidOperationException("수호자 Sprite 슬롯이 비어 있습니다. KarmaArtworkSettings를 확인하세요.");
             var root = new GameObject("Artwork").transform; root.SetParent(parent, false);
             var picture = new GameObject("Guardian sprite"); picture.transform.SetParent(root, false);
@@ -138,7 +169,9 @@ namespace KarmaPrototype
             var primary = KarmaPatternCatalog.Primary(order);
             animator.ConfigureSheet(!primary.HasValue ? "Neutral" : primary == Essence.SwordWave ? "Wave" : primary == Essence.RisingSlash ? "Rise" : "Ward");
             if (final) renderer.color = new Color(1, 0.88f, 0.73f);
-            if (order.Count >= 2) animator.SetGuardianAppearance(GuardianPreview(order), GuardianFormName(order));
+            string form = GuardianFormName(order);
+            if (order.Count >= 2) animator.SetGuardianAppearance(Sprite("Inheritance", form) ?? sprite, form);
+            animator.ConfigureGuardianIdle(form);
             return root;
         }
         public static readonly Color BarrierColor = new Color(1, 0.83f, 0.48f);
@@ -154,9 +187,7 @@ namespace KarmaPrototype
         }
         public static Sprite GuardianPreview(IReadOnlyList<Essence> order)
         {
-            var primary = KarmaPatternCatalog.Primary(order);
-            string name = GuardianFormName(order);
-            return Sprite("Inheritance", name) ?? Settings.Guardian(primary);
+            return StageIdle(GuardianFormName(order));
         }
         public static bool Background(Transform parent, int stage = 1, KarmaGame game = null)
         {
@@ -191,7 +222,7 @@ namespace KarmaPrototype
             KarmaMoonArtwork.Apply(renderer, mountain);
             if (game != null) game.FrameStageBackground(coverage > 1
                 ? new Bounds(renderer.bounds.center, new Vector3(frameWidth, frameHeight, renderer.bounds.size.z))
-                : renderer.bounds);
+                : renderer.bounds, renderer.bounds);
             return true;
         }
     }

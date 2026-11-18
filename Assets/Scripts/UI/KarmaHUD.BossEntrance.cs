@@ -39,6 +39,8 @@ namespace KarmaPrototype
             ? new Color32(114, 191, 255, 255) : type == Essence.RisingSlash
             ? new Color32(255, 119, 113, 255) : new Color32(242, 207, 99, 255);
 
+        float NameReveal(float elapsed) => Ease((elapsed * (2.8f / entranceDuration) - 0.4f) / 0.6f);
+
         bool DrawBossEntrance()
         {
             if (!game.GuardianInheriting || entranceBoss == null || !entranceBoss.Alive
@@ -63,7 +65,7 @@ namespace KarmaPrototype
             }
             float t = Mathf.Min(2.2f, elapsed * (2.8f / entranceDuration));
             float frame = Ease(t / 0.4f);
-            float reveal = Ease((t - 0.4f) / 0.6f);
+            float reveal = NameReveal(elapsed);
             float alpha = reveal;
             if (entranceTitle == null)
             {

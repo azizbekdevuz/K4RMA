@@ -99,7 +99,9 @@ namespace KarmaPrototype
                 if (KarmaInput.Pressed(KarmaAction.SwordWave)) Essences.TryUse(Essence.SwordWave);
                 if (KarmaInput.Pressed(KarmaAction.RisingSlash)) Essences.TryUse(Essence.RisingSlash);
                 if (KarmaInput.Pressed(KarmaAction.Guard)) Essences.TryUse(Essence.Guard);
-                if (KarmaInput.Pressed(KarmaAction.Counter)) Essences.TryCounter();
+                var counters = KarmaInput.Edges(KarmaAction.Counter);
+                for (int i = 0; i < counters.Count; i++)
+                    if (counters[i].Down) Essences.TryCounterAt(KarmaInput.GameTimeOf(counters[i].RealTime));
             }
         }
 

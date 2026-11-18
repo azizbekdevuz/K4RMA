@@ -552,7 +552,7 @@ namespace KarmaPrototype
         }
         void FinalElectricity(float progress, bool detonating)
         {
-            int frame = Mathf.FloorToInt(age*24);
+            int frame = Mathf.FloorToInt(age * KarmaBootstrap.FramesPerSecond);
             float strength = detonating ? Mathf.Exp(-progress*10) : 0.30f+0.70f*progress*progress;
             for (int i = 0; i < electricSites.Length; i++)
             {

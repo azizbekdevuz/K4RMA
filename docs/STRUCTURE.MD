@@ -72,6 +72,7 @@ K4RMA/
 │   │   │   │   │   └── Hesitate.png
 │   │   │   │   └── Revival/
 │   │   │   │       └── Neutral.png
+│   │   │   ├── Motions12/  (플레이어·스승·수호자 외형별 동작 시트, Catalog.txt, BodyPoses.txt, BladeSockets.txt)
 │   │   │   ├── Player/
 │   │   │   │   ├── Animation/
 │   │   │   │   │   ├── AirSlash.anim
@@ -95,7 +96,7 @@ K4RMA/
 │   │   │   │   │   ├── Run.anim
 │   │   │   │   │   ├── SwordWave.anim
 │   │   │   │   │   └── Transition.anim
-│   │   │   │   ├── Animation24/
+│   │   │   │   ├── Animation12/
 │   │   │   │   │   ├── AirborneApex.anim
 │   │   │   │   │   ├── AirborneFall.anim
 │   │   │   │   │   ├── AirborneRise.anim
@@ -150,57 +151,6 @@ K4RMA/
 │   │   │   │   │   ├── Transition.anim
 │   │   │   │   │   ├── Turn.anim
 │   │   │   │   │   └── Walk.anim
-│   │   │   │   ├── Native24/
-│   │   │   │   │   ├── AirborneApex.png
-│   │   │   │   │   ├── AirborneFall.png
-│   │   │   │   │   ├── AirborneRise.png
-│   │   │   │   │   ├── AirDiagonal.png
-│   │   │   │   │   ├── AirDown.png
-│   │   │   │   │   ├── AirHorizontal.png
-│   │   │   │   │   ├── AirHover.png
-│   │   │   │   │   ├── AirKnockback.png
-│   │   │   │   │   ├── AirRecovery.png
-│   │   │   │   │   ├── AirUp.png
-│   │   │   │   │   ├── Apex.png
-│   │   │   │   │   ├── Attack.png
-│   │   │   │   │   ├── Crouch.png
-│   │   │   │   │   ├── Death.png
-│   │   │   │   │   ├── DownLoop.png
-│   │   │   │   │   ├── Fall.png
-│   │   │   │   │   ├── GetUp.png
-│   │   │   │   │   ├── Guard.png
-│   │   │   │   │   ├── Hurt.png
-│   │   │   │   │   ├── Idle.png
-│   │   │   │   │   ├── Jump.png
-│   │   │   │   │   ├── JumpStart.png
-│   │   │   │   │   ├── Kneel.png
-│   │   │   │   │   ├── Knockback.png
-│   │   │   │   │   ├── Knockdown.png
-│   │   │   │   │   ├── Land.png
-│   │   │   │   │   ├── Parry.png
-│   │   │   │   │   ├── PersonalizeGuard.png
-│   │   │   │   │   ├── PersonalizeRising.png
-│   │   │   │   │   ├── PersonalizeWave.png
-│   │   │   │   │   ├── Pierce.png
-│   │   │   │   │   ├── PierceDiagonal.png
-│   │   │   │   │   ├── PierceDown.png
-│   │   │   │   │   ├── PierceUp.png
-│   │   │   │   │   ├── Recovery.png
-│   │   │   │   │   ├── Riposte.png
-│   │   │   │   │   ├── Rising.png
-│   │   │   │   │   ├── Run.png
-│   │   │   │   │   ├── RunRecovery.png
-│   │   │   │   │   ├── Salute.png
-│   │   │   │   │   ├── ShockLoop.png
-│   │   │   │   │   ├── ShockRecovery.png
-│   │   │   │   │   ├── ShockStart.png
-│   │   │   │   │   ├── StandFromKneel.png
-│   │   │   │   │   ├── StunLoop.png
-│   │   │   │   │   ├── StunRecovery.png
-│   │   │   │   │   ├── StunStart.png
-│   │   │   │   │   ├── SwordWave.png
-│   │   │   │   │   ├── Turn.png
-│   │   │   │   │   └── Walk.png
 │   │   │   │   ├── Actions.png
 │   │   │   │   ├── Additional.png
 │   │   │   │   ├── Locomotion.png
@@ -259,8 +209,8 @@ K4RMA/
 │   │   │   │   │   ├── KarmaInheritanceReveal.shader
 │   │   │   │   │   ├── KarmaMoonBackground.mat
 │   │   │   │   │   ├── KarmaMoonBackground.shader
-│   │   │   │   │   ├── KarmaPlayer24.mat
-│   │   │   │   │   ├── KarmaPlayer24.shader
+│   │   │   │   │   ├── KarmaPlayer12.mat
+│   │   │   │   │   ├── KarmaPlayer12.shader
 │   │   │   │   │   ├── KarmaSprite.mat
 │   │   │   │   │   └── KarmaSpriteUnlit.mat
 │   │   │   │   ├── Props.png
@@ -539,7 +489,7 @@ K4RMA/
 │       │   └── KarmaGuardPatternWeights.cs
 │       ├── Player/
 │       │   ├── Editor/
-│       │   │   ├── KarmaPlayer24AnimationAssets.cs
+│       │   │   ├── KarmaPlayer12AnimationAssets.cs
 │       │   │   ├── KarmaPlayerAnimationAssets.cs
 │       │   │   └── KarmaPlayerAnimationAssets.Parry.cs
 │       │   ├── KarmaPlayer.AirSlash.cs
@@ -715,7 +665,7 @@ K4RMA/
 │   │   │   ├── KarmaGuardPlayChecks.cs
 │   │   │   └── KarmaGuardSelectionChecks.cs
 │   │   ├── Player/
-│   │   │   ├── KarmaPlayer24Checks.cs
+│   │   │   ├── KarmaPlayer12Checks.cs
 │   │   │   ├── KarmaPlayerCrowdControlChecks.cs
 │   │   │   ├── KarmaPlayerIdleChecks 2.cs
 │   │   │   ├── KarmaPlayerIdleChecks.cs

@@ -67,12 +67,11 @@ public static class KarmaPlayerPierceChecks
     {
         string verdict;
         float previousCapture = Time.captureDeltaTime;
-        Time.captureDeltaTime = 1f / 60;
+        Time.captureDeltaTime = KarmaBootstrap.Step;
         GameObject hazard = null, wall = null;
         try
         {
             KarmaPrototype.EditorTools.KarmaPlayerAnimationAssets.Validate();
-            Check(Resources.Load<TextAsset>("Player/Animation24/Ready") == null, "24 FPS activation marker removed");
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             game.StartRun();
             foreach (var essence in new[] { Essence.SwordWave, Essence.RisingSlash, Essence.Guard })
@@ -83,20 +82,20 @@ public static class KarmaPlayerPierceChecks
             if (player.TestInvincible) player.ToggleTestInvincibility();
             foreach (var enemy in game.Enemies) enemy.gameObject.SetActive(false);
             var animator = player.GetComponentInChildren<KarmaCharacterAnimator>();
-            Check(!(bool)typeof(KarmaCharacterAnimator).GetField("nativePlayer24", Private).GetValue(animator), "Live player uses original art");
-            Check((float)typeof(KarmaCharacterAnimator).GetField("playerSampleRate", Private).GetValue(animator) == 12, "Live playback uses 12 FPS");
+            Check(Application.targetFrameRate == 12 && Mathf.Approximately(Time.fixedDeltaTime, 1f / 12), "Game clocks");
             var picture = (SpriteRenderer)typeof(KarmaCharacterAnimator).GetField("picture", Private).GetValue(animator);
             var sample = typeof(KarmaCharacterAnimator).GetMethod("SamplePlayerClip", Private);
             var clock = typeof(KarmaCharacterAnimator).GetField("playerClipAt", Private);
-            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation/Frames");
+            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation12/Frames");
             foreach (var sheet in library.sheets)
             {
+                if (sheet.id == "Riposte") { KarmaPrototype.EditorTools.KarmaPlayerAnimationAssets.VerifyParrySuccess(); continue; }
                 sample.Invoke(animator, new object[] { sheet.id, true });
                 for (int i = 0; i < sheet.sprites.Length; i++)
                 {
                     clock.SetValue(animator, Time.time - (i + 0.1f) / 12f);
                     sample.Invoke(animator, new object[] { sheet.id, false });
-                    Check(picture.sprite == sheet.sprites[i] && !AssetDatabase.GetAssetPath(picture.sprite).Contains("/Native24/"), sheet.id + " original frame " + i);
+                    Check(picture.sprite == sheet.sprites[i] && AssetDatabase.GetAssetPath(picture.sprite).Contains("/Motions12/Player/"), sheet.id + " original frame " + i);
                 }
             }
             Vector2 origin = new Vector2(25, KarmaSpace.Units(7));

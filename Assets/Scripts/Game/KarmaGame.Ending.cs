@@ -21,7 +21,7 @@ namespace KarmaPrototype
         internal const float EndingMasterReplyAt = 27.1f, EndingApprenticeReplyAt = 31.02f;
         internal const float EndingFarewellAt = 36.91f;
         internal const float EndingMasterX = KarmaStage.ArenaCenter - 5.2f;
-        internal const float EndingRelease = 3f / 24f;
+        internal const float EndingRelease = 0.125f;
 
         public float EndingTime { get; private set; }
         public bool EndingCompleted { get; private set; }
@@ -199,11 +199,12 @@ namespace KarmaPrototype
             float size;
             if (t < EndingApproachAt)
             {
-                float bothActors = Mathf.Max(8.8f, Mathf.Abs(playerX - fallenGuardianPosition.x) / (2 * GameCamera.aspect) + 3);
-                float settle = EndingEase(0, 3.5f, t);
-                var fallenFocus = new Vector3(Mathf.Lerp(playerX, fallenGuardianPosition.x, 0.5f), 3.8f, -10);
+                float x = fallenGuardianPosition.x;
+                bool distantKill = Mathf.Abs(endingCameraStart.x - x) > endingCameraSize * GameCamera.aspect;
+                float settle = distantKill ? 1 : EndingEase(0, 0.55f, t);
+                var fallenFocus = new Vector3(x + Mathf.Clamp((playerX - x) * 0.5f, -4, 4), 3.8f, -10);
                 focus = Vector3.Lerp(endingCameraStart, fallenFocus, settle);
-                size = Mathf.Lerp(endingCameraSize, bothActors, settle);
+                size = Mathf.Lerp(endingCameraSize, 8.8f, settle);
             }
             else
             {
@@ -249,10 +250,10 @@ namespace KarmaPrototype
 
             float aspect = Mathf.Max(0.01f, GameCamera.aspect);
             size = Mathf.Min(size, Mathf.Min(endingBackground.extents.y, endingBackground.extents.x / aspect));
-            float width = size * aspect;
-            focus.x = Mathf.Clamp(focus.x, endingBackground.min.x + width, endingBackground.max.x - width);
-            focus.y = Mathf.Clamp(focus.y, endingBackground.min.y + size, endingBackground.max.y - size);
-            float blend = shot != endingShot ? 1 : 1 - Mathf.Exp(-5f * Time.deltaTime);
+            focus = InsideBackdrop(focus, size, aspect, endingBackground);
+            bool distantHandoff = t < EndingApproachAt ? Offscreen(fallenGuardianPosition)
+                : t < EndingKneelAt && Offscreen(Player.transform.position);
+            float blend = shot != endingShot || distantHandoff ? 1 : 1 - Mathf.Exp(-5f * Time.deltaTime);
             endingShot = shot;
             GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize, size, blend);
             GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position, focus, blend);

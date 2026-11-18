@@ -66,16 +66,17 @@ namespace KarmaPrototype
                     player.BeginGuard(c.guardDuration); break;
             }
         }
-        public void TryCounter()
+        public void TryCounter() => TryCounterAt(Time.time);
+        internal void TryCounterAt(float pressedAt)
         {
             if (!game.IsCombat || player.ControlLocked || !HasRemnant(Essence.Guard)) return;
             bool queued = false;
             foreach (var enemy in game.Enemies)
-                if (enemy != null && enemy.TryQueueParry()) queued = true;
+                if (enemy != null && enemy.TryQueueParry(pressedAt)) queued = true;
             // An encounter may accept buffered counter input during its own readable window.
-            if (!queued && Cooldown(Essence.Guard) > 0) return;
-            readyAt[2] = Time.time + game.Config.Techniques.counterCooldown;
-            player.BeginCounter();
+            if (!queued && pressedAt < readyAt[(int)Essence.Guard]) return;
+            readyAt[2] = pressedAt + game.Config.Techniques.counterCooldown;
+            player.BeginCounterAt(pressedAt);
         }
     }
 }

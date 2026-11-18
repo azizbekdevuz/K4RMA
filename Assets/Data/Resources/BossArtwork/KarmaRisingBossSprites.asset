@@ -14,29 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
   sheets:
   - id: Rise
-    source: Assets/Arts/Resources/RisingSlash/Forms/Rise.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 851959632, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -1107247268, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -1605148761, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -385472749, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: 118322682, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: 310831768, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -89964707, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -990188912, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: 1891474542, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -582455795, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: -337873037, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    - {fileID: 942584010, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 28c76b1297d874549aa2f32e41ac07f5, type: 3}
+    - {fileID: 21300000, guid: 28c76b1297d874549aa2f32e41ac07f5, type: 3}
+    - {fileID: 21300000, guid: 28c76b1297d874549aa2f32e41ac07f5, type: 3}
+    - {fileID: -773312617, guid: ace76c02721ee44839cd8ad995577c2c, type: 3}
+    - {fileID: -1284549934, guid: 345f08ee80df143eeaeff453c3f467d0, type: 3}
+    - {fileID: 1518405248, guid: 0292fad34c0384d70b3f60f4bad65deb, type: 3}
+    - {fileID: -1974608528, guid: ddf5082614425411ca94bfa6c0116e6a, type: 3}
+    - {fileID: 1518405248, guid: 0292fad34c0384d70b3f60f4bad65deb, type: 3}
+    - {fileID: -856551648, guid: b35bbbbbe145545b7a97c551e050c315, type: 3}
+    - {fileID: -1876685227, guid: 5da0f8b5de1364e60b1ca9bee4c2cbe4, type: 3}
+    - {fileID: -678481008, guid: c9be7f234f43840b0b02339e447b0aec, type: 3}
+    - {fileID: -93280840, guid: 33d9eabe8e1b6439391bd382a07f5e93, type: 3}
+    poses:
+    - Idle
+    - Side
+    - Back
+    - Dash
+    - Windup
+    - Rising
+    - AirSlash
+    - Fall
+    - Landing
+    - Slash
+    - Hurt
+    - Death
   - id: Inheritance
-    source: Assets/Arts/Resources/Shared/ReferencePoses.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -804002876, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    - {fileID: -711018825, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    - {fileID: -114026187, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    - {fileID: 1732185949, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 28c76b1297d874549aa2f32e41ac07f5, type: 3}
+    - {fileID: 21300000, guid: eb4795aeaf5ab4f78ad14f2228c11ef5, type: 3}
+    - {fileID: 21300000, guid: 131fc88e3816340b2af0156b57a4d154, type: 3}
+    - {fileID: 21300000, guid: 603577ac121ae441ebc93226482cbbae, type: 3}
+    poses:
+    - Rise
+    - RiseWave
+    - RiseWard
+    - RiseFinal
   - id: RisingBossVFX
     source: Assets/Arts/Resources/RisingSlash/Effects
     sprites:
@@ -72,108 +88,60 @@ MonoBehaviour:
     - Wave
     - WaveEcho
   - id: BossAppearance
-    source: Assets/Arts/Resources/RisingSlash/Forms/Rise.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 851959632, guid: 5a0e6caa184cb4b6d9527b732fe76e9c, type: 3}
+    - {fileID: 21300000, guid: 28c76b1297d874549aa2f32e41ac07f5, type: 3}
     poses:
     - Rise
   - id: RisingStunStars
     source: Assets/Arts/Resources/RisingSlash/Effects/StunStars.png
     sprites:
     - {fileID: 21310000, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310001, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310002, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310003, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310004, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310005, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310006, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310007, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310008, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310009, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310010, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310011, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310012, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310013, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310014, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310015, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310016, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310017, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310018, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310019, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310020, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310021, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310022, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310023, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310024, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310025, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310026, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310027, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310028, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310029, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310030, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310031, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310032, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310033, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310034, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310035, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310036, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310037, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310038, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310039, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310040, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310041, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310042, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310043, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310044, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310045, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     - {fileID: 21310046, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
-    - {fileID: 21310047, guid: 94f9b20fb05f44c78f5c1525950f77b7, type: 3}
     poses:
     - Frame00
-    - Frame01
     - Frame02
-    - Frame03
     - Frame04
-    - Frame05
     - Frame06
-    - Frame07
     - Frame08
-    - Frame09
     - Frame10
-    - Frame11
     - Frame12
-    - Frame13
     - Frame14
-    - Frame15
     - Frame16
-    - Frame17
     - Frame18
-    - Frame19
     - Frame20
-    - Frame21
     - Frame22
-    - Frame23
     - Frame24
-    - Frame25
     - Frame26
-    - Frame27
     - Frame28
-    - Frame29
     - Frame30
-    - Frame31
     - Frame32
-    - Frame33
     - Frame34
-    - Frame35
     - Frame36
-    - Frame37
     - Frame38
-    - Frame39
     - Frame40
-    - Frame41
     - Frame42
-    - Frame43
     - Frame44
-    - Frame45
     - Frame46
-    - Frame47

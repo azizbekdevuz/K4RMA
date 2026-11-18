@@ -17,6 +17,16 @@ namespace KarmaPrototype
         internal const float BasicSwingSeconds = 0.10f;
         float basicReleasedAt = float.NegativeInfinity;
         bool basicPresentationActive, basicReleaseStarted;
+        internal bool RangedBasicBody { get; set; }
+        string SwordBodyMotion(string action, EnemyAttack attack, bool moved)
+        {
+            if (CurrentPose == "Backstep") return "Backstep";
+            if (action == "Attack" || action == "Telegraph" && CurrentPose != "Windup" && CurrentPose != "Guard")
+                return attack == EnemyAttack.SWBasic && RangedBasicBody ? "SWBasicRanged" : attack.ToString();
+            if (action == "Recover") return "FollowThrough";
+            if (action == "Telegraph") return "Windup";
+            return moved || CurrentPose == "Move" ? "Move" : CurrentPose == "Guard" ? "Guard" : "Idle";
+        }
         public void PrepareBasicAttack(float warningSeconds)
         {
             // Keep the original damage-pose policy and warning clock. Only the
@@ -41,7 +51,7 @@ namespace KarmaPrototype
             // sheet. Keep its original damage policy BEFORE filling the display
             // poses; inherited forms already supplied their own sixteen poses.
             swordDamagePoses = new Dictionary<string, Sprite>(poses);
-            swordDamageFallback = picture.sprite;
+            swordDamageFallback = KarmaBodyPoses.Get("BossAppearance", "Wave");
             foreach (var sprite in KarmaArtwork.Sprites("Wave"))
                 if (sprite != null && !poses.ContainsKey(sprite.name)) poses.Add(sprite.name, sprite);
             ConfigureSW02Frames();
@@ -77,6 +87,7 @@ namespace KarmaPrototype
             Sprite damageSprite = GuardianDamageSprite;
             Vector3 damageScale = GuardianDamageScale;
             ShowPose("Move");
+            PlayBody("Move", loop: true);
             GuardianDamageSprite = damageSprite;
             GuardianDamageScale = damageScale;
             GuardianPhaseOverridesPose = true;
@@ -87,6 +98,7 @@ namespace KarmaPrototype
         {
             if (picture == null || deathAt >= 0 || sheet != "Wave") return;
             ShowPose(poses.ContainsKey("Guard") ? "Guard" : "Hurt");
+            PlayBody("Stun", loop: true);
             GuardianPhaseOverridesPose = true;
         }
         void SwordGuardianPose(string action, EnemyAttack attack, bool airborne, bool armored)

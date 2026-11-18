@@ -26,7 +26,6 @@ namespace KarmaPrototype
         KarmaCharacterAnimator animator, sourceAnimator;
         Transform sourceRoot;
         SpriteRenderer sourcePicture, original, focus;
-        Sprite reflection, hesitantReach;
         SpriteRenderer formPicture, formReveal;
         Material formMaterial, originalFormMaterial;
         SpriteRenderer inheritedHalo;
@@ -63,7 +62,7 @@ namespace KarmaPrototype
                 if (Stage == 1)
                 {
                     if (age < FirstCopy) return "이렇게…?";
-                    return Mathf.Floor(age * 24) / 24 < RevealEnd ? "네 움직임…" : "네 움직임… 기억했다.";
+                    return Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step < RevealEnd ? "네 움직임…" : "네 움직임… 기억했다.";
                 }
                 if (Stage == 3) return age < FirstStroke ? "이번엔… 내가 먼저." : "이제 나만의 움직임이다…";
                 return techniques[1].Realization;
@@ -96,14 +95,12 @@ namespace KarmaPrototype
             growth.Stage = inherited.Count; growth.Duration = DurationFor(inherited.Count);
             if (inherited.Count == 1)
             {
-                growth.hesitantReach = Resources.Load<Sprite>("Neutral/Growth/Hesitate");
                 if (shieldHalo != null && shieldHalo.enabled && shieldHalo.gameObject.activeInHierarchy)
                 {
                     growth.inheritedHalo = shieldHalo;
                     growth.haloColor = shieldHalo.color;
                 }
             }
-            if (inherited.Count == 2) growth.reflection = guardian.GrowthReflection;
             growth.facing = guardian.GetComponentInChildren<SpriteRenderer>().transform.lossyScale.x < 0 ? -1 : 1;
             // The memory stands between player and guardian, close enough for the
             // camera to connect the same movement without cutting away to a panel.
@@ -197,7 +194,7 @@ namespace KarmaPrototype
         }
         void Draw()
         {
-            float t = Mathf.Floor(age * 24) / 24;
+            float t = Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
             foreach (var picture in demonstrations) if (picture != null) picture.enabled = false;
             original.enabled = focus.enabled = sourcePicture.enabled = false;
             foreach (var piece in failedPieces) if (piece != null) piece.enabled = false;
@@ -216,6 +213,7 @@ namespace KarmaPrototype
             if (Stage == 3)
             {
                 DrawMastery(t);
+                animator.ShowGrowthMotion("GrowthMastery", false, t - Revived);
                 return;
             }
             if (t < Observed)
@@ -233,8 +231,7 @@ namespace KarmaPrototype
                 animator.GrowthPose("Idle", true, Vector2.zero);
                 if (elapsed >= 0.2f && t < FirstQuestion - 0.28f)
                 {
-                    float reach = Smooth(0.2f, 0.55f, elapsed) * (1 - Smooth(FirstQuestion - 0.65f, FirstQuestion - 0.28f, t));
-                    animator.GrowthKeyPose(hesitantReach, "Growth/Hesitate", 1, -3 * reach);
+                    animator.ShowGrowthMotion("GrowthHesitate", true, elapsed - 0.2f);
                 }
             }
             else if (Stage == 1 && t < FirstCopy)
@@ -255,6 +252,7 @@ namespace KarmaPrototype
                 string pose = order[0] == Essence.Guard || (order[0] == Essence.RisingSlash && action > 0.36f)
                     ? "Windup" : "Slash";
                 animator.GrowthPose(action < 0.82f ? pose : "Recovery", true, Vector2.zero);
+                animator.ShowGrowthMotion(order[0] == Essence.Guard ? "GrowthCopyWard" : order[0] == Essence.SwordWave ? "GrowthCopyWave" : "GrowthCopyRise", true, t - FirstCopy);
                 DrawOriginal(guardian.Position, order[latest], action, 0.8f);
             }
             else if (Stage == 1)
@@ -293,7 +291,7 @@ namespace KarmaPrototype
                 }
                 var technique = techniques[latest];
                 animator.GrowthPose(technique.Inspect, true, Vector2.zero, -3);
-                animator.GrowthKeyPose(reflection, "Growth/InspectWeapon", 0.95f);
+                animator.ShowGrowthMotion("GrowthInspect", true, t - FailureHeld - 0.6f);
                 Vector2 anchor = guardian.GrowthInspectionAnchor;
                 Vector2 hand = guardian.Position + new Vector2(facing * anchor.x, anchor.y);
                 float gather = Smooth(FailureHeld + 0.9f, Reflected - 0.15f, t);
@@ -418,6 +416,7 @@ namespace KarmaPrototype
                     point += new Vector2(facing * offset.x, offset.y); break;
             }
             animator.GrowthPose(progress < 0.25f ? leadPose ?? technique.Prepare : technique.Release, false, offset);
+            if (Stage < 3) animator.ShowGrowthMotion("GrowthTechnique", false, progress * Adaptation);
             Display(demonstrations[index], point, technique.Size, angle, facing, opacity * 0.85f, Color.white);
 
         }

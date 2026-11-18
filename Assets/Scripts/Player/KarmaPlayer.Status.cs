@@ -37,12 +37,12 @@ namespace KarmaPrototype
 
         // Attack dispatch keeps its existing visual and parry/riposte policy.
         internal bool TakeCrowdControlHit(float damage, CrowdControlKind kind, float seconds,
-            Vector2 launchVelocity, bool counterDamage)
+            Vector2 launchVelocity, bool counterDamage, float? hitAt = null)
         {
             if (!ValidCrowdControl(kind, seconds, launchVelocity) || game == null || body == null
                 || game.Paused || !game.AllowsPlayerActions || Health <= 0 || !Finite(damage) || damage <= 0) return false;
             float before = Health;
-            TakeDamage(damage, counterDamage);
+            TakeDamageAt(damage, counterDamage, hitAt ?? Time.time);
             return Health < before && Health > 0 && ApplyCrowdControl(kind, seconds, launchVelocity, true);
         }
 
@@ -89,7 +89,6 @@ namespace KarmaPrototype
                 airborneUntil = Time.time + seconds;
                 body.linearVelocity = velocity;
             }
-            if (!animator.UsesNativePlayer24) animator.Hurt();
             return true;
         }
 

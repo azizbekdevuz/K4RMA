@@ -9,24 +9,22 @@ namespace KarmaPrototype
         Sprite[] sw02Frames;
         KarmaEnemy sw02Owner;
         float sw02PhaseAt, sw02PhaseSeconds;
+        int sw02DisplayFrame;
         bool sw02RecoveryRequested;
         internal bool SW02UsesIntermediateFrame { get; private set; }
 
+        bool PresentSwordIntermediate(EnemyAttack attack)
+        {
+            if (attack != EnemyAttack.SW02 || !SW02UsesIntermediateFrame) return false;
+            displayForm = motionForm;
+            displayMotion = "SW02";
+            DrawMotion(motionForm, "SW02", sw02DisplayFrame * KarmaBootstrap.Step);
+            return true;
+        }
+
         void ConfigureSW02Frames()
         {
-            // Inherited Idle sprites retain their source texture identity. Load
-            // only that form's complete set; never fall back to the base body.
-            string group = "WaveSW02";
-            if (guardianAppearance != null)
-            {
-                switch (guardianAppearance.texture.name)
-                {
-                    case "WaveRise": group = "WaveRiseSW02"; break;
-                    case "WaveWard": group = "WaveWardSW02"; break;
-                    case "WaveFinal": group = "WaveFinalSW02"; break;
-                    default: return;
-                }
-            }
+            string group = motionForm + "SW02";
             sw02Owner = GetComponentInParent<KarmaEnemy>();
             string[] names = { "Prepare01", "Prepare02", "Swing01", "Swing02", "Recover01", "Recover02" };
             var frames = new Sprite[names.Length];
@@ -99,6 +97,7 @@ namespace KarmaPrototype
                     if (elapsed >= 0.28f) { picture.sprite = poses["Idle"]; return; }
                     frame = elapsed < 0.13f ? 4 : 5; break;
             }
+            sw02DisplayFrame = frame;
             picture.sprite = sw02Frames[frame];
             SW02UsesIntermediateFrame = true;
         }

@@ -244,7 +244,7 @@ namespace KarmaPrototype
             // Rebuild its world AABB on demand so root travel/facing and inherited
             // appearances remain current even before this frame's LateUpdate.
             var sprite = animator.GuardianPhaseOverridesPose ? animator.GuardianDamageSprite : null;
-            var local = sprite != null ? sprite.bounds : renderer.localBounds;
+            var local = sprite != null ? KarmaBodyPoses.HitBounds(sprite) : animator.DisplayDamageLocalBounds(renderer);
             var scale = sprite != null ? animator.GuardianDamageScale : spriteTransform.localScale;
             var matrix = spriteTransform.parent.localToWorldMatrix *
                 Matrix4x4.TRS(spriteHome, spriteHomeRotation, scale);

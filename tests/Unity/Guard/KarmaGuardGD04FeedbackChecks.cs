@@ -67,7 +67,7 @@ public static partial class KarmaGuardPlayChecks
             flightTarget = new RenderTexture(1280, 720, 24);
             flightPixels = new Texture2D(1280, 720, TextureFormat.RGBA32, false);
             flightEncoder = new MediaEncoder(SlamReviewOutput + "/GD04-" + mode + ".mp4",
-                new VideoTrackAttributes { width = 1280, height = 720, frameRate = new MediaRational(24), includeAlpha = false });
+                new VideoTrackAttributes { width = 1280, height = 720, frameRate = new MediaRational(12), includeAlpha = false });
             recordedFlightFrames = 0; largestCaptureGap = 0;
             flightRecordingAt = lastCaptureAt = Time.realtimeSinceStartup;
             recordingFlight = true; game.StartCoroutine(RecordFlightFrames());

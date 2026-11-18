@@ -17,6 +17,31 @@ namespace KarmaPrototype
         string guardFlightPose;
         Sprite[] groundSlam;
         int groundSlamFrame = -1;
+        float autoShieldArtUntil, catchArtUntil, guardStunBegan;
+        bool wasGuardStunned;
+        internal void ShowAutoShield(float seconds) { autoShieldArtUntil = Time.time + seconds; }
+        internal void CatchGuardShield() { catchArtUntil = Time.time + 3 * KarmaBootstrap.Step; }
+        string GuardBodyMotion(string action, EnemyAttack attack, bool moved, ref string form)
+        {
+            bool away = GuardTrialShieldAway || guardThrownShield != null && guardThrownShield.gameObject.activeInHierarchy;
+            if (away && form == "WardFinal") form = "WardFinal_NoShield";
+            bool bare = form == "WardFinal_NoShield";
+            bool stunned = action == "Stunned";
+            if (stunned && !wasGuardStunned) guardStunBegan = Time.time;
+            wasGuardStunned = stunned;
+            if (stunned) return bare || Time.time - guardStunBegan < 3 * KarmaBootstrap.Step ? "Stagger" : "Stun";
+            if (Time.time < hurtUntil) return away && form == "WardWave" ? "GD03ShieldAwayHurt" : "Hurt";
+            if (bare) return CurrentPose != null && CurrentPose.Contains("GD02") ? "GD05Heavy"
+                : attack == EnemyAttack.GD03 ? "GD03Release" : moved ? "Move" : "Idle";
+            if (Time.time < catchArtUntil) return "GD03Catch";
+            if (Time.time < autoShieldArtUntil && action == "Approach") return "GD01";
+            if (action == "Attack" || attack == EnemyAttack.GD02 && CurrentPose != null && CurrentPose.StartsWith("GD02/"))
+                return attack == EnemyAttack.GroundStrike ? "GDBasic" : attack.ToString();
+            if (attack == EnemyAttack.GD04 && groundSlamFrame >= 0) return "GD04";
+            if (action == "Telegraph") return attack == EnemyAttack.GD05 ? "GD05" : "Windup";
+            if (action == "Recover") return "Recover";
+            return moved || CurrentPose == "Move" ? "Move" : CurrentPose == "Guard" ? "Guard" : "Idle";
+        }
         public void ConfigureHeavyStrike(IReadOnlyList<Essence> order)
         {
             // Boss-local libraries also provide the base Ward poses after asset separation.
@@ -45,7 +70,7 @@ namespace KarmaPrototype
             // Using crouched height here would inflate the boss during every parry.
             if (guardStagger == null || reference == null)
                 throw new System.InvalidOperationException("경직 스프라이트가 없습니다: " + heavyStrike.FormKey);
-            staggerScale = pictureScale * (picture.sprite.bounds.size.y / reference.bounds.size.y);
+            staggerScale = pictureScale * (DisplayDamageLocalBounds(picture).size.y / KarmaBodyPoses.HitBounds(reference).size.y);
             string slamSheet = "GuardSlam" + heavyStrike.FormKey;
             groundSlam = new[] { KarmaArtwork.Sprite(slamSheet, "Windup"), KarmaArtwork.Sprite(slamSheet, "Descent"),
                 KarmaArtwork.Sprite(slamSheet, "Contact"), KarmaArtwork.Sprite(slamSheet, "Rebound") };
@@ -121,6 +146,7 @@ namespace KarmaPrototype
                 picture.sprite = pose == "Hurt" ? guardThrownHurt : pose == "Move" ? guardTrialMove : guardTrialIdle;
                 picture.transform.localScale = pictureScale;
                 CurrentPose = "GD05/ShieldAway/" + pose;
+                if (picture.sprite == guardTrialIdle) ShowStandingArt(true);
             }
             if (attack == EnemyAttack.GD03 && guardThrownShield != null && guardThrownShield.gameObject.activeInHierarchy)
             {
@@ -151,19 +177,28 @@ namespace KarmaPrototype
             {
                 picture.sprite = poses[guardFlightPose];
                 CurrentPose = guardFlightPose;
+                PlayBody("GD03Catch");
                 guardFlightPose = null;
             }
         }
-        public void PrepareHeavyStrike() { heavyStrike.Prepare(); }
-        public void HeatHeavyStrike() { heavyStrike.Heat(); }
-        public void SwingHeavyStrike() { heavyStrike.Swing(); }
+        public void PrepareHeavyStrike() { heavyStrike.Prepare(); HeavyBody(0); }
+        public void HeatHeavyStrike() { heavyStrike.Heat(); HeavyBody(0); }
+        public void SwingHeavyStrike() { heavyStrike.Swing(); HeavyBody(2); }
+        void HeavyBody(int frame)
+        {
+            string form = GuardTrialShieldAway ? "WardFinal_NoShield" : motionForm;
+            string motion = GuardTrialShieldAway ? "GD05Heavy" : "GD02";
+            PlayBody(motion, form);
+            motionStarted = Time.time - frame * KarmaBootstrap.Step;
+            DrawMotion(form, motion, Time.time - motionStarted);
+        }
         public void EndHeavyStrike() { if (heavyStrike != null) heavyStrike.Stop(); }
         internal Bounds GuardDamageBounds(SpriteRenderer renderer)
         {
             if (renderer != picture || sheet != "Ward" || !guardDamageOverride || guardDamageSprite == null)
-                return renderer.bounds;
+                return DisplayDamageBounds(renderer);
             // Both movement and attack recovery preserve the original unrotated damage silhouette.
-            var local = guardDamageSprite.bounds;
+            var local = KarmaBodyPoses.HitBounds(guardDamageSprite);
             var root = picture.transform.parent;
             var scale = Vector3.Scale(root.lossyScale, guardDamageScale);
             var center = root.TransformPoint(pictureHome + Vector3.Scale(local.center, guardDamageScale));
@@ -172,12 +207,18 @@ namespace KarmaPrototype
         public void SetGroundSlamFrame(int frame)
         {
             groundSlamFrame = frame;
-            if (frame >= 0) ShowGroundSlam();
+            if (frame >= 0 && ShowGroundSlam())
+            {
+                slamContact = picture.transform.TransformPoint(new Vector3(KarmaBodyPoses.HitBounds(picture.sprite).max.x * 0.96f, 0, 0));
+                int count = motionArt.Frames(motionForm, "GD04").Length;
+                int key = Mathf.RoundToInt(Mathf.Clamp01(frame / 3f) * (count - 1));
+                PlayBody("GD04");
+                motionStarted = Time.time - key * KarmaBootstrap.Step;
+                DrawMotion(motionForm, "GD04", key * KarmaBootstrap.Step);
+            }
         }
-        public Vector2 GroundSlamContact
-        {
-            get { return picture.transform.TransformPoint(new Vector3(picture.sprite.bounds.max.x * 0.96f, 0, 0)); }
-        }
+        Vector2 slamContact;
+        public Vector2 GroundSlamContact => slamContact;
         bool ShowGroundSlam()
         {
             if (groundSlam == null || groundSlamFrame < 0 || groundSlam[groundSlamFrame] == null) return false;

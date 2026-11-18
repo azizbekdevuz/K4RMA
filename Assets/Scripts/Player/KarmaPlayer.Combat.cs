@@ -60,7 +60,7 @@ namespace KarmaPrototype
             animator.Attack(direction); nextSword = Time.time + game.Config.swordCooldown;
             string piercePose = direction.y > 0.75f ? "PierceUp" : direction.y < -0.25f ? "PierceDown"
                 : direction.y > 0.25f ? "PierceDiagonal" : "Pierce";
-            animator.PlayPlayerAction(piercePose, "Pierce", 0.22f);
+            animator.PlayPlayerAction(piercePose, 0.22f);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             FaceAction();
             Vector2 from = Position;
@@ -137,6 +137,6 @@ namespace KarmaPrototype
                     if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
                 }
         }
-        public void BeginSwordWave() { FaceAction(); animator.PlayPlayerAction("SwordWave", "SwordWave", 0.25f); }
+        public void BeginSwordWave() { FaceAction(); animator.PlayPlayerAction("SwordWave", 0.25f); }
     }
 }

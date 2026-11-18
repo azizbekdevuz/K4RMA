@@ -3,7 +3,11 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaCharacterAnimator
     {
-        const int RisingSpriteFps = 24;
+        // Per-tick indices preserve the contact and settled drawings of each source strip.
+        static readonly int[][] RisingDrawings = {
+            null, new[] { 0 }, new[] { 1 }, new[] { 0, 2 }, null, null,
+            new[] { 0, 3, 5 }, new[] { 0, 2, 4, 6 }
+        };
         const int BasicStrikeFrames = 6;
         const int BaseDescentFrames = 7;
         const int LandingFrames = 2;
@@ -13,6 +17,16 @@ namespace KarmaPrototype
         double risingDescentAt = -1, risingLandingAt = -1;
         double risingStrikeAt = -1;
 
+        internal bool RisingBarrierVisible { get; set; }
+        string RisingBodyMotion(string action, EnemyAttack attack, bool moved)
+        {
+            if (risingLandingAt >= 0 && attack == EnemyAttack.UP01) return "UP01Landing";
+            if (action == "Attack") return attack == EnemyAttack.GroundStrike ? "UPBasic"
+                : attack == EnemyAttack.UP05 && RisingBarrierVisible ? "UP05_NoFX" : attack.ToString();
+            if (action == "Recover") return "Landing";
+            if (action == "Telegraph") return attack == EnemyAttack.UP05 ? "UP05" : "Windup";
+            return moved || CurrentPose == "Dash" ? "Dash" : "Idle";
+        }
         internal void ConfigureRisingPresentation(string form)
         {
             // Base poses live in this boss's library; inherited bodies already supplied
@@ -37,7 +51,7 @@ namespace KarmaPrototype
 
         static Sprite[] LoadRisingFrames(string name, int count)
         {
-            var frames = Resources.LoadAll<Sprite>("RisingSlash/Forms/" + name);
+            var frames = KarmaBodyPoses.All("@RisingSlash/Forms/" + name);
             if (frames.Length != count) return null;
             System.Array.Sort(frames, (a, b) => string.CompareOrdinal(a.name, b.name));
             return frames;
@@ -48,7 +62,7 @@ namespace KarmaPrototype
             if (risingDescent == null) return;
             risingLandingAt = -1;
             // Hold the first pose on long drops, then play the cut at its authored rate.
-            risingDescentAt = Time.timeAsDouble + Mathf.Max(0, duration - RisingDropFrameCount / (float)RisingSpriteFps);
+            risingDescentAt = Time.timeAsDouble + Mathf.Max(0, duration - RisingDropFrameCount * (0.5f * KarmaBootstrap.Step));
         }
 
         int RisingDropFrameCount => risingDescent.Length - LandingFrames;
@@ -77,8 +91,12 @@ namespace KarmaPrototype
             risingMotionAt = Time.timeAsDouble;
         }
 
-        static int RisingFrame(double start, int count) =>
-            Mathf.Clamp((int)((Time.timeAsDouble - start) * RisingSpriteFps), 0, count - 1);
+        static int RisingFrame(double start, int count)
+        {
+            int tick = Mathf.Max(0, (int)((Time.timeAsDouble - start) * KarmaBootstrap.FramesPerSecond));
+            var drawings = RisingDrawings[count];
+            return drawings[Mathf.Min(tick, drawings.Length - 1)];
+        }
 
         internal void StartRisingBasicStrike()
         {

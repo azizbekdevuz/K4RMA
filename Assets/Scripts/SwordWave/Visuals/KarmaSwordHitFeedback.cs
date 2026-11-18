@@ -226,7 +226,7 @@ namespace KarmaPrototype
                 return;
             }
             float age = (float)(Time.timeAsDouble-began);
-            FrameIndex = Mathf.FloorToInt(age*24);
+            FrameIndex = Mathf.FloorToInt(age * KarmaBootstrap.FramesPerSecond);
             // Enter over one frame. The status owns the end, including refresh;
             // a separate visual timer must not expire before the control lock.
             float envelope = Mathf.Min(1,(age+1f/60)*24);

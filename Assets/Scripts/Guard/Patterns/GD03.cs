@@ -100,7 +100,7 @@ namespace KarmaPrototype
                         }
                         if (!reflected && (to - target).sqrMagnitude < 0.0001f)
                         {
-                            if (returning) break;
+                            if (returning) { owner.animator.CatchGuardShield(); break; }
                             returning = true;
                             shield.name = "GD03 큰 방패 복귀";
                             // Outward and return passes each have one independent player contact.

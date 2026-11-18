@@ -124,7 +124,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Frame01
+      name: Frame02
       rect:
         serializedVersion: 2
         x: 384
@@ -139,52 +139,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 74f02b3b953577946907a8f547302d29
-      internalID: 894209832
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Frame02
-      rect:
-        serializedVersion: 2
-        x: 768
-        y: 512
-        width: 384
-        height: 512
-      alignment: 9
-      pivot: {x: 0.5, y: 0.14453125}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
       spriteID: 8c7e4109c7f12564c9479d4510bbe676
       internalID: 2016637433
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Frame03
-      rect:
-        serializedVersion: 2
-        x: 1152
-        y: 512
-        width: 384
-        height: 512
-      alignment: 9
-      pivot: {x: 0.5, y: 0.14453125}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8b0fff47d360ae44084502e122dc4bdf
-      internalID: 239774479
       vertices: []
       indices:
       edges: []
@@ -212,54 +168,10 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Frame05
-      rect:
-        serializedVersion: 2
-        x: 384
-        y: 0
-        width: 384
-        height: 512
-      alignment: 9
-      pivot: {x: 0.5, y: 0.14453125}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e8ad4f1fa08cd2a47929edd8ef444355
-      internalID: -521064031
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Frame06
-      rect:
-        serializedVersion: 2
-        x: 768
-        y: 0
-        width: 384
-        height: 512
-      alignment: 9
-      pivot: {x: 0.5, y: 0.14453125}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData:
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2efd491781e0f4143bea3176bb62a449
-      internalID: 893723534
-      vertices: []
-      indices:
-      edges: []
-      weights: []
-    - serializedVersion: 2
       name: Frame07
       rect:
         serializedVersion: 2
-        x: 1152
+        x: 384
         y: 0
         width: 384
         height: 512

@@ -36,7 +36,7 @@ namespace KarmaPrototype
         void DrawPlayerComparison()
         {
             if (memoryPicture == null) return;
-            float t = Mathf.Floor(age * 24) / 24;
+            float t = Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
             float memoryAlpha = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.05f, 0.25f, t))
                 * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(MemoryDuration - 0.4f, MemoryDuration, t)));
             playerMemory.localPosition = new Vector3(comparisonFacing * 4.8f, -0.5f, 0);

@@ -4,7 +4,7 @@ namespace KarmaPrototype
 {
     // Flight shares the planner's equation. Planted swords stay harmless until
     // the final volley explicitly detonates them after the electrical charge.
-    public sealed class KarmaSW05RainBlade : MonoBehaviour
+    public sealed class KarmaSW05RainBlade : KarmaHostileFlight
     {
         KarmaGame game;
         KarmaEnemy owner;
@@ -75,14 +75,14 @@ namespace KarmaPrototype
             KarmaSW05VFX.Falling(root, game, blade.transform, blade.Visual, shot.size, shot.delay + shot.life, shot.velocity.normalized);
             return blade;
         }
-        void Update()
+        protected override void AdvanceFlight(float tickEnd)
         {
             if (game == null || owner == null || !owner.Alive || game.Phase != RunPhase.Combat)
             { gameObject.SetActive(false); Destroy(gameObject); return; }
             if (game.Paused) return;
             if (detonating)
             {
-                explosionAge += Time.deltaTime;
+                explosionAge += Time.fixedDeltaTime;
                 if (explosionAge >= ExplosionActiveSeconds)
                 { gameObject.SetActive(false); Destroy(gameObject); return; }
                 // The same ledger spans every zone and every active frame.
@@ -92,13 +92,13 @@ namespace KarmaPrototype
                     explosionContact, 0, sourcePattern: EnemyAttack.SW05);
                 return;
             }
-            float previous = age; age += Time.deltaTime;
+            float previous = age; age += Time.fixedDeltaTime;
             if (Landed || age < shot.delay) return;
             float fromTime = Mathf.Clamp(previous - shot.delay, 0, shot.life);
             float toTime = Mathf.Clamp(age - shot.delay, 0, shot.life);
             Vector2 from = shot.PositionAt(fromTime), to = shot.PositionAt(toTime);
             transform.position = to;
-            owner.TryAttackHit(from, to, shot.size, damage, contact, 0, shot.velocity.normalized);
+            owner.TryAttackHit(from, to, shot.size, damage, contact, 0, shot.velocity.normalized, segmentStart: tickEnd - (age - shot.delay - fromTime), segmentSeconds: toTime - fromTime);
             if (toTime < shot.life) return;
             if (warning != null) { warning.gameObject.SetActive(false); Destroy(warning.gameObject); warning = null; }
             landing = to + shot.velocity.normalized * (shot.size.x / 2);

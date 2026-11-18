@@ -4,7 +4,7 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
-        void Update()
+        void FixedUpdate()
         {
             if (game == null || stopped) return;
             if (game.Paused) return;
@@ -19,7 +19,7 @@ namespace KarmaPrototype
                 if (!behavior.CanEngage) { return; }
                 engaged = true;
             }
-            float dt = Time.deltaTime; FightSeconds += dt;
+            float dt = Time.fixedDeltaTime; FightSeconds += dt;
             if (Enraged && !announcedEnrage)
             {
                 announcedEnrage = true;

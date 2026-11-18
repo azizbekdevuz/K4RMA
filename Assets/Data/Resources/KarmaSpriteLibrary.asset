@@ -14,41 +14,69 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
   sheets:
   - id: Player
-    source: Assets/Arts/Resources/Player/Actions.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -1166498298, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 817887777, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1760789366, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1526526727, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 847005292, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 225469813, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: -2078491597, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 459610708, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 62152086, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: -1365063686, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 343864838, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1534812052, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1155186186, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: -1445634849, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 897304144, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: -631073187, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1493579159, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: -225161381, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1389647563, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    - {fileID: 1615971206, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: e31cf09e2675940d29881c3f000b7333, type: 3}
+    - {fileID: -1996039169, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
+    - {fileID: 1989934688, guid: 645395564f72c4a658835e1de404ff02, type: 3}
+    - {fileID: 1160839727, guid: 13ccd81a4ff124f08ae7a95a28c058e7, type: 3}
+    - {fileID: -245207309, guid: a67fca1754cf54cfcb83b8c433b45c50, type: 3}
+    - {fileID: -46325224, guid: 13252d6c74dec4b5cbf63aea09588f16, type: 3}
+    - {fileID: 80548596, guid: 1748e66946ad04e18b29adb6774cddf6, type: 3}
+    - {fileID: -1741662668, guid: 4cdc04f27802e4ff1a83a0c58f027b06, type: 3}
+    - {fileID: -1741662668, guid: 4cdc04f27802e4ff1a83a0c58f027b06, type: 3}
+    - {fileID: -1063912144, guid: 34a8da87c37744b88a3a633b218b6cad, type: 3}
+    - {fileID: 1966875291, guid: 56629021e250744658508ab7f00bb094, type: 3}
+    - {fileID: 1860138507, guid: 7875502c539134ce78cc55c387cd332a, type: 3}
+    - {fileID: -266476305, guid: 5eb5af312d360415aa2b59797c83a97a, type: 3}
+    - {fileID: -2026558918, guid: b7540c1c6a0c543c8b535aa674fe79bd, type: 3}
+    - {fileID: 545805173, guid: 2562a39ecb9b24ffa9047a2909c10126, type: 3}
+    - {fileID: -1063912144, guid: 34a8da87c37744b88a3a633b218b6cad, type: 3}
+    - {fileID: -46325224, guid: 13252d6c74dec4b5cbf63aea09588f16, type: 3}
+    - {fileID: -842377239, guid: c7a34cb91ab454b7094bb4c67184c5c9, type: 3}
+    - {fileID: 1778125743, guid: 0e94955ea4c7842d4a9f134c9cfeb00b, type: 3}
+    - {fileID: -1361924763, guid: 6b263422d9e5447e3990879bdd1ad999, type: 3}
+    poses:
+    - Idle
+    - Run
+    - Jump
+    - Apex
+    - Fall
+    - Dash
+    - Land
+    - Windup
+    - Slash
+    - FollowThrough
+    - Rising
+    - Guard
+    - Parry
+    - Hurt
+    - Death
+    - Recovery
+    - Pierce
+    - AirSlash
+    - Riposte
+    - Crouch
   - id: Neutral
-    source: Assets/Arts/Resources/Neutral/Forms/Neutral.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 180812220, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: -1802364208, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: -1085669223, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: 2025771284, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: 449866624, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: 983109016, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: -91326788, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    - {fileID: -568564582, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 95889af325e0f4eb193ad53f4526d8ab, type: 3}
+    - {fileID: 1799767991, guid: 899648b203c39461c8e3e51709692678, type: 3}
+    - {fileID: 1716456789, guid: 3ea2578483d534923aad8c45bff69c16, type: 3}
+    - {fileID: -1633353883, guid: 2bf75559e4fc745e49c6a88daa4f1840, type: 3}
+    - {fileID: 1468896795, guid: 6bd23af6bc9d147fcb39dade77af09ee, type: 3}
+    - {fileID: 579951212, guid: b8a91be7178ba4997bd5a972cefc43a4, type: 3}
+    - {fileID: -1904995181, guid: 6a2e412ab6ba44c36aa8615c7d5826e2, type: 3}
+    - {fileID: 1952602886, guid: 0371a8b3e93da4ad2988264de60f93a7, type: 3}
+    poses:
+    - Idle
+    - Move
+    - Windup
+    - Slash
+    - Recovery
+    - Hurt
+    - Kneel
+    - Death
   - id: PlayerVFX
     source: Assets/Arts/Resources/Shared/Effects/Player.png
     sprites:
@@ -96,11 +124,15 @@ MonoBehaviour:
   - id: Inheritance
     source: Assets/Arts/Resources/Shared/ReferencePoses.png
     sprites:
-    - {fileID: -851417356, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
+    - {fileID: 21300000, guid: 95889af325e0f4eb193ad53f4526d8ab, type: 3}
     - {fileID: 708199587, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     - {fileID: 1649695096, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
     - {fileID: 1955462934, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    poses: []
+    poses:
+    - Neutral
+    - SwordPart
+    - RisePart
+    - WardPart
   - id: Props
     source: Assets/Arts/Resources/Shared/Props.png
     sprites:

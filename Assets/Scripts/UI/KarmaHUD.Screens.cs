@@ -229,13 +229,7 @@ namespace KarmaPrototype
         }
         void StageTransitionScreen()
         {
-            if (!game.GuardianInheriting)
-            {
-                Panel(new Rect(280, 590, 720, 82));
-                Label(300, 609, 680, 44,
-                    "고유화 · " + KarmaPatternCatalog.UniqueName(game.LastPersonalizedEssence), centered);
-                return;
-            }
+            if (!game.GuardianInheriting) return;
             if (DrawBossEntrance()) return;
 
             string guardian = GuardianEncounterTitle(game.Player.Essences.PersonalizationOrder);

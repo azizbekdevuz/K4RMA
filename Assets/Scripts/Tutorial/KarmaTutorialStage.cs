@@ -8,11 +8,12 @@ namespace KarmaPrototype
         {
             var names = new[] { "01_Dojo_NoMaster", "04_Boss_Gate", "Master", "TrainingDummy" };
             var requests = new ResourceRequest[names.Length];
-            for (int i = 0; i < names.Length; i++) requests[i] = Resources.LoadAsync<Texture2D>("Tutorial/" + names[i]);
+            for (int i = 0; i < names.Length; i++) requests[i] = Resources.LoadAsync<Texture2D>(PicturePath(names[i]));
             foreach (var request in requests) yield return request;
         }
-        // Original Master.png: last broad sandal support is row 1294 of 1312 (17 px transparent inset).
-        internal static float MasterGroundCenter(float height) => height * (0.5f - 17f / 1312f);
+        static string PicturePath(string name) => name == "Master" ? KarmaArtwork.StageArt + "Master_Idle" : "Tutorial/" + name;
+        internal const float MasterSoleInset = 16f / 1312f;
+        internal static float MasterGroundCenter(float height) => height * (0.5f - MasterSoleInset);
         public const float RoomWidth = 50;
         public const float Right = 75;
         public const float FinalGate = 59;
@@ -65,7 +66,15 @@ namespace KarmaPrototype
         }
         internal static SpriteRenderer Picture(Transform parent, string name, Vector2 at, Vector2 size, int order)
         {
-            var texture = Resources.Load<Texture2D>("Tutorial/" + name);
+            if (name == "Master")
+            {
+                var idle = KarmaArtwork.StageIdle("Master");
+                var renderer = KarmaVisuals.Box(parent, name, at - Vector2.up * MasterGroundCenter(size.y), Vector2.one, Color.white, order);
+                renderer.sprite = idle;
+                renderer.transform.localScale = Vector3.one * (size.y / (idle.rect.height / idle.pixelsPerUnit));
+                return renderer;
+            }
+            var texture = Resources.Load<Texture2D>(PicturePath(name));
             if (texture == null) throw new System.InvalidOperationException("Missing tutorial artwork: " + name);
             var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f, 100, 0, SpriteMeshType.FullRect);
             var sr = KarmaVisuals.Box(parent, name, at, Vector2.one, Color.white, order);

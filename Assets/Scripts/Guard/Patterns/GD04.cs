@@ -86,9 +86,9 @@ namespace KarmaPrototype
                 }
                 float started = owner.FightSeconds, previousElapsed = -0.001f;
                 bool resolved = false;
-                // Speed up each vertical emergence to two 24 FPS visual frames.
+                // Speed up each vertical emergence to one 12 FPS visual frame.
                 // Preserve the near-to-far spread, damage windows and complete sequence/chain timing.
-                const float travelSeconds = 0.55f, riseSeconds = 2f / 24f, hitStart = 0.12f, hitEnd = 0.20f;
+                const float travelSeconds = 0.55f, riseSeconds = KarmaBootstrap.Step, hitStart = 0.12f, hitEnd = 0.20f;
                 const float lowerAt = travelSeconds + hitStart + 0.16f, lowerSeconds = 0.24f;
                 while (owner.Active)
                 {

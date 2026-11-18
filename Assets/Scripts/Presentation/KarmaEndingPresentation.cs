@@ -13,23 +13,15 @@ namespace KarmaPrototype
         readonly SpriteRenderer[] particles = new SpriteRenderer[48];
         readonly Vector3[] particleOrigins = new Vector3[48];
         const float MasterHeight = 4.8f;
-        const int MasterColumns = 24, MasterRows = 28;
         static readonly Color MasterMoonlight = new Color(0.84f, 0.9f, 1f);
         static readonly Color MasterWarmLight = new Color(1f, 0.94f, 0.78f);
-        static readonly string[] masterPoseNames = { "MasterLift", "MasterTeach" };
-        static readonly float[] masterFootPixels = { 16, 9 };
         readonly SpriteRenderer[] memories = new SpriteRenderer[KarmaGame.EndingMemoryCount];
         readonly Vector3[] symbolSizes = new Vector3[3];
         const float EmblemRadius = 3.2f;
         readonly SpriteRenderer[] mist = new SpriteRenderer[2];
-        readonly Sprite[] masterPoses = new Sprite[masterPoseNames.Length];
         SpriteRenderer master, aura, backdrop, emblemCore;
         float coreScale;
-        Sprite masterIdle;
-        Mesh masterMesh;
-        MeshRenderer masterMotion;
-        MaterialPropertyBlock masterProperties;
-        Vector3[] masterVertices;
+        readonly KarmaMotionArt motionArt = new KarmaMotionArt();
         float lastMasterFrame = -1;
         readonly SpriteRenderer[] driftingLights = new SpriteRenderer[20];
         Color backdropColor;
@@ -50,7 +42,6 @@ namespace KarmaPrototype
             var root = new GameObject("Ending presentation"); root.transform.SetParent(world, false);
             var ending = root.AddComponent<KarmaEndingPresentation>();
             ending.game = game; ending.fallen = fallen;
-            Sprite finalDefeat = null;
             if (fallen != null)
             {
                 fallen.position = origin;
@@ -59,7 +50,6 @@ namespace KarmaPrototype
                 fallen.localScale = scale;
                 ending.fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
                 ending.fallenPictures = fallen.GetComponentsInChildren<SpriteRenderer>();
-                if (ending.fallenPictures.Length > 0) finalDefeat = ending.fallenPictures[0].sprite;
                 ending.fallenAnimator?.PresentEndingDefeat(0);
                 var material = Resources.Load<Material>("Shared/Rendering/KarmaEndingDissolve");
                 if (material != null) foreach (var picture in ending.fallenPictures) picture.sharedMaterial = material;
@@ -89,21 +79,21 @@ namespace KarmaPrototype
                 KarmaArtwork.Sprite("PlayerVFX", "PierceTrail"), 5.4f, 14);
             for (int i = 0; i < ending.techniques.Length; i++) ending.techniqueSizes[i] = ending.techniques[i].transform.localScale;
             var acquired = game.Player.Essences.PersonalizationOrder;
-            ending.memories[0] = ending.Layer("Memory of the first guardian", KarmaArtwork.Sprite("Neutral", "Death") ?? defeated[0], 5f, 1);
+            ending.memories[0] = ending.Layer("Memory of the first guardian", ending.motionArt.Sample("Neutral", "Death", 10), 5f, 1);
             if (acquired.Count >= 1)
             {
                 var baseForm = KarmaArtwork.GuardianFormName(new[] { acquired[0] });
-                ending.memories[1] = ending.Layer("Memory of the second guardian", KarmaArtwork.Sprite(baseForm, "Death") ?? defeated[1], 5f, 1);
+                ending.memories[1] = ending.Layer("Memory of the second guardian", ending.motionArt.Sample(baseForm, "Death", 10), 5f, 1);
             }
             if (acquired.Count >= 2)
             {
                 var inheritedForm = KarmaArtwork.GuardianFormName(new[] { acquired[0], acquired[1] });
                 ending.memories[2] = ending.Layer("Memory of the third guardian",
-                    FindSprite(KarmaArtwork.InheritedPoses(inheritedForm), "Death") ?? defeated[2], 5f, 1);
+                    ending.motionArt.Sample(inheritedForm, "Death", 10), 5f, 1);
             }
             string finalForm = KarmaArtwork.GuardianFormName(acquired);
             ending.memories[3] = ending.Layer("Memory of the final guardian",
-                FindSprite(KarmaArtwork.InheritedPoses(finalForm), "Death") ?? finalDefeat, 5f, 1);
+                ending.motionArt.Sample(finalForm, "FinalDefeat", 10), 5f, 1);
             for (int i = 0; i < ending.mist.Length; i++)
                 ending.mist[i] = ending.Layer("Ending ground mist " + i, mistSprite, i == 0 ? 42f : 30f, -7 + i);
             var background = world.Find("Trial hall artwork") ?? world.Find("Mountain dojo artwork");
@@ -115,71 +105,16 @@ namespace KarmaPrototype
             ending.master = KarmaTutorialStage.Picture(root.transform, "Master",
                 new Vector2(KarmaGame.EndingMasterX, KarmaTutorialStage.MasterGroundCenter(MasterHeight)),
                 new Vector2(4.39f, MasterHeight), 10);
-            ending.masterIdle = ending.master.sprite;
-            for (int i = 0; i < ending.masterPoses.Length; i++)
-                ending.masterPoses[i] = Resources.Load<Sprite>("Ending/" + masterPoseNames[i]);
             ending.master.enabled = false;
-            ending.CreateMasterMotion();
             for (int i = 0; i < ending.driftingLights.Length; i++)
                 ending.driftingLights[i] = ending.Layer("Ending air light " + i,
                     KarmaArtwork.Sprite("PersonalizationVFX", "Core"), 0.08f + 0.03f * (i % 4), 2 + i % 2);
             return ending;
         }
 
-        static Sprite FindSprite(Sprite[] sprites, string name)
-        {
-            foreach (var sprite in sprites)
-                if (sprite.name == name) return sprite;
-            return null;
-        }
-
         void OnDisable()
         {
             if (originalBackdrop && backdrop != null) backdrop.color = backdropColor;
-        }
-
-        void OnDestroy()
-        {
-            if (masterMesh != null) Destroy(masterMesh);
-        }
-
-        void CreateMasterMotion()
-        {
-            var layer = new GameObject("Master performance");
-            layer.transform.SetParent(transform, false);
-            layer.transform.localPosition = new Vector3(KarmaGame.EndingMasterX, 0, 0);
-            masterMotion = layer.AddComponent<MeshRenderer>();
-            masterMotion.sharedMaterial = KarmaVisuals.DefaultMaterial;
-            masterMotion.sortingOrder = master.sortingOrder;
-            masterProperties = new MaterialPropertyBlock();
-            masterMesh = new Mesh { name = "Ending master performance" };
-            masterMesh.MarkDynamic();
-            masterVertices = new Vector3[(MasterColumns + 1) * (MasterRows + 1)];
-            var uv = new Vector2[masterVertices.Length];
-            var indices = new int[MasterColumns * MasterRows * 6];
-            var colors = new Color32[masterVertices.Length];
-            int index = 0;
-            for (int y = 0; y <= MasterRows; y++)
-            for (int x = 0; x <= MasterColumns; x++)
-            {
-                int point = y * (MasterColumns + 1) + x;
-                uv[point] = new Vector2((float)x / MasterColumns, (float)y / MasterRows);
-                colors[point] = new Color32(255, 255, 255, 255);
-                if (x == MasterColumns || y == MasterRows) continue;
-                int top = point + MasterColumns + 1;
-                indices[index++] = point;
-                indices[index++] = top;
-                indices[index++] = point + 1;
-                indices[index++] = point + 1;
-                indices[index++] = top;
-                indices[index++] = top + 1;
-            }
-            masterMesh.vertices = masterVertices;
-            masterMesh.uv = uv;
-            masterMesh.colors32 = colors;
-            masterMesh.triangles = indices;
-            masterMesh.bounds = new Bounds(new Vector3(0, 2.4f, 0), new Vector3(7, 7, 1));
-            layer.AddComponent<MeshFilter>().sharedMesh = masterMesh;
         }
 
         SpriteRenderer Layer(string name, Sprite sprite, float size, int order)
@@ -209,7 +144,7 @@ namespace KarmaPrototype
         {
             if (game == null || game.Player == null || game.Phase != RunPhase.Ending) return;
             float t = game.EndingTime;
-            float poseTime = Mathf.Floor(t * 24f + 0.001f) / 24f;
+            float poseTime = Mathf.Floor(t * KarmaBootstrap.FramesPerSecond + 0.001f) * KarmaBootstrap.Step;
             game.Player.PresentEnding(t);
             DrawGuardian(t);
             DrawAtmosphere(t);
@@ -285,53 +220,22 @@ namespace KarmaPrototype
             lastMasterFrame = t;
             float presence = Ease(KarmaGame.EndingMasterAt, 11.8f, t) * (1 - Ease(KarmaGame.EndingDepartAt + 0.1f,
                 KarmaGame.EndingDepartAt + 2.7f, t));
-            masterMotion.enabled = presence > 0;
-            if (!masterMotion.enabled) return;
-
-            // The farewell uses the original idle pose throughout both lines.
-            float lesson = Gesture(11.3f, 12.0f, 12.38f, 13.55f, t) * 9f
-                + Gesture(14.95f, 15.64f, 16.08f, 17.3f, t) * 8f
-                + Gesture(18.38f, 18.96f, 19.38f, 20.35f, t) * 6f;
-            float reply = Gesture(27.24f, 27.78f, 28.06f, 28.85f, t) * 10f;
-            float angle = (lesson + reply) * Mathf.Deg2Rad;
-            float breath = t < KarmaGame.EndingFarewellAt ? Mathf.Sin(t * 2.15f) * 0.022f : 0;
-            int pose = -1;
-            if (t >= 11.55f && t < 12f || t >= 15.9f && t < 16.35f) pose = 0;
-            else if (t >= 12f && t < 15.9f) pose = 1;
-            var sprite = pose >= 0 ? masterPoses[pose] : null;
-            float foot = sprite != null ? masterFootPixels[pose] : 17;
-            sprite ??= masterIdle;
-
-            // Keep both sandals and the cane tip planted. Bend around the waist,
-            // letting the head and shoulders travel farther than the hands.
-            float sine = Mathf.Sin(angle);
-            float cosine = Mathf.Cos(angle);
-            for (int y = 0; y <= MasterRows; y++)
-            {
-                float height = (float)y / MasterRows;
-                float weight = Ease(0.44f, 0.78f, height);
-                for (int x = 0; x <= MasterColumns; x++)
-                {
-                    float horizontal = (float)x / MasterColumns;
-                    float px = (horizontal - 0.5f) * 4.39f;
-                    float py = (height - foot / 1312f) * MasterHeight;
-                    var rest = new Vector2(px, py - 2.45f);
-                    var bent = new Vector2(rest.x * cosine + rest.y * sine,
-                        rest.y * cosine - rest.x * sine + 2.45f + breath);
-                    masterVertices[y * (MasterColumns + 1) + x] = new Vector3(
-                        Mathf.Lerp(px, bent.x, weight), Mathf.Lerp(py, bent.y, weight), 0);
-                }
-            }
-            masterMesh.SetVertices(masterVertices, 0, masterVertices.Length, UnityEngine.Rendering.MeshUpdateFlags.DontRecalculateBounds);
+            master.enabled = presence > 0;
+            if (!master.enabled) return;
+            string motion = "Breath";
+            float start = KarmaGame.EndingMasterAt;
+            if (t >= KarmaGame.EndingFarewellAt) { motion = "Farewell"; start = KarmaGame.EndingFarewellAt; }
+            else if (t >= KarmaGame.EndingMasterReplyAt && t < KarmaGame.EndingApprenticeReplyAt)
+            { motion = "Reply"; start = KarmaGame.EndingMasterReplyAt; }
+            else if (t >= 11.55f && t < 12f || t >= 15.9f && t < 16.35f)
+            { motion = "MasterLift"; start = t < 12f ? 11.55f : 15.9f; }
+            else if (t >= 12f && t < 15.9f || t >= 18.38f && t < 20.35f)
+            { motion = "MasterTeach"; start = t < 15.9f ? 12f : 18.38f; }
+            master.sprite = motionArt.Sample("Master", motion, t - start, motion == "Breath");
             var color = Color.Lerp(MasterMoonlight, MasterWarmLight, game.EndingAbsorbLight);
             color.a = presence * 0.98f;
-            masterProperties.SetTexture("_MainTex", sprite.texture);
-            masterProperties.SetColor("_Color", color);
-            masterMotion.SetPropertyBlock(masterProperties);
+            master.color = color;
         }
-
-        static float Gesture(float start, float peak, float hold, float finish, float t)
-            => Ease(start, peak, t) * (1 - Ease(hold, finish, t));
 
         void DrawAir(float t)
         {

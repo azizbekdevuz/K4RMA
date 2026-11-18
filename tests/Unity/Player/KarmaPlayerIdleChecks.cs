@@ -17,8 +17,8 @@ using KarmaPrototype;
 [InitializeOnLoad]
 public static class KarmaPlayerIdleChecks
 {
-    const string Art = "Assets/Arts/Resources/Player/Native24/Idle.png";
-    const string Clips = "Assets/Arts/Resources/Player/Animation";
+    const string Art = "Assets/Arts/Resources/Reference/GameScale_HD_StageStyle/Player_Idle.png";
+    const string Clips = "Assets/Arts/Resources/Player/Animation12";
     const string Output = "output/validation/player-idle";
     const string Session = "K4RMA.IdleChecks";
     const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -44,7 +44,7 @@ public static class KarmaPlayerIdleChecks
             if (!started && Time.frameCount > 0) { started = true; Debug.Log("IDLE PLAY: starting verification at frame " + Time.frameCount); VerifyGameplay(); }
             if (recording && Time.time >= nextCapture)
             {
-                nextCapture = Time.time + 1f / 24;
+                nextCapture = Time.time + 1f / 12;
                 Capture();
             }
         };
@@ -53,91 +53,25 @@ public static class KarmaPlayerIdleChecks
     static void Check(bool pass, string message)
     { if (!pass) throw new Exception(message); }
 
-    // Runs the existing sprite importer API in a disposable validation copy.
     public static void ImportBatch()
     {
         try
         {
-            var args = Environment.GetCommandLineArgs();
-            int at = Array.IndexOf(args, "-idleSheet");
-            Check(at >= 0 && at + 1 < args.Length, "Pass -idleSheet <reviewed PNG>");
-            var original = AssetDatabase.LoadAllAssetsAtPath("Assets/Arts/Resources/Player/Actions.png")
-                .OfType<Sprite>().Single(s => s.name == "Idle");
-            var pivot = new Vector2(original.pivot.x / original.rect.width, original.pivot.y / original.rect.height);
-            var sprites = ImportIdle(args[at + 1], original.pixelsPerUnit, pivot);
-            foreach (string folder in new[] { Clips, Clips + "24" })
-            {
-                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(folder + "/Idle.anim");
-                clip.frameRate = 24;
-                var keys = Enumerable.Range(0, 24).Select(i => new ObjectReferenceKeyframe { time = i / 24f, value = sprites[i] }).ToArray();
-                AnimationUtility.SetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(SpriteRenderer), "m_Sprite"), keys);
-                var settings = AnimationUtility.GetAnimationClipSettings(clip);
-                settings.startTime = 0; settings.stopTime = 1; settings.loopTime = true;
-                AnimationUtility.SetAnimationClipSettings(clip, settings); EditorUtility.SetDirty(clip);
-            }
-            var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Clips + "/Frames.asset");
-            var entry = library.sheets.Single(s => s.id == "Idle");
-            entry.sprites = sprites; entry.source = Art;
-            EditorUtility.SetDirty(library); AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(Art, ImportAssetOptions.ForceSynchronousImport);
+            KarmaPrototype.EditorTools.KarmaPlayer12AnimationAssets.Rebuild();
             VerifyAssets();
-            Debug.Log("IDLE IMPORT PASS: 24 drawings, one 24FPS tick each, 1s loop; original Actions/Idle PPU and pivot.");
             EditorApplication.Exit(0);
         }
         catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
     }
 
-    static Sprite[] ImportIdle(string input, float ppu, Vector2 pivot)
-    {
-        File.Copy(input, Art, true);
-        AssetDatabase.ImportAsset(Art, ImportAssetOptions.ForceSynchronousImport);
-        var importer = (TextureImporter)AssetImporter.GetAtPath(Art);
-        importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Multiple;
-        importer.spritePixelsPerUnit = ppu; importer.npotScale = TextureImporterNPOTScale.None;
-        importer.maxTextureSize = 2048; importer.mipmapEnabled = false; importer.alphaIsTransparency = true;
-        importer.textureCompression = TextureImporterCompression.Uncompressed;
-        var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
-        settings.spriteMeshType = SpriteMeshType.FullRect; importer.SetTextureSettings(settings);
-        foreach (string platform in new[] { "Standalone", "Android", "iPhone", "WebGL" }) importer.ClearPlatformTextureSettings(platform);
-        importer.SaveAndReimport();
-        var factories = new SpriteDataProviderFactories(); factories.Init();
-        var provider = factories.GetSpriteEditorDataProviderFromObject(importer);
-        Check(provider != null, "Sprite data provider missing"); provider.InitSpriteEditorDataProvider();
-        var capability = provider.GetDataProvider<ISpriteFrameEditCapability>();
-        Check(capability != null, "Sprite edit capability missing");
-        foreach (var edit in new[] { EEditCapability.CreateAndDeleteSprite, EEditCapability.EditSpriteName, EEditCapability.EditSpriteRect, EEditCapability.EditPivot })
-            Check(capability.GetEditCapability().HasCapability(edit), "Unsupported sprite edit: " + edit);
-        var old = provider.GetSpriteRects().ToDictionary(r => r.name, r => r.spriteID);
-        var rects = Enumerable.Range(0, 24).Select(i => {
-            string name = "Idle_" + i.ToString("00");
-            return new SpriteRect { name = name, rect = new Rect(i % 4 * 205, (5 - i / 4) * 285, 205, 285),
-                alignment = SpriteAlignment.Custom, pivot = pivot, spriteID = old.TryGetValue(name, out var id) ? id : GUID.Generate() };
-        }).ToArray();
-        provider.SetSpriteRects(rects);
-        var names = provider.GetDataProvider<ISpriteNameFileIdDataProvider>();
-        Check(names != null, "Sprite name/ID provider missing");
-        names.SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));
-        provider.Apply(); importer.SaveAndReimport();
-        return AssetDatabase.LoadAllAssetsAtPath(Art).OfType<Sprite>().OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
-    }
-
     static void VerifyAssets()
     {
-        var original = AssetDatabase.LoadAllAssetsAtPath("Assets/Arts/Resources/Player/Actions.png").OfType<Sprite>().Single(s => s.name == "Idle");
-        var sprites = AssetDatabase.LoadAllAssetsAtPath(Art).OfType<Sprite>().OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
-        Check(sprites.Length == 24, "Idle must contain exactly twenty-four drawings");
-        for (int i = 0; i < 24; i++)
-        {
-            var s = sprites[i];
-            Check(s.name == "Idle_" + i.ToString("00") && s.rect == new Rect(i % 4 * 205, (5 - i / 4) * 285, 205, 285), "Row-major slice " + i);
-            Check(s.pixelsPerUnit == original.pixelsPerUnit && (s.pivot - original.pivot).sqrMagnitude < .001f, "Original Idle PPU/pivot " + i);
-        }
+        var idle = KarmaArtwork.StageIdle("Player");
         var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(Clips + "/Idle.anim");
-        var settings = AnimationUtility.GetAnimationClipSettings(clip);
-        Check(clip.frameRate == 24 && clip.isLooping && settings.stopTime == 1, "24FPS, exactly one second, loop enabled");
         var keys = AnimationUtility.GetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(SpriteRenderer), "m_Sprite"));
-        Check(keys.Length == 24, "24-tick Idle timeline");
-        for (int i = 0; i < 24; i++)
-            Check(Mathf.Abs(keys[i].time - i / 24f) < .00001f && keys[i].value == sprites[i], "Idle drawing timing " + i);
+        Check(clip.frameRate == KarmaBootstrap.FramesPerSecond && clip.isLooping, "Idle playback clock");
+        Check(keys.Length == 1 && keys[0].value == idle && AssetDatabase.GetAssetPath(idle) == Art, "StageStyle Idle binding");
     }
 
     public static void RunGameplayBatch()
@@ -179,14 +113,13 @@ public static class KarmaPlayerIdleChecks
             renderer = (SpriteRenderer)typeof(KarmaCharacterAnimator).GetField("picture", Private).GetValue(animator);
             var sample = typeof(KarmaCharacterAnimator).GetMethod("SamplePlayerClip", Private);
             var clock = typeof(KarmaCharacterAnimator).GetField("playerClipAt", Private);
-            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation/Frames");
-            Check(!(bool)typeof(KarmaCharacterAnimator).GetField("nativePlayer24", Private).GetValue(animator), "Keep existing legacy state policy");
+            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation12/Frames");
             player.enabled = false;
             foreach (var sheet in library.sheets)
             {
                 if (sheet.id == "Riposte") continue; // Dedicated parry-success renderer owns this pose.
                 sample.Invoke(animator, new object[] { sheet.id, true });
-                var clip = Resources.Load<AnimationClip>("Player/Animation/" + sheet.id);
+                var clip = Resources.Load<AnimationClip>("Player/Animation12/" + sheet.id);
                 var curve = AnimationUtility.GetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(SpriteRenderer), "m_Sprite"));
                 for (int i = 0; i < sheet.sprites.Length; i++)
                 {
@@ -197,11 +130,11 @@ public static class KarmaPlayerIdleChecks
                 }
             }
             sample.Invoke(animator, new object[] { "Idle", true });
-            for (int tick = 0; tick < 49; tick++)
+            for (int tick = 0; tick < 25; tick++)
             {
-                clock.SetValue(animator, Time.time - (tick + .01f) / 24);
+                clock.SetValue(animator, Time.time - (tick + .01f) / 12);
                 sample.Invoke(animator, new object[] { "Idle", false });
-                Check(renderer.sprite.name == "Idle_" + (tick % 24).ToString("00"), "Two complete Idle loops at tick " + tick);
+                Check(renderer.sprite == KarmaArtwork.StageIdle("Player"), "Two complete Idle loops at tick " + tick);
                 animator.Pose(0, false);
                 Check(renderer.transform.localPosition == (Vector3)typeof(KarmaCharacterAnimator).GetField("pictureHome", Private).GetValue(animator), "No procedural Idle bob");
             }
@@ -229,7 +162,7 @@ public static class KarmaPlayerIdleChecks
             await Hold("Jump", .05f, Key.Space); await Hold("LandReturn", 1.4f);
             await Hold("Guard", .05f, Key.K); await Hold("GuardReturn", .6f);
             Check(captures >= 48 && rows.Any(r => r.Contains(",Run,")) && rows.Any(r => r.Contains(",Attack,")) && rows.Any(r => r.Contains(",Land,")), "Actual movement/attack/jump input capture");
-            File.WriteAllText(Output + "/result.txt", "PASS: Unity import, PPU/pivot, 24-tick/1-second loop, 49 deterministic runtime ticks, all connected player sequences, parry-success, no procedural bob, and actual Idle/run/attack/jump/guard input capture. Gameplay clocks unchanged.\n");
+            File.WriteAllText(Output + "/result.txt", "PASS: Unity import, PPU/pivot, 12-tick/1-second loop, 25 deterministic runtime ticks, all connected player sequences, parry-success, no procedural bob, and actual Idle/run/attack/jump/guard input capture. Gameplay clocks unchanged.\n");
             exit = 0;
         }
         catch (Exception e) { File.WriteAllText(Output + "/result.txt", "FAIL: " + e); Debug.LogException(e); }

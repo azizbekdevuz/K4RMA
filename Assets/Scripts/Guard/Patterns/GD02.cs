@@ -7,12 +7,12 @@ namespace KarmaPrototype
         sealed class GD02Pattern : GuardBossPattern
         {
             public GD02Pattern(KarmaEnemy owner) : base(owner) { }
-            float heavyParryUntil;
+            float heavyParryUntil, cueOpenedAt, cueClosesAt;
             bool heavyParryQueued;
             public bool ParryWindowOpen { get { return owner.Active && !owner.game.Paused && owner.running
                 && (owner.selected == EnemyAttack.GD02 || owner.selected == EnemyAttack.GD05)
                 && owner.state == ActionState.Telegraph && heavyParryUntil > 0; } }
-            public bool TryQueueParry() { if (!ParryWindowOpen) return false; heavyParryQueued = true; return true; }
+            public bool TryQueueParry(float pressedAt) { if (!ParryWindowOpen || pressedAt < cueOpenedAt || pressedAt > cueClosesAt) return false; heavyParryQueued = true; return true; }
             public bool ConsumeQueuedParry() { bool queued = heavyParryQueued; heavyParryQueued = false; return queued; }
             public override void Interrupt() { heavyParryUntil = 0; heavyParryQueued = false; owner.animator.EndHeavyStrike(); }
             public override IEnumerator Execute() { return ExecuteWithTerrain(null); }
@@ -49,6 +49,7 @@ namespace KarmaPrototype
                 float cueSeconds = CueSeconds;
                 yield return owner.Wait(Mathf.Max(0, owner.Warning(0.9f) - cueSeconds));
                 heavyParryQueued = false; heavyParryUntil = owner.FightSeconds + cueSeconds;
+                cueOpenedAt = Time.time; cueClosesAt = cueOpenedAt + cueSeconds;
                 owner.animator.HeatHeavyStrike();
 
                 while (owner.FightSeconds < heavyParryUntil && owner.Active)

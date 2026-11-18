@@ -78,6 +78,7 @@ namespace KarmaPrototype
                 body.linearVelocity = new Vector2(horizontal, body.linearVelocity.y);
                 if (jumpQueued)
                 {
+                    animator.BeginJumpVisual();
                     body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.jumpSpeed);
                     jumpBufferedUntil = 0;
                     lastGrounded = -10;

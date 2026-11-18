@@ -12,6 +12,7 @@ namespace KarmaPrototype
             {
                 // The choice is latched in OnSelected, before any warning starts.
                 // Crossing a range boundary never cancels or swaps this attack.
+                owner.animator.RangedBasicBody = !sword.BasicMeleeSelected;
                 if (sword.BasicMeleeSelected)
                 { yield return Melee(); yield break; }
                 owner.state = ActionState.Telegraph;

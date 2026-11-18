@@ -75,35 +75,37 @@ namespace KarmaPrototype
                         "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f), WaveVisuals);
             }
         }
-        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
+        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null, float? segmentStart = null, float segmentSeconds = 0)
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
             var body = player.DamageBounds;
             p = body.center;
+            float first;
             bool hit = attackAxis.HasValue
                 ? KarmaBossGeometry.SweptOrientedBox(from.x, from.y, to.x, to.y, p.x, p.y, attackAxis.Value.x, attackAxis.Value.y,
-                    size.x, size.y, body.extents.x, body.extents.y)
-                : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y);
-            if (hit) ResolveAttackHit(body.center, amount, contact, stun, parryStun, shieldBreak, sourcePattern);
+                    size.x, size.y, body.extents.x, body.extents.y, out first)
+                : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y, out first);
+            if (hit) ResolveAttackHit(body.center, amount, contact, stun, parryStun, shieldBreak, sourcePattern,
+                segmentStart.HasValue ? segmentStart.Value + first * segmentSeconds : Time.time);
         }
         // Geometry belongs to the attack owner; damage and contact lifecycle stay in the host.
         void ResolveAttackHit(Vector2 point, float amount, KarmaAttackContact contact, float stun,
-            bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null)
+            bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null, float? hitAt = null)
         {
             if (!Active || game.Paused || !contact.TryConsume()) return;
             var player = game.Player;
             if ((contact.BreaksShieldOnParry || contact.ParryWithoutRiposte) && state == ActionState.Attack && behavior.ConsumeQueuedParry())
-                player.BeginCounter();
+                player.BeginCounterAt(hitAt ?? Time.time);
             int parries = player.ParryCount;
             float before = player.Health;
             var hitPattern = sourcePattern ?? selected;
             behavior.ContactStarting(hitPattern, contact);
             if (behavior.TryPlayerCrowdControl(hitPattern, contact, out var crowdControl, out var seconds))
                 player.TakeCrowdControlHit(amount, crowdControl, seconds, Vector2.zero,
-                    !contact.ParryWithoutRiposte);
+                    !contact.ParryWithoutRiposte, hitAt);
             else
-                player.TakeDamage(amount, !contact.ParryWithoutRiposte);
+                player.TakeDamageAt(amount, !contact.ParryWithoutRiposte, hitAt ?? Time.time);
             behavior.ContactResolved(hitPattern, contact, point, player.ParryCount != parries, player.Health < before);
             if (player.ParryCount != parries)
             {

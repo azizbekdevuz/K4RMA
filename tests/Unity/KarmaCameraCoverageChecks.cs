@@ -8,7 +8,8 @@ public static class KarmaCameraCoverageChecks
     const BindingFlags F = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
     public static void CheckView(KarmaGame game, string label)
     {
-        var bg = game.World.Find("Trial hall artwork").GetComponent<SpriteRenderer>().bounds;
+        var painting = game.World.Find("Trial hall artwork") ?? game.World.Find("Mountain dojo artwork");
+        var bg = painting.GetComponent<SpriteRenderer>().bounds;
         var cam = game.GameCamera; var p = cam.transform.position;
         float y = cam.orthographicSize, x = y * cam.aspect;
         if (p.x - x < bg.min.x - 0.01f || p.x + x > bg.max.x + 0.01f || p.y - y < bg.min.y - 0.01f || p.y + y > bg.max.y + 0.01f)
@@ -37,6 +38,7 @@ public static class KarmaCameraCoverageChecks
                     foreach (bool inherited in new[] { false, true })
                     {
                         typeof(KarmaGame).GetField("guardianInheriting", F).SetValue(game, inherited);
+                        typeof(KarmaGame).GetField("transitionLeft", F).SetValue(game, 5f);
                         typeof(KarmaGame).GetProperty("Phase").SetValue(game, RunPhase.Transition);
                         game.GameCamera.orthographicSize = combatSize;
                         game.GameCamera.transform.position = new Vector3(20, frame.center.y, -10);
@@ -45,7 +47,9 @@ public static class KarmaCameraCoverageChecks
                             typeof(KarmaGame).GetMethod("LateUpdate", F).Invoke(game, null);
                             CheckView(game, stage + "/" + ratio + "/edge=" + edge + "/inherit=" + inherited); checks++;
                         }
-                        float intended = combatSize * (inherited ? 0.8f : 0.75f);
+                        float intended = Mathf.Max(inherited ? 10.5f : 8.8f, combatSize * (inherited ? 0.76f : 0.62f));
+                        float actorX = game.GameCamera.WorldToViewportPoint(new Vector3(edge, 2, 0)).x;
+                        if (actorX < 0.25f || actorX > 0.75f) throw new Exception("Edge actor is pinned to the viewport border");
                         if (Mathf.Abs(game.GameCamera.orthographicSize - intended) > 0.1f) throw new Exception("Camera zoom changed instead of extending scenery");
                     }
                 }

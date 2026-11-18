@@ -15,7 +15,14 @@ namespace KarmaPrototype
 
         bool PresentSwordIntermediate(EnemyAttack attack)
         {
-            if (attack != EnemyAttack.SW02 || !SW02UsesIntermediateFrame) return false;
+            if (attack != EnemyAttack.SW02) return false;
+            if (!SW02UsesIntermediateFrame)
+            {
+                // Once Recover02 settles, the original cast holds its ready stance until recovery ends.
+                if (sw02VisualPhase != SW02VisualPhase.Recovery) return false;
+                PlayBody("Idle");
+                return true;
+            }
             displayForm = motionForm;
             displayMotion = "SW02";
             DrawMotion(motionForm, "SW02", sw02DisplayFrame * KarmaBootstrap.Step);

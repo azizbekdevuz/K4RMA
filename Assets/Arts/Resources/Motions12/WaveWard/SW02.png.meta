@@ -116,11 +116,11 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 768
-        width: 768
-        height: 768
+        y: 896
+        width: 1024
+        height: 896
       alignment: 9
-      pivot: {x: 0.48698, y: 0.13542}
+      pivot: {x: 0.46, y: 0.12}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -137,12 +137,12 @@ TextureImporter:
       name: SW02_01
       rect:
         serializedVersion: 2
-        x: 768
-        y: 768
-        width: 768
-        height: 768
+        x: 1024
+        y: 896
+        width: 1024
+        height: 896
       alignment: 9
-      pivot: {x: 0.48698, y: 0.13542}
+      pivot: {x: 0.46, y: 0.12}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -159,12 +159,12 @@ TextureImporter:
       name: SW02_02
       rect:
         serializedVersion: 2
-        x: 1536
-        y: 768
-        width: 768
-        height: 768
+        x: 2048
+        y: 896
+        width: 1024
+        height: 896
       alignment: 9
-      pivot: {x: 0.48698, y: 0.13542}
+      pivot: {x: 0.46, y: 0.12}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -183,10 +183,10 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 768
-        height: 768
+        width: 1024
+        height: 896
       alignment: 9
-      pivot: {x: 0.48698, y: 0.13542}
+      pivot: {x: 0.46, y: 0.12}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -203,12 +203,12 @@ TextureImporter:
       name: SW02_04
       rect:
         serializedVersion: 2
-        x: 768
+        x: 1024
         y: 0
-        width: 768
-        height: 768
+        width: 1024
+        height: 896
       alignment: 9
-      pivot: {x: 0.48698, y: 0.13542}
+      pivot: {x: 0.46, y: 0.12}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -225,12 +225,12 @@ TextureImporter:
       name: SW02_05
       rect:
         serializedVersion: 2
-        x: 1536
+        x: 2048
         y: 0
-        width: 768
-        height: 768
+        width: 1024
+        height: 896
       alignment: 9
-      pivot: {x: 0.48698, y: 0.13542}
+      pivot: {x: 0.46, y: 0.12}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []

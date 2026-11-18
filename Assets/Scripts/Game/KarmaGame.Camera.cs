@@ -108,6 +108,7 @@ namespace KarmaPrototype
             }
             if (Phase == RunPhase.Transition)
             {
+                if (Paused) return;
                 var actor = GuardianInheriting && Enemies.Count > 0 ? Enemies[0].transform : Player.transform;
                 float height = GuardianInheriting ? 2.2f : 0.6f;
                 var focus = actor.position + new Vector3(GuardianInheriting ? 0 : Player.Facing * 2, height, -10);

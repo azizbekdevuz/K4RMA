@@ -65,25 +65,24 @@ public static class KarmaPresentationChecks
     static void CheckPlayerCeremony(Transform root, Action<bool, string> check)
     {
         var pictures = root.GetComponentsInChildren<SpriteRenderer>();
-        check(!pictures.Any(p => p.name == "Gathering halo" || p.name == "Absorbed sigil"
-            || p.name == "Awakening pulse" || p.name == "Technique symbol"), "Player learning remains free of large rings and skill marks");
-        var motes = pictures.Where(p => p.name == "Absorbing fragment").ToArray();
-        check(motes.Length == 6, "Only six small hand-level particles accompany the gesture");
+        check(pictures.Count(p => p.name == "Absorbing fragment") == 20,
+            "The original personalization ceremony is retained in its own sequence");
         check(root.GetComponentsInChildren<Collider2D>().Length == 0, "Personalization demonstrations cannot hit");
         var proof = pictures.Single(p => p.name == "Personalized technique demonstration");
         check(proof.sprite != null && proof.sortingOrder < 5, "The remade skill remains behind the player's body");
         var effect = root.GetComponent<KarmaPersonalizationVFX>();
-        var completion = pictures.Single(p => p.name == "Personalization completion");
-        check(completion.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"),
-            "The original awakening effect confirms completion after the demonstration");
+        var awaken = pictures.Single(p => p.name == "Absorbed sigil");
+        check(awaken.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), "Original awakening art is retained");
         var fields = BindingFlags.Instance | BindingFlags.NonPublic;
-        foreach (float seconds in new[] { 0f, 0.6f, 1.2f, 1.8f, 2.3f, 3f, 4.2f })
+        foreach (float seconds in new[] { 2.05f, 4.75f })
         {
             typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, seconds);
             typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
-            check(motes.All(m => m.color.a <= 0.221f), "Particles never overwhelm the body gesture");
-            check(completion.color.a == 0, "Completion effect stays hidden while learning and demonstrating");
+            check(pictures.All(p => !p.enabled || p.color.a < 0.001f), "Memory, ceremony and proof are separated by clear holds");
         }
+        typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, 3.3f);
+        typeof(KarmaPersonalizationVFX).GetMethod("Draw", fields).Invoke(effect, null);
+        check(awaken.color.a > 0 && proof.color.a == 0, "Original ceremony precedes the new technique");
         typeof(KarmaPersonalizationVFX).GetField("age", fields).SetValue(effect, 0f);
     }
     static void CheckCeremony(bool guardian, Essence essence)

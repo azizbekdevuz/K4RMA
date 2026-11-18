@@ -218,11 +218,12 @@ namespace KarmaPrototype
                     return new KarmaGuardianGrowth.Technique("Windup", "Rising", "Windup",
                         KarmaRisingArt.Get("Wave"), KarmaGuardianGrowth.Motion.Sweep, new Vector2(7, 4.5f), copy: "Slash", realization: "더 멀리까지 벨 수 있겠군.");
                 return new KarmaGuardianGrowth.Technique("Windup", "AirSlash", "Windup",
-                    KarmaRisingArt.Get("Slash"), KarmaGuardianGrowth.Motion.Dash, new Vector2(4.5f, 5), copy: "Rising");
+                    KarmaRisingArt.Get("Slash"), KarmaGuardianGrowth.Motion.Dash, new Vector2(4.5f, 5), copy: "Rising")
+                    { FaceInIdle = new Vector2(0.713f, 0.723f) };
             }
             public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
-                "Guard", "Guard", "Guard", KarmaArtwork.Sprite("GuardianVFX", "Rising"),
-                KarmaGuardianGrowth.Motion.Dash, new Vector2(5, 7));
+                "Guard", "Guard", "Guard", KarmaRisingArt.Get("Shield"),
+                KarmaGuardianGrowth.Motion.Dash, new Vector2(7, 7), trail: KarmaRisingArt.Get("Slash"));
             public override string VictoryPose => "Landing";
             public override string VictoryLine(int stage) => stage == 1 ? "네 움직임을 따라잡았다…"
                 : stage == 2 ? "네 다음 움직임까지… 따라잡았다." : "이번에는… 내가 먼저 닿았다.";

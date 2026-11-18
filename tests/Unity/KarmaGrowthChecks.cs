@@ -104,6 +104,26 @@ public static class KarmaGrowthChecks
         Check(!game.IsCombat, "Confirmation waits for release");
         await Space(false); await Until(() => game.IsCombat);
     }
+    static async Task PauseRehearsal(Func<float> readAge, SpriteRenderer picture)
+    {
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState(UnityEngine.InputSystem.Key.Escape));
+        await Until(() => game.Paused);
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+        await Frames();
+        float age = readAge(), remaining = (float)Get(game, "transitionLeft");
+        var sprite = picture.sprite;
+        var camera = game.GameCamera.transform.position;
+        float size = game.GameCamera.orthographicSize;
+        await Space(true); await Space(false);
+        Check(game.Paused && readAge() == age && (float)Get(game, "transitionLeft") == remaining,
+            "Esc freezes rehearsal and confirmation input cannot advance it");
+        Check(picture.sprite == sprite && camera == game.GameCamera.transform.position && size == game.GameCamera.orthographicSize,
+            "The paused pose and camera remain still");
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState(UnityEngine.InputSystem.Key.Escape));
+        await Until(() => !game.Paused);
+        InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+        await Until(() => readAge() > age);
+    }
     static async Task Transition(Essence essence, int stage)
     {
         var defeated = game.Enemies[0];
@@ -129,7 +149,16 @@ public static class KarmaGrowthChecks
         }
         // Queue the held input before rendering video frames. Capture itself can
         // change Editor focus; it must not be part of the input-delivery test.
-        if (!recordVideo) await Space(true);
+        if (!recordVideo)
+        {
+            if (route == 0 && stage == 1)
+            {
+                var ceremony = UnityEngine.Object.FindAnyObjectByType<KarmaPersonalizationVFX>();
+                await Until(() => (float)Get(ceremony, "age") > KarmaPersonalizationVFX.CeremonyStart + 0.25f);
+                await PauseRehearsal(() => (float)Get(ceremony, "age"), game.Player.GetComponentInChildren<SpriteRenderer>());
+            }
+            await Space(true);
+        }
         Check(game.Player.Essences.Count == stage, "Exactly one existing choice is committed");
         await Until(() => game.GuardianInheriting);
         recording = null;
@@ -149,7 +178,9 @@ public static class KarmaGrowthChecks
         Check(techniques.Take(stage).All(x => x.Effect != null), "Every preview uses a real existing effect");
         Check(((SpriteRenderer)Get(growth, "original")).sprite != null, "Original player effect exists");
         var reflection = (Sprite)Get(growth, "reflection");
-        Check(reflection != null && reflection.texture.width >= 1024, "Reference-based reflection art loads at full resolution");
+        if (stage == 2) Check(reflection != null && reflection.texture.width >= 1024, "Second inheritance loads the guardian's weapon inspection");
+        var hesitation = (Sprite)Get(growth, "hesitantReach");
+        if (stage == 1) Check(hesitation != null && hesitation.texture.width >= 1024, "First inheritance loads the neutral reaching pose");
         Check(growth.GetComponentsInChildren<Collider2D>().Length == 0
             && growth.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "Rehearsal cannot hit");
         var beats = new HashSet<KarmaGuardianGrowth.Beat>();
@@ -159,13 +190,29 @@ public static class KarmaGrowthChecks
             Directory.CreateDirectory(Output + "/" + recording); videoFrame = 0; lastRecorded = -1;
         }
         game.StartCoroutine(ObserveGrowth(growth, beats));
-        bool captionCaptured = false;
+        if (!recordVideo && route == 0 && stage == 1)
+        {
+            await Until(() => Get(growth, "formMaterial") is Material m && m.GetFloat("_FormAmount") > 0.2f);
+            var reveal = (SpriteRenderer)Get(growth, "formReveal");
+            float radius = reveal.sharedMaterial.GetFloat("_FormAmount");
+            await PauseRehearsal(() => growth.Age, reveal);
+            Check(reveal.sharedMaterial.GetFloat("_FormAmount") >= radius, "The hand reveal resumes after Esc");
+            await Space(true);
+        }
+        if (!recordVideo && route == 0 && stage == 3)
+        {
+            await Until(() => growth.CurrentBeat == KarmaGuardianGrowth.Beat.Foreshadow);
+            await PauseRehearsal(() => growth.Age, boss.GetComponentInChildren<SpriteRenderer>());
+            await Space(true);
+        }
+        var capturedCaptions = new HashSet<string>();
         while (growth != null)
         {
-            if (recordVideo && route < 3 && !captionCaptured && growth.CaptionAlpha > 0.9f)
+            if (recordVideo && route < 3 && growth.CaptionAlpha > 0.9f && capturedCaptions.Add(growth.Caption))
             {
-                ScreenCapture.CaptureScreenshot(Output + "/ui-" + route + "-" + stage + ".png");
-                captionCaptured = true;
+                string suffix = growth.CurrentBeat == KarmaGuardianGrowth.Beat.TakeStance ? "-opening"
+                    : growth.Caption == "네 움직임…" ? "-transform" : "";
+                ScreenCapture.CaptureScreenshot(Output + "/ui-" + route + "-" + stage + suffix + ".png");
             }
             Check(boss.FightSeconds == fight && game.Player.Health == health, "No combat advances during growth");
             Check((boss.Position - bossPosition).sqrMagnitude < 0.001f, "Visual motion never moves the combat body");
@@ -176,7 +223,9 @@ public static class KarmaGrowthChecks
         recording = null;
         if (stage < 3)
             Check(beats.Contains(KarmaGuardianGrowth.Beat.Observe) && beats.Contains(KarmaGuardianGrowth.Beat.Imitate)
-                && beats.Contains(KarmaGuardianGrowth.Beat.Adapt), "Original -> copy -> own interpretation");
+                && beats.Contains(stage == 1 ? KarmaGuardianGrowth.Beat.Remember : KarmaGuardianGrowth.Beat.Adapt),
+                "First copy is remembered; second inheritance is reinterpreted after failure");
+        if (stage == 1) Check(beats.Contains(KarmaGuardianGrowth.Beat.Adapt), "Guardian uses its signature skill after remembering the successful copy");
         Check(beats.Contains(KarmaGuardianGrowth.Beat.Falter) == (stage == 2)
             && beats.Contains(KarmaGuardianGrowth.Beat.Inspect) == (stage == 2), "Trial and reflection only at second inheritance");
         if (stage == 3) Check(beats.Contains(KarmaGuardianGrowth.Beat.Combine)
@@ -212,7 +261,8 @@ public static class KarmaGrowthChecks
         var art = game.Player.GetComponentInChildren<KarmaCharacterAnimator>();
         var picture = game.Player.GetComponentInChildren<SpriteRenderer>();
         var baseColor = (Color)Get(art, "pictureColor");
-        bool captured = false;
+        bool captured = false, opaqueProof = false;
+        float previousAdvance = 0;
         while (game.Phase == RunPhase.Transition && !game.GuardianInheriting)
         {
             Check((game.Player.Position - bodyPosition).sqrMagnitude < 0.01f, "Player demonstration leaves physics body in place");
@@ -222,12 +272,24 @@ public static class KarmaGrowthChecks
             if (ceremony != null)
             {
                 float age = (float)Get(ceremony, "age");
-                var completion = ceremony.GetComponentsInChildren<SpriteRenderer>()
-                    .Single(p => p.name == "Personalization completion");
-                Check(completion.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"),
-                    "Completion uses the original awakening art");
-                if (age < 5.45f) Check(completion.color.a == 0, "Awakening waits until the gesture is complete");
-                if (age > 5.8f && age < 6.3f) Check(completion.color.a > 0.3f, "Original awakening effect follows the skill");
+                var layers = ceremony.GetComponentsInChildren<SpriteRenderer>();
+                var memory = (SpriteRenderer)Get(ceremony, "memoryPicture");
+                var source = (SpriteRenderer)Get(ceremony, "sourceEffect");
+                var proof = (SpriteRenderer)Get(ceremony, "proofEffect");
+                if (age > 0.35f && age < 1.3f)
+                    Check(Mathf.Abs(memory.color.a - 0.65f) < 0.001f && Mathf.Abs(source.color.a - 0.65f) < 0.001f,
+                        "Player memory matches the guardian's 65 percent opacity");
+                bool inGap = age > KarmaPersonalizationVFX.MemoryDuration + 0.05f && age < KarmaPersonalizationVFX.CeremonyStart - 0.05f
+                    || age > KarmaPersonalizationVFX.CeremonyStart + KarmaPersonalizationVFX.CeremonyDuration + 0.05f
+                        && age < KarmaPersonalizationVFX.ProofStart - 0.05f;
+                if (inGap) Check(layers.All(p => !p.enabled || p.color.a < 0.001f), "Quiet intervals contain no overlapping presentation effects");
+                var original = layers.Single(p => p.name == "Absorbed sigil");
+                Check(original.sprite == KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), "Original awakening art is reused");
+                if (age < KarmaPersonalizationVFX.CeremonyStart || age > KarmaPersonalizationVFX.CeremonyStart + KarmaPersonalizationVFX.CeremonyDuration + 0.05f)
+                    Check(original.color.a == 0, "Original ceremony is confined to the middle sequence");
+                if (age > KarmaPersonalizationVFX.CeremonyStart + 0.3f && age < KarmaPersonalizationVFX.CeremonyStart + 1.7f)
+                    Check(art.CurrentPose == "Transition" || art.CurrentPose.StartsWith("Personalize"), "Original personalization gesture plays after the memory");
+                if (proof.color.a > 0.99f) opaqueProof = true;
             }
             if (recordVideo && route < 3 && !captured && art.CurrentPose != null
                 && (art.CurrentPose == "Personalized/Pierce" || art.CurrentPose == "Personalized/AirDiagonal" || art.CurrentPose == "Personalized/Riposte"))
@@ -237,6 +299,9 @@ public static class KarmaGrowthChecks
             }
             if (art.CurrentPose != null && art.CurrentPose.StartsWith("Personalized/"))
             {
+                float advance = picture.transform.localPosition.x - ((Vector3)Get(art, "pictureHome")).x;
+                Check(advance + 0.001f >= previousAdvance, "Player holds the finishing position without sliding backwards");
+                previousAdvance = advance;
                 Check((bool)Get(art, "personalizationProofActive") && (bool)Get(art, "presentingEnding"), "Authored player proof is active");
                 var focus = UnityEngine.Object.FindAnyObjectByType<KarmaGrowthFocus>();
                 Check(focus != null && (float)Property(focus, "GuardianOpacity") < 0.001f,
@@ -244,6 +309,8 @@ public static class KarmaGrowthChecks
             }
             yield return null;
         }
+        Check(opaqueProof, "New personalized technique is demonstrated at full opacity");
+        Check(!poses.Contains("Personalized/Walk"), "No backwards walk follows the player's demonstration");
     }
     // Sample each player-loop frame; an Editor task continuation can resume
     // after several frames when the GPU/importer is busy and miss a short beat.
@@ -252,8 +319,77 @@ public static class KarmaGrowthChecks
         int stage = growth.Stage;
         var attempts = new HashSet<int>(); var staggers = new HashSet<int>();
         bool checkedRender = false, checkedFall = false;
+        var releases = new List<int>();
+        var demos = (SpriteRenderer[])Get(growth, "demonstrations");
+        bool hintedBeforeLine = false;
+        float rememberHeld = 0, reachHeld = 0, revealHeld = 0;
+        bool sawNewForm = false, checkedRevealShader = false;
+        var captions = new List<string>();
+        var source = (SpriteRenderer)Get(growth, "sourcePicture");
+        var guardianArt = game.Enemies[0].GetComponentInChildren<KarmaCharacterAnimator>();
+        var body = guardianArt.GetComponentInChildren<SpriteRenderer>();
+        var bodyMaterial = body.sharedMaterial;
+        var halo = (SpriteRenderer)Get(growth, "inheritedHalo");
+        if (stage == 1 && game.Enemies[0].PrimaryType == Essence.Guard)
+            Check(halo != null && game.Enemies[0].AutoShieldActive, "The guard shield remains active during its visual introduction");
+        var previous = (Dictionary<string, Sprite>)Get(guardianArt, "growthPrevious");
         while (growth != null)
         {
+            if (stage == 1 && (growth.CurrentBeat == KarmaGuardianGrowth.Beat.TakeStance ||
+                growth.CurrentBeat == KarmaGuardianGrowth.Beat.Imitate))
+            {
+                Check(body.enabled && previous.ContainsValue(body.sprite) && Get(growth, "formReveal") == null,
+                    "The original body performs the question and the entire copy");
+            }
+            if (stage == 1 && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Remember)
+            {
+                var reveal = (SpriteRenderer)Get(growth, "formReveal");
+                if (reveal != null)
+                {
+                    Check(body.enabled && reveal.enabled && previous.ContainsValue(body.sprite) && !previous.ContainsValue(reveal.sprite)
+                        && body.sharedMaterial == reveal.sharedMaterial && growth.Caption == "네 움직임…",
+                        "The two real sprite outlines share the hand reveal during the first phrase");
+                    if (!checkedRevealShader)
+                    {
+                        Check(reveal.transform.parent == body.transform && reveal.sharedMaterial.shader.isSupported
+                            && !ShaderUtil.ShaderHasError(reveal.sharedMaterial.shader), "Foot-relative reveal shader is compiled and supported");
+                        checkedRevealShader = true;
+                    }
+                    revealHeld += Time.deltaTime;
+                }
+                if (growth.Caption == "네 움직임… 기억했다." && growth.CaptionAlpha > 0.9f)
+                {
+                    Check(body.enabled && reveal == null && body.sharedMaterial == bodyMaterial && !previous.ContainsValue(body.sprite),
+                        "The completed phrase holds the inherited body after releasing the overlay");
+                    sawNewForm = true;
+                }
+            }
+            if (halo != null && growth.Caption != "네 움직임… 기억했다.")
+                Check(halo.color.a == 0, "The inherited shield is invisible on the neutral guardian");
+            if (halo != null && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Adapt)
+                Check(halo.color == (Color)Get(growth, "haloColor"), "The normal shield is restored before the signature");
+            if (growth.CaptionAlpha > 0.9f && captions.LastOrDefault() != growth.Caption) captions.Add(growth.Caption);
+            if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Hesitate)
+            {
+                Check(stage == 1 && !source.enabled && growth.CaptionAlpha == 0, "The guardian has a silent beat after the memory disappears");
+                if (guardianArt.CurrentPose == "Growth/Hesitate") reachHeld += Time.deltaTime;
+            }
+            if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.TakeStance)
+                Check(!source.enabled && demos.All(d => d == null || !d.enabled), "The stance and its opening line precede the attack");
+            if (stage == 3)
+            {
+                Check(!source.enabled, "Mastery begins without a player demonstration");
+                for (int i = 0; i < demos.Length; i++)
+                    if (demos[i].enabled && demos[i].color.a > 0.2f && !releases.Contains(i)) releases.Add(i);
+                if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Foreshadow && growth.CaptionAlpha == 0)
+                    hintedBeforeLine |= ((SpriteRenderer[])Get(growth, "ultimateHints")).Any(p => p.enabled && p.sprite != null);
+            }
+            if (stage == 1 && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Adapt)
+            {
+                Check(beats.Contains(KarmaGuardianGrowth.Beat.Remember), "Signature skill follows the memory hold");
+                Check(growth.CaptionAlpha == 0, "Signature skill begins after the memory caption has cleared");
+            }
+            if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Remember) rememberHeld += Time.deltaTime;
             if (growth.Age > 0.6f)
             {
                 var focus = UnityEngine.Object.FindAnyObjectByType<KarmaGrowthFocus>();
@@ -294,6 +430,19 @@ public static class KarmaGrowthChecks
             Check(staggers.SetEquals(new[] { 1, 2 }) && checkedFall,
                 "First two attempts wobble; only the third falls before reflection");
         }
+        else if (stage == 1) Check(attempts.SetEquals(new[] { 1 }) && staggers.Count == 0,
+            "First inheritance attempts once and remembers without failure");
+        if (stage == 1)
+        {
+            Check(reachHeld > 0.8f && captions.SequenceEqual(new[] { "이렇게…?", "네 움직임…", "네 움직임… 기억했다." }),
+                "The silent reaching pose precedes the question and the successful copy is acknowledged");
+            Check(revealHeld >= 1.15f && sawNewForm, "A continuous hand reveal finishes before the signature attack");
+            Check(rememberHeld >= 2.5f, "First inheritance holds the successful stance before its signature skill");
+        }
+        if (stage == 3) Check(captions.SequenceEqual(new[] { "이번엔… 내가 먼저.", "이제 나만의 움직임이다…" }),
+            "The guardian announces the first move and acknowledges mastery after the ultimate hint");
+        if (stage == 3) Check(releases.SequenceEqual(new[] { 0, 1, 2 }) && hintedBeforeLine,
+            "Each inherited technique appears in acquisition order and the ultimate appears before the line");
     }
     static async Task Ending()
     {

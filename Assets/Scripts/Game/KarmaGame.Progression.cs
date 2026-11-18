@@ -252,7 +252,8 @@ namespace KarmaPrototype
         }
         public void TogglePause()
         {
-            if (Phase != RunPhase.Combat && Phase != RunPhase.Gate && Phase != RunPhase.Choosing && Phase != RunPhase.Tutorial && Phase != RunPhase.Ending) return;
+            if (Phase != RunPhase.Combat && Phase != RunPhase.Gate && Phase != RunPhase.Choosing
+                && Phase != RunPhase.Transition && Phase != RunPhase.Tutorial && Phase != RunPhase.Ending) return;
             Paused = !Paused; Time.timeScale = GameplayFrozen ? 0 : 1;
         }
     }

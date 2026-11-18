@@ -80,7 +80,7 @@ namespace KarmaPrototype
         internal Sprite GrowthReflection => behavior.GrowthReflection;
         internal Vector2 GrowthInspectionAnchor => behavior.GrowthInspectionAnchor;
         internal KarmaGuardianGrowth BeginGrowth(Sprite fallen, string previousForm)
-            => KarmaGuardianGrowth.Play(game, this, animator, game.Player.Essences.PersonalizationOrder, fallen, previousForm);
+            => KarmaGuardianGrowth.Play(game, this, animator, game.Player.Essences.PersonalizationOrder, fallen, previousForm, shieldHalo);
         bool Active { get { return !stopped && Alive && game != null && game.Phase == RunPhase.Combat; } }
     }
 }

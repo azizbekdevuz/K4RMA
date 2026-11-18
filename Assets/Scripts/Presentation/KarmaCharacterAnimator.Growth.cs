@@ -93,18 +93,18 @@ namespace KarmaPrototype
             ApplyGuardianPose("Idle");
         }
 
-        internal void GrowthInspect(Sprite reflection)
+        internal void GrowthKeyPose(Sprite keyPose, string pose, float relativeHeight, float lean = 0)
         {
-            if (!growthActive || reflection == null || picture == null) return;
-            picture.sprite = reflection;
+            if (!growthActive || keyPose == null || picture == null) return;
+            picture.sprite = keyPose;
             // Calibrate once against the old standing body, not the bounding box
             // of the last hurt/slash pose. The new art has a foot-aligned pivot.
-            float height = GrowthSprite("Idle", true).bounds.size.y * 0.95f;
-            picture.transform.localScale = pictureScale * (height / reflection.bounds.size.y);
+            float height = GrowthSprite("Idle", true).bounds.size.y * relativeHeight;
+            picture.transform.localScale = pictureScale * (height / keyPose.bounds.size.y);
             picture.transform.localPosition = pictureHome;
-            picture.transform.localRotation = Quaternion.identity;
+            picture.transform.localRotation = Quaternion.Euler(0, 0, lean);
             picture.color = pictureColor;
-            CurrentPose = "Growth/InspectWeapon";
+            CurrentPose = pose;
         }
 
         internal void PresentVictory(string pose, float elapsed)
@@ -128,7 +128,7 @@ namespace KarmaPrototype
             {
                 // The ending already samples these authored 24 FPS gestures
                 // independently of the optional combat animation profile.
-                BeginEndingPoses("Idle", "Pierce", "Recovery", "Walk", "Jump", "AirDiagonal", "Land", "Parry", "Riposte");
+                BeginEndingPoses("Idle", "Pierce", "Recovery", "Jump", "AirDiagonal", "Land", "Parry", "Riposte");
                 personalizationProofActive = true;
             }
             string pose = "Idle"; float sample = seconds;
@@ -144,9 +144,8 @@ namespace KarmaPrototype
             else if (essence == Essence.SwordWave)
             {
                 float advance = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.05f, 0.3f, action));
-                float retreat = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(1.65f, 2.65f, action));
-                offset.x = 3.2f * advance * (1 - retreat);
-                pose = action < 0.95f ? "Pierce" : action < 1.65f ? "Recovery" : action < 2.65f ? "Walk" : "Idle";
+                offset.x = 3.2f * advance;
+                pose = action < 0.95f ? "Pierce" : action < 1.65f ? "Recovery" : "Idle";
                 sample = action < 0.95f ? Mathf.Min(action, 0.32f)
                     : action < 1.65f ? (action - 0.95f) * 0.6f : action - 1.65f;
             }
@@ -154,9 +153,8 @@ namespace KarmaPrototype
             {
                 float flight = Mathf.Clamp01(action / 1.1f);
                 offset.y = Mathf.Sin(flight * Mathf.PI) * 2.8f;
-                offset.x = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.3f, 0.64f, action))
-                    * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(1.85f, 2.85f, action))) * 2.2f;
-                pose = action < 0.32f ? "Jump" : action < 0.7f ? "AirDiagonal" : action < 1.1f ? "Fall" : action < 1.85f ? "Land" : action < 2.85f ? "Walk" : "Idle";
+                offset.x = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.3f, 0.64f, action)) * 2.2f;
+                pose = action < 0.32f ? "Jump" : action < 0.7f ? "AirDiagonal" : action < 1.1f ? "Fall" : action < 1.85f ? "Land" : "Idle";
                 sample = action - (action < 0.32f ? 0 : action < 0.7f ? 0.32f : action < 1.1f ? 0.7f : action < 1.85f ? 1.1f : 1.85f);
             }
             else
@@ -167,7 +165,7 @@ namespace KarmaPrototype
             }
             // Use the exact existing clips and parry sampler. Rehearsal clocks
             // never call combat, consume a cooldown, or move the Rigidbody.
-            PresentEndingPose(pose, Mathf.Max(0, sample), pose == "Idle" || pose == "Walk", 0);
+            PresentEndingPose(pose, Mathf.Max(0, sample), pose == "Idle", 0);
             float scale = Mathf.Max(0.01f, Mathf.Abs(transform.lossyScale.x));
             picture.transform.localPosition = pictureHome + (Vector3)offset / scale;
             picture.color = pictureColor;

@@ -12,19 +12,25 @@ namespace KarmaPrototype
         {
             public string Prepare, Release, Inspect, Copy;
             public string Realization;
-            public Sprite Effect;
+            public Sprite Effect, Trail;
             public Motion Movement;
             public Vector2 Size;
-            public Technique(string prepare, string release, string inspect, Sprite effect, Motion movement, Vector2 size, string copy = null, string realization = null)
-            { Prepare = prepare; Release = release; Inspect = inspect; Effect = effect; Movement = movement; Size = size; Copy = copy ?? prepare; Realization = realization; }
+            // Normalized eye position on the primary form's Idle illustration.
+            public Vector2 FaceInIdle;
+            public Technique(string prepare, string release, string inspect, Sprite effect, Motion movement, Vector2 size, string copy = null, string realization = null, Sprite trail = null)
+            { Prepare = prepare; Release = release; Inspect = inspect; Effect = effect; Movement = movement; Size = size; Copy = copy ?? prepare; Realization = realization; Trail = trail; FaceInIdle = new Vector2(0.5f, 0.85f); }
         }
-        public enum Beat { Revive, Observe, Imitate, Stagger, Falter, Inspect, Adapt, Combine, Foreshadow, Ready }
+        public enum Beat { Revive, Observe, Imitate, Stagger, Falter, Inspect, Adapt, Combine, Foreshadow, Ready, Remember, Hesitate, TakeStance }
         KarmaGame game;
         KarmaEnemy guardian;
         KarmaCharacterAnimator animator, sourceAnimator;
         Transform sourceRoot;
         SpriteRenderer sourcePicture, original, focus;
-        Sprite reflection;
+        Sprite reflection, hesitantReach;
+        SpriteRenderer formPicture, formReveal;
+        Material formMaterial, originalFormMaterial;
+        SpriteRenderer inheritedHalo;
+        Color haloColor;
         Technique ultimate;
         readonly SpriteRenderer[] failedPieces = new SpriteRenderer[3];
         readonly Sprite[] pieceSprites = new Sprite[3];
@@ -40,30 +46,64 @@ namespace KarmaPrototype
         public float Duration { get; private set; }
         public float Age => age;
         public int CurrentAttempt { get; private set; }
-        // The action establishes meaning first. One short line then confirms it;
-        // no explanation appears during the source-copy or failed attempt.
-        public string Caption => Stage == 1 ? "네 움직임… 기억했다."
-            : Stage == 2 ? techniques[1].Realization : "이제 나만의 움직임이다…";
-        const float Revived = 1.2f, Observed = 2.5f, Copied = 3.55f;
+        const float Revived = 1.2f, Observed = 2.5f;
+        const float FirstQuestion = Observed + 1.55f, FirstCopy = FirstQuestion + 1.85f;
+        const float Copied = FirstCopy + 1.05f, RevealStart = Copied + 0.6f;
+        const float RevealEnd = RevealStart + 1.25f, FirstRemembered = RevealEnd + 1.75f;
         const float AttemptSpan = 1.9f, AttemptReleaseEnd = 1.05f;
         const float ThirdCopyEnds = Observed + AttemptSpan * 2 + AttemptReleaseEnd;
         const float FailureHeld = ThirdCopyEnds + 2.2f, Reflected = FailureHeld + 2.6f, Adaptation = 1.55f;
-        const float Combined = 4, UltimateHeld = 5.8f;
-        public float CaptionAlpha => Stage == 1 ? Smooth(3.8f, 4.05f, age) * (1 - Smooth(5.7f, 6.1f, age))
-            : Stage == 2 ? Smooth(FailureHeld + 1, FailureHeld + 1.25f, age)
-                * (1 - Smooth(Reflected + Adaptation + 0.5f, Duration - 0.1f, age))
-            : Smooth(4.35f, 4.6f, age) * (1 - Smooth(6.3f, 6.7f, age));
-        public static float DurationFor(int count) => count == 1 ? 6.2f : count == 2 ? Reflected + Adaptation + 1 : 6.8f;
+        const float MasterStance = Revived + 0.35f, FirstStroke = MasterStance + 1.95f, StrokeLength = 1.05f;
+        const float ChainEnd = FirstStroke + 3 * StrokeLength, HintStart = ChainEnd + 0.7f;
+        const float HintEnd = HintStart + 2.25f, MasteryEnd = HintEnd + 1.05f;
+        public string Caption
+        {
+            get
+            {
+                if (Stage == 1)
+                {
+                    if (age < FirstCopy) return "이렇게…?";
+                    return Mathf.Floor(age * 24) / 24 < RevealEnd ? "네 움직임…" : "네 움직임… 기억했다.";
+                }
+                if (Stage == 3) return age < FirstStroke ? "이번엔… 내가 먼저." : "이제 나만의 움직임이다…";
+                return techniques[1].Realization;
+            }
+        }
+        public float CaptionAlpha
+        {
+            get
+            {
+                if (Stage == 1)
+                    return age < FirstCopy ? CaptionWindow(FirstQuestion + 0.1f, FirstCopy - 0.15f)
+                        : CaptionWindow(RevealStart, FirstRemembered - 0.22f);
+                if (Stage == 3)
+                    return age < FirstStroke ? CaptionWindow(MasterStance + 0.1f, FirstStroke - 0.15f)
+                        : CaptionWindow(HintStart + 0.7f, MasteryEnd - 0.1f);
+                return Smooth(FailureHeld + 1, FailureHeld + 1.25f, age)
+                    * (1 - Smooth(Reflected + Adaptation + 0.5f, Duration - 0.1f, age));
+            }
+        }
+        float CaptionWindow(float start, float end) => Smooth(start, start + 0.2f, age) * (1 - Smooth(end - 0.25f, end, age));
+        public static float DurationFor(int count) => count == 1 ? FirstRemembered + Adaptation + 1.1f : count == 2 ? Reflected + Adaptation + 1 : MasteryEnd;
         public Vector3 CameraFocus => new Vector3(guardian.Position.x + facing * 1.4f, 3.6f, -10);
 
         public static KarmaGuardianGrowth Play(KarmaGame game, KarmaEnemy guardian,
-            KarmaCharacterAnimator animator, IReadOnlyList<Essence> inherited, Sprite fallen, string previousForm)
+            KarmaCharacterAnimator animator, IReadOnlyList<Essence> inherited, Sprite fallen, string previousForm, SpriteRenderer shieldHalo = null)
         {
             var go = new GameObject("Guardian growth rehearsal"); go.transform.SetParent(game.World, false);
             var growth = go.AddComponent<KarmaGuardianGrowth>();
             growth.game = game; growth.guardian = guardian; growth.animator = animator;
             growth.Stage = inherited.Count; growth.Duration = DurationFor(inherited.Count);
-            growth.reflection = guardian.GrowthReflection;
+            if (inherited.Count == 1)
+            {
+                growth.hesitantReach = Resources.Load<Sprite>("Neutral/Growth/Hesitate");
+                if (shieldHalo != null && shieldHalo.enabled && shieldHalo.gameObject.activeInHierarchy)
+                {
+                    growth.inheritedHalo = shieldHalo;
+                    growth.haloColor = shieldHalo.color;
+                }
+            }
+            if (inherited.Count == 2) growth.reflection = guardian.GrowthReflection;
             growth.facing = guardian.GetComponentInChildren<SpriteRenderer>().transform.lossyScale.x < 0 ? -1 : 1;
             // The memory stands between player and guardian, close enough for the
             // camera to connect the same movement without cutting away to a panel.
@@ -87,7 +127,8 @@ namespace KarmaPrototype
             {
                 growth.ultimate = guardian.UltimateForeshadow;
                 for (int i = 0; i < growth.ultimateHints.Length; i++)
-                    growth.ultimateHints[i] = growth.Layer("Unreleased ultimate preparation " + i, growth.ultimate.Effect, 8);
+                    growth.ultimateHints[i] = growth.Layer("Unreleased ultimate preparation " + i,
+                        i > 0 && growth.ultimate.Trail != null ? growth.ultimate.Trail : growth.ultimate.Effect, 8);
             }
             animator.BeginGrowth(fallen, previousForm);
             growth.Draw();
@@ -161,6 +202,12 @@ namespace KarmaPrototype
             original.enabled = focus.enabled = sourcePicture.enabled = false;
             foreach (var piece in failedPieces) if (piece != null) piece.enabled = false;
             foreach (var hint in ultimateHints) if (hint != null) hint.enabled = false;
+            if (inheritedHalo != null)
+            {
+                var tint = haloColor;
+                tint.a *= Smooth(RevealEnd, RevealEnd + 0.55f, t);
+                inheritedHalo.color = tint;
+            }
             int latest = Stage - 1;
             if (t < Revived)
             {
@@ -168,22 +215,32 @@ namespace KarmaPrototype
             }
             if (Stage == 3)
             {
-                CurrentBeat = t < Combined ? Beat.Combine : t < UltimateHeld ? Beat.Foreshadow : Beat.Ready;
-                // No source-copy, failure, or repeated contemplation at mastery.
-                for (int i = 0; i < 3; i++)
-                {
-                    float start = Revived + i * 0.85f;
-                    if (t >= start && t < start + 1.1f) Adapt(i, (t - start) / 1.1f);
-                }
-                if (t >= Combined && t < UltimateHeld) DrawUltimateHint((t - Combined) / (UltimateHeld - Combined));
-                else if (t >= UltimateHeld) animator.GrowthPose(ultimate.Prepare, false, Vector2.zero);
+                DrawMastery(t);
                 return;
             }
             if (t < Observed)
             {
                 CurrentBeat = Beat.Observe;
                 animator.GrowthPose("Idle", true, Vector2.zero);
-                ShowSource(latest, t - Revived, Smooth(Revived, Revived + 0.3f, t));
+                float opacity = Smooth(Revived, Revived + 0.3f, t);
+                if (Stage == 1) opacity *= 1 - Smooth(Observed - 0.35f, Observed, t);
+                ShowSource(latest, t - Revived, opacity);
+            }
+            else if (Stage == 1 && t < FirstQuestion)
+            {
+                CurrentBeat = Beat.Hesitate;
+                float elapsed = t - Observed;
+                animator.GrowthPose("Idle", true, Vector2.zero);
+                if (elapsed >= 0.2f && t < FirstQuestion - 0.28f)
+                {
+                    float reach = Smooth(0.2f, 0.55f, elapsed) * (1 - Smooth(FirstQuestion - 0.65f, FirstQuestion - 0.28f, t));
+                    animator.GrowthKeyPose(hesitantReach, "Growth/Hesitate", 1, -3 * reach);
+                }
+            }
+            else if (Stage == 1 && t < FirstCopy)
+            {
+                CurrentBeat = Beat.TakeStance;
+                animator.GrowthPose("Windup", true, Vector2.zero);
             }
             else if (Stage == 2 && t < ThirdCopyEnds)
             {
@@ -191,11 +248,32 @@ namespace KarmaPrototype
             }
             else if (Stage == 1 && t < Copied)
             {
+                CurrentAttempt = 1;
                 CurrentBeat = Beat.Imitate;
-                ShowSource(latest, 0.6f, 1 - Smooth(Observed + 0.15f, Copied - 0.25f, t));
-                animator.GrowthPose(techniques[latest].Copy, false, Vector2.zero);
-                float action = Mathf.InverseLerp(Observed, Copied, t);
+                float action = Mathf.InverseLerp(FirstCopy, Copied, t);
+                // Neutral only has its original sword. The copied effect carries the skill identity.
+                string pose = order[0] == Essence.Guard || (order[0] == Essence.RisingSlash && action > 0.36f)
+                    ? "Windup" : "Slash";
+                animator.GrowthPose(action < 0.82f ? pose : "Recovery", true, Vector2.zero);
                 DrawOriginal(guardian.Position, order[latest], action, 0.8f);
+            }
+            else if (Stage == 1)
+            {
+                // The first successful copy is acknowledged before the guardian
+                // demonstrates its existing signature skill. No repeated trial.
+                float progress = (t - FirstRemembered) / Adaptation;
+                CurrentBeat = progress < 0 ? Beat.Remember : progress < 1 ? Beat.Adapt : Beat.Ready;
+                if (t >= RevealEnd) EndFirstForm();
+                if (progress < 0)
+                {
+                    if (t < RevealStart)
+                        animator.GrowthPose("Recovery", true, Vector2.zero);
+                    else if (t < RevealEnd)
+                        DrawFirstForm(Mathf.InverseLerp(RevealStart, RevealEnd, t));
+                    else animator.GrowthPose("Idle", false, Vector2.zero);
+                }
+                else if (progress < 1) Adapt(0, progress);
+                else animator.GrowthPose(techniques[0].Prepare, false, Vector2.zero);
             }
             else if (Stage == 2 && t < FailureHeld)
             {
@@ -215,7 +293,7 @@ namespace KarmaPrototype
                 }
                 var technique = techniques[latest];
                 animator.GrowthPose(technique.Inspect, true, Vector2.zero, -3);
-                animator.GrowthInspect(reflection);
+                animator.GrowthKeyPose(reflection, "Growth/InspectWeapon", 0.95f);
                 Vector2 anchor = guardian.GrowthInspectionAnchor;
                 Vector2 hand = guardian.Position + new Vector2(facing * anchor.x, anchor.y);
                 float gather = Smooth(FailureHeld + 0.9f, Reflected - 0.15f, t);
@@ -224,13 +302,61 @@ namespace KarmaPrototype
             }
             else
             {
-                float start = Stage == 1 ? Copied : Reflected;
-                float progress = (t - start) / Adaptation;
+                float progress = (t - Reflected) / Adaptation;
                 CurrentBeat = progress < 1 ? Beat.Adapt : Beat.Ready;
                 if (progress < 1) Adapt(latest, progress);
                 else animator.GrowthPose(techniques[latest].Prepare, false, Vector2.zero);
             }
         }
+        // Both original sprite meshes share the foot pivot. Keeping their mesh
+        // outlines excludes neighbouring drawings that overlap the atlas slice rectangles.
+        static Vector2 PoseAnchor(Sprite pose, Vector2 normalized) =>
+            (Vector2.Scale(normalized, pose.rect.size) - pose.pivot) / pose.pixelsPerUnit;
+
+        void DrawFirstForm(float progress)
+        {
+            if (formReveal == null)
+            {
+                animator.GrowthPose("Recovery", true, Vector2.zero);
+                formPicture = animator.GetComponentInChildren<SpriteRenderer>();
+                var next = animator.GrowthSprite("Idle");
+                Bounds area = formPicture.sprite.bounds;
+                float height = area.size.y;
+                area.Encapsulate(next.bounds);
+                Vector2 grip = PoseAnchor(formPicture.sprite, new Vector2(0.59f, 0.50f));
+                Vector2 oldFace = PoseAnchor(formPicture.sprite, new Vector2(0.393f, 0.878f));
+                Vector2 newFace = PoseAnchor(next, techniques[0].FaceInIdle);
+                Vector2 farthest = Vector2.Max(grip - (Vector2)area.min, (Vector2)area.max - grip);
+                formMaterial = new Material(Resources.Load<Shader>("Shared/Rendering/KarmaInheritanceReveal"));
+                formMaterial.SetVector("_Grip", new Vector4(grip.x, grip.y, height, farthest.magnitude));
+                formMaterial.SetVector("_Faces", new Vector4(oldFace.x, oldFace.y, newFace.x, newFace.y));
+                originalFormMaterial = formPicture.sharedMaterial;
+                formPicture.sharedMaterial = formMaterial;
+
+                formReveal = new GameObject("First inherited form").AddComponent<SpriteRenderer>();
+                formReveal.transform.SetParent(formPicture.transform, false);
+                formReveal.sprite = next;
+                formReveal.color = formPicture.color;
+                formReveal.flipX = formPicture.flipX; formReveal.flipY = formPicture.flipY;
+                formReveal.sortingLayerID = formPicture.sortingLayerID;
+                formReveal.sortingOrder = formPicture.sortingOrder + 1;
+                formReveal.sharedMaterial = formMaterial;
+                var layer = new MaterialPropertyBlock();
+                layer.SetFloat("_Incoming", 1);
+                formReveal.SetPropertyBlock(layer);
+            }
+            formMaterial.SetFloat("_FormAmount", progress);
+        }
+
+        void EndFirstForm()
+        {
+            if (formMaterial == null) return;
+            if (formPicture != null) formPicture.sharedMaterial = originalFormMaterial;
+            if (formReveal != null) { formReveal.enabled = false; Destroy(formReveal.gameObject); }
+            Destroy(formMaterial);
+            formMaterial = null; formReveal = null;
+        }
+
         void DrawAttempt(float t)
         {
             int index = Mathf.Min(2, Mathf.FloorToInt((t - Observed) / AttemptSpan));
@@ -258,10 +384,10 @@ namespace KarmaPrototype
             sourceRoot.localScale = new Vector3(-facing, 1, 1);
             sourceAnimator.SampleGrowthSource(order[index], seconds);
             sourcePicture.enabled = opacity > 0.001f;
-            sourcePicture.color = new Color(0.75f, 0.88f, 1, opacity * 0.65f);
+            sourcePicture.color = new Color(0.75f, 0.88f, 1, opacity * KarmaPersonalizationVFX.MemoryOpacity);
             // The original skill begins at the memory, then the same shape appears
             // at the guardian's hand in the following beat.
-            DrawOriginal(sourceRoot.position, order[index], Mathf.Clamp01(seconds / 0.75f), opacity * 0.65f, -facing);
+            DrawOriginal(sourceRoot.position, order[index], Mathf.Clamp01(seconds / 0.75f), opacity * KarmaPersonalizationVFX.MemoryOpacity, -facing);
         }
         void DrawOriginal(Vector2 origin, Essence essence, float t, float opacity, float direction = 0)
         {
@@ -272,7 +398,7 @@ namespace KarmaPrototype
             if (essence == Essence.RisingSlash) point.y += t * 1.5f;
             Display(original, point, size, 0, direction, opacity * (1 - Smooth(0.75f, 1, t)), Color.white);
         }
-        void Adapt(int index, float progress)
+        void Adapt(int index, float progress, string leadPose = null)
         {
             var technique = techniques[index];
             float launch = Smooth(0.18f, 0.75f, progress);
@@ -291,7 +417,7 @@ namespace KarmaPrototype
                     offset = new Vector2(Mathf.Sin(launch * Mathf.PI) * 1.3f, Mathf.Sin(launch * Mathf.PI) * 1.1f);
                     point += new Vector2(facing * offset.x, offset.y); break;
             }
-            animator.GrowthPose(progress < 0.25f ? technique.Prepare : technique.Release, false, offset);
+            animator.GrowthPose(progress < 0.25f ? leadPose ?? technique.Prepare : technique.Release, false, offset);
             Display(demonstrations[index], point, technique.Size, angle, facing, opacity * 0.85f, Color.white);
 
         }
@@ -320,19 +446,71 @@ namespace KarmaPrototype
                     side * fall * 60, facing, (1 - fall) * 0.85f, new Color(0.7f, 0.75f, 0.85f));
             }
         }
+        void DrawMastery(float t)
+        {
+            CurrentBeat = Beat.Combine;
+            if (t < FirstStroke)
+            {
+                CurrentBeat = Beat.TakeStance;
+                animator.GrowthPose(t < MasterStance ? "Idle" : techniques[0].Copy, false, Vector2.zero);
+                return;
+            }
+            if (t < ChainEnd)
+            {
+                float stroke = (t - FirstStroke) / StrokeLength;
+                int i = Mathf.Min(2, Mathf.FloorToInt(stroke));
+                // Each release becomes the windup of the next inherited skill.
+                Adapt(i, stroke - i, i == 0 ? techniques[0].Copy : techniques[i - 1].Release);
+                return;
+            }
+            if (t < HintStart)
+            {
+                animator.GrowthPose(techniques[2].Release, false, Vector2.zero);
+                return;
+            }
+            if (t < HintEnd)
+            {
+                CurrentBeat = Beat.Foreshadow;
+                DrawUltimateHint(Mathf.InverseLerp(HintStart, HintEnd, t));
+                return;
+            }
+            CurrentBeat = Beat.Ready;
+            animator.GrowthPose(ultimate.Release, false, Vector2.zero);
+        }
+
         void DrawUltimateHint(float progress)
         {
             animator.GrowthPose(progress < 0.4f ? ultimate.Prepare : ultimate.Release, false, Vector2.zero);
-            float alpha = Smooth(0, 0.3f, progress) * (1 - Smooth(0.75f, 1, progress));
-            for (int i = 0; i < 3; i++)
+            float fade = 1 - Smooth(0.8f, 1, progress);
+            Vector2 center = guardian.Position + Vector2.up * 1.1f;
+            if (ultimate.Movement == Motion.Rise)
             {
-                Vector2 point = guardian.Position + Vector2.up * 1.1f;
-                float angle = 0;
-                if (ultimate.Movement == Motion.Rise) point += new Vector2((i - 1) * 3, 3.5f + progress * 1.2f);
-                else if (ultimate.Movement == Motion.Dash) { if (i > 0) continue; }
-                else { if (i > 0) continue; point.y = 0.25f; }
-                Display(ultimateHints[i], point, ultimate.Size, angle, facing, alpha * 0.65f, Color.white);
+                for (int i = 0; i < ultimateHints.Length; i++)
+                {
+                    float form = Smooth(i * 0.12f, i * 0.12f + 0.25f, progress);
+                    Vector2 point = center + new Vector2(facing * (i - 1) * 3, 3.5f + form);
+                    Display(ultimateHints[i], point, ultimate.Size, 0, facing, form * fade * 0.8f, Color.white);
+                }
+                return;
             }
+            float open = Smooth(0, 0.35f, progress);
+            if (ultimate.Movement == Motion.Dash)
+            {
+                Display(ultimateHints[0], center, ultimate.Size, 0, facing, open * fade * 0.6f, Color.white);
+                // Show the shield and two crossing paths, as in the actual dash windup.
+                for (int i = 1; i <= 2; i++)
+                {
+                    float trace = Mathf.InverseLerp(i * 0.17f, i * 0.17f + 0.38f, progress);
+                    float slope = i == 1 ? 1 : -1;
+                    Vector2 path = center + new Vector2(facing * (1 + 4 * trace), slope * (trace - 0.5f) * 2.5f);
+                    Display(ultimateHints[i], path, new Vector2(5, 3), facing * slope * 25, facing,
+                        Mathf.Sin(trace * Mathf.PI) * fade * 0.72f, Color.white);
+                }
+                return;
+            }
+            center.y = 0.25f;
+            Display(ultimateHints[0], center, ultimate.Size * Mathf.Lerp(0.3f, 1, open), 0, facing,
+                open * fade * 0.8f, Color.white);
         }
         void OnDestroy()
         {
@@ -345,6 +523,8 @@ namespace KarmaPrototype
         }
         void OnDisable()
         {
+            if (inheritedHalo != null) inheritedHalo.color = haloColor;
+            EndFirstForm();
             if (!restored && !recall && animator != null) animator.EndGrowth();
             restored = true;
         }

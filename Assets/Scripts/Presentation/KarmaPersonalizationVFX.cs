@@ -5,8 +5,10 @@ namespace KarmaPrototype
     // A field-space ceremony attached to the real actor, with no hit boxes or damage.
     public sealed partial class KarmaPersonalizationVFX : MonoBehaviour
     {
-        public const float CeremonyDuration = 1.8f, PlayerDuration = 7.6f;
-        internal const float CompletionAt = 5.5f, CompletionDuration = 1.3f;
+        public const float MemoryDuration = 1.8f, CeremonyStart = MemoryDuration + 0.5f;
+        public const float CeremonyDuration = 2.2f, ProofStart = CeremonyStart + CeremonyDuration + 0.55f;
+        public const float PlayerDuration = ProofStart + 4.8f;
+        internal const float MemoryOpacity = 0.65f;
         public const float ProofAnticipation = 0.75f;
         internal static float ProofRelease(Essence essence) => essence == Essence.Guard ? 1.45f
             : essence == Essence.RisingSlash ? 1.07f : 0.9f;
@@ -29,18 +31,15 @@ namespace KarmaPrototype
             effect.guardian = guardian;
             effect.color = TechniqueColor(game, essence);
             effect.radius = guardian ? 5.5f : 3.5f;
-            if (guardian)
-            {
-                effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
-                effect.sigil = effect.Layer("Absorbed sigil", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 16);
-                effect.techniqueSymbol = effect.Layer("Technique symbol", KarmaArtwork.SkillIcon(essence), 26);
-                for (int i = 0; i < effect.waves.Length; i++)
-                    effect.waves[i] = effect.Layer("Awakening pulse", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 17);
-            }
+            effect.halo = effect.Layer("Gathering halo", KarmaArtwork.Sprite("PlayerVFX", "Barrier"), 4);
+            effect.sigil = effect.Layer("Absorbed sigil", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 16);
+            effect.techniqueSymbol = effect.Layer("Technique symbol", KarmaArtwork.SkillIcon(essence), 26);
+            for (int i = 0; i < effect.waves.Length; i++)
+                effect.waves[i] = effect.Layer("Awakening pulse", KarmaArtwork.Sprite("PersonalizationVFX", "Awaken"), 17);
             effect.orb = effect.Layer("Inherited power", guardian ? KarmaArtwork.SkillIcon(essence)
-                : KarmaArtwork.Sprite("PersonalizationVFX", "Core"), guardian ? 25 : 4);
-            for (int i = 0; i < (guardian ? effect.motes.Length : 6); i++)
-                effect.motes[i] = effect.Layer("Absorbing fragment", KarmaArtwork.Sprite("PersonalizationVFX", "Core"), guardian ? 23 : 4);
+                : KarmaArtwork.Sprite("UI", essence == Essence.SwordWave ? "Pierce" : essence == Essence.RisingSlash ? "Air" : "Parry"), 25);
+            for (int i = 0; i < effect.motes.Length; i++)
+                effect.motes[i] = effect.Layer("Absorbing fragment", KarmaArtwork.Sprite("PersonalizationVFX", "Core"), 23);
             var animator = actor.GetComponentInChildren<KarmaCharacterAnimator>(true);
             if (animator != null) animator.Empower(essence, seconds, previousAppearance,
                 guardian && game.Player.Essences.Count == 1, previousForm);
@@ -79,22 +78,38 @@ namespace KarmaPrototype
             transform.position = actor.position + Vector3.up * (guardian ? 1.6f : 0.5f);
             if (!guardian)
             {
-                DrawPlayerGathering();
+                float ceremonyTime = age - CeremonyStart;
+                if (ceremonyTime >= 0 && ceremonyTime < CeremonyDuration)
+                    DrawCeremony(ceremonyTime / CeremonyDuration, ceremonyTime);
+                else HideCeremony();
                 DrawPlayerComparison();
                 return;
             }
-            float t = Mathf.Clamp01(age / duration);
+            DrawCeremony(Mathf.Clamp01(age / duration), age);
+        }
+
+        void HideCeremony()
+        {
+            halo.color = sigil.color = orb.color = techniqueSymbol.color = Color.clear;
+            foreach (var mote in motes) mote.color = Color.clear;
+            foreach (var wave in waves) wave.color = Color.clear;
+        }
+
+        // The original absorption -> awakening animation, isolated between
+        // memory and proof so none of its particles obscure either demonstration.
+        void DrawCeremony(float t, float clock)
+        {
             float gather = Mathf.SmoothStep(0, 1, Mathf.Clamp01(t / 0.48f));
             float release = Mathf.InverseLerp(0.45f, 1, t);
             float fade = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.82f, 1, t));
             float pulse = Mathf.Sin(t * Mathf.PI);
-            Show(halo, Vector2.zero, radius * Mathf.Lerp(2, 0.65f, gather), age * 35,
+            Show(halo, Vector2.zero, radius * Mathf.Lerp(2, 0.65f, gather), clock * 35,
                 color, (0.3f + pulse * 0.3f) * fade);
             Show(sigil, Vector2.zero, radius * Mathf.Lerp(0.5f, 1.5f, pulse), -age * 22,
                 color, pulse * 0.35f * fade);
             for (int i = 0; i < motes.Length; i++)
             {
-                float angle = i * 2.39996f + age * 1.3f + gather * 3;
+                float angle = i * 2.39996f + clock * 1.3f + gather * 3;
                 float distance = radius * (1 - gather) * (0.7f + (i % 4) * 0.15f);
                 var point = new Vector2(Mathf.Cos(angle) * distance, Mathf.Sin(angle) * distance * 0.8f);
                 Show(motes[i], point, 0.28f + pulse * 0.2f, angle * Mathf.Rad2Deg,
@@ -119,6 +134,7 @@ namespace KarmaPrototype
         void LateUpdate()
         {
             if (actor == null) { Destroy(gameObject); return; }
+            if (comparisonGame != null && comparisonGame.Paused) return;
             age += Time.deltaTime;
             if (age >= duration)
             {

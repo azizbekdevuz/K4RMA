@@ -313,7 +313,8 @@ namespace KarmaPrototype
                         KarmaGuardianGrowth.Motion.Rise, new Vector2(3.5f, 6), copy: "Rising", realization: "내 검을 솟구치게 한다면…");
                 return new KarmaGuardianGrowth.Technique("Windup", "Wave", "Windup",
                     KarmaWaveArtwork.Sprite("SW01_CrescentWave_v4"),
-                    KarmaGuardianGrowth.Motion.Sweep, new Vector2(3.5f, 4.5f), copy: "Wave");
+                    KarmaGuardianGrowth.Motion.Sweep, new Vector2(3.5f, 4.5f), copy: "Wave")
+                    { FaceInIdle = new Vector2(0.623f, 0.886f) };
             }
             public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
                 "Windup", "Guard", "Windup", KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional"),

@@ -70,12 +70,15 @@ namespace KarmaPrototype
             float t = Mathf.InverseLerp(empowermentAt, empowermentUntil, Time.time);
             if (sheet == "Player")
             {
-                if (Time.time - empowermentAt >= KarmaPersonalizationVFX.CeremonyDuration)
+                float elapsed = Time.time - empowermentAt;
+                if (elapsed >= KarmaPersonalizationVFX.ProofStart)
                 {
-                    SamplePersonalizationProof(empowermentEssence, Time.time - empowermentAt - KarmaPersonalizationVFX.CeremonyDuration);
+                    SamplePersonalizationProof(empowermentEssence, elapsed - KarmaPersonalizationVFX.ProofStart);
                     return true;
                 }
-                string pose = !nativePlayer24 ? "Transition" : empowermentEssence == Essence.SwordWave ? "PersonalizeWave"
+                bool ceremony = elapsed >= KarmaPersonalizationVFX.CeremonyStart
+                    && elapsed < KarmaPersonalizationVFX.CeremonyStart + KarmaPersonalizationVFX.CeremonyDuration;
+                string pose = !ceremony ? "Idle" : !nativePlayer24 ? "Transition" : empowermentEssence == Essence.SwordWave ? "PersonalizeWave"
                     : empowermentEssence == Essence.RisingSlash ? "PersonalizeRising" : "PersonalizeGuard";
                 SamplePlayerClip(pose);
             }

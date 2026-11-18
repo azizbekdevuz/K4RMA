@@ -68,7 +68,8 @@ namespace KarmaPrototype
                         KarmaGuardianGrowth.Motion.Slam, new Vector2(7, 4), realization: "이 힘을 지면으로 전하면…");
                 return new KarmaGuardianGrowth.Technique("Guard", "ShieldBash", "Guard",
                     KarmaArtwork.Sprite("PlayerVFX", "Barrier"),
-                    KarmaGuardianGrowth.Motion.Surround, new Vector2(5, 6));
+                    KarmaGuardianGrowth.Motion.Surround, new Vector2(5, 6))
+                    { FaceInIdle = new Vector2(0.504f, 0.852f) };
             }
             public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
                 "Guard", "Guard", "Guard", KarmaArtwork.Sprite("GuardBossVFX", "Seal"),

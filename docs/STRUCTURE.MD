@@ -68,6 +68,8 @@ K4RMA/
 │   │   │   ├── Neutral/
 │   │   │   │   ├── Forms/
 │   │   │   │   │   └── Neutral.png
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Hesitate.png
 │   │   │   │   └── Revival/
 │   │   │   │       └── Neutral.png
 │   │   │   ├── Player/
@@ -254,6 +256,7 @@ K4RMA/
 │   │   │   │   │   ├── KarmaCombatGlow.shader
 │   │   │   │   │   ├── KarmaEndingDissolve.mat
 │   │   │   │   │   ├── KarmaEndingDissolve.shader
+│   │   │   │   │   ├── KarmaInheritanceReveal.shader
 │   │   │   │   │   ├── KarmaMoonBackground.mat
 │   │   │   │   │   ├── KarmaMoonBackground.shader
 │   │   │   │   │   ├── KarmaPlayer24.mat

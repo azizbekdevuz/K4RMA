@@ -15,11 +15,10 @@ namespace KarmaPrototype
             if (recovery && (Time.time < actionUntil || Time.time < poseUntil || Time.time < hurtUntil)) return false;
             if (playerStatusPose != pose) { playerStatusPose = pose; playerStatusAt = Time.time; }
             if (pose.StartsWith("Airborne", System.StringComparison.Ordinal)) elapsed = Time.time - playerStatusAt;
-            playerClips.TryGetValue(pose, out var clip);
             int frame = Mathf.FloorToInt(elapsed * KarmaBootstrap.FramesPerSecond);
             playerClip = null;
             picture.flipX = reverse;
-            picture.sprite = sequence[clip != null && clip.isLooping ? frame % sequence.Length : Mathf.Min(frame, sequence.Length - 1)];
+            picture.sprite = sequence[KarmaPlayerTimeline.Find(pose).Loop ? frame % sequence.Length : Mathf.Min(frame, sequence.Length - 1)];
             picture.transform.localScale = pictureScale;
             picture.transform.localPosition = pictureHome; picture.transform.localRotation = Quaternion.identity;
             picture.color = pictureColor; transform.localRotation = Quaternion.identity;

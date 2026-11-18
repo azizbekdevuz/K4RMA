@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,40 @@ namespace KarmaPrototype
     {
         public const string Root = "Motions12/";
         static Dictionary<string, int> counts;
-        readonly Dictionary<string, Sprite[]> loaded = new Dictionary<string, Sprite[]>();
+        readonly Dictionary<(string form, string motion), Sprite[]> loaded = new Dictionary<(string, string), Sprite[]>();
+        static KarmaMotionArt commonPlayer = new KarmaMotionArt();
+        static readonly string[] playerOpening = {
+            "JumpStart", "Run", "Jump", "Land", "Attack", "AirHorizontal", "Turn", "Fall",
+            "Apex", "AirRecovery", "RunRecovery", "Recovery", "Walk", "Parry", "Guard"
+        };
+        static readonly string[] guardianOpening = {
+            "Move", "Windup", "GroundStrike", "SWBasic", "UPBasic", "GDBasic",
+            "Backstep", "FollowThrough", "Guard", "Hurt", "Stun"
+        };
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Reset()
+        {
+            commonPlayer = new KarmaMotionArt();
+            counts = null;
+        }
+
+        internal static IEnumerator PreparePlayer() => commonPlayer.Prepare("Player", playerOpening);
+        internal static bool TryPreparedPlayer(string motion, out Sprite[] frames)
+            => commonPlayer.loaded.TryGetValue(("Player", motion), out frames);
+
+        internal IEnumerator PrepareGuardian(string form) => Prepare(form, guardianOpening);
+        IEnumerator Prepare(string form, string[] motions)
+        {
+            // Integrate one texture at a time. Keep real input responsive if it arrives before preparation finishes.
+            foreach (string motion in motions)
+            {
+                if (!Has(form, motion) || loaded.ContainsKey((form, motion))) continue;
+                var request = Resources.LoadAsync<Texture2D>(Root + form + "/" + motion);
+                yield return request;
+                if (request.asset != null) Frames(form, motion);
+                yield return null;
+            }
+        }
         static Dictionary<string, int> Counts
         {
             get
@@ -28,13 +62,13 @@ namespace KarmaPrototype
         public static bool Has(string form, string motion) => motion == "Idle" || Counts.ContainsKey(form + "/" + motion);
         public Sprite[] Frames(string form, string motion)
         {
+            if (loaded.TryGetValue((form, motion), out var sequence)) return sequence;
             string key = form + "/" + motion;
-            if (loaded.TryGetValue(key, out var sequence)) return sequence;
             sequence = motion == "Idle" ? new[] { KarmaArtwork.StageIdle(form) } : Resources.LoadAll<Sprite>(Root + key);
             if (motion != "Idle" && (!Counts.TryGetValue(key, out int expected) || sequence.Length != expected))
                 throw new InvalidOperationException("Missing motion drawings: " + key);
             Array.Sort(sequence, (a,b) => string.CompareOrdinal(a.name,b.name));
-            return loaded[key] = sequence;
+            return loaded[(form, motion)] = sequence;
         }
         public Sprite Sample(string form, string motion, float elapsed, bool loop = false)
         {

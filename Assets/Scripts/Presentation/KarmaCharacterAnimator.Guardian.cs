@@ -16,6 +16,7 @@ namespace KarmaPrototype
             stageIdle = KarmaArtwork.StageIdle(form);
             if (form == "WardFinal") shieldlessIdle = KarmaArtwork.StageIdle("WardFinal_NoShield");
             PlayBody("Idle");
+            if (Application.isPlaying && isActiveAndEnabled) StartCoroutine(motionArt.PrepareGuardian(form));
         }
 
         internal void ShowStandingArt(bool shieldAway = false)

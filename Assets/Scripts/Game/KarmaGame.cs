@@ -58,6 +58,7 @@ namespace KarmaPrototype
             gameObject.AddComponent<KarmaHUD>().Initialize(this);
             KarmaPreferences.ApplyAudio();
             InitializeDisplaySettings();
+            StartCoroutine(KarmaMotionArt.PreparePlayer());
             StartCoroutine(KarmaTutorialStage.PreloadArtwork());
             Time.timeScale = 1;
         }

@@ -51,7 +51,7 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
             yield return MeasureActiveCombat(game);
             yield break;
         }
-        File.WriteAllText(report, "phase,frame,real_seconds,interval_ms,fixed_updates,time_scale\n");
+        File.WriteAllText(report, "phase,frame,real_seconds,interval_ms,fixed_updates,time_scale,focused\n");
         yield return Measure(game, RunPhase.Title, "TitleCold");
         yield return Measure(game, RunPhase.Title);
         game.StartRun();
@@ -123,7 +123,7 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
     {
         // Include the operation and its first presented frame, not just the steady state afterwards.
         var rows = new List<string>();
-        rows.Add("section,frame,real_seconds,interval_ms,fixed_updates,time_scale,player_x,guardian_x,player_pose,guardian_pose,fight_seconds");
+        rows.Add("section,frame,real_seconds,interval_ms,fixed_updates,time_scale,player_x,guardian_x,player_pose,guardian_pose,fight_seconds,focused");
         var keyboard = InputSystem.AddDevice<Keyboard>();
         bool finished = false;
         try
@@ -138,7 +138,7 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
             {
                 double now = Time.realtimeSinceStartupAsDouble;
                 var enemy = game.Enemies[0];
-                rows.Add(FormattableString.Invariant($"{section},{frame},{now:F5},{(now-previous)*1000:F3},{ticks-previousTicks},{Time.timeScale:F3},{game.Player.Position.x:F4},{enemy.Position.x:F4},{actor.CurrentPose},{boss.CurrentPose},{enemy.FightSeconds:F4}"));
+                rows.Add(FormattableString.Invariant($"{section},{frame},{now:F5},{(now-previous)*1000:F3},{ticks-previousTicks},{Time.timeScale:F3},{game.Player.Position.x:F4},{enemy.Position.x:F4},{actor.CurrentPose},{boss.CurrentPose},{enemy.FightSeconds:F4},{Application.isFocused}"));
                 previous = now;
                 previousTicks = ticks;
             }
@@ -218,8 +218,8 @@ public sealed class KarmaFramePacingProbe : MonoBehaviour
             if (expected == RunPhase.Ending) ObserveMaster();
             double now = Time.realtimeSinceStartupAsDouble;
             if (game.Phase != expected) throw new InvalidOperationException("Unexpected phase " + game.Phase);
-            rows.Add(string.Format(CultureInfo.InvariantCulture, "{0},{1},{2:F6},{3:F3},{4},{5:F3}",
-                label ?? expected.ToString(), rows.Count + 1, now - start, (now - previous) * 1000, ticks - initialTicks, Time.timeScale));
+            rows.Add(string.Format(CultureInfo.InvariantCulture, "{0},{1},{2:F6},{3:F3},{4},{5:F3},{6}",
+                label ?? expected.ToString(), rows.Count + 1, now - start, (now - previous) * 1000, ticks - initialTicks, Time.timeScale, Application.isFocused));
             previous = now;
         }
         while (previous - start < 10);

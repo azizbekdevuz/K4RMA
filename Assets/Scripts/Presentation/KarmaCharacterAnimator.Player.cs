@@ -5,7 +5,6 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaCharacterAnimator
     {
-        readonly Dictionary<string, AnimationClip> playerClips = new Dictionary<string, AnimationClip>();
         readonly Dictionary<string, Sprite[]> playerSequences = new Dictionary<string, Sprite[]>();
         string playerClip;
         float playerClipAt, jumpVisualUntil;
@@ -14,22 +13,20 @@ namespace KarmaPrototype
 
         void LoadPlayerClips()
         {
-            playerClips.Clear(); playerSequences.Clear(); playerClip = null;
+            playerSequences.Clear(); playerClip = null;
             if (sheet != "Player") return;
             var material = Resources.Load<Material>("Shared/Rendering/KarmaPlayer12");
             if (material != null && picture != null) picture.sharedMaterial = material;
             SamplePlayerClip("Idle", true);
         }
-        // Load a new sheet only when its action is first requested. CC/ending art does not inflate normal startup.
+        // Animation clips are authored from this same timeline. Live playback needs only its drawings and loop flag.
         void LoadNativePlayerPose(string name)
         {
             if (playerSequences.ContainsKey(name)) return;
             var motion = KarmaPlayerTimeline.Find(name);
             if (motion == null) return;
-            var clip = Resources.Load<AnimationClip>(KarmaPlayerTimeline.Clips + name);
-            if (clip == null) throw new System.InvalidOperationException("Missing player clip " + name);
-            var sequence = motion.Load();
-            playerClips[name] = clip; playerSequences[name] = sequence;
+            playerSequences[name] = KarmaMotionArt.TryPreparedPlayer(motion.Source, out var sequence)
+                ? sequence : motion.Load();
         }
         float playerExplicitRecoveryEnd;
         internal bool PlayerActionPlaying => Time.time < actionUntil || Time.time < poseUntil;
@@ -73,12 +70,12 @@ namespace KarmaPrototype
             playerStatusPose = null;
             if (name == "Riposte" && SampleParrySuccess(restart)) return;
             LoadNativePlayerPose(name);
-            if (!playerClips.TryGetValue(name, out var clip) || !playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) return;
+            if (!playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) return;
             if (restart || playerClip != name) { playerClip = name; playerClipAt = Time.time; }
             float elapsed = Mathf.Max(0, Time.time - playerClipAt);
             float sampleRate = playerSampleRate;
-            float duration = KarmaPlayerTimeline.Find(name).Duration;
-            float sample = clip.isLooping ? elapsed % duration : elapsed;
+            var motion = KarmaPlayerTimeline.Find(name);
+            float sample = motion.Loop ? elapsed % motion.Duration : elapsed;
             // Quantize visuals only. Physics, damage and input windows keep their original clocks.
             picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * sampleRate + 0.00001f))];
             picture.flipX = false;

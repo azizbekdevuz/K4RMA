@@ -64,7 +64,7 @@ static class KarmaStage{public const float ArenaLeft=-15,ArenaRight=55;}static c
 class KarmaGame{public Player Player=new Player();}class Player{public Vector2 Position;}
 class Node{public bool active=true;public void SetActive(bool n){active=n;}}
 class Transform{public Node gameObject=new Node();}class Marker{public Node gameObject=new Node();public Transform transform=new Transform();}
-class Animator{public void PrepareBasicAttack(float n,bool b){}public void Attack(Vector2 n){}public void BeginBasicRelease(float n){}}
+class Animator{public bool RangedBasicBody;public void PrepareBasicAttack(float n,bool b){}public void Attack(Vector2 n){}public void BeginBasicRelease(float n){}}
 enum ActionState{Telegraph,Attack}class KarmaBossAttack{}
 class KarmaEnemy{public Vector2 Position,markFrom,markTo,markSize,shotFrom,shotVelocity,shotSize;public float direction,damage,shotLife;public int shots;public ActionState state;public KarmaGame game=new KarmaGame();public object art;public Animator animator=new Animator();public float Warning(float n)=>n;public Marker PathMark(Vector2 a,Vector2 b,Vector2 size){markFrom=a;markTo=new SwordBossBehavior().WarningEndpoint(a,b);markSize=size;return new Marker();}public object Wait(float n)=>n;public object Recovery(float n)=>n;public KarmaBossAttack Attack(Vector2 a,Vector2 b,Vector2 size,float life,float d,object parent){shotFrom=a;shotVelocity=b;shotSize=size;shotLife=life;damage=d;shots++;return new KarmaBossAttack();}}
 struct Bounds{public Vector2 center;}
@@ -110,7 +110,6 @@ class Renderer{public bool flipX;public Transform transform=new Transform();}
 public class Probe{
  Transform transform=new Transform();Renderer picture=new Renderer();bool basicVisualOrigin;float age;
  ORIGIN
- CENTER
  APPLY
  static void Check(bool b,string m){if(!b)throw new Exception(m);}
  public static void Run(){int cases=0;
@@ -118,12 +117,12 @@ public class Probe{
  var origin=BasicTorsoOrigin(new Vector2(x,.3f),height,facing);
  Check(Math.Abs((origin.x-x)*facing-height*.18f)<.00001f,"mirrored torso front");Check(Math.Abs(origin.y-(.3f+height*.55f))<.00001f,"upper torso height");
  var p=new Probe();p.picture.flipX=facing<0;p.picture.transform.scale=new Vector3(facing*1.4f,1.8f,1);p.transform.position=new Vector3(origin.x,origin.y,0);p.basicVisualOrigin=true;
- p.ApplyBasicVisualOrigin();var center=p.picture.transform.TransformVector(new Vector3(.305f*(p.picture.flipX?-1:1),.085f,0));Check(Math.Abs(p.picture.transform.position.x+center.x-origin.x)<.00001f&&Math.Abs(p.picture.transform.position.y+center.y-origin.y)<.00001f,"visible crescent center at waist");
+ p.ApplyBasicVisualOrigin();var center=p.picture.transform.TransformVector(new Vector3(0,0,0));Check(Math.Abs(p.picture.transform.position.x+center.x-origin.x)<.00001f&&Math.Abs(p.picture.transform.position.y+center.y-origin.y)<.00001f,"visible crescent center at waist");
  for(int i=0;i<=96;i++){p.age=i/96f;p.transform.position=new Vector3(origin.x+facing*10*p.age,origin.y-2*p.age,0);var root=p.transform.position;p.ApplyBasicVisualOrigin();Check(p.transform.position.x==root.x&&p.transform.position.y==root.y,"root never moved");var first=p.picture.transform.position;p.ApplyBasicVisualOrigin();Check(p.picture.transform.position.x==first.x,"offset never compounds");}
  Check(Math.Abs(p.picture.transform.position.x+center.x-p.transform.position.x)<.00001f&&Math.Abs(p.picture.transform.position.y+center.y-p.transform.position.y)<.00001f,"visual follows actual collision lane at all times");cases++;
  }Console.WriteLine("PASS "+cases+" torso origins and render-only transitions");}
 }'''
-        code=code.replace('ORIGIN',expression('BasicTorsoOrigin')).replace('APPLY',method(source,'void ApplyBasicVisualOrigin()')).replace('CENTER',method(source,'void CenterBasicCrescent()'))
+        code=code.replace('ORIGIN',expression('BasicTorsoOrigin')).replace('APPLY',method(source,'void ApplyBasicVisualOrigin()'))
         self.assertIn('PASS 24 torso origins',run_cs(code,'Probe',modern=True))
         apply=method(source,'void ApplyBasicVisualOrigin()')
         self.assertNotIn('localScale',apply)
@@ -140,16 +139,10 @@ public class Probe{
         self.assertIn('owner.PathMark(origin, origin + velocity * flightLife, sword.BasicSwordSize)',source)
         self.assertIn('SwordAim(origin, sword.SwordPlayerBounds.center, owner.direction)',source)
         self.assertNotIn('AlignBasicVisual(',source.split('IEnumerator Melee()')[1])
-        from PIL import Image
-        image=ROOT/'Assets/Arts/Resources/SwordWave/SWBasic/SWBasic_BlueCrescent.png'
-        with Image.open(image) as selected:
-            self.assertEqual(selected.mode,'RGBA')
-            self.assertEqual(selected.size,(1254,1254))
-            import numpy as np
-            pixels=np.array(selected)
-            y,x=np.where((pixels[:,:,3]>128)&(pixels[:,:,:3].max(axis=2)>120))
-            self.assertEqual((int(x.min()),int(x.max()),int(y.min()),int(y.max())),(201,1114,141,1096))
-            self.assertEqual(((x.min()+x.max())/2,(y.min()+y.max())/2),(657.5,618.5))
+        flight=(SWORD/'Visuals/KarmaSwordWaveAnimation.cs').read_text(encoding='utf-8-sig')
+        self.assertIn('FlightDrawings[', method(flight, 'void ApplyFlight()'))
+        self.assertIn('picture.transform.position = transform.position', method(flight, 'void ApplyBasicVisualOrigin()'))
+
 
 
 if __name__=='__main__':

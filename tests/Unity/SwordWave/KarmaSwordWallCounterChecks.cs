@@ -290,7 +290,7 @@ public static class KarmaSwordWallCounterChecks
             for (int i = index; i < 4; i++)
                 Check(scope == null || scope != slots[i] && !scope.IsChildOf(slots[i]), "canceled shot leaves no launch particles or flight echoes");
             var renderer = (SpriteRenderer)Get(entry, "renderer");
-            if (renderer.sprite == KarmaWaveArtwork.Sprite("SW04_CounterBlade_v2") && scope == null)
+            if (renderer.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional") && scope == null && (float)Get(entry, "growth") < 0)
             {
                 dissolves++;
                 Check((Vector3)Get(entry, "velocity") == Vector3.zero && (float)Get(entry, "growth") < 0,
@@ -314,10 +314,12 @@ public static class KarmaSwordWallCounterChecks
             Enemy.TryAttackHit(game.Player.Position, game.Player.Position, Vector2.one * 10, 1, contacts[later], 0, sourcePattern: EnemyAttack.SW04);
             Check(game.Player.Health == health, "canceled later contact causes no damage");
         }
-        foreach (var shot in earlier) Check(shot != null && !shot.gameObject.activeInHierarchy, "parry suppresses earlier live contacts before the stun transition");
-        Check(other != null && !other.gameObject.activeInHierarchy, "parry suppresses overlapping ordinary attacks in the same frame");
+        Check(Array.Exists(Root.GetComponentsInChildren<SpriteRenderer>(), r => r.name == "SW04 reflected blade"),
+            "Successful parry launches the return blade");
         Shot("counter-parry-" + (index + 1) + "-" + allFlying);
-        await Seconds(0.3f);
+        await Until(() => Enemy.Stunned, 5);
+        foreach (var shot in earlier) Check(shot == null || !shot.gameObject.activeInHierarchy, "returned blade stops earlier live contacts");
+        Check(other == null || !other.gameObject.activeInHierarchy, "returned blade suppresses outstanding attacks on impact");
         Check(Enemy.Stunned && !Enemy.Armored && !(bool)Get(Enemy, "running"), "successful parry interrupts the whole boss and removes its guard");
         Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "stun leaves no live projectile");
         Check(game.World.GetComponentsInChildren<KarmaSwordParryFeedback>().Length == 0, "success ring expires naturally");

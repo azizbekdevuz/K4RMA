@@ -257,6 +257,13 @@ public static class KarmaEndingMoonChecks
         try
         {
             map.devices = new[] { keyboard }; map.RemoveAllBindingOverrides();
+            if (game.OpeningArrivalSpeech != null)
+            {
+                await Until(() => game.OpeningArrivalFade < 0.45f);
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(UnityEngine.InputSystem.Key.Space));
+                await Until(() => game.OpeningArrivalSpeech == null);
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            }
             enemy.gameObject.SetActive(false);
             game.Player.ResetForRoom(new Vector2(KarmaStage.ArenaLeft + 2, KarmaSpace.PlayerHalfHeight + 0.05f), true);
             Directory.CreateDirectory(Output + "/mountain-traverse");
@@ -345,7 +352,7 @@ public static class KarmaEndingMoonChecks
             }
             typeof(KarmaGame).GetProperty("Phase").SetValue(game, RunPhase.Transition);
             SettleCamera(); CheckCoverage();
-            Check(Mathf.Abs(game.GameCamera.orthographicSize - normal * 0.75f) < 0.1f,
+            Check(Mathf.Abs(game.GameCamera.orthographicSize - Mathf.Max(8.8f, normal * 0.62f)) < 0.1f,
                 "Personalization preserves its original zoom-in even when moon is outside the frame");
             foreach (float edge in new[] { KarmaStage.ArenaLeft + 1, KarmaStage.ArenaRight - 1 })
             foreach (bool inheriting in new[] { false, true })
@@ -353,8 +360,11 @@ public static class KarmaEndingMoonChecks
                 game.Player.ResetForRoom(new Vector2(edge, KarmaSpace.PlayerHalfHeight), true);
                 enemy.transform.position = new Vector3(edge, KarmaSpace.GuardianGroundY, 0);
                 Set(game, "guardianInheriting", inheriting);
+                Set(game, "transitionLeft", 30f);
                 SettleCamera(); CheckCoverage();
-                Check(Mathf.Abs(game.GameCamera.orthographicSize - normal * (inheriting ? 0.8f : 0.75f)) < 0.1f,
+                float closeup = Mathf.Max(inheriting ? 10.5f : 8.8f, normal * (inheriting ? 0.76f : 0.62f));
+                await Until(() => Mathf.Abs(game.GameCamera.orthographicSize - closeup) < 0.1f, 12);
+                Check(Mathf.Abs(game.GameCamera.orthographicSize - closeup) < 0.1f,
                     "Original player/guardian zoom stays covered at arena edges");
                 Render("zoom-in-stage-" + stage + "-" + (inheriting ? "guardian" : "player") + "-" + edge);
                 typeof(KarmaGame).GetProperty("Phase").SetValue(game, RunPhase.Combat);
@@ -380,7 +390,10 @@ public static class KarmaEndingMoonChecks
         SettleCamera();
         Check(game.GameCamera.orthographicSize > baseline + 0.5f, "GD05 zooms out normally");
         var frameBounds = (Bounds)Get(game, "stageBackgroundBounds");
-        float expected = Mathf.Max(frameBounds.extents.y, 25 / game.GameCamera.aspect, 16, 22 / game.GameCamera.aspect);
+        float radius = KarmaSpace.Units(10);
+        float expected = Mathf.Max(frameBounds.extents.y, 25 / game.GameCamera.aspect, 0.8f * radius,
+            (radius + KarmaSpace.Units(1)) / game.GameCamera.aspect);
+        await Until(() => Mathf.Abs(game.GameCamera.orthographicSize - expected) < 0.1f, 10);
         Check(Mathf.Abs(game.GameCamera.orthographicSize - expected) < 0.1f, "GD05 retains exact original zoom target");
         Render("gd05-zoom");
         // GD05 dome crosses the moon. Exclude foreground renderers only for the pixel measurement.

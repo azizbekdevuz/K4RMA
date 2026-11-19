@@ -68,8 +68,6 @@ namespace KarmaPrototype
             picture.transform.localPosition = home;
             picture.transform.localScale = scale;
             picture.transform.localRotation = Quaternion.identity;
-            glow.SetPose(ShieldAway ? shieldlessPoses[index] : poses[index],
-                ShieldAway ? shieldlessHeatedPoses[index] : heatedPoses[index]);
             CurrentPose = index == 0 ? "GD02/Windup" : index == 1 ? "GD02/Downstroke" : "GD02/FollowThrough";
         }
     }

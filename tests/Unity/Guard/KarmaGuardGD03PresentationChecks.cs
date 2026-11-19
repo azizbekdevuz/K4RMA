@@ -31,14 +31,25 @@ public static partial class KarmaGuardPlayChecks
     {
         if (flightReviewRunning) return;
         SessionState.SetString(FlightReviewKey, mode);
-        if (!EditorApplication.isPlaying) EditorApplication.EnterPlaymode();
+        if (!EditorApplication.isPlaying)
+        {
+            if (Application.isBatchMode)
+            {
+                EditorWindow.GetWindow(typeof(Editor).Assembly.GetType("UnityEditor.GameView")).Show();
+                UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
+            }
+            EditorApplication.EnterPlaymode();
+        }
     }
     static void PumpFlightReview()
     {
         string mode = SessionState.GetString(FlightReviewKey, "");
         if (string.IsNullOrEmpty(mode) || flightReviewRunning) return;
         EditorApplication.QueuePlayerLoopUpdate();
-        if (!EditorApplication.isPlaying || Time.frameCount < 2) return;
+        if (!EditorApplication.isPlaying) return;
+        Application.runInBackground = true;
+        EditorApplication.isPaused = false;
+        if (Time.frameCount < 2) return;
         SessionState.EraseString(FlightReviewKey);
         if (mode == "lifecycle") ReviewFlightLifecycle();
         else ReviewFlight(mode == "after");
@@ -57,7 +68,10 @@ public static partial class KarmaGuardPlayChecks
         assertions = 0; runtimeError = null;
         Application.logMessageReceived += CaptureError;
         Directory.CreateDirectory(FlightOutput);
+        float originalStep = Time.captureDeltaTime;
+        Time.captureDeltaTime = 1f / 60;
         string mode = verify ? "after" : "before";
+        int exitCode = 0;
         try
         {
             EditorApplication.isPaused = false;
@@ -106,7 +120,9 @@ public static partial class KarmaGuardPlayChecks
                 FlightShot(mode + "-" + label + "-flight");
                 if (!verify) continue;
                 Vector3 scale = picture.transform.localScale, position = picture.transform.localPosition;
+                float health = enemy.Health;
                 enemy.TakeDamage(1, enemy.Position + Vector2.left * facing * 3);
+                Check(enemy.Health < health, "GD03 receives the test hit during flight: " + label);
                 await Seconds(0.03f);
                 CheckFlightPose(animator, picture, form, "Hurt");
                 FlightShot(mode + "-" + label + "-hurt");
@@ -149,9 +165,10 @@ public static partial class KarmaGuardPlayChecks
             Check(runtimeError == null, "GD03 presentation emits no combat runtime errors: " + runtimeError);
         }
         catch (Exception error)
-        { File.WriteAllText(FlightOutput + "/" + mode + "-failure.txt", error.ToString()); Debug.LogException(error); }
+        { exitCode = 1; File.WriteAllText(FlightOutput + "/" + mode + "-failure.txt", error.ToString()); Debug.LogException(error); }
         finally
         {
+            Time.captureDeltaTime = originalStep;
             recordingFlight = false; StopFlightRecording();
             if (flightTarget != null) UnityEngine.Object.Destroy(flightTarget);
             if (flightPixels != null) UnityEngine.Object.Destroy(flightPixels);
@@ -161,6 +178,7 @@ public static partial class KarmaGuardPlayChecks
             Application.runInBackground = background;
             EditorApplication.update -= EditorApplication.QueuePlayerLoopUpdate;
             flightReviewRunning = false;
+            if (Application.isBatchMode) EditorApplication.Exit(exitCode);
         }
     }
     static async void ReviewFlightLifecycle()
@@ -228,20 +246,25 @@ public static partial class KarmaGuardPlayChecks
         // Check the rendered world-space direction, not just the requested attack direction.
         float visibleHeading = picture.transform.TransformVector(Vector3.right).x * (picture.flipX ? -1 : 1);
         Check(visibleHeading * enemy.Facing > 0, "visible shieldless facing matches throw direction: " + form + "/" + pose);
-        Sprite expected = KarmaArtwork.Sprite("GuardShieldless" + form, pose);
-        Check(expected != null && picture.sprite == expected && animator.CurrentPose == "GD03/ShieldAway/" + form + "/" + pose, "visible shieldless " + form + "/" + pose);
-        var original = Array.Find(KarmaArtwork.InheritedPoses(form), sprite => sprite.name == pose);
-        Check(expected.rect == original.rect && expected.pivot == original.pivot && Mathf.Approximately(expected.pixelsPerUnit, original.pixelsPerUnit), "slice, pivot and PPU preserved: " + form + "/" + pose);
-        Check(expected.bounds == original.bounds, "source pose bounds preserved");
-        var damagePose = Array.Find(KarmaArtwork.InheritedPoses(form), sprite => sprite.name == (pose == "Hurt" ? "Hurt" : "Thrust"));
+        bool hurt = pose == "Hurt";
+        string motion = form == "WardFinal" ? (hurt ? "Hurt" : "GD03Release") : (hurt ? "GD03ShieldAwayHurt" : "GD03");
+        string resource = "Motions12/" + (form == "WardFinal" ? "WardFinal_NoShield" : form) + "/" + motion;
+        Sprite visible = picture.sprite;
+        Check(Array.IndexOf(Resources.LoadAll<Sprite>(resource), visible) >= 0 &&
+            animator.CurrentPose == "GD03/ShieldAway/" + form + "/" + pose, "visible shieldless " + resource + " actual=" + visible.name);
+        Check(Array.TrueForAll(enemy.GetComponentsInChildren<Transform>(true), child =>
+            !child.name.Contains("FloatingWoodRing") && !child.name.Contains("Floating Wood Ring"))
+            && typeof(KarmaEnemy).Assembly.GetType("KarmaPrototype.KarmaGuardFloatingRing") == null,
+            "Inherited shield throw has no floating ring");
+        var damagePose = Array.Find(Resources.LoadAll<Sprite>("Guard/Forms/" + form), sprite => sprite.name == (hurt ? "Hurt" : "Thrust"));
+        Check(damagePose != null, "Original shielded damage silhouette resolves");
         var actualDamageBounds = enemy.DamageBounds;
-        // Compare against Unity's renderer bounds for the original gameplay pose, without advancing a frame.
         picture.sprite = damagePose;
         var originalDamageBounds = picture.bounds;
-        picture.sprite = expected;
-        Check((actualDamageBounds.center - originalDamageBounds.center).sqrMagnitude < 0.000001f
-            && (actualDamageBounds.size - originalDamageBounds.size).sqrMagnitude < 0.000001f,
-            "old GD03 damage bounds preserved while the shield arm is shown");
+        picture.sprite = visible;
+        Check(((Vector2)(actualDamageBounds.center - originalDamageBounds.center)).sqrMagnitude < 0.000001f
+            && ((Vector2)(actualDamageBounds.size - originalDamageBounds.size)).sqrMagnitude < 0.000001f,
+            "GD03 " + form + "/" + pose + " damage bounds: actual=" + actualDamageBounds + " old=" + originalDamageBounds + " source=" + damagePose.bounds + " scale=" + picture.transform.lossyScale);
     }
     static void RenderFlightFrame()
     {

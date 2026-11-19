@@ -198,12 +198,22 @@ public static class KarmaBossIsolationChecks
         var sharedParry = AssetDatabase.LoadAssetAtPath<Sprite>(sharedParryPath);
         Check(sharedParry != null, "Shared parry sprite imports");
         Check(Resources.Load<Sprite>("Shared/Effects/Parry") == sharedParry, "Shared parry Resources path loads");
-        const string sharedAtlasPath = "Assets/Arts/Resources/Shared/ReferencePoses.png";
-        var sharedAtlas = Resources.LoadAll<Sprite>("Shared/ReferencePoses");
-        Check(sharedAtlas.Length == 16, "Shared guardian atlas loads all sixteen cutouts");
+        var bindings = Resources.Load<TextAsset>("Motions12/BodyPoses").text.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries)
+            .Select(row => row.Split('\t')).ToDictionary(row => (row[0], row[1]));
+        bool SameFrame(Sprite a, Sprite b) => a != null && b != null && a.texture == b.texture && a.rect == b.rect
+            && a.pivot == b.pivot && a.pixelsPerUnit == b.pixelsPerUnit;
+        Sprite BoundFrame(string[] row)
+        {
+            if (row[3] == "Idle") return KarmaArtwork.StageIdle(row[2]);
+            string key = "Motions12/" + row[2] + "/" + row[3];
+            string name = row[3] + "_" + int.Parse(row[4]).ToString("00");
+            return Resources.LoadAll<Sprite>(key).Single(frame => frame.name == name);
+        }
         foreach (var path in Directory.GetFiles("Assets/Arts", "*.png", SearchOption.AllDirectories))
         {
-            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path.Replace('\\', '/'));
+            // Unity and the macOS filesystem can present Korean filenames using different normalization.
+            var guid = File.ReadLines(path + ".meta").First(line => line.StartsWith("guid: ")).Substring(6);
+            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(guid));
             Check(texture != null && texture.width > 0 && texture.height > 0, "Optimized PNG imports: " + path);
         }
         foreach (var library in libraries)
@@ -219,19 +229,13 @@ public static class KarmaBossIsolationChecks
                     string pose = sheet.poses != null && i < sheet.poses.Length && !string.IsNullOrEmpty(sheet.poses[i]) ? sheet.poses[i] : sprite.name;
                     bool usesSharedParry = sheet.id == "BossStun" || (sheet.id == "RisingBossVFX" && pose == "Parry");
                     string source = AssetDatabase.GetAssetPath(sprite);
-                    Check(sheet.id == "Inheritance" ? source == sharedAtlasPath : usesSharedParry ? sprite == sharedParry
-                        : source.StartsWith("Assets/Arts/Resources/" + folder + "/"),
+                    if (bindings.TryGetValue((sheet.id, pose), out var binding))
+                        Check(SameFrame(sprite, BoundFrame(binding)), library.name + "/" + pose + " uses its catalog drawing");
+                    else Check(usesSharedParry ? sprite == sharedParry : source.StartsWith("Assets/Arts/Resources/" + folder + "/"),
                         library.name + "/" + sheet.id + " uses its dedicated or shared image source");
-                    Check(KarmaArtwork.Sprite(sheet.id, pose) == sprite, "Artwork routing resolves " + sheet.id + "/" + pose);
-                    if (sheet.id == "Inheritance")
-                    {
-                        Sprite original = null;
-                        foreach (var candidate in sharedAtlas) if (candidate.name == sprite.name) original = candidate;
-                        Check(original == sprite && original.rect == sprite.rect && original.pivot == sprite.pivot
-                            && original.pixelsPerUnit == sprite.pixelsPerUnit, "Shared preview atlas resolves cutout " + pose);
-                    }
+                    Check(SameFrame(KarmaArtwork.Sprite(sheet.id, pose), sprite), "Artwork routing resolves " + sheet.id + "/" + pose);
                 }
-            Check(KarmaArtwork.Settings.Guardian(essence) == library.Get("BossAppearance", form), "Boss appearance is locally connected: " + form);
+            Check(SameFrame(KarmaArtwork.Settings.Guardian(essence), library.Get("BossAppearance", form)), "Boss appearance is locally connected: " + form);
             foreach (string kind in new[] { "Base", "Revival", "Inherited" })
             {
                 string key = kind == "Inherited" ? form + "Final" : form;
@@ -239,14 +243,14 @@ public static class KarmaBossIsolationChecks
                     "Animation Resources path survives move: " + kind + "/" + key);
             }
             Check(KarmaArtwork.InheritedPoses(form).Length == 0, "Base form is not an inherited pose set: " + form);
-            foreach (string path in Directory.GetFiles("Assets/Arts/Resources/" + folder + "/Forms", "*.png"))
+            foreach (string suffix in new[] { "Rise", "Wave", "Ward", "Final" })
             {
-                string key = Path.GetFileNameWithoutExtension(path);
-                if (key == form) continue;
-                var expected = Resources.LoadAll<Sprite>(folder + "/Forms/" + key);
-                var actual = KarmaArtwork.InheritedPoses(key);
-                Check(expected.Length > 0 && actual.Length == expected.Length
-                    && actual.All(expected.Contains), "Inherited form preserves all poses: " + key);
+                if (suffix == form) continue;
+                string key = form + suffix;
+                var poses = KarmaArtwork.InheritedPoses(key);
+                Check(poses.Length == 16 && poses.Select(p => p.name).Distinct().Count() == 16, key + " has 16 named poses");
+                foreach (var pose in poses)
+                    Check(SameFrame(pose, BoundFrame(bindings[("@" + folder + "/Forms/" + key, pose.name)])), key + "/" + pose.name);
             }
         }
         Check(KarmaArtwork.InheritedPoses("Neutral").Length == 0, "Neutral form is not an inherited pose set");

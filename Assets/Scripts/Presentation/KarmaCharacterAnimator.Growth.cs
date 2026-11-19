@@ -100,7 +100,9 @@ namespace KarmaPrototype
             picture.sprite = keyPose;
             // Calibrate once against the old standing body, not the bounding box
             // of the last hurt/slash pose. The new art has a foot-aligned pivot.
-            float height = GrowthSprite("Idle", true).bounds.size.y * relativeHeight;
+            var standing = KarmaBodyPoses.Get(previousMotionForm, "Idle");
+            float height = (standing != null ? KarmaBodyPoses.HitBounds(standing).size.y
+                : GrowthSprite("Idle", true).bounds.size.y) * relativeHeight;
             picture.transform.localScale = pictureScale * (height / keyPose.bounds.size.y);
             picture.transform.localPosition = pictureHome;
             picture.transform.localRotation = Quaternion.Euler(0, 0, lean);

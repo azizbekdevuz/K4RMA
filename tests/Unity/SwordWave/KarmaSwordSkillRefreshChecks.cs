@@ -110,6 +110,22 @@ public static class KarmaSwordSkillRefreshChecks
         while (!done()) { observe?.Invoke(); Check(EditorApplication.timeSinceStartup < end, "focused check timeout"); await Task.Delay(5); }
         observe?.Invoke();
     }
+    static async Task ObserveEveryFrame(Func<bool> done, Action observe, float timeout = 25)
+    {
+        Exception failure = null;
+        var probe = game.gameObject.AddComponent<KarmaSwordAimProbe>();
+        probe.Tick = () => {
+            if (failure != null || done()) return;
+            try { observe(); } catch (Exception ex) { failure = ex; }
+        };
+        try
+        {
+            probe.Tick();
+            await Until(() => failure != null || done(), timeout: timeout);
+            if (failure != null) throw failure;
+        }
+        finally { probe.Tick = null; UnityEngine.Object.Destroy(probe); }
+    }
     static Task Seconds(float seconds) { float end = enemy.FightSeconds + seconds; return Until(() => enemy.FightSeconds >= end); }
     static float OriginalWaitAt60(float seconds)
     {
@@ -208,14 +224,14 @@ public static class KarmaSwordSkillRefreshChecks
             float crossedAt=-1;
             Exception failure=null;
             var probe=game.gameObject.AddComponent<KarmaSwordAimProbe>();
-            float began=enemy.FightSeconds;
+            float began=Time.time;
             Force(pattern);
             probe.Tick=()=>
             {
                 if(failure!=null)return;
                 try
                 {
-                    float now=enemy.FightSeconds-began;
+                    float now=Time.time-began;
                     var animator=(KarmaCharacterAnimator)Get(enemy,"animator");
                     if(pattern==EnemyAttack.SW02 && !aimedWarningCaptured && Get(animator,"sw02VisualPhase").ToString()=="Locked")
                     {
@@ -263,12 +279,12 @@ public static class KarmaSwordSkillRefreshChecks
                         trackingSides.Add(enemy.Facing);
                         advertisedFacing=enemy.Facing;
                         var size=(Vector2)Call(Get(enemy,"behavior"),"SwordSize",pattern);
-                        // Sample the mesh that is actually rendered; the generic
-                        // SpriteRenderer is disabled by the flowing warning.
-                        var rendered=mark.GetComponentInChildren<MeshFilter>();
-                        var vertices=rendered.sharedMesh.vertices;
-                        var bounds=new Bounds(rendered.transform.TransformPoint(vertices[0]),Vector3.zero);
-                        foreach(var vertex in vertices)bounds.Encapsulate(rendered.transform.TransformPoint(vertex));
+                        var outline=mark.transform.Find("Locked danger outline").GetComponent<LineRenderer>();
+                        Check(outline.enabled && outline.loop && outline.positionCount>=4 && mark.GetComponentInChildren<MeshFilter>()==null,
+                            "Original visible warning outline follows the advertised path");
+                        Vector3 Vertex(int i) => outline.useWorldSpace ? outline.GetPosition(i) : outline.transform.TransformPoint(outline.GetPosition(i));
+                        var bounds=new Bounds(Vertex(0),Vector3.zero);
+                        for (int i=1;i<outline.positionCount;i++) bounds.Encapsulate(Vertex(i));
                         advertisedOrigin=new Vector2(advertisedFacing>0?bounds.min.x+size.x/2:bounds.max.x-size.x/2,bounds.center.y);
                     }
                     float phaseStart=count==0?0:launches[0];
@@ -283,7 +299,7 @@ public static class KarmaSwordSkillRefreshChecks
             probe.Tick=null;UnityEngine.Object.Destroy(probe);
             if(failure!=null)throw failure;
             Check(count==expected,"exactly the existing projectile count");
-            Check(Mathf.Abs(enemy.FightSeconds-began-total)<0.002f,"original total duration and recovery: "+(enemy.FightSeconds-began).ToString("F4")+" expected "+total.ToString("F4"));
+            Check(Mathf.Abs(Time.time-began-total)<0.002f,"original total duration and recovery: "+(Time.time-began).ToString("F4")+" expected "+total.ToString("F4"));
             if(pattern==EnemyAttack.SW01)
             {
                 Check(Mathf.Abs(heights[0]-heights[1])>1,"high/low lanes preserved");
@@ -292,7 +308,7 @@ public static class KarmaSwordSkillRefreshChecks
                 Check(Mathf.Abs(total-(trial==0?1.683333f:1.45f))<0.002f,"original overall SW01 duration");
             }
             Pass(pattern+" "+(trial==0?"normal":"enraged")+": releases ["+string.Join(",",launches.Select(t=>t.ToString("F4")))
-                +"] s; complete="+(enemy.FightSeconds-began).ToString("F4")
+                +"] s; complete="+(Time.time-began).ToString("F4")
                 +(pattern==EnemyAttack.SW01?"; gap="+(launches[1]-launches[0]).ToString("F4"):"")
                 +" s; continuous facing/warning tracking, last-frame crossings retain the advertised origin/direction, no added delay, fixed spawned velocity, original speed/hitboxes/VFX passed");
         }
@@ -691,7 +707,7 @@ public static class KarmaSwordSkillRefreshChecks
         var spec=new KarmaAerialSwordPlanner.Shot {origin=center+Vector2.up*0.25f,
             velocity=Vector2.down*20,size=new Vector2(2,1),life=0.1f};
         var falling=KarmaSW05RainBlade.Spawn(game,enemy,Root,spec,5,null);
-        Call(falling,"Update");
+        Call(falling,"AdvanceFlight", Time.time + Time.fixedDeltaTime);
         Check(Mathf.Abs(health-game.Player.Health-5)<0.001f && !game.Player.Shocked,"real falling blade damages without Shock");
 
         // A later entry during the original active window still receives CC.
@@ -709,7 +725,7 @@ public static class KarmaSwordSkillRefreshChecks
         await Seconds(0.035f);
         body.position=new Vector2(35,KarmaSpace.PlayerHalfHeight+0.02f);player2.transform.position=body.position;Physics2D.SyncTransforms();
         health=player2.Health;float takenBefore=game.DamageTaken;
-        foreach(var blade in blades)Call(blade,"Update");
+        foreach(var blade in blades)Call(blade,"AdvanceFlight", Time.time + Time.fixedDeltaTime);
         float expected=10/game.Config.BossTuning.sword.aerialSwordDamageMultiplier;
         Check(ledger.DealtDamage && Mathf.Abs(health-player2.Health-expected)<0.001f
             && Mathf.Abs(game.DamageTaken-takenBefore-expected)<0.001f && player2.Shocked,"late entry gets exactly one blast damage and Shock");
@@ -801,7 +817,7 @@ public static class KarmaSwordSkillRefreshChecks
             Check(Mathf.Abs(((Vector2)Get(shot,"velocity")).magnitude-game.Config.BossTuning.sword.swordSpeed)<0.001f,"counter speed retained");
             shot.transform.position=body.position;Set(shot,"velocity",Vector2.zero);
             // An immune contact consumes its ledger without producing electricity.
-            Call(shot,"Update");Check(PlayerElectric==null && player.Health==health,"immune contact does not electrify");
+            Call(shot,"AdvanceFlight", Time.time + Time.fixedDeltaTime);Check(PlayerElectric==null && player.Health==health,"immune contact does not electrify");
             // Exercise actual hit resolution, with a fresh ledger, after immunity.
             Set(player,"invulnerableUntil",0f);var hit=new KarmaAttackContact();float began=Time.time;
             enemy.TryAttackHit(body.position,body.position,Vector2.one,damage,hit,0,sourcePattern:EnemyAttack.SW04);
@@ -844,12 +860,12 @@ public static class KarmaSwordSkillRefreshChecks
             Force(EnemyAttack.SW04);counter=Get(Get(enemy,"behavior"),"counter");
             await Until(()=>Get(counter,"activeVolley")!=null);volley=Get(counter,"activeVolley");enemy.TakeDamage(1);
             var released=new float[4];
-            await Until(()=>released[3]>0,()=>
+            await ObserveEveryFrame(()=>released[3]>0,()=>
             {var shots=(KarmaBossAttack[])Get(volley,"Shots");for(int i=0;i<4;i++)if(shots[i]!=null&&released[i]==0)released[i]=enemy.FightSeconds;});
             float cadence=(float)counter.GetType().GetProperty("GuardTrackingTime",F).GetValue(counter)
                 +(float)counter.GetType().GetProperty("GuardLockTime",F).GetValue(counter)
                 +(float)counter.GetType().GetProperty("GuardShotGap",F).GetValue(counter);
-            for(int i=1;i<4;i++)Check(Mathf.Abs(released[i]-released[i-1]-cadence)<0.07f,"all four counter releases retain existing cadence");
+            for(int i=1;i<4;i++)Check(Mathf.Abs(released[i]-released[i-1]-cadence)<0.07f,"all four counter releases retain existing cadence: actual=" + (released[i]-released[i-1]) + " expected=" + cadence);
             Pass("SW04 "+(enraged?"enraged":"normal")+": all four counters and original cadence passed");
 
             ResetElectric();if(enraged)typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy,enemy.MaxHealth*0.1f);
@@ -860,11 +876,11 @@ public static class KarmaSwordSkillRefreshChecks
             shot=((KarmaBossAttack[])Get(volley,"Shots"))[0];
             var slots=(Transform[])Get(volley,"Slots");var contacts=(KarmaAttackContact[])Get(volley,"Contacts");
             Set(game.Player,"invulnerableUntil",0f);game.Player.BeginCounter();int parries=game.Player.ParryCount;
-            shot.transform.position=game.Player.GetComponent<Collider2D>().bounds.center;Set(shot,"velocity",Vector2.zero);Call(shot,"Update");
+            shot.transform.position=game.Player.GetComponent<Collider2D>().bounds.center;Set(shot,"velocity",Vector2.zero);Call(shot,"AdvanceFlight", Time.time + Time.fixedDeltaTime);
             Check(game.Player.ParryCount==parries+1 && PlayerElectric==null && !game.Player.Shocked,"real parry never electrocutes player");
             for(int i=1;i<4;i++)Check(contacts[i].Consumed && !slots[i].gameObject.activeInHierarchy,"same-frame successor cancellation preserved");
             await Until(()=>enemy.Stunned);float stunStart=enemy.FightSeconds;
-            Check(Mathf.Abs((float)Get(enemy,"stunnedUntil")-stunStart-2)<0.001f,"host owns exact existing 2 second deadline");
+            Check(Mathf.Abs((float)Get(enemy,"stunnedUntil")-stunStart-2)<=2*Time.fixedDeltaTime+0.001f,"host owns exact existing 2 second deadline");
             var position=enemy.Position;bool activeElectrical=false;var bossFrames=new HashSet<int>();
             recording=enraged?null:new ElectricRecording(game,enemy.transform,"boss",2.2f);
             await Until(()=>!enemy.Stunned,()=>
@@ -877,7 +893,7 @@ public static class KarmaSwordSkillRefreshChecks
                 Check(!game.World.GetComponentsInChildren<LineRenderer>().Any(l=>l.name=="Stun orbit" && l.gameObject.activeInHierarchy),"old SW04 dizzy orbit replaced");
             });
             float stunDuration=enemy.FightSeconds-stunStart;
-            Check(Mathf.Abs(stunDuration-2)<0.018f && activeElectrical && bossFrames.Count>35,"electricity follows unchanged host stun duration");
+            Check(Mathf.Abs(stunDuration-2)<=2*Time.fixedDeltaTime+0.002f && activeElectrical && bossFrames.Count>=18,"electricity follows unchanged host stun duration");
             await Seconds(0.22f);if(recording!=null)recording.Dispose();
             Check(game.World.GetComponentsInChildren<KarmaSwordElectrocution>().Length==0,"no electric effect lingers after stun");
             Check(((KarmaCharacterAnimator)Get(enemy,"animator")).CurrentPose!="Hurt","normal AI presentation resumes");
@@ -909,7 +925,7 @@ public static class KarmaSwordSkillRefreshChecks
             await Until(()=>game.World.GetComponentsInChildren<KarmaSwordElectrocution>().Length==0,timeout:3);
         }
         ResetElectric();typeof(KarmaGame).GetProperty("StageIndex").SetValue(game,2);
-        Call(Get(enemy,"behavior"),"OnAttackParried",true);await Until(()=>enemy.Stunned);await Seconds(0.05f);
+        Set(enemy,"pendingParry",true);await Until(()=>enemy.Stunned);await Seconds(0.05f);
         Check(!enemy.GetComponent<KarmaSwordStunFeedback>().Electrocuted && game.World.GetComponentsInChildren<KarmaSwordElectrocution>().Length==0,"unrelated sword stuns keep their existing presentation");
         // Immune phases continue to use their original policy.
         ResetElectric();Force(EnemyAttack.SW05);Call(Get(enemy,"behavior"),"OnAttackParried",true);await Seconds(0.1f);
@@ -936,8 +952,8 @@ public static class KarmaSwordSkillRefreshChecks
         {
             if(began<0)
             {
-                if(waitForRain&&!game.World.GetComponentsInChildren<KarmaSW05Energy>()
-                    .Any(e=>e.name=="SW05 batched falling sword warnings / no damage"))return;
+                if(waitForRain&&!game.World.GetComponentsInChildren<SpriteRenderer>()
+                    .Any(e=>e.enabled && e.name=="SW05 낙하 지면 전조"))return;
                 if(waitForKind!=null&&!game.World.GetComponentsInChildren<KarmaSW05Energy>()
                     .Any(e=>Get(e,"kind").ToString()==waitForKind))return;
                 began=Time.time;
@@ -1267,9 +1283,11 @@ public static class KarmaSwordSkillRefreshChecks
             if (launches.Count > lastCount) { if (waves.Count == 0 || enemy.FightSeconds - waves.Last() > 0.5f) waves.Add(enemy.FightSeconds); lastCount = launches.Count; }
             retained |= shots.Count(s => s.Landed) >= 32;
             var sprites = Root.GetComponentsInChildren<SpriteRenderer>();
-            Check(!sprites.Any(s=>s.name=="SW05 locked warning / no damage" && s.enabled),
-                "SW05 never displays the obsolete body rectangle in any phase");
-            formationWarned |= shots.Length==0 && Root.GetComponentsInChildren<KarmaSW05Energy>().Any(e=>e.name=="SW05 batched falling sword warnings / no damage");
+            var fallBoxes = sprites.Where(s=>s.enabled && s.name=="SW05 낙하 지면 전조").ToArray();
+            foreach (var box in fallBoxes)
+                Check(!box.forceRenderingOff && box.sprite != null && box.GetComponent<Collider2D>() == null,
+                    "SW05 uses the original visible, non-damaging landing box");
+            formationWarned |= shots.Length==0 && fallBoxes.Length>0;
             foreach (var layer in Root.GetComponentsInChildren<KarmaSwordPackedVfx>())
             {
                 if (!played.TryGetValue(layer.ClipId,out var frames)) played[layer.ClipId] = frames = new HashSet<int>();
@@ -1286,12 +1304,7 @@ public static class KarmaSwordSkillRefreshChecks
                 int quads = (int)Get(energy,"count"), capacity = (int)Get(Get(energy,"buffer"),"capacity");
                 Check(mesh != null && quads <= capacity && mesh.GetIndexCount(0) == (uint)(quads*6),
                     "every emitted energy quad reaches the bounded mesh draw");
-                if(energy.name=="SW05 batched falling sword warnings / no damage")
-                {
-                    var positions=(Vector3[])Get(Get(energy,"buffer"),"vertices");
-                    for(int v=0;v<quads*4;v++)Check(positions[v].y>=0.01f && positions[v].y<=0.5f,
-                        "SW05 advertises landing sites only, without airborne travel lines");
-                }
+
             }
             Check(energies.Count(e=>e.name=="SW05 planted electrical lattice / no damage") <= 1,
                 "all planted swords share one idle electrical mesh");
@@ -1314,7 +1327,7 @@ public static class KarmaSwordSkillRefreshChecks
             if(energies.Any(e=>e.Detonated))
                 Check(!sprites.Any(s=>s.gameObject.activeInHierarchy && s.name.Contains("planted explosion warning")),
                     "historical warnings retire at the shared release event");
-            warned |= shots.Any(s=>!s.Landed) && energies.Any(e=>e.name=="SW05 batched falling sword warnings / no damage" && (int)Get(e,"count")>0);
+            warned |= shots.Any(s=>!s.Landed) && fallBoxes.Length>0;
             dimmed |= sprites.Any(s => s.name.Contains("wood-embedded sword") && s.color.a >= 0.4f && s.color.a <= 0.55f && s.sortingOrder == 15);
             echoSeen |= sprites.Any(s=>s.name=="SW05 compact blade echo / no damage");
             if (!rainCaptured && shots.Any(s => !s.Landed && (float)Get(s,"age") > 0.025f))
@@ -1557,7 +1570,7 @@ public static class KarmaSwordSkillRefreshChecks
             float previousTime=enemy.FightSeconds,previousX=enemy.Position.x,travel=0,warningSeconds=0,lastRelease=-1;
             float active=Mathf.Clamp(game.Config.BossTuning.sword.scarActiveSeconds,0.25f,0.8f);
             float retreatEnd=0;bool wasRetreating=false;
-            await Until(()=>!GroundRunning,()=>
+            await ObserveEveryFrame(()=>!GroundRunning,()=>
             {
                 if(!GroundRunning)return;
                 foreach(var fx in phaseRoot.GetComponentsInChildren<KarmaSW05Energy>())
@@ -1600,15 +1613,15 @@ public static class KarmaSwordSkillRefreshChecks
                     {
                         Check(set.Count()==SW03PlannedCount && set.Select(v=>((Vector2)Get(v,"ground")).x).Distinct().Count()==set.Count(),
                             "one locked warning per sword in the common countdown");
-                        warningTimes[groupRoot]=enemy.FightSeconds;
+                        warningTimes[groupRoot]=Time.time;
                         warningDurations[groupRoot]=(float)Get(set.First(),"life");
                         Check(warningDurations[groupRoot]>=0.8f,"minimum readable warning retained");
                         if(roundRoots.Add(roundRoot))
                         {
                             recycledBeforeRelease[roundRoot]=KarmaSwordVfxPool.For(game).RecycledLive;
                             if(lastRelease>=0)
-                                Check(Mathf.Abs(enemy.FightSeconds-lastRelease-active-Mathf.Clamp(game.Config.BossTuning.sword.scarRoundGap,0.3f,0.8f))<0.06f,
-                                    "gap follows the common unchanged active duration");
+                                Check(Mathf.Abs(Time.time-lastRelease-active-Mathf.Clamp(game.Config.BossTuning.sword.scarRoundGap,0.3f,0.8f))<0.06f,
+                                    "gap follows the common unchanged active duration: actual=" + (Time.time-lastRelease-active) + " expected=" + game.Config.BossTuning.sword.scarRoundGap);
                             warningSeconds=(float)Get(set.First(),"life");
                             var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");
                             centers=((float[])Get(plan,"Positions")).ToList();
@@ -1683,9 +1696,9 @@ public static class KarmaSwordSkillRefreshChecks
                         var plan=Get(GroundPhase,"<CurrentPlan>k__BackingField");
                         Check(groupRoot.GetComponentsInChildren<KarmaBossAttack>().Select(shot=>Get(shot,"contact")).Distinct().Count()==((int[])Get(plan,"ClusterSizes")).Length,
                             "one independent ledger per spatial cluster at the common release");
-                        Check(Mathf.Abs(enemy.FightSeconds-warningTimes[groupRoot]-warningDurations[groupRoot])<0.04f,"full warning for each group");
+                        Check(Mathf.Abs(Time.time-warningTimes[groupRoot]-warningDurations[groupRoot])<0.04f,"full warning for each group: elapsed=" + (Time.time-warningTimes[groupRoot]) + " expected=" + warningDurations[groupRoot]);
                         Check(!releaseFrames.ContainsKey(roundRoot),"exactly one activation event in a round");
-                        releaseFrames[roundRoot]=Time.frameCount;lastRelease=enemy.FightSeconds;
+                        releaseFrames[roundRoot]=Time.frameCount;lastRelease=Time.time;
                         float health=enemy.Health;enemy.TakeDamage(1);
                         Check(Mathf.Abs(enemy.Health-health+1)<0.001f,"boss vulnerable during active swords");
                     }

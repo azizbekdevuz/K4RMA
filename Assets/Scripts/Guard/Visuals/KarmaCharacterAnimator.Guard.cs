@@ -165,6 +165,12 @@ namespace KarmaPrototype
             heavyStrike.ShieldAway = GuardTrialShieldAway;
             GuardianPose("Approach", EnemyAttack.GD05, false, false);
         }
+        internal void GuardShieldFlightHurt()
+        {
+            if (guardThrownShield == null || !guardThrownShield.gameObject.activeInHierarchy) return;
+            Hurt();
+            GuardianPose("Attack", EnemyAttack.GD03, false, false);
+        }
         public void SetGuardThrownShield(SpriteRenderer shield)
         {
             guardThrownShield = shield;

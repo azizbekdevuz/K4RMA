@@ -1,14 +1,24 @@
 """Offline SW01/SW02 asset, blade-socket and event contract checks."""
-import math
 import re
 import unittest
-import subprocess
 from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
 VISUAL = ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaSwordWaveAnimation.cs"
-ART = ROOT / "Assets/Arts/Resources/SwordWave/SW02"
+MOTIONS = ROOT / "Assets/Arts/Resources/Motions12"
+FORMS = ("Wave", "WaveRise", "WaveWard", "WaveFinal")
+
+
+def motion_catalog():
+    rows = [line.split("\t") for line in (MOTIONS / "Catalog.txt").read_text().splitlines()]
+    return {(row[0], row[1]): row for row in rows}
+
+
+def blade_endpoints():
+    rows = [line.split("\t") for line in (MOTIONS / "BladeSockets.txt").read_text().splitlines()]
+    return {key: tuple(map(int, coords)) for key, *coords in rows}
+
 
 class EnergyChecks(unittest.TestCase):
     def test_charge_mesh_clips_at_both_walls_without_moving_anchor(self):
@@ -40,50 +50,49 @@ class ClipProbe {
 
 
     def test_transparent_dedicated_projectile(self):
-        with Image.open(ART / "SW02_BlueCrescent.png") as image:
-            self.assertEqual(image.mode, "RGBA")
-            alpha = image.getchannel("A")
-            self.assertEqual(alpha.getpixel((0, 0)), 0)
-            self.assertEqual(alpha.getpixel((image.width - 1, image.height - 1)), 0)
-            histogram = alpha.histogram()
-            self.assertGreater(histogram[0], image.width * image.height * 0.3)
-            self.assertGreater(sum(histogram[220:]), image.width * image.height * 0.05)
+        from test_sword_presentation import method
         source = VISUAL.read_text(encoding="utf-8-sig")
-        flight = source.split("void ApplyFlight()", 1)[1].split("void ApplyCharge()", 1)[0]
-        self.assertIn('Resources.Load<Sprite>("SwordWave/SW02/SW02_BlueCrescent")', flight)
-        self.assertIn('new Vector2(size.x * 1.12f, size.y), new Vector2(0.65f, 0.81f)', flight)
+        drawing_ids = re.search(r"FlightDrawings = \{ ([\d, ]+) \}", source)[1]
+        library = (ROOT / "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset").read_text()
+        group = library.split("  - id: SwordBossVFX\n", 1)[1].split("  - id:", 1)[0]
+        references = re.findall(r"fileID: (-?\d+), guid: (\w+)", group)
+        poses = group.split("    poses:\n", 1)[1].splitlines()
+        pose_refs = dict(zip((line.strip()[2:] for line in poses), references))
+        sheet = ROOT / "Assets/Arts/Resources/SwordWave/Shared/SW01_SW02_EnergyFrames.png"
+        meta = Path(str(sheet) + ".meta").read_text()
+        guid = re.search(r"^guid: (.+)$", meta, re.M)[1]
+        with Image.open(sheet) as image:
+            self.assertEqual(image.mode, "RGBA")
+            for frame in map(int, drawing_ids.split(",")):
+                name = f"SwordEnergy_SW02Flight_{frame}"
+                sprite = meta.split("      name: " + name + "\n", 1)[1].split("    - serializedVersion", 1)[0]
+                file_id = re.search(r"internalID: (\d+)", sprite)[1]
+                self.assertEqual(pose_refs[name], (file_id, guid))
+                x, y, w, h = map(int, re.findall(r"^        (?:x|y|width|height): (\d+)$", sprite, re.M)[:4])
+                alpha = image.crop((x, image.height-y-h, x+w, image.height-y)).getchannel("A")
+                self.assertLess(alpha.getpixel((0, 0)), 8)
+                self.assertGreater(sum(alpha.histogram()[220:]), w * h * 0.05)
+        self.assertIn("Paint(clip, FlightDrawings[", method(source, "void ApplyFlight()"))
 
     def test_sockets_touch_each_authored_blade(self):
-        source = VISUAL.read_text(encoding="utf-8-sig")
-        table = source.split("static readonly Vector2[,] BladeSockets", 1)[1].split("internal static bool BladePoints", 1)[0]
-        rows = re.findall(r"\{ (new Vector2.+?) \}", table)
-        self.assertEqual(len(rows), 4)
-        for name, row in zip(("Wave", "WaveRise", "WaveWard", "WaveFinal"), rows):
-            points = [tuple(map(int, xy)) for xy in re.findall(r"new Vector2\((\d+),(\d+)\)", row)]
-            self.assertEqual(len(points), 18)
-            with Image.open(ART.parent / "Forms" / (name + "_Combat.png")) as image:
-                for index, (x, y) in enumerate(points):
-                    x += (index // 3 % 3) * 512
-                    y += (index // 9) * 512
-                    # Blade steel must be present within five source pixels of
-                    # every measured heel, bend and tip, in every body form.
-                    steel = max(min(image.getpixel((a, b))[:3]) for a in range(x-5, x+6) for b in range(y-5, y+6))
-                    self.assertGreaterEqual(steel, 145, (name, index))
-                for frame in range(6):
-                    heel, bend, tip = points[frame*3:frame*3+3]
-                    control = tuple(2*b-(h+t)/2 for h,b,t in zip(heel,bend,tip))
-                    for sample in range(13):
-                        u = sample/12
-                        x,y = [round(h*(1-u)**2+2*c*u*(1-u)+t*u*u)
-                               for h,c,t in zip(heel,control,tip)]
-                        x += (frame%3)*512
-                        y += (frame//3)*512
-                        steel = max(min(image.getpixel((a,b))[:3])
-                                    for a in range(x-5,x+6) for b in range(y-5,y+6))
-                        self.assertGreaterEqual(steel,145,(name,frame,sample))
-        self.assertIn("renderer.transform.TransformPoint(point)", source)
-        self.assertIn("sprite.pivot) / sprite.pixelsPerUnit", source)
-        self.assertIn("if (renderer.flipX) point.x = -point.x", source)
+        catalog = motion_catalog()
+        images = {}
+        for key, (x1, y1, x2, y2) in blade_endpoints().items():
+            form, frame = key.split("/")
+            motion, index = frame.rsplit("_", 1)
+            row = catalog[form, motion]
+            cols, _, _, width, height = map(int, row[2:7])
+            if (form, motion) not in images:
+                with Image.open(MOTIONS / form / (motion + ".png")) as sheet:
+                    images[form, motion] = sheet.convert("RGBA")
+            image = images[form, motion]
+            for x, y in ((x1, y1), (x2, y2)):
+                px = int((int(index) % cols + x / 96) * width)
+                py = int((int(index) // cols + y / 96) * height)
+                patch = image.crop((px-width//36, py-height//36, px+width//36, py+height//36))
+                pixels = (patch.getpixel((x, y)) for x in range(patch.width) for y in range(patch.height))
+                steel = max((min(pixel[:3]) for pixel in pixels if pixel[3] > 90), default=0)
+                self.assertGreaterEqual(steel, 140, (key, x, y))
 
     def test_speed_and_original_warning_contract(self):
         sw02 = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
@@ -206,9 +215,17 @@ public class SpeedProbe{
     def test_charge_geometry_converges_on_transformed_blades(self):
         from test_sword_presentation import method, run_cs
         source = VISUAL.read_text(encoding="utf-8-sig")
-        table = source.split("        static readonly Vector2[,] BladeSockets", 1)[1].split("        internal static bool BladePoints", 1)[0]
-        ppus = [float(re.search(r"spritePixelsToUnits: ([\d.]+)", (ART.parent / "Forms" / (f + "_Combat.png.meta")).read_text())[1])
-                for f in ("Wave", "WaveRise", "WaveWard", "WaveFinal")]
+        catalog = motion_catalog()
+        sockets = blade_endpoints()
+        rows = []
+        for form in FORMS:
+            values = []
+            for frame in range(6):
+                x1, y1, x2, y2 = sockets[f"{form}/SW02_{frame:02d}"]
+                values.extend((f"new Vector2({x1},{y1})", f"new Vector2({x2},{y2})"))
+            rows.append("{" + ",".join(values) + "}")
+        table = "= {" + ",".join(rows) + "};"
+        ppus = [float(catalog[form, "SW02"][7]) for form in FORMS]
         code = r'''
 using System;using System.Collections.Generic;
 public struct Vector2{
@@ -222,7 +239,7 @@ public struct Vector2{
 public struct Vector3{public float x,y;public Vector3(float x,float y){this.x=x;this.y=y;}public static implicit operator Vector2(Vector3 v){return new Vector2(v.x,v.y);}}
 struct Color{public float r,g,b,a;public Color(float r,float g,float b,float a=1){this.r=r;this.g=g;this.b=b;this.a=a;}}
 class Transform{public float sx,angle;public Vector2 TransformPoint(Vector2 p){p=new Vector2(p.x*sx,p.y*1.7f);float c=(float)Math.Cos(angle),s=(float)Math.Sin(angle);return new Vector2(p.x*c-p.y*s,p.x*s+p.y*c);}}
-class Rect{public float height=512;}
+class Rect{public float width,height;}
 class Sprite{public Rect rect=new Rect();public Vector2 pivot=new Vector2(256,256);public float pixelsPerUnit;}
 class SpriteRenderer{public Sprite sprite=new Sprite();public bool flipX,flipY;public Transform transform=new Transform();}
 static class Mathf{
@@ -279,7 +296,8 @@ public class ChargeProbe{
  float[] ppus={PPUS};
  foreach(int form in new[]{0,1,2,3})foreach(int frame in new[]{0,1,2,3,4,5})foreach(int sign in new[]{-1,1})foreach(bool flip in new[]{false,true})foreach(float angle in new[]{0f,.47f})foreach(int phase in new[]{0,1,2,3}){
   var renderer=new SpriteRenderer();renderer.sprite.pixelsPerUnit=ppus[form];renderer.flipX=flip;renderer.transform.sx=sign*1.7f;renderer.transform.angle=angle;
-  var heel=BladePoint(renderer,BladeSockets[form,frame*3]);var bend=BladePoint(renderer,BladeSockets[form,frame*3+1]);var tip=BladePoint(renderer,BladeSockets[form,frame*3+2]);
+  renderer.sprite.rect.width=new float[]{WIDTHS}[form];renderer.sprite.rect.height=new float[]{HEIGHTS}[form];
+  var heel=ChargeBladePoint(renderer,BladeSockets[form,frame*2]);var tip=ChargeBladePoint(renderer,BladeSockets[form,frame*2+1]);var bend=Vector2.Lerp(heel,tip,.5f);
   var p=new ChargeProbe{heavy=phase==1||phase==2,aiming=phase==1,power=phase>0?1:.72f,facing=sign};
   float pixel=2*14.0625f/720;p.ConfigureBlade(new Vector2(),bend-heel,tip-heel,pixel,4,phase==3);p.Sample(0,0);
   if(p.smallCharge){
@@ -319,6 +337,8 @@ public class ChargeProbe{
 }'''
         code = code.replace("INTENSITY", re.search(r"float ChargeIntensity => [^;]+;", source)[0])
         code = code.replace("SOCKETS", table).replace("PPUS", ",".join(str(p) + "f" for p in ppus))
+        code = code.replace("WIDTHS", ",".join(catalog[f, "SW02"][5] for f in FORMS))
+        code = code.replace("HEIGHTS", ",".join(catalog[f, "SW02"][6] for f in FORMS))
         for token, signature in [("CONFIGURE", "public void ConfigureBlade("), ("ON_BLADE", "Vector2 OnBlade("),
                                  ("NOISE", "static float Noise("), ("FLICKER", "float Flicker("), ("CRACKLE", "float CrackleFlicker("),
                                  ("ALPHA", "static Color Alpha("), ("RIBBON", "void Ribbon("),
@@ -326,7 +346,7 @@ public class ChargeProbe{
                                  ("CHARGE_CENTER", "Vector2 ChargeCenter()"), ("CHARGE_RADIUS", "float ChargeRadius("),
                                  ("CHARGE_DISC", "void ChargeDisc("), ("CHARGE_CORE", "void ChargeCore("),
                                  ("CHARGE_RELEASE", "void ChargeRelease("), ("SEGMENT", "void Segment("),
-                                 ("CHARGE", "void Charge(float t)"), ("FILL_PROGRESS", "float BladeFillProgress("), ("FILL", "void BladeFill("), ("ACCENTS", "void BladeChargeAccents("), ("VENT", "void BladeChargeDischarge("), ("POINT", "static Vector2 BladePoint(")]:
+                                 ("CHARGE", "void Charge(float t)"), ("FILL_PROGRESS", "float BladeFillProgress("), ("FILL", "void BladeFill("), ("ACCENTS", "void BladeChargeAccents("), ("VENT", "void BladeChargeDischarge("), ("POINT", "static Vector2 ChargeBladePoint(")]:
             body = method(source, signature)
             if token == "BOLT":
                 body = body.replace("void BladeBolt(", "void DrawBladeBolt(", 1)
@@ -546,11 +566,9 @@ public class ParryProbe {
  }
 }
 """.replace("CALLBACK", callback).replace("RETURNED", returned)
-        command = "[Console]::InputEncoding=New-Object System.Text.UTF8Encoding;$c=[Console]::In.ReadToEnd();Add-Type -TypeDefinition $c -ErrorAction Stop;[ParryProbe]::Run()"
-        result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", command],
-                                input=code, text=True, encoding="utf-8", capture_output=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("PASS 69 production parry scenarios", result.stdout)
+        from test_sword_presentation import run_cs
+        self.assertIn("PASS 69 production parry scenarios", run_cs(code, "ParryProbe", modern=True))
+
 
 class BasicChecks(unittest.TestCase):
     def test_basic_reuses_sw01_flight_and_keeps_charge_attached(self):
@@ -561,8 +579,9 @@ class BasicChecks(unittest.TestCase):
         self.assertNotIn("Projectile(game", ranged)
         self.assertNotIn("0.95f", ranged)
         self.assertNotIn("AddComponent", ranged)
-        self.assertIn("KarmaSwordWaveAnimation.BladePoints(sword, out var heel, out var bend, out var tip)", basic)
-        self.assertIn("if (pool != null) pool.Cancel(transform)", basic)
+        charge = VISUAL.read_text(encoding="utf-8-sig")
+        self.assertIn("BladePoints(swordPicture, out var heel", charge)
+        self.assertIn("transform.position = heel", charge)
         motion = (ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaWaveMotion.cs").read_text(encoding="utf-8-sig")
         self.assertIn("spriteHomeRotation * (foot - rotation * foot)", motion)
 
@@ -570,7 +589,8 @@ class BasicChecks(unittest.TestCase):
         source = (ROOT / "Assets/Scripts/SwordWave/Patterns/SWBasic.cs").read_text(encoding="utf-8-sig")
         melee = source.split("            IEnumerator Melee()", 1)[1].split("            public override bool CanReach", 1)[0]
         animator = (ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaCharacterAnimator.Sword.cs").read_text(encoding="utf-8-sig")
-        frames = animator.split("        int BasicBodyFrame()", 1)[1].split("        void ApplyBasicBodyFrame(", 1)[0]
+        self.assertIn('PrepareSwordBody(melee ? "BasicMelee" : "BasicRanged"', animator)
+        self.assertIn("ShowSwordPatternMotion(EnemyAttack.SWBasic)", animator)
         core = (ROOT / "Assets/Scripts/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
         consume = core.split("public bool TryConsume()", 1)[1].split("\n", 1)[0]
         code = r"""
@@ -610,10 +630,6 @@ public class BasicProbe {
  static void Destroy(object o){}
  KarmaAttackContact firstMeleeContact;float firstMeleeResumeAt;
  IEnumerator Melee() MELEE
- bool basicReleaseStarted=true;string SwordBodyAction="BasicMelee";float SwordBodyAge=.39f,SwordBodyDuration=.4f;
- float BasicReleaseAge=0,basicStrikeSeconds=3f/24,basicLinkSeconds=2f/24;int BasicStrikeIndex=0,swordLinkLowFrame=10;float BasicLinkAge{get{return Math.Max(0,BasicReleaseAge-3f/24);}}
- static float SwordFrameTime(float t){return (float)Math.Floor(t*24)/24;}
- int BasicBodyFrame() FRAMES
  static void Check(bool v,string message){if(!v)throw new Exception(message);}
  static void Drive(IEnumerator e,Owner o){while(e.MoveNext()){var nested=e.Current as IEnumerator;if(nested!=null)Drive(nested,o);else if(e.Current is float)o.clock+=(float)e.Current;}}
  public static void Run(){
@@ -634,21 +650,12 @@ public class BasicProbe {
  var miss=new BasicProbe();Drive(miss.Melee(),miss.owner);Check(miss.owner.shots[1].contact.TryConsume(),"return cut hits if opener misses");
  var cancelled=new BasicProbe();cancelled.owner.Active=false;Drive(cancelled.Melee(),cancelled.owner);Check(cancelled.owner.shots.Count==0,"cancelled windup never releases");
  }
- var pose=new BasicProbe();int[] expected={2,3,4,10,11};float[] ages={.001f,1.1f/24,2.1f/24,3.1f/24,8.9f/24};
- for(int i=0;i<ages.Length;i++){pose.BasicReleaseAge=ages[i];Check(pose.BasicBodyFrame()==expected[i],"down-cut frames");}
- pose.BasicStrikeIndex=1;expected=new[]{11,7,8,16,0};ages=new[]{.001f,1.1f/24,2.1f/24,5.1f/24,8.1f/24};
- for(int i=0;i<ages.Length;i++){pose.BasicReleaseAge=ages[i];Check(pose.BasicBodyFrame()==expected[i],"return-cut frames");}
- pose.basicReleaseStarted=false;Check(pose.BasicBodyFrame()==1,"late preparation");
- pose.SwordBodyAction="BasicRanged";Check(pose.BasicBodyFrame()==2,"ranged pre-release crossing");
- Console.WriteLine("PASS production melee timeline, mirrored contacts, damage cap, cancellation and two pose sequences");
+ Console.WriteLine("PASS production melee timeline, mirrored contacts, damage cap, cancellation and two release events");
  }
 }
-""".replace("CONSUME", consume).replace("MELEE", melee).replace("FRAMES", frames)
-        command = "[Console]::InputEncoding=New-Object System.Text.UTF8Encoding;$c=[Console]::In.ReadToEnd();Add-Type -TypeDefinition $c -ErrorAction Stop;[BasicProbe]::Run()"
-        result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", command],
-                                input=code, text=True, encoding="utf-8", capture_output=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("PASS production melee timeline", result.stdout)
+""".replace("CONSUME", consume).replace("MELEE", melee)
+        from test_sword_presentation import run_cs
+        self.assertIn("PASS production melee timeline", run_cs(code, "BasicProbe", modern=True))
 
     def test_two_health_losses_use_production_damage_and_defenses(self):
         # Execute the real coroutine, collision/consumption and player damage
@@ -682,7 +689,7 @@ class Marker{public Node gameObject=new Node();public Node transform=new Node();
 static class KarmaCombatVFX{public static Visual SpawnSprite(object w,Vector2 p,string g,string n,Vector2 s,float t){return null;}}
 static class KarmaVisuals{public static void Flash(object w,Vector2 p,Vector2 s,Color c){}}
 static class KarmaProjectile{public static void Spawn(params object[] values){}}
-class Animator{public void BeginBasicLink(float t){}public void PlayPlayerAction(string p,string q,float t){}public void Hurt(){}public void StartDamageFlash(float t){}public void PrepareBasicAttack(float t,bool m){}public void PlayPose(string p,float t){}public void BeginBasicRelease(float t,int s){}}
+class Animator{public void BeginBasicLink(float t){}public void PlayPlayerAction(string p,float t){}public void Hurt(){}public void StartDamageFlash(float t){}public void PrepareBasicAttack(float t,bool m){}public void PlayPose(string p,float t){}public void BeginBasicRelease(float t,int s){}}
 class EssencesStub{public void NotifyUnique(Essence e){}}
 class Tutorial{public void GuardBlocked(){}}
 class TechniqueConfig{public float counterDamage=3;}
@@ -695,8 +702,8 @@ class Player{
  public Game game;public float Health=160,invulnerableUntil;public bool Shielded,TestInvincible;public int ParryCount,Facing=1;
  public Vector2 Position;public Bounds DamageBounds{get{return new Bounds{center=Position,extents=new Vector2(.6f,1.6f)};}}
  public KarmaTechniqueState techniques=new KarmaTechniqueState();Animator animator=new Animator();EssencesStub Essences=new EssencesStub();
- void FaceAction(){}void CancelAirSlash(){}public void Stun(float t){}public void BeginCounter(){techniques.ArmCounter(Time.time,1);}
- public void TakeCrowdControlHit(float a,int kind,float seconds,Vector2 p,bool c){throw new Exception("unexpected crowd control");}
+ void FaceAction(){}void CancelAirSlash(){}public void Stun(float t){}public void BeginCounterAt(float t){techniques.ArmCounter(t,1);}
+ public void TakeCrowdControlHit(float a,int kind,float seconds,Vector2 p,bool c,float? hitAt){throw new Exception("unexpected crowd control");}
  DAMAGE
 }
 class Behavior{

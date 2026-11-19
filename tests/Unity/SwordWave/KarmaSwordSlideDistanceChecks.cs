@@ -85,6 +85,7 @@ public static class KarmaSwordSlideDistanceChecks
         Enemy.transform.position = new Vector3(x, KarmaSpace.GuardianGroundY, 0); Place(playerX);
         typeof(KarmaEnemy).GetProperty("FightSeconds").SetValue(Enemy, Enemy.FightSeconds + 6);
         Call(Behavior, "OnCompleted"); Physics2D.SyncTransforms();
+        if (!baseline) Call(Movement, "RememberSwordPressure");
     }
     static void Samples()
     {
@@ -97,7 +98,7 @@ public static class KarmaSwordSlideDistanceChecks
                 Arrange(20, 20 + playerSide * 3.5f);
                 UnityEngine.Random.InitState(6104 + playerSide * 1000 + i);
                 var randomState = UnityEngine.Random.state;
-                Tick(); Check(Remaining > 0, "open-space choice must start");
+                Tick(); Check(Remaining > 0, "open-space pressured retreat must start");
                 if (!baseline) Check(UnityEngine.Random.state.Equals(randomState), "pressured direction selection consumes no random choice");
                 var r = Sample("open-player-" + playerSide, 20); if (r.direction < 0) left++; else right++;
                 if (!baseline) Check(r.direction == -playerSide && Kind == "LongRetreat",

@@ -202,10 +202,9 @@ public static class KarmaGrowthChecks
         var techniques = (KarmaGuardianGrowth.Technique[])Get(growth, "techniques");
         Check(techniques.Take(stage).All(x => x.Effect != null), "Every preview uses a real existing effect");
         Check(((SpriteRenderer)Get(growth, "original")).sprite != null, "Original player effect exists");
-        var reflection = (Sprite)Get(growth, "reflection");
+        var reflection = (Sprite)Get(growth, "inspectionPose");
         if (stage == 2) Check(reflection != null && reflection.texture.width >= 1024, "Second inheritance loads the guardian's weapon inspection");
-        var hesitation = (Sprite)Get(growth, "hesitantReach");
-        if (stage == 1) Check(hesitation != null && hesitation.texture.width >= 1024, "First inheritance loads the neutral reaching pose");
+        if (stage == 1) Check(Resources.LoadAll<Sprite>("Motions12/Neutral/GrowthHesitate").Length == 3, "Neutral reaching sequence");
         Check(growth.GetComponentsInChildren<Collider2D>().Length == 0
             && growth.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "Rehearsal cannot hit");
         var beats = new HashSet<KarmaGuardianGrowth.Beat>();
@@ -350,7 +349,7 @@ public static class KarmaGrowthChecks
     {
         int stage = growth.Stage;
         var attempts = new HashSet<int>(); var staggers = new HashSet<int>();
-        bool checkedRender = false, checkedFall = false;
+        bool checkedRender = false, checkedFall = false, inspectedWeapon = false;
         var releases = new List<int>();
         var demos = (SpriteRenderer[])Get(growth, "demonstrations");
         bool hintedBeforeLine = false;
@@ -364,7 +363,9 @@ public static class KarmaGrowthChecks
         var halo = (SpriteRenderer)Get(growth, "inheritedHalo");
         if (stage == 1 && game.Enemies[0].PrimaryType == Essence.Guard)
             Check(halo != null && game.Enemies[0].AutoShieldActive, "The guard shield remains active during its visual introduction");
-        var previous = (Dictionary<string, Sprite>)Get(guardianArt, "growthPrevious");
+        var previousForm = (string)Get(guardianArt, "previousMotionForm");
+        bool PreviousBody(Sprite sprite) => sprite != null && (sprite == KarmaArtwork.StageIdle(previousForm)
+            || AssetDatabase.GetAssetPath(sprite.texture).StartsWith("Assets/Arts/Resources/Motions12/" + previousForm + "/"));
         while (growth != null)
         {
             Check(HudOpacity == 0, "Combat UI cannot reveal the new guardian's name before the entrance");
@@ -378,7 +379,7 @@ public static class KarmaGrowthChecks
             if (stage == 1 && (growth.CurrentBeat == KarmaGuardianGrowth.Beat.TakeStance ||
                 growth.CurrentBeat == KarmaGuardianGrowth.Beat.Imitate))
             {
-                Check(body.enabled && previous.ContainsValue(body.sprite) && Get(growth, "formReveal") == null,
+                Check(body.enabled && PreviousBody(body.sprite) && Get(growth, "formReveal") == null,
                     "The original body performs the question and the entire copy");
             }
             if (stage == 1 && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Remember)
@@ -386,7 +387,7 @@ public static class KarmaGrowthChecks
                 var reveal = (SpriteRenderer)Get(growth, "formReveal");
                 if (reveal != null)
                 {
-                    Check(body.enabled && reveal.enabled && previous.ContainsValue(body.sprite) && !previous.ContainsValue(reveal.sprite)
+                    Check(body.enabled && reveal.enabled && PreviousBody(body.sprite) && !PreviousBody(reveal.sprite)
                         && body.sharedMaterial == reveal.sharedMaterial && growth.Caption == "네 움직임…",
                         "The two real sprite outlines share the hand reveal during the first phrase");
                     if (!checkedRevealShader)
@@ -399,7 +400,7 @@ public static class KarmaGrowthChecks
                 }
                 if (growth.Caption == "네 움직임… 기억했다." && growth.CaptionAlpha > 0.9f)
                 {
-                    Check(body.enabled && reveal == null && body.sharedMaterial == bodyMaterial && !previous.ContainsValue(body.sprite),
+                    Check(body.enabled && reveal == null && body.sharedMaterial == bodyMaterial && !PreviousBody(body.sprite),
                         "The completed phrase holds the inherited body after releasing the overlay");
                     sawNewForm = true;
                 }
@@ -412,7 +413,7 @@ public static class KarmaGrowthChecks
             if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Hesitate)
             {
                 Check(stage == 1 && !source.enabled && growth.CaptionAlpha == 0, "The guardian has a silent beat after the memory disappears");
-                if (guardianArt.CurrentPose == "Growth/Hesitate") reachHeld += Time.deltaTime;
+                if (body.sprite.texture.name == "GrowthHesitate") reachHeld += Time.deltaTime;
             }
             if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.TakeStance)
                 Check(!source.enabled && demos.All(d => d == null || !d.enabled), "The stance and its opening line precede the attack");
@@ -454,8 +455,14 @@ public static class KarmaGrowthChecks
             if (stage == 2 && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Falter && !checkedFall)
             {
                 var animator = game.Enemies[0].GetComponentInChildren<KarmaCharacterAnimator>();
-                var frames = (Sprite[])Get(animator, "beforeRevivalFrames");
-                if (game.Enemies[0].GetComponentInChildren<SpriteRenderer>().sprite == frames[0]) checkedFall = true;
+                if (body.sprite.texture.name == "GrowthFalter" && body.sprite.name == "GrowthFalter_02") checkedFall = true;
+            }
+            if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Inspect && guardianArt.CurrentPose == "Growth/InspectWeapon")
+            {
+                string path = AssetDatabase.GetAssetPath(body.sprite);
+                string owner = previousForm == "Wave" ? "SwordWave" : previousForm == "Ward" ? "Guard" : "RisingSlash";
+                Check(path == "Assets/Arts/Resources/" + owner + "/Growth/Reflection.png", "Original weapon inspection is displayed by the previous guardian");
+                inspectedWeapon = true;
             }
             if (beats.Add(growth.CurrentBeat))
             {
@@ -467,7 +474,7 @@ public static class KarmaGrowthChecks
         if (stage == 2)
         {
             Check(attempts.SetEquals(new[] { 1, 2, 3 }), "Second inheritance makes three visible attempts");
-            Check(staggers.SetEquals(new[] { 1, 2 }) && checkedFall,
+            Check(staggers.SetEquals(new[] { 1, 2 }) && checkedFall && inspectedWeapon,
                 "First two attempts wobble; only the third falls before reflection");
         }
         else if (stage == 1) Check(attempts.SetEquals(new[] { 1 }) && staggers.Count == 0,

@@ -20,8 +20,10 @@ namespace KarmaPrototype
         internal bool RisingBarrierVisible { get; set; }
         string RisingBodyMotion(string action, EnemyAttack attack, bool moved)
         {
-            if (risingLandingAt >= 0 && attack == EnemyAttack.UP01) return "UP01Landing";
-            if (action == "Attack") return attack == EnemyAttack.GroundStrike ? "UPBasic"
+            if (risingLandingAt >= 0) return attack == EnemyAttack.UP01 ? "UP01Landing" : "Landing";
+            if (attack == EnemyAttack.GroundStrike && risingStrikeAt >= 0) return "UPBasic";
+            if (action == "Attack" && attack == EnemyAttack.GroundStrike && CurrentPose == "Dash") return "Dash";
+            if (risingMotion != null || action == "Attack") return attack == EnemyAttack.GroundStrike ? "UPBasic"
                 : attack == EnemyAttack.UP05 && RisingBarrierVisible ? "UP05_NoFX" : attack.ToString();
             if (action == "Recover") return "Landing";
             if (action == "Telegraph") return attack == EnemyAttack.UP05 ? "UP05" : "Windup";

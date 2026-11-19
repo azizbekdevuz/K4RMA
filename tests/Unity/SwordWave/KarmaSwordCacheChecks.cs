@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using KarmaPrototype;
 using UnityEngine;
@@ -10,14 +11,15 @@ public static class KarmaSwordCacheChecks
     public static void Run(Action<bool, string> check)
     {
         const BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic;
-        var cache = typeof(KarmaArtwork).GetField("bossLibraries", flags);
-        var old = cache.GetValue(null);
+        const string key = "BossArtwork/KarmaSwordBossSprites";
+        var cache = (Dictionary<string, KarmaSpriteLibrary>)typeof(KarmaArtwork).GetField("loadedLibraries", flags).GetValue(null);
+        bool hadLibrary = cache.TryGetValue(key, out var old);
         var library = UnityEngine.Object.Instantiate(Resources.LoadAll<KarmaSpriteLibrary>("BossArtwork")
             .Single(x => x.name == "KarmaSwordBossSprites"));
         var reset = typeof(KarmaSwordPackedVfx).GetMethod("ResetFrames", flags);
         try
         {
-            cache.SetValue(null, new[] { library }); reset.Invoke(null, null);
+            cache[key] = library; reset.Invoke(null, null);
             var sheet = library.sheets.Single(x => x.id == "SwordBossVFX");
             int missing = Array.IndexOf(sheet.poses, "SW03_GroundCharge_6f_3");
             check(missing >= 0, "Expected packed frame is registered");
@@ -47,7 +49,12 @@ public static class KarmaSwordCacheChecks
             catch (ArgumentOutOfRangeException) { rejected = true; }
             check(rejected, "Invalid clip is rejected explicitly");
         }
-        finally { cache.SetValue(null, old); reset.Invoke(null, null); UnityEngine.Object.DestroyImmediate(library); }
+        finally
+        {
+            if (hadLibrary) cache[key] = old; else cache.Remove(key);
+            reset.Invoke(null, null);
+            UnityEngine.Object.DestroyImmediate(library);
+        }
     }
 }
 #endif

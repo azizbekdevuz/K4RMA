@@ -111,13 +111,15 @@ public static class KarmaSW02InheritedChecks
         if (Enemy == null) return;
         var animator = (KarmaCharacterAnimator)Get(Enemy, "animator");
         var picture = (SpriteRenderer)Get(animator, "picture");
-        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || picture.sprite.texture.name != Forms[form - 1] + "_Combat")
+        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || AssetDatabase.GetAssetPath(picture.sprite) != "Assets/Arts/Resources/Motions12/" + Forms[form - 1] + "/SW02.png")
         {
-            if (side > 0 && picture.sprite.name == "Idle" && picture.sprite.texture.name == Forms[form - 1] && captured.Add("OriginalIdle"))
+            if (side > 0 && picture.sprite == KarmaArtwork.StageIdle(Forms[form - 1]) && captured.Add("OriginalIdle"))
                 CapturePicture(picture, "OriginalIdle");
             return;
         }
-        string name = picture.sprite.name;
+        int frame = Array.FindIndex(Names, n => picture.sprite.name == "SW02_" + Array.IndexOf(Names, n).ToString("00"));
+        if (frame < 0) return;
+        string name = Names[frame];
         if (!Names.Contains(name) || (side < 0 && name != "Swing02") || !captured.Add(name)) return;
         CapturePicture(picture, name);
     }

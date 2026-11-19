@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using KarmaPrototype;
@@ -126,7 +127,6 @@ public static class KarmaGuardBasicDodgeChecks
                 float started = enemy.FightSeconds;
                 bool dodged = false, sawSwing = false, sawRecovery = false;
                 bool bufferedSecondJump = false, sawRecoveryPose = false;
-                int recoveryFrame = -1;
                 float recoverFrom = 0;
                 string scenario = string.Join(">", order) + " / " + side + " / " + (jump ? "jump" : "range")
                     + " / shield=" + shielded + (liveControls ? " / player physics" : "");
@@ -162,8 +162,8 @@ public static class KarmaGuardBasicDodgeChecks
                         Check(animator.CurrentPose == "Thrust", "Active guard basic attack must show Thrust, not a frozen windup: " + animator.CurrentPose);
                     }
                     if (!sawRecovery && state == "Recover")
-                    { sawRecovery = true; recoverFrom = enemy.FightSeconds; recoveryFrame = Time.frameCount; }
-                    if (!baseline && state == "Recover" && Time.frameCount > recoveryFrame)
+                    { sawRecovery = true; recoverFrom = enemy.FightSeconds; }
+                    if (!baseline && state == "Recover" && enemy.FightSeconds > recoverFrom + Time.fixedDeltaTime * 0.5f)
                     {
                         string expected = shielded ? "Guard" : "Idle";
                         Check(animator.CurrentPose == expected,
@@ -201,12 +201,12 @@ public static class KarmaGuardBasicDodgeChecks
                         chasePose = animator.CurrentPose;
                         if (!baseline && shielded)
                         {
-                            var damageSprite = (Sprite)Get(animator, "guardianAppearance")
-                                ?? ((Dictionary<string, Sprite>)Get(animator, "poses"))["Guard"];
-                            float expectedWidth = damageSprite.bounds.size.x * Mathf.Abs(animator.transform.lossyScale.x)
+                            string form = KarmaArtwork.GuardianFormName(order);
+                            var original = Resources.LoadAll<Sprite>("Guard/Forms/" + form).Single(sprite => sprite.name == (order.Length == 1 ? "Guard" : "Idle"));
+                            float expectedWidth = original.bounds.size.x * Mathf.Abs(animator.transform.lossyScale.x)
                                 * ((Vector3)Get(animator, "pictureScale")).x;
                             Check(Mathf.Abs(enemy.DamageBounds.size.x - expectedWidth) < 0.01f,
-                                "Moving with GD01 keeps the original shielded damage silhouette");
+                                "Moving with GD01 keeps the original shielded damage silhouette: " + scenario + " width=" + enemy.DamageBounds.size.x + " expected=" + expectedWidth);
                         }
                     }
                     Check(!enemy.Stunned, "Recovery must return to movement without stun");

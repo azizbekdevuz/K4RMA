@@ -94,13 +94,15 @@ public static class KarmaSwordFinalPolishChecks
                 "no Basic replacement renderer or late mesh overwrite");
             Check((Vector2)Get(flight, "size") == footprint && !(bool)Get(flight, "heavy") && (int)Get(flight, "clip") == 1,
                 "shared SW01 flight size and playback route");
-            var selectedCrescent = Resources.Load<Sprite>("SwordWave/SWBasic/SWBasic_BlueCrescent");
-            Check(selectedCrescent != null && visual.sprite == selectedCrescent,
-                "shared flight preserves the authored Basic crescent instead of replacing it with SW01 frames");
+            bool approvedFrame = visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_0")
+                || visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_3");
+            Check(approvedFrame,
+                "Basic displays its approved 12 fps flight sequence");
             Check((int)Get(flight, "pattern") == (int)EnemyAttack.SWBasic && Get(flight, "energy") == null,
                 "Basic keeps its identity and is not overdrawn by SW01 electrical flight geometry");
             var expected = new Vector2(footprint.x * 1.12f / 0.65f, footprint.y / 0.81f);
-            Check(Vector2.Distance(visual.bounds.size, expected) < 0.002f,
+            var orientedSize = Vector2.Scale(visual.sprite.bounds.size, visual.transform.lossyScale);
+            Check(Vector2.Distance(orientedSize, expected) < 0.002f,
                 "final world bounds equal SW01, including parents and frame bounds fitting");
             Check(visual.color == Color.white && visual.flipX == (velocity.x < 0) && !visual.flipY,
                 "same SW01 tint and facing");
@@ -122,8 +124,6 @@ public static class KarmaSwordFinalPolishChecks
             bool validFrame = false;
             for (int i = 0; i < 5; i++)
                 validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_" + sequence + "_" + i);
-            if (pattern == EnemyAttack.SW02)
-                validFrame = visual.sprite == Resources.Load<Sprite>("SwordWave/SW02/SW02_BlueCrescent");
             Check(validFrame, "released shot uses a registered frame from its electric flight sequence");
             Vector2 footprint = size;
             if (pattern == EnemyAttack.SW01) footprint.x *= 1.12f;
@@ -341,11 +341,14 @@ public static class KarmaSwordFinalPolishChecks
                     pattern + " has no delayed electrocution");
                 continue;
             }
-            Check(game.Player.ParryCount == parries + 1 && (bool)Get(Enemy, "pendingParry"), pattern + " real successful contact queues boss stun");
-            Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0
-                && Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, pattern + " suppresses every live contact synchronously");
+            Check(game.Player.ParryCount == parries + 1 && !Enemy.Stunned &&
+                Array.Exists(Root.GetComponentsInChildren<SpriteRenderer>(), r => r.name == "SW04 reflected blade"),
+                "SW04 parry launches the blade back before the boss is stunned");
             try { await Until(() => !float.IsNaN(stunBegan)); }
             finally { onsetProbe.After = null; UnityEngine.Object.Destroy(onsetProbe.gameObject); }
+            Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0
+                && Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0,
+                pattern + " suppresses every live contact when the returned blade strikes");
             float start = stunBegan, deadline = (float)Get(Enemy, "stunnedUntil");
             Vector2 position = Enemy.Position;
             Check(Mathf.Abs(deadline - start - 2) < 0.02f, pattern + " stun deadline is exactly two combat seconds");

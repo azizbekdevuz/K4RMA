@@ -369,9 +369,10 @@ public static partial class KarmaSfxCompletionChecks
             await Prepare(Essence.SwordWave);
             foreach (var attack in new[] { EnemyAttack.SW01, EnemyAttack.SW02, EnemyAttack.SW03 })
             {
-                Clear();
+                await Prepare(Essence.SwordWave);
+                PlacePlayer(new Vector2(10, KarmaSpace.PlayerHalfHeight));
                 Pattern(attack);
-                await Wait(attack == EnemyAttack.SW03 ? 3 : 4);
+                await Until(() => observed.Contains("SW_Electric_Discharge"), 15, attack + " discharge audio source");
                 Check(observed.Contains("SW_Electric_Discharge"), attack + " electrical release playback");
                 Check(!observed.Contains("SW_Wave_Launch"), attack + " has no redundant generic launch");
             }

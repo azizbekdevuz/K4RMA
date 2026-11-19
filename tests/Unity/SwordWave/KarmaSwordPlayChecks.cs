@@ -272,8 +272,9 @@ public static class KarmaSwordPlayChecks
         await Until(() => Attacks().Length > 0);
         Check(Get<Vector2>(Attacks()[0], "velocity").x > 0, "medium wave aims toward player");
         var wave = Attacks()[0];
-        var selectedCrescent = Resources.Load<Sprite>("SwordWave/SWBasic/SWBasic_BlueCrescent");
-        Check(selectedCrescent != null && wave.Visual.sprite == selectedCrescent
+        bool approvedFrame = wave.Visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_0")
+                || wave.Visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_3");
+        Check(approvedFrame
             && wave.GetComponent<KarmaSwordWaveAnimation>() != null,
             "medium wave preserves Basic artwork through the shared SW01 flight path");
         Check(wave.GetComponent<KarmaSwordBasicPresentation>() == null
@@ -282,7 +283,8 @@ public static class KarmaSwordPlayChecks
         var footprint = (Vector2)Behavior.GetType().GetMethod("SwordSize", Flags).Invoke(Behavior,
             new object[] { EnemyAttack.SW01 });
         var expected = new Vector2(footprint.x * 1.12f / 0.65f, footprint.y / 0.81f);
-        Check(Vector2.Distance(wave.Visual.bounds.size, expected) < 0.002f,
+        var orientedSize = Vector2.Scale(wave.Visual.sprite.bounds.size, wave.Visual.transform.lossyScale);
+            Check(Vector2.Distance(orientedSize, expected) < 0.002f,
             "medium wave retains the full shared flight footprint, not the old half-size version");
         Check(Get<EnemyAttack>(wave, "sourcePattern") == EnemyAttack.SWBasic
             && Get<Vector2>(wave, "size") == footprint * 0.90f,

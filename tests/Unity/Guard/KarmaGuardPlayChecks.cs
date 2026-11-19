@@ -348,9 +348,10 @@ public static partial class KarmaGuardPlayChecks
             var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
             var picture = Get<SpriteRenderer>(animator, "picture");
             Force(EnemyAttack.GD02, facing);
-            var normal = KarmaArtwork.Sprite("GuardHeavy" + form, "Windup");
-            var molten = KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Windup");
-            Check(picture.sprite == normal && !enemy.HeavyParryWindowOpen, "GD02 starts with the original cool weapon: " + form);
+            var frames = Resources.LoadAll<Sprite>("Motions12/" + form + "/GD02");
+            var glow = animator.GetComponentInChildren<KarmaGuardHeavyGlow>(true);
+            Check(Array.Exists(frames, frame => picture.sprite == frame && frame.name.EndsWith("_00")) &&
+                !enemy.HeavyParryWindowOpen, "GD02 starts on the first cool drawing: " + form);
             Vector3 scale = picture.transform.localScale, position = picture.transform.localPosition;
             var heavyMotion = Get<object>(animator, "heavyStrike");
             var showHeavy = (Func<EnemyAttack, bool>)Delegate.CreateDelegate(typeof(Func<EnemyAttack, bool>), heavyMotion, "Show");
@@ -359,30 +360,30 @@ public static partial class KarmaGuardPlayChecks
 
             await Until(() => enemy.HeavyParryWindowOpen, 2);
             var effects = Get<Transform>(enemy, "effectsRoot");
-            Check(molten != null && picture.sprite == molten && effects.Find("GD02 parry cue") == null,
-                "GD02 signals the parry window with the molten weapon and no hand glow: " + form);
-            Check(normal.rect == molten.rect && normal.pivot == molten.pivot && normal.pixelsPerUnit == molten.pixelsPerUnit,
-                "GD02 molten sheet preserves its original frame, foot pivot and resolution: " + form);
+            var overlay = Get<SpriteRenderer>(glow, "overlay");
+            await Until(() => glow.Visible && glow.Charge >= 0.99f && overlay.sprite == picture.sprite, 1);
+            Check(Array.IndexOf(frames, picture.sprite) >= 0 && overlay.sprite == picture.sprite && effects.Find("GD02 parry cue") == null,
+                "Parry heat aligns with the displayed GD02 drawing: " + form);
             Check(picture.transform.localScale == scale && picture.transform.localPosition == position && enemy.Facing == facing,
                 "GD02 heat swap preserves body scale, position and facing: " + form);
             float clock = enemy.FightSeconds;
+            var pausedFrame = picture.sprite;
             game.TogglePause(); await Task.Delay(80);
-            Check(enemy.FightSeconds == clock && picture.sprite == molten, "GD02 molten cue stays fixed during pause");
+            Check(enemy.FightSeconds == clock && picture.sprite == pausedFrame, "GD02 molten cue stays fixed during pause");
             game.TogglePause();
             await Until(() => animator.CurrentPose == "GD02/Downstroke", 2);
-            Check(picture.sprite == KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Downstroke"), "GD02 downstroke keeps the molten blade");
+            Check(Array.IndexOf(frames, picture.sprite) >= 0 && glow.Visible, "GD02 downstroke keeps the molten blade");
             await Until(() => animator.CurrentPose == "GD02/FollowThrough", 1);
-            Check(picture.sprite == KarmaArtwork.Sprite("GuardHeavyMolten" + form, "FollowThrough"), "GD02 follow-through keeps the molten blade");
+            Check(Array.IndexOf(frames, picture.sprite) >= 0 && glow.Visible, "GD02 follow-through keeps the molten blade");
             await Until(() => State() == "Recover", 3);
             await Seconds(0.04f);
-            Check(!enemy.HeavyParryWindowOpen && !Array.Exists(KarmaArtwork.Sprites("GuardHeavyMolten" + form),
-                sprite => sprite == picture.sprite), "GD02 recovery clears the overheated presentation");
+            Check(!enemy.HeavyParryWindowOpen && !glow.Visible && Array.IndexOf(frames, picture.sprite) < 0, "GD02 recovery clears the overheated presentation");
             Check(animator.CurrentPose == "Idle" || animator.CurrentPose == "Guard",
                 "GD02 missed heavy recovers without a false hurt/recoil pose: " + form);
             Vector3 idleScale = picture.transform.localScale;
-            Check(Mathf.Approximately(scale.x, idleScale.x * normal.pixelsPerUnit / (picture.sprite.pixelsPerUnit * 1.35f))
+            Check(Mathf.Approximately(scale.x, idleScale.x)
                 && Mathf.Approximately(scale.x, scale.y),
-                "GD02 uses the idle pixel density with one uniform authoring scale: " + form);
+                "GD02 keeps the calibrated 12 fps body scale: " + form);
             animator.Hurt(); await Seconds(0.03f);
             Check(animator.CurrentPose == "Hurt", "GD02 recovery still shows an actual damage reaction");
         }
@@ -466,19 +467,17 @@ public static partial class KarmaGuardPlayChecks
             int facing = shielded ? 1 : -1;
             if (!shielded) Call(enemy, "BreakAutoShield");
             Vector2 playerAt = new Vector2(20 + facing * 14, KarmaSpace.PlayerHalfHeight);
-            Place(playerAt + (returnPass ? Vector2.up * 10 : Vector2.zero));
+            Place(playerAt + Vector2.up * 10);
             Force(EnemyAttack.GD03, facing);
             await Until(() => WholeShield() != null, 2);
             var shield = WholeShield();
-            if (returnPass)
-            {
-                await Until(() => shield.name.EndsWith("복귀"), 3);
-                Place(playerAt);
-            }
-            await Until(() => Mathf.Abs(shield.transform.position.x - playerAt.x) < 4, 3);
+            if (returnPass) await Until(() => shield.name.EndsWith("복귀"), 3);
+            await Until(() => Mathf.Abs(shield.transform.position.x - playerAt.x) < 5, 3);
             float playerHealth = game.Player.Health, bossHealth = enemy.Health;
             int parries = game.Player.ParryCount;
-            Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
+            Set(game.Player, "invulnerableUntil", 0f);
+            game.Player.BeginCounter();
+            Place(new Vector2(shield.transform.position.x, KarmaSpace.PlayerHalfHeight));
             await Until(() => game.Player.ParryCount > parries, 1);
             Check(game.Player.Health == playerHealth && enemy.Health == bossHealth && !enemy.Stunned
                 && !Get<bool>(enemy, "pendingParry") && game.Projectiles.Count == 0,
@@ -753,7 +752,7 @@ public static partial class KarmaGuardPlayChecks
             foreach (string pose in new[] { "Windup", "Descent", "Contact", "Rebound" })
             {
                 await Until(() => animator.CurrentPose == "GD04/" + pose, 2);
-                Check(picture.sprite == KarmaArtwork.Sprite("GuardSlam" + form, pose),
+                Check(Array.IndexOf(Resources.LoadAll<Sprite>("Motions12/" + form + "/GD04"), picture.sprite) >= 0,
                     "GD04 retains the matching overhead shield slam frames: " + form + "/" + pose);
                 if (pose == "Contact") Check(SlamFan() != null, "GD04 creates the fan at shield-floor contact");
             }

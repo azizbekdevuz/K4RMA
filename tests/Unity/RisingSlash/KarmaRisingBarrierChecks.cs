@@ -92,6 +92,7 @@ public static class KarmaRisingBarrierChecks
         Call(game, "LoadRoom", true); enemy = game.Enemies[0];
         enemy.transform.position = new Vector3(20, KarmaSpace.GuardianGroundY, 0);
         Set(enemy, "engaged", true); Set(enemy, "timer", float.MaxValue);
+        Set(Get(enemy, "behavior"), "PracticeHold", true);
         var body = game.Player.GetComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Kinematic;
         body.position = game.Player.transform.position = new Vector2(32, KarmaSpace.Units(4));
         Set(game.Player, "invulnerableUntil", Time.time + 10000);

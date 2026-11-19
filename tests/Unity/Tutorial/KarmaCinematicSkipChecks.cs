@@ -195,7 +195,7 @@ public static class KarmaCinematicSkipChecks
         await Until(() => game.EndingFade > 0.1f, "Skip fade missing");
         Check(game.Phase == RunPhase.Ending && game.EndingTime < 8, "Skip fades from current shot without fast-forwarding cues");
         await Until(() => game.EndingCompleted, "Ending skip never completes"); await Frames();
-        Check(game.Phase == RunPhase.Victory && game.EndingFade == 1 && game.EndingTime == 40, "Skip reaches normal victory endpoint");
+        Check(game.Phase == RunPhase.Victory && game.EndingFade == 1 && game.EndingTime == KarmaGame.EndingDuration, "Skip reaches normal victory endpoint");
         Check(presentation == null && game.World.Find("Ending presentation") == null, "Early skip removes presentation objects");
         Check((Transform)typeof(KarmaGame).GetField("fallenGuardian", Fields).GetValue(game) == null, "Early skip removes undissolved boss");
         Check((int)typeof(KarmaGame).GetField("endingSoundStage", Fields).GetValue(game) == soundStage, "Skipping never bursts pending sound cues");

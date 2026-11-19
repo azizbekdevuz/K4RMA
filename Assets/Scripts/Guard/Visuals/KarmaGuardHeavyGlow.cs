@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace KarmaPrototype
 {
-    // Only the difference between the existing cold and molten sword art emits light.
+    // Mask the blade on the actual displayed frame so release and recovery stay aligned.
     // A separate renderer keeps the inherited shield material and damage silhouette untouched.
     public sealed class KarmaGuardHeavyGlow : MonoBehaviour
     {
@@ -29,29 +29,40 @@ namespace KarmaPrototype
         public void Cue() { phase = 2; pulseAt = Time.time; Sample(); }
         public void Strike() { phase = 3; pulseAt = Time.time; Sample(); }
         public void Stop() { phase = 0; Charge = Pulse = 0; if (overlay != null) overlay.enabled = false; }
-        public void SetPose(Sprite cold, Sprite hot)
+        // Grip and tip measured in each drawing on a normalized 160 by 160 cell, from the top left.
+        static readonly Vector4[,] blades = {
+            {new(98,118,141,137),new(41,33,81,7),new(41,47,82,32),new(112,45,81,16),new(115,119,151,136),new(107,115,148,137)},
+            {new(52,120,98,140),new(49,32,106,8),new(48,36,107,11),new(110,94,144,123),new(109,110,149,127),new(89,109,139,125)},
+            {new(85,107,133,138),new(24,43,84,17),new(22,50,80,21),new(81,66,35,28),new(106,121,150,136),new(81,109,140,130)},
+            {new(65,113,22,143),new(53,34,10,9),new(68,29,18,14),new(87,68,44,21),new(108,117,151,133),new(101,110,146,132)},
+            {new(106,112,151,135),new(54,36,10,15),new(51,39,8,50),new(111,51,77,14),new(110,116,150,130),new(99,113,142,131)}
+        };
+        Sprite sampled;
+        bool AlignBlade()
         {
-            overlay.sprite = hot;
-            material.SetTexture("_ColdTex", cold.texture);
-            int pose = hot.name == "Windup" ? 0 : hot.name == "Downstroke" ? 1 : 2;
-            Vector4 blade;
-            if (form == "WardRise") blade = pose == 0 ? new Vector4(194,131,241,109) : pose == 1 ? new Vector4(216,280,270,316) : new Vector4(215,285,275,321);
-            else if (form == "WardWave") blade = pose == 0 ? new Vector4(160,143,208,105) : pose == 1 ? new Vector4(155,275,199,316) : new Vector4(111,294,71,333);
-            else if (form == "WardFinal") blade = pose == 0 ? new Vector4(181,145,237,108) : pose == 1 ? new Vector4(204,267,260,299) : new Vector4(213,285,263,321);
-            else blade = pose == 0 ? new Vector4(145,116,210,82) : pose == 1 ? new Vector4(115,260,178,306) : new Vector4(164,284,222,328);
-            // Blade endpoints measured in half-resolution, top-origin pose coordinates.
-            material.SetVector("_Blade", new Vector4(blade.x*2,724-blade.y*2,blade.z*2,724-blade.w*2));
-            material.SetVector("_PoseRect", new Vector4(hot.rect.x,hot.rect.y,hot.texture.width,hot.texture.height));
-            // Both sheets retain the same slicing, pivot and dimensions.
+            var sprite = source.sprite;
+            if (sprite == null) return false;
+            if (sprite == sampled) return true;
+            string name = sprite.name;
+            bool shieldAway = name.StartsWith("GD05Heavy_", System.StringComparison.Ordinal);
+            if (!shieldAway && !name.StartsWith("GD02_", System.StringComparison.Ordinal)) return false;
+            int frame = name[name.Length - 1] - '0';
+            if (frame < 0 || frame >= blades.GetLength(1)) return false;
+            int row = shieldAway ? 4 : form == "WardFinal" ? 3 : form == "WardWave" ? 2 : form == "WardRise" ? 1 : 0;
+            var rect = sprite.rect;
+            sampled = overlay.sprite = sprite;
+            material.SetVector("_Blade", blades[row, frame]);
+            material.SetVector("_PoseRect", new Vector4(rect.x, rect.y, rect.width, rect.height));
+            material.SetVector("_TexSize", new Vector4(sprite.texture.width, sprite.texture.height, 0, 0));
             overlay.sortingLayerID = source.sortingLayerID;
             overlay.sortingOrder = source.sortingOrder + 1;
-            Sample();
+            return true;
         }
         void LateUpdate() { Sample(); }
         void Sample()
         {
             if (overlay == null) return;
-            overlay.enabled = phase != 0 && source.enabled;
+            overlay.enabled = phase != 0 && source.enabled && AlignBlade();
             if (phase == 0) return;
             Charge = phase == 1 ? Mathf.SmoothStep(0, 0.75f, Mathf.Clamp01((Time.time - began) / chargeSeconds)) : 1;
             Pulse = phase >= 2 ? Mathf.Pow(Mathf.Clamp01(1 - (Time.time - pulseAt) / (phase == 3 ? 0.16f : 0.12f)), 2) : 0;

@@ -45,7 +45,11 @@ namespace KarmaPrototype
             else if (sheet == "Rise") motion = RisingBodyMotion(action, attack, moved);
             else motion = action == "Attack" ? "GroundStrike" : action == "Recover" ? "Recovery"
                 : action == "Telegraph" ? "Windup" : moved ? "Move" : "Idle";
-            if (sheet == "Wave" && (PresentSwordIntermediate(attack) || SwordBodyVisible && SwordBodyAction != null && displayMotion == motion)) return;
+            if (sheet == "Wave" && PresentSwordIntermediate(attack)) return;
+            // State-specific poses are selected before this final drawing pass.
+            // Keep the authored pose if this form has no matching replacement.
+            if (!KarmaMotionArt.Has(form, motion)) return;
+            if (sheet == "Wave" && SwordBodyVisible && SwordBodyAction != null && displayMotion == motion) return;
             PlayBody(motion, form, motion == "Move" || motion == "Dash" || motion == "Stun" || motion == "Guard");
         }
     }

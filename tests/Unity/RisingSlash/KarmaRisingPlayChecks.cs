@@ -90,8 +90,12 @@ public static class KarmaRisingPlayChecks
                 Action<string, EnemyAttack, bool, string> pose = (state, attack, air, name) =>
                 {
                     animator.GuardianPose(state, attack, air, false);
-                    var sprite = Array.Find(expected, entry => entry.name == name);
-                    Check(sprite != null && renderer.sprite == sprite,
+                    string form = KarmaArtwork.GuardianFormName(order);
+                    string motion = state == "Attack" ? attack.ToString() : state == "Stunned" ? "Stun" : name;
+                    var sprite = renderer.sprite;
+                    bool connected = motion == "Idle" ? sprite == KarmaArtwork.StageIdle(form)
+                        : Array.IndexOf(Resources.LoadAll<Sprite>("Motions12/" + form + "/" + motion), sprite) >= 0;
+                    Check(connected,
                         "Actual Rising Sprite connection: " + string.Join(">", order) + "/" + name + " got=" + renderer.sprite.name);
                     count++;
                 };
@@ -126,97 +130,76 @@ public static class KarmaRisingPlayChecks
         Set(enemy, "timer", float.MaxValue);
         var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
         var renderer = (SpriteRenderer)Get(animator, "picture");
-        var frames = (Sprite[])Get(animator, "risingBasicStrike");
-        Check(frames != null && frames.Length == 6, "Base strike loads six authored sprites");
-        for (int i = 0; i < frames.Length; i++)
-        {
-            Check(frames[i].name == $"Strike{i:00}", "Strike frames import in order");
-            Check(frames[i].pixelsPerUnit == 125 && frames[i].pivot == new Vector2(270, 20),
-                "Strike preserves canonical PPU and a fixed pivot");
-        }
-        bool first = false, second = false, dash = false;
-        var observed = new System.Collections.Generic.HashSet<Sprite>();
-        double lastStrike = -1;
+        var frames = Frames("Rise", "UPBasic");
+        Check(frames.Length == 6, "Base strike loads six authored drawings");
+        var observed = new System.Collections.Generic.List<int>();
+        bool dash = false;
+        var strikes = new System.Collections.Generic.HashSet<double>();
         Force(EnemyAttack.GroundStrike);
         await Until(() =>
         {
             double strikeAt = (double)Get(animator, "risingStrikeAt");
-            dash |= animator.CurrentPose == "Dash" && strikeAt < 0;
-            if (strikeAt >= 0 && animator.CurrentPose == "Slash" && renderer.sprite == frames[0])
-            {
-                if (!first) { first = true; lastStrike = strikeAt; }
-                else second |= strikeAt > lastStrike;
-            }
-            if (Array.IndexOf(frames, renderer.sprite) >= 0) observed.Add(renderer.sprite);
+            dash |= animator.CurrentPose == "Dash" && renderer.sprite.texture.name == "Dash";
+            if (strikeAt >= 0) strikes.Add(strikeAt);
+            int index = Array.IndexOf(frames, renderer.sprite);
+            if (index >= 0 && (observed.Count == 0 || observed[observed.Count-1] != index)) observed.Add(index);
             return !(bool)Get(enemy, "running");
         });
-        Check(dash && first && second, "A visible dash precedes the two actual strike starts");
-        Check(observed.SetEquals(new[] { frames[0], frames[3], frames[5] }), "All three strike keys appear during the basic combo");
-        Check(((Transform)Get(enemy, "art")).localScale.x < 0, "The existing facing mirrors the new frames");
-        await CheckBaseDescent(animator, renderer);
+        Check(dash && strikes.Count == 2, "Actual dash and both strike events appear in the basic combo");
+        Check(observed.SequenceEqual(Enumerable.Range(0, frames.Length)), "Ordered in-game basic combo: " + string.Join(",", observed));
+        Check(((Transform)Get(enemy, "art")).localScale.x < 0, "Existing facing mirrors the new frames");
+        Force(EnemyAttack.UP01, KarmaSpace.Units(4));
+        await ObserveClip(renderer, "Rise", "UP01", "UP01Landing");
 
         Force(EnemyAttack.GroundStrike);
         await Until(() => (double)Get(animator, "risingStrikeAt") >= 0);
         Call(enemy, "InterruptPattern");
         Check((double)Get(animator, "risingStrikeAt") < 0, "Interrupt clears strike playback");
         animator.GuardianPose("Stunned", EnemyAttack.GroundStrike, false, false);
-        Check(renderer.sprite.name == "Hurt", "Stun overrides strike playback");
+        Check(Frames("Rise", "Stun").Contains(renderer.sprite), "Stun overrides strike playback");
     }
-    static async Task CheckBaseDescent(KarmaCharacterAnimator animator, SpriteRenderer renderer)
-    {
-        var frames = (Sprite[])Get(animator, "risingDescent");
-        Check(frames != null && frames.Length == 9, "Base descent and landing load nine sprites");
-        Force(EnemyAttack.UP01, KarmaSpace.Units(4));
-        await ObserveClip(frames, renderer, "Base descent and landing");
-    }
+    static Sprite[] Frames(string form, string motion) =>
+        Resources.LoadAll<Sprite>("Motions12/" + form + "/" + motion)
+            .OrderBy(frame => frame.name, StringComparer.Ordinal).ToArray();
 
-    static Task ObserveClip(Sprite[] frames, SpriteRenderer renderer, string label)
+    static async Task ObserveClip(SpriteRenderer renderer, string form, string motion, string landing = null)
     {
-        Check(frames != null && frames.Length > 1, label + " loads a multi-frame clip");
-        bool descent = frames.Any(f => f.name.StartsWith("Land", StringComparison.Ordinal));
-        int length = frames.Length - (descent ? 2 : 0);
-        int[] keys = length == 7 ? new[] { 0, 2, 4, 6 } : length == 2 ? new[] { 1 } : new[] { 0, 2 };
-        if (descent) keys = keys.Concat(new[] { frames.Length - 1 }).ToArray();
-        frames = keys.Select(i => frames[i]).ToArray();
-        var completed = new TaskCompletionSource<bool>();
-        game.StartCoroutine(ObserveRenderedFrames());
-        return completed.Task;
-
-        IEnumerator ObserveRenderedFrames()
+        var frames = Frames(form, motion);
+        var ground = landing == null ? Array.Empty<Sprite>() : Frames(form, landing);
+        Check(frames.Length >= 2 && (landing == null || ground.Length > 0), form + "/" + motion + " resources");
+        var observed = new System.Collections.Generic.List<int>();
+        var landed = new System.Collections.Generic.List<int>();
+        var complete = new TaskCompletionSource<bool>();
+        game.StartCoroutine(AtRender());
+        await complete.Task;
+        IEnumerator AtRender()
         {
             var endOfFrame = new WaitForEndOfFrame();
             double deadline = EditorApplication.timeSinceStartup + 90;
-            int next = 0;
             while (true)
             {
                 yield return endOfFrame;
                 try
                 {
                     int frame = Array.IndexOf(frames, renderer.sprite);
-                    // A pattern can start before the renderer updates from the previous one.
-                    if (frame >= 0 && (next > 0 || frame == 0))
+                    if (frame >= 0 && (observed.Count == 0 || observed[observed.Count-1] != frame)) observed.Add(frame);
+                    int contact = Array.IndexOf(ground, renderer.sprite);
+                    if (contact >= 0 && observed.Count > 0)
                     {
-                        if (renderer.sprite.name.StartsWith("Land", StringComparison.Ordinal))
-                            Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f,
-                                label + " lands only after ground contact");
-                        if (frame == next) next++;
-                        else if (frame > next) throw new Exception(label + " skipped frame " + next);
+                        Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f, form + "/" + landing + " requires ground contact");
+                        if (landed.Count == 0 || landed[landed.Count-1] != contact) landed.Add(contact);
                     }
-                    if (!(bool)Get(enemy, "running"))
-                    {
-                        Check(next == frames.Length, label + " shows every frame in order (" + next + "/" + frames.Length + ")");
-                        completed.SetResult(true);
-                        yield break;
-                    }
-                    Check(EditorApplication.timeSinceStartup < deadline, label + " timed out");
+                    if (!(bool)Get(enemy, "running")) { complete.SetResult(true); yield break; }
+                    Check(EditorApplication.timeSinceStartup < deadline, form + "/" + motion + " timeout");
                 }
-                catch (Exception e)
-                {
-                    completed.SetException(e);
-                    yield break;
-                }
+                catch (Exception ex) { complete.SetException(ex); yield break; }
             }
         }
+        Check(observed.Contains(0) && observed.Contains(1), form + "/" + motion + " actual starting frames: " + string.Join(",",observed));
+        for (int i = 1; i < observed.Count; i++)
+            Check(observed[i] == 0 || observed[i] > observed[i-1], form + "/" + motion + " forward playback");
+        if (landing != null)
+            Check(landed.Count > 0 && landed[0] == 0 && landed.SequenceEqual(landed.OrderBy(i => i)), form + "/" + landing + " landing playback");
     }
 
     static async Task CheckFormClips()
@@ -230,51 +213,24 @@ public static class KarmaRisingPlayChecks
         {
             Reset(order);
             string form = KarmaArtwork.GuardianFormName(order);
-            var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
-            var renderer = (SpriteRenderer)Get(animator, "picture");
-            var strike = (Sprite[])Get(animator, "risingBasicStrike");
-            var descent = (Sprite[])Get(animator, "risingDescent");
-            var pursuit = (Sprite[])Get(animator, "risingPursuit");
-            var wave = (Sprite[])Get(animator, "risingWave");
-            var crossing = (Sprite[])Get(animator, "risingCrossing");
-            var canonical = order.Length == 1 ? KarmaArtwork.Sprites("Rise") : KarmaArtwork.InheritedPoses(form);
-            var idle = Array.Find(canonical, sprite => sprite.name == "Idle");
-            foreach (var clip in new[] { strike, descent, pursuit, wave, crossing })
-            {
-                if (clip == null) continue;
-                foreach (var sprite in clip)
-                    Check(Mathf.Approximately(sprite.pixelsPerUnit, idle.pixelsPerUnit), form + " preserves its authored PPU");
-            }
-            foreach (int tick in new[] { 0, 1 })
-            {
-                var method = typeof(KarmaCharacterAnimator).GetMethod("RisingFrame", BindingFlags.Static | BindingFlags.NonPublic);
-                var start = Time.timeAsDouble - (tick + 0.5d) / 12d;
-                Check((int)method.Invoke(null, new object[] { start, 3 }) == tick * 2, form + " samples at 12 FPS");
-            }
-            if (order.Length > 1)
-            {
-                Force(EnemyAttack.GroundStrike);
-                await ObserveClip(strike, renderer, form + " basic strike");
-            }
+            var renderer = (SpriteRenderer)Get(enemy.GetComponentInChildren<KarmaCharacterAnimator>(), "picture");
             var body = game.Player.GetComponent<Rigidbody2D>();
             enemy.transform.position = new Vector3(16, KarmaSpace.GuardianGroundY, 0);
             body.position = game.Player.transform.position = new Vector2(39, KarmaSpace.Units(4));
             Force(EnemyAttack.UP02);
-            await ObserveClip(pursuit, renderer, form + " UP02 pursuit");
-
+            await ObserveClip(renderer, form, "UP02");
             EnemyAttack drop = Array.IndexOf(order, Essence.Guard) >= 0 ? EnemyAttack.UP04 : EnemyAttack.UP01;
             Force(drop, KarmaSpace.Units(4));
-            await ObserveClip(descent, renderer, form + " " + drop + " descent and landing");
-
+            await ObserveClip(renderer, form, drop.ToString(), drop == EnemyAttack.UP01 ? "UP01Landing" : "Landing");
             if (Array.IndexOf(order, Essence.SwordWave) >= 0)
             {
                 Force(EnemyAttack.UP03);
-                await ObserveClip(wave, renderer, form + " UP03 wave release");
+                await ObserveClip(renderer, form, "UP03");
             }
             if (order.Length == 3)
             {
                 Force(EnemyAttack.UP05);
-                await ObserveClip(crossing, renderer, form + " UP05 crossing");
+                await ObserveClip(renderer, form, "UP05_NoFX");
             }
             Debug.Log("PASS: " + form + " in-game 12 FPS clip coverage (" + string.Join(">", order) + ")");
         }

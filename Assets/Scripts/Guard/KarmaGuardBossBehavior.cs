@@ -131,6 +131,11 @@ namespace KarmaPrototype
             }
             public override Color ShieldColor { get { return BlocksSelection && !owner.Invulnerable && !AutoShieldActive
                 ? new Color(1, 1, 1, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : Color.white; } }
+            public override void OnDamaged()
+            {
+                if (owner.selected == EnemyAttack.GD03 && owner.running)
+                    owner.animator.GuardShieldFlightHurt();
+            }
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
             public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
             public override bool TryQueueParry(float pressedAt) { return Heavy.TryQueueParry(pressedAt); }

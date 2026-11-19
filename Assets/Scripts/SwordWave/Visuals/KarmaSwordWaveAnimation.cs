@@ -182,14 +182,13 @@ namespace KarmaPrototype
         {
             if (!basicVisualOrigin) return;
             // Warning, aim and collision now share the waist launch root.
-            // Only compensate the artwork's transparent margins; no flight offset.
             picture.transform.position = transform.position;
         }
         void ApplyFlight()
         {
             // A fixed footprint and pivot keep the cutting edge legible at the
             // existing fast speed; only the authored energy shapes change.
-            Paint(clip, FlightDrawings[(int)(age * KarmaBootstrap.FramesPerSecond) % FlightDrawings.Length], size,
+            Paint(clip, FlightDrawings[(int)(age * KarmaBootstrap.FramesPerSecond) % FlightDrawings.Length], heavy ? size : new Vector2(size.x * 1.12f, size.y),
                 heavy ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f));
             picture.flipX = velocity.x < 0; picture.flipY = false;
             if (pattern == (int)EnemyAttack.SWBasic && velocity.sqrMagnitude > 0.000001f)
@@ -206,8 +205,6 @@ namespace KarmaPrototype
             if (BladePoints(swordPicture, out var heel, out _, out _)) transform.position = heel;
         }
 
-        // Pixel coordinates measured on each authored 512px combat frame, from
-        // its top-left corner. Read-only sockets do not alter body poses/scales.
         // Endpoints are measured on the displayed 96-unit cell, before sprite and parent mirroring.
         static System.Collections.Generic.Dictionary<string, Vector4> chargeBladeSockets;
         static bool TryBladeEndpoints(string key, out Vector4 endpoints)

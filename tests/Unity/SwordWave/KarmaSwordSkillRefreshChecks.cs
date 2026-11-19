@@ -33,7 +33,6 @@ public static class KarmaSwordSkillRefreshChecks
     {
         SessionState.SetBool(Key + ".RequestedChanges", false);
         SessionState.SetBool(Key + ".RainOnly", false);
-        SessionState.SetBool(Key + ".PackedRenderOnly", false);
         SessionState.SetBool(Key + ".VfxOnly", false);
         SessionState.SetBool(Key + ".Grand", false);
         SessionState.SetBool(Key + ".WardFinal", false);
@@ -69,7 +68,6 @@ public static class KarmaSwordSkillRefreshChecks
     public static void RunSW03VisualOnly() { RunSW03Only(); SessionState.SetInt(Key + ".SW03Step", 2); }
     public static void RunRequestedChanges() { RunBatch(); SessionState.SetBool(Key + ".RequestedChanges", true); }
     public static void RunRequestedRainOnly() { RunRequestedChanges(); SessionState.SetBool(Key + ".RainOnly", true); }
-    public static void RunPackedRenderOnly() { RunBatch(); SessionState.SetBool(Key + ".PackedRenderOnly",true); }
     public static void RunRequestedVfxOnly() { RunRequestedChanges(); SessionState.SetBool(Key + ".VfxOnly",true); }
     public static void RunGrandOverhaul() { RunRequestedChanges(); SessionState.SetBool(Key+".Grand",true); }
     public static void RunWardAndFinal() { RunRequestedChanges(); SessionState.SetBool(Key+".WardFinal",true); }
@@ -463,66 +461,9 @@ public static class KarmaSwordSkillRefreshChecks
         }
         finally { RenderTexture.active = active; UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(picture); }
     }
-    static void Retreat()
-    {
-        Reset(); var move = Get(Get(enemy, "behavior"), "movement");
-        Check(Mathf.Abs((float)Call(move, "SwordRetreatDistance") - game.Config.Techniques.pierceDistance * 1.75f) < 0.01f, "retreat 1.75 dash");
-        Set(move, "swordAttackedSinceRetreat", true);
-        Call(move, "RetreatSword", 1f / 60, 5f);
-        float remaining = (float)Get(move, "nextSwordRetreat") - enemy.FightSeconds;
-        Check(remaining > 2.1f, "live retreat cooldown exceeds previous 1.5 cap");
-        Check((float)Get(move, "swordRetreatDirection") < 0, "retreat away from player");
-        Call(move, "Interrupt", false);
-        enemy.transform.position = new Vector2(KarmaStage.BossLeftWall + 0.5f, KarmaSpace.GuardianGroundY);
-        object[] args = { 5f, 0f, 0f };
-        Check((bool)move.GetType().GetMethod("ChooseRetreat", F).Invoke(move, args) && (float)args[1] > 0, "wall escape points inward");
-        Pass("retreat 12 units, live cooldown 2.4 seconds, away priority and wall escape");
-    }
     static async Task SW03()
     {
         await SW03Active(null, true);
-    }
-    static List<Vector2> SafeGaps(IEnumerable<Vector2> danger)
-    {
-        var gaps = new List<Vector2>(); float cursor = KarmaStage.ArenaLeft;
-        foreach (var interval in danger.OrderBy(x => x.x))
-        {
-            float start = Mathf.Max(KarmaStage.ArenaLeft, interval.x), end = Mathf.Min(KarmaStage.ArenaRight, interval.y);
-            if (start > cursor + 0.001f) gaps.Add(new Vector2(cursor, start));
-            cursor = Mathf.Max(cursor, end);
-        }
-        if (cursor < KarmaStage.ArenaRight - 0.001f) gaps.Add(new Vector2(cursor, KarmaStage.ArenaRight));
-        return gaps;
-    }
-    static Bounds RenderedBounds(SpriteRenderer source)
-    {
-        var node = new GameObject("SW03 focused world height render"); var camera = node.AddComponent<Camera>();
-        node.AddComponent<UniversalAdditionalCameraData>(); camera.orthographic = true; camera.orthographicSize = 9;
-        camera.aspect = 1; camera.cullingMask = 1 << 31; camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.clear;
-        camera.transform.position = new Vector3(source.transform.position.x, 8, -10);
-        var sample = new GameObject("supplied sprite render sample"); sample.layer = 31;
-        var sr = sample.AddComponent<SpriteRenderer>(); sr.sprite = source.sprite; sr.sharedMaterial = source.sharedMaterial;
-        sr.flipX = source.flipX; sr.flipY = source.flipY; sr.color = source.color;
-        sample.transform.position = source.transform.position; sample.transform.rotation = source.transform.rotation; sample.transform.localScale = source.transform.lossyScale;
-        var rt = new RenderTexture(512, 512, 24); var image = new Texture2D(512, 512, TextureFormat.RGBA32, false); var old = RenderTexture.active;
-        try
-        {
-            Check(!UnityEditor.ShaderUtil.ShaderHasError(sr.sharedMaterial.shader), "supplied sprite material renders");
-            RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
-            RenderTexture.active = rt; image.ReadPixels(new Rect(0, 0, 512, 512), 0, 0); image.Apply();
-            var pixels = image.GetPixels32(); int x0 = 512, y0 = 512, x1 = -1, y1 = -1, blue = 0;
-            for (int y = 0; y < 512; y++) for (int x = 0; x < 512; x++)
-            {
-                var c = pixels[y * 512 + x]; if (c.a < 128) continue;
-                x0 = Mathf.Min(x0, x); x1 = Mathf.Max(x1, x); y0 = Mathf.Min(y0, y); y1 = Mathf.Max(y1, y);
-                if (c.b > c.r * 1.2f && c.b > 70) blue++;
-            }
-            Check(y1 >= y0 && blue > 20, "visible supplied blue/cyan frame");
-            float pixel = 18f / 512;
-            return new Bounds(new Vector3(camera.transform.position.x + ((x0 + x1 + 1) / 2f - 256) * pixel, -1 + (y0 + y1 + 1) / 2f * pixel, 0),
-                new Vector3((x1 - x0 + 1) * pixel, (y1 - y0 + 1) * pixel, 0));
-        }
-        finally { RenderTexture.active = old; UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(image); UnityEngine.Object.Destroy(sample); UnityEngine.Object.Destroy(node); }
     }
     static async Task JumpAcrossBlade()
     {
@@ -1115,7 +1056,7 @@ public static class KarmaSwordSkillRefreshChecks
             Check(warning==null || !warning.gameObject.activeInHierarchy,
                 "planted explosion range marker removed; charge and blast retained");
         }
-        Check(energy.GetComponentsInChildren<KarmaSwordPackedVfx>().Length == 0,
+        Check(energy.GetComponentsInChildren<SpriteRenderer>().Length == 0,
             "sigils and helixes are not obscured by the old packed charge layer");
         var sites=(Vector3[])Get(energy,"sites");
         var feet=(Vector2[])Get(energy,"chargeFeet");
@@ -1184,8 +1125,7 @@ public static class KarmaSwordSkillRefreshChecks
         Check(energy.transform.parent == Root && energy.GetComponentInParent<KarmaSW05RainBlade>() == null
             && Mathf.Abs((float)Get(energy,"life")-0.48f)<0.001f,
             "historical 480ms fade is independent of 120ms sword damage cleanup");
-        var layers=energy.GetComponentsInChildren<KarmaSwordPackedVfx>();
-        Check(layers.Length==0,
+        Check(energy.GetComponentsInChildren<SpriteRenderer>().Length == 0,
             "procedural release has no overlapping packed detonation layer");
         Check(((Vector2[])Get(energy,"chargeFeet")).Length == swords,
             "release retains every planted anchor through the shared fade");
@@ -1206,17 +1146,13 @@ public static class KarmaSwordSkillRefreshChecks
         var target = new RenderTexture(384,256,24,RenderTextureFormat.ARGB32);
         var pixels = new Texture2D(384,256,TextureFormat.RGBA32,false);
         var old = RenderTexture.active;
-        var packed=energy.GetComponentsInChildren<KarmaSwordPackedVfx>();
-        var packedLayers=packed.Select(p=>p.gameObject.layer).ToArray();
         try
         {
             energy.gameObject.layer = 31;
-            foreach(var layer in packed)layer.gameObject.layer=31;
             foreach (float time in new[] {0f,0.10f,0.15f,0.30f})
             {
                 Set(energy,"age",time); Set(energy,"count",0);
                 Call(energy,"FinalEnergy"); Call(energy,"Upload");
-                foreach(var layer in packed)layer.SetProgress(time/(8f/24));
                 var vertices = (Vector3[])Get(Get(energy,"buffer"),"vertices");
                 int count = (int)Get(energy,"count");
                 var bounds = new Bounds(energy.transform.TransformPoint(vertices[0]),Vector3.zero);
@@ -1249,11 +1185,6 @@ public static class KarmaSwordSkillRefreshChecks
         finally
         {
             RenderTexture.active = old; energy.gameObject.layer = savedLayer;
-            for(int i=0;i<packed.Length;i++)
-            {
-                packed[i].gameObject.layer=packedLayers[i];
-                packed[i].SetProgress((float)Get(packed[i],"age")/(float)Get(packed[i],"seconds"));
-            }
             Set(energy,"age",savedAge); Set(energy,"count",0); Call(energy,"FinalEnergy"); Call(energy,"Upload");
             UnityEngine.Object.Destroy(cameraNode); UnityEngine.Object.Destroy(target); UnityEngine.Object.Destroy(pixels);
         }
@@ -1267,7 +1198,6 @@ public static class KarmaSwordSkillRefreshChecks
         bool distinctionCaptured = false, rainCaptured = false, impactCaptured = false, blastCaptured = false, tailCaptured = false, echoSeen = false;
         using var recording = SessionState.GetBool(Key+".AreaRecording",false) ? new SkillRecording("sw05",true) : null;
         using var explosionRecording = SessionState.GetBool(Key+".GroundedVfxReview",false) ? new SkillRecording("sw05-explosion",false,"Charge") : null;
-        var played = new Dictionary<KarmaSwordPackedVfx.Clip,HashSet<int>>();
         var plantedPoses = new Dictionary<KarmaSW05VFX,Matrix4x4>();
         int lastCount = 0; float lastLanding = -1, detonation = -1;
         var waves = new List<float>(); var launches = new HashSet<KarmaSW05RainBlade>();
@@ -1288,14 +1218,6 @@ public static class KarmaSwordSkillRefreshChecks
                 Check(!box.forceRenderingOff && box.sprite != null && box.GetComponent<Collider2D>() == null,
                     "SW05 uses the original visible, non-damaging landing box");
             formationWarned |= shots.Length==0 && fallBoxes.Length>0;
-            foreach (var layer in Root.GetComponentsInChildren<KarmaSwordPackedVfx>())
-            {
-                if (!played.TryGetValue(layer.ClipId,out var frames)) played[layer.ClipId] = frames = new HashSet<int>();
-                frames.Add(layer.FrameIndex);
-                Check(layer.GetComponent<Collider2D>() == null,"pack layers add no damaging collider");
-                if (layer.ClipId == KarmaSwordPackedVfx.Clip.Detonation)
-                    Check(shots.Length == 0 || shots.All(s => (bool)Get(s,"detonating")),"packed detonation starts at the real shared damage event");
-            }
             var energies = Root.GetComponentsInChildren<KarmaSW05Energy>();
             foreach(var energy in energies)
             {
@@ -1411,15 +1333,11 @@ public static class KarmaSwordSkillRefreshChecks
         Check(retained && formationWarned && warned && exploded && dimmed && distinctionCaptured, "formation/falling warnings remain; old swords recede below new strike cues");
         Check(finalWarnCaptured && detonation - lastLanding >= 0.58f && detonation-lastLanding <= 0.68f, "electric charge retains the 0.60-second final countdown");
         Check(launches.Count >= 48 && launches.Count <= 54, "all three complete rain waves retained");
-        Check(echoSeen && !played.ContainsKey(KarmaSwordPackedVfx.Clip.FallingAura),
-            "compact blade echoes replace the duplicate broad falling aura");
-        Check(!played.ContainsKey(KarmaSwordPackedVfx.Clip.LandingShock),
-            "one grounded landing batch replaces the overlapping tall impact sprites");
+        Check(echoSeen, "falling blades display the compact echo");
         await Seconds(0.05f);
         Check(Root.GetComponentsInChildren<KarmaSW05RainBlade>(true).Length == 0
             && Root.GetComponentsInChildren<KarmaSW05VFX>(true).Length == 0
-            && Root.GetComponentsInChildren<KarmaSW05Energy>(true).Length == 0
-            && Root.GetComponentsInChildren<KarmaSwordPackedVfx>(true).Length == 0, "no lingering explosion, sprite animation or energy mesh after completion");
+            && Root.GetComponentsInChildren<KarmaSW05Energy>(true).Length == 0, "no lingering explosion, sprite animation or energy mesh after completion");
         Force(EnemyAttack.SW05); await Until(() => Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length > 0);
         Call(enemy, "InterruptPattern"); await Seconds(0.05f);
         Check(!enemy.Invulnerable && Root.GetComponentsInChildren<KarmaSW05Energy>(true).Length == 0, "SW05 interruption clears energy and shield");
@@ -1564,7 +1482,7 @@ public static class KarmaSwordSkillRefreshChecks
             var releasedSites=new Dictionary<Transform,HashSet<int>>();
             var layouts=new List<float[]>();
             var strikes=new HashSet<KarmaSW05Energy>();
-            var centers=new List<float>();var chargeFrames=new HashSet<int>();var surgeFrames=new HashSet<int>();
+            var centers=new List<float>();
             bool retreated=false,thresholdCrossed=false;int retreatCount=0;float approachTravel=0;
             bool retreatCapture=false,groundCapture=false;
             float previousTime=enemy.FightSeconds,previousX=enemy.Position.x,travel=0,warningSeconds=0,lastRelease=-1;
@@ -1757,11 +1675,6 @@ public static class KarmaSwordSkillRefreshChecks
                     }
                     if(!enraged && !groundCapture && rising.Any(v=>v.FrameIndex==4)){groundCapture=true;Capture("active-sw03-ground");}
                 }
-                foreach(var fx in phaseRoot.GetComponentsInChildren<KarmaSwordPackedVfx>())
-                {
-                    if(fx.ClipId==KarmaSwordPackedVfx.Clip.GroundCharge)chargeFrames.Add(fx.FrameIndex);
-                    if(fx.ClipId==KarmaSwordPackedVfx.Clip.BladeSurge)surgeFrames.Add(fx.FrameIndex);
-                }
                 foreach(var shot in Root.GetComponentsInChildren<KarmaBossAttack>())
                 {
                     var source=(EnemyAttack)Get(shot,"sourcePattern");
@@ -1791,7 +1704,6 @@ public static class KarmaSwordSkillRefreshChecks
                 Check(game.Player.Health==escapeHealth,"reaction-delayed walking survives the simultaneous active window");
             }
             if(!verifyEscape)Check(retreated && retreatCount>=2 && approachTravel>0.5f && travel>10,"original evasion and approach continue without extra attacks");
-            Check(chargeFrames.Count==0 && surgeFrames.Count==0,"no secondary charge or blade column layers are spawned");
             recording?.Dispose();
             Pass("SW03 TIMING "+(enraged?"enraged":"normal")+" total="+(enemy.FightSeconds-castBegan).ToString("F4")+" warning="+warningSeconds.ToString("F4")+" active="+active.ToString("F4")+" gap="+Mathf.Clamp(game.Config.BossTuning.sword.scarRoundGap,0.3f,0.8f).ToString("F4"));
             await Seconds(0.05f);
@@ -2039,29 +1951,6 @@ public static class KarmaSwordSkillRefreshChecks
         }
         finally { RenderTexture.active = old; UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(pixels); UnityEngine.Object.Destroy(picture); UnityEngine.Object.Destroy(node); }
         Pass("nine connected effect sprites rendered blue/white in Unity URP; no shader fallback");
-    }
-    static void RenderPacked()
-    {
-        Reset();
-        var node = new GameObject("packed render camera"); var camera = node.AddComponent<Camera>();
-        camera.orthographic = true; camera.orthographicSize = 4; camera.aspect = 1; camera.cullingMask = 1 << 31;
-        camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.clear;
-        camera.transform.position = new Vector3(0,3,-10); node.AddComponent<UniversalAdditionalCameraData>();
-        var fx = KarmaSwordPackedVfx.Spawn(Root,game,KarmaSwordPackedVfx.Clip.Detonation,Vector2.zero,new Vector2(6,6),1,30,1,true);
-        fx.gameObject.layer = 31; fx.SetProgress(3f/8);
-        var rt = new RenderTexture(512,512,24); var pixels = new Texture2D(512,512,TextureFormat.RGBA32,false);
-        var active = RenderTexture.active;
-        try
-        {
-            RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
-            RenderTexture.active = rt; pixels.ReadPixels(new Rect(0,0,512,512),0,0); pixels.Apply();
-            int lit = pixels.GetPixels32().Count(p => p.b > 30);
-            System.IO.Directory.CreateDirectory("output/requested-sw03-sw05");
-            System.IO.File.WriteAllBytes("output/requested-sw03-sw05/packed-isolated.png",pixels.EncodeToPNG());
-            Check(lit > 1000,"packed shader produces visible animated texture, lit pixels="+lit);
-            Pass("isolated supplied detonation render, lit pixels="+lit);
-        }
-        finally { RenderTexture.active = active; UnityEngine.Object.Destroy(rt); UnityEngine.Object.Destroy(pixels); UnityEngine.Object.Destroy(node); UnityEngine.Object.Destroy(fx.gameObject); }
     }
     // Stream frames to the existing encoder: no large temporary PNG sequence.
     sealed class MotionRecording : IDisposable
@@ -2395,16 +2284,11 @@ public static class KarmaSwordSkillRefreshChecks
                 await ContinuousAimOnly();Check(error==null,"runtime error: "+error);Pass("SW01/SW02 CONTINUOUS AIM CHECKS COMPLETE");
                 Time.captureDeltaTime=0;SessionState.SetBool(Key,false);EditorApplication.Exit(0);return;
             }
-            if (SessionState.GetBool(Key + ".PackedRenderOnly",false))
-            {
-                RenderPacked(); Time.captureDeltaTime = 0; SessionState.SetBool(Key,false); EditorApplication.Exit(0); return;
-            }
             if (SessionState.GetBool(Key + ".RequestedChanges", false))
             {
                 bool rainOnly = SessionState.GetBool(Key + ".RainOnly",false);
                 bool vfxOnly = SessionState.GetBool(Key + ".VfxOnly",false);
                 bool wardFinal = SessionState.GetBool(Key + ".WardFinal",false);
-                if (vfxOnly) RenderPacked();
                 if (!rainOnly && !wardFinal) await SW03Active();
                 if (SessionState.GetBool(Key+".Grand",false) || wardFinal) { await SW04Sequence(); await SW04(); }
                 if (SessionState.GetBool(Key+".WardOnly",false))

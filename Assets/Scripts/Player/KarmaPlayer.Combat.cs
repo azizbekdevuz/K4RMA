@@ -3,12 +3,17 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaPlayer
     {
+        void GetSwordArea(KarmaTechniqueTuning tuning, out Vector2 center, out Vector2 size)
+        {
+            float halfWidth = KarmaSpace.PlayerHalfWidth;
+            center = Position + Vector2.right * Facing * ((tuning.longSlashReach - halfWidth) * 0.5f);
+            size = new Vector2(tuning.longSlashReach + halfWidth, tuning.longSlashHeight);
+        }
+
         internal bool SwordAreaOverlaps(KarmaEnemy enemy)
         {
-            var tuning = game.Config.Techniques;
-            float width = tuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
-            Vector2 center = Position + Vector2.right * Facing * (tuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
-            return enemy.OverlapsDamageArea(center, new Vector2(width, tuning.longSlashHeight));
+            GetSwordArea(game.Config.Techniques, out var center, out var size);
+            return enemy.OverlapsDamageArea(center, size);
         }
 
         int trainingExecution;
@@ -43,15 +48,18 @@ namespace KarmaPrototype
             nextSword = Time.time + game.Config.swordCooldown;
             var swordTuning = game.Config.Techniques;
             normalSwordPressureUntil = Time.time + swordTuning.slashLife;
-            game.Tutorial?.HitArea(KarmaTrainingAttack.Sword, trainingAttack, Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f, new Vector2(swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth, swordTuning.longSlashHeight));
+            if (game.Tutorial != null)
+            {
+                GetSwordArea(swordTuning, out var center, out var size);
+                game.Tutorial.HitArea(KarmaTrainingAttack.Sword, trainingAttack, center, size);
+            }
             KarmaRemnantVFX.SwordSlash(game.World, Position, Vector2.right * Facing,
                 swordTuning.longSlashReach, swordTuning.longSlashHeight, swordTuning.slashLife);
-            foreach (var enemy in game.Enemies.ToArray())
+            using var snapshot = game.GetEnemySnapshot(out var targets);
+            foreach (var enemy in targets)
             {
                 if (enemy == null || !enemy.Alive) continue;
-                float width = swordTuning.longSlashReach + KarmaSpace.PlayerHalfWidth;
-                Vector2 center = Position + Vector2.right * Facing * (swordTuning.longSlashReach - KarmaSpace.PlayerHalfWidth) * 0.5f;
-                if (enemy.OverlapsDamageArea(center, new Vector2(width, swordTuning.longSlashHeight)))
+                if (SwordAreaOverlaps(enemy))
                     SwordHit(enemy, Vector2.right * Facing, basicMelee: true);
             }
         }
@@ -72,20 +80,20 @@ namespace KarmaPrototype
                 KarmaAudio.Play(KarmaSfxId.PlDash);
             }
             Color color = game.Config.ColorOf(essence);
-            var flash = KarmaVisuals.Box(game.World, "Directional slash", (from + to) * 0.5f,
-                new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f)), color, 10);
-            KarmaCombatVFX.ApplySprite(flash, "PlayerVFX", "PierceTrail",
-                new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f)));
+            var trailSize = new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f));
+            var flash = KarmaVisuals.Box(game.World, "Directional slash", (from + to) * 0.5f, trailSize, color, 10);
+            KarmaCombatVFX.ApplySprite(flash, "PlayerVFX", "PierceTrail", trailSize);
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f),
                 game.Config.Techniques.slashLife, emitSparks: false);
             Essences.NotifyUnique(essence);
-            foreach (var enemy in game.Enemies.ToArray())
+            using var snapshot = game.GetEnemySnapshot(out var targets);
+            foreach (var enemy in targets)
             {
                 if (enemy == null || !enemy.Alive) continue;
                 if (enemy.IntersectsDamagePath(from, to, KarmaSpace.Units(1.3f)))
-                SwordHit(enemy, direction);
+                    SwordHit(enemy, direction);
             }
         }
         bool SwordHit(KarmaEnemy enemy, Vector2 direction, bool basicMelee = false)
@@ -124,19 +132,25 @@ namespace KarmaPrototype
         }
         public void BeginRisingSlash()
         {
-            game.Tutorial?.HitArea(KarmaTrainingAttack.Rising, ++trainingExecution, Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4)));
-            CancelAirSlash(); FaceAction(); animator.Attack(Vector2.up); body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
+            var hitSize = KarmaSpace.Units(new Vector2(4.2f, 4));
+            var hitOffset = Vector2.up * KarmaSpace.Scale;
+            game.Tutorial?.HitArea(KarmaTrainingAttack.Rising, ++trainingExecution, Position + hitOffset, hitSize);
+            CancelAirSlash();
+            FaceAction();
+            animator.Attack(Vector2.up);
+            body.linearVelocity = new Vector2(body.linearVelocity.x, game.Config.Techniques.risingSpeed);
             KarmaAudio.Play(KarmaSfxId.PlRisingSlash);
-            var risingVisual = KarmaCombatVFX.SpawnSprite(game.World, Position + Vector2.up * KarmaSpace.Scale, "PlayerVFX", "Rising",
+            var risingVisual = KarmaCombatVFX.SpawnSprite(game.World, Position + hitOffset, "PlayerVFX", "Rising",
                 KarmaSpace.Units(new Vector2(1.8f, 3)), 0.25f);
             if (risingVisual != null) risingVisual.transform.parent.localScale = new Vector3(Facing, 1, 1);
-            foreach (var enemy in game.Enemies.ToArray())
-                if (enemy != null && enemy.Alive && enemy.OverlapsDamageArea(Position + Vector2.up * KarmaSpace.Scale, KarmaSpace.Units(new Vector2(4.2f, 4))))
-                {
-                    float before = enemy.Health;
-                    enemy.TakeDamage(game.Config.Techniques.risingDamage, out bool reduced, basicMelee: true);
-                    if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
-                }
+            using var snapshot = game.GetEnemySnapshot(out var targets);
+            foreach (var enemy in targets)
+            {
+                if (enemy == null || !enemy.Alive || !enemy.OverlapsDamageArea(Position + hitOffset, hitSize)) continue;
+                float before = enemy.Health;
+                enemy.TakeDamage(game.Config.Techniques.risingDamage, out bool reduced, basicMelee: true);
+                if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
+            }
         }
         public void BeginSwordWave() { FaceAction(); animator.PlayPlayerAction("SwordWave", 0.25f); }
     }

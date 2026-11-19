@@ -105,7 +105,9 @@ namespace KarmaPrototype
             ResetCinematicSkip();
             EndingCompleted = false;
             Player.Essences.Cancel(); Player.BeginEndingControl(); ClearProjectiles();
-            foreach (var enemy in Enemies.ToArray()) if (enemy != null) enemy.CancelCombat();
+            using var snapshot = GetEnemySnapshot(out var targets);
+            foreach (var enemy in targets)
+                if (enemy != null) enemy.CancelCombat();
             endingShot = 0;
             endingCameraStart = GameCamera.transform.position;
             endingCameraSize = GameCamera.orthographicSize;

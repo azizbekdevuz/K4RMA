@@ -694,7 +694,9 @@ class EssencesStub{public void NotifyUnique(Essence e){}}
 class Tutorial{public void GuardBlocked(){}}
 class TechniqueConfig{public float counterDamage=3;}
 class Config{public Color guardColor;public float hitInvulnerability=.7f;public TechniqueConfig Techniques=new TechniqueConfig();}
-class Game{public Config Config=new Config();public Player Player;public bool AllowsPlayerActions=true,Paused;public float DamageTaken;public object World=new object();public List<Owner> Enemies=new List<Owner>();public Tutorial Tutorial;public void PlayerDied(){AllowsPlayerActions=false;}}
+class Game{public Config Config=new Config();public Player Player;public bool AllowsPlayerActions=true,Paused;public float DamageTaken;public object World=new object();public List<Owner> Enemies=new List<Owner>();public Tutorial Tutorial;
+ public IDisposable GetEnemySnapshot(out List<Owner> targets){targets=new List<Owner>(Enemies);return null;}
+ public void PlayerDied(){AllowsPlayerActions=false;}}
 CONTACT
 GEOMETRY
 TECHNIQUES

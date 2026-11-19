@@ -386,7 +386,6 @@ public static class KarmaSwordPoseLoadingChecks
         Call(animator, "EndSwordBodyAction");
         animator.GuardianPose("Recover", EnemyAttack.SW05, false, false);
         Check(picture.sprite == frames[5], form + " landing does not rewind descent");
-        Set(animator, "swordRecoveryAt", Time.time - 9f / 24);
         animator.GuardianPose("Recover", EnemyAttack.SW05, false, false);
         var poses = (Dictionary<string, Sprite>)Get(animator, "poses");
         Check(picture.sprite == poses["Idle"], form + " SW05 recovery reaches Idle");

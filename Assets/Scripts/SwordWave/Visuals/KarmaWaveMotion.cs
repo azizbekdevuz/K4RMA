@@ -24,7 +24,6 @@ namespace KarmaPrototype
         KarmaEnemy enemy;
         KarmaGame game;
         Transform spriteTransform;
-        SpriteRenderer spriteRenderer;
         Vector3 spriteHome;
         Quaternion spriteHomeRotation;
         string previousPose = "";
@@ -62,7 +61,6 @@ namespace KarmaPrototype
             }
 
             spriteTransform = child;
-            spriteRenderer = child.GetComponent<SpriteRenderer>();
             spriteHome = animator.SwordAuthoredHome;
             spriteHomeRotation = child.localRotation;
             previousRootPosition = enemy.Position;

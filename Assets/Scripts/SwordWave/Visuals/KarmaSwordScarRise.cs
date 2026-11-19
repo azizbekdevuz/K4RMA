@@ -11,7 +11,7 @@ namespace KarmaPrototype
         public const float RiseSeconds = 0.14f, DissipationSeconds = 0.22f;
         public const float AuraDelay = 0.045f, BladeFadeSeconds = 0.22f, AuraFadeSeconds = 0.30f;
         public const float VisualWidthScale = 0.76f;
-        // SW05-family silver blade, measured alpha>=128 bounds at 1024x1536.
+        // Authored visual fit for the 1024x1536 sword, including its edge padding.
         // Keep the crossguard at the old ground socket and preserve display width.
         public static readonly Rect BladePixels = new Rect(156,155,713,1362);
         public static readonly Vector2 FloorPixel = new Vector2(512,256);

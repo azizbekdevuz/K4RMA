@@ -1,5 +1,4 @@
 """Offline source-execution and source-pixel checks; never starts Unity."""
-import math
 import json
 import os
 import re
@@ -406,7 +405,6 @@ public class KarmaSwordWaveAnimation{
         self.assertNotIn("Projectile(game", method(source, "public static void Ranged("))
 
     def test_own_idle_and_motion_registration(self):
-        root = ROOT / "Assets/Arts/Resources"
         for form in ("Wave", "WaveRise", "WaveWard", "WaveFinal"):
             idle = ROOT / "Assets/Arts/Reference" / (form + "_Idle.png")
             with Image.open(idle) as image:

@@ -55,8 +55,6 @@ namespace KarmaPrototype
         public Vector2 ElectricFoot => planted != null ? KarmaSW05Energy.GroundAnchor(planted.Sword) : new Vector2(landing.x, 0.12f);
         public Vector2 ElectricHilt => planted != null ? KarmaSW05Energy.GuardAnchor(planted.Sword)
             : ElectricFoot - shot.velocity.normalized * (shot.size.x * 0.60f);
-        public float ElectricWidth => shot.size.y;
-        public SpriteRenderer PlantedVisual => planted != null ? planted.Sword : null;
         public void ArmExplosion(float seconds = 0.75f)
         {
             explosionArmed = true; explosionWarning = seconds;

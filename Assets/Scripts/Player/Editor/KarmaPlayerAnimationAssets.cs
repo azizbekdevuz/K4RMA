@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.IO;
 using UnityEditor;
-using UnityEditor.U2D.Sprites;
 using UnityEngine;
 
 namespace KarmaPrototype.EditorTools

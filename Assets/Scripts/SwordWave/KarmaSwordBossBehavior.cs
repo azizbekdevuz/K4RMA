@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
@@ -196,7 +195,7 @@ namespace KarmaPrototype
             public bool GroundPatternRunning => ground.Running;
             public bool CounterWardFormed => counter.Formed;
 #endif
-            new KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
+            KarmaSwordBossSettings Settings { get { return owner.Tuning.sword; } }
             public override bool PlaysOwnStunSound => stunFeedback != null && stunFeedback.Electrocuted;
             public override Sprite StunSprite { get { return PlaysOwnStunSound ? null
                 : KarmaArtwork.Sprite("BossStun", "Wave") ?? base.StunSprite; } }
@@ -438,9 +437,6 @@ namespace KarmaPrototype
                 movement.RememberSwordPressure(); counter.OnDamaged();
             }
             public override Transform PersistentEffects { get { return persistentRoot; } }
-            public void CounterParried(KarmaAttackContact contact) { counter.OnParried(contact); }
-            public void CounterContactStarting(KarmaAttackContact contact) { counter.TraceStarting(contact); }
-            public void CounterContactResolved(KarmaAttackContact contact) { counter.TraceResolved(contact); }
             public override void Interrupt(bool preservePressure)
             {
                 owner.animator.CancelSwordBodyPresentation();

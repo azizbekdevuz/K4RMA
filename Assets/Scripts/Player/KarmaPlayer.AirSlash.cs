@@ -6,7 +6,6 @@ namespace KarmaPrototype
     {
         readonly KarmaAirSlashMotion airSlashMotion = new KarmaAirSlashMotion();
         readonly HashSet<KarmaEnemy> airSlashHits = new HashSet<KarmaEnemy>();
-        internal bool ContinuousSwordAttack { get { return airSlashRunning; } }
         bool airSlashRunning;
         Vector2 airSlashDirection, airSlashPrevious;
         float airSlashBufferedUntil, airRecoveryLeft, airSlashHoverLeft;
@@ -45,7 +44,8 @@ namespace KarmaPrototype
             Vector2 from = airSlashPrevious + airSlashDirection * KarmaSpace.Units(0.35f);
             Vector2 to = Position + airSlashDirection * KarmaSpace.Units(0.85f);
             airSlashPrevious = Position;
-            foreach (var enemy in game.Enemies.ToArray())
+            using var snapshot = game.GetEnemySnapshot(out var targets);
+            foreach (var enemy in targets)
             {
                 if (enemy == null || !enemy.Alive || airSlashHits.Contains(enemy)) continue;
                 if (!enemy.IntersectsDamagePath(from, to, KarmaSpace.Units(0.75f))) continue;

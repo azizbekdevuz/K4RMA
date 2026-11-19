@@ -10,7 +10,7 @@ namespace KarmaPrototype
         struct BossAttackVisual
         {
             public string Pose, Sheet, ExtraPose;
-            public bool Restrained, SeparateLaunch, ShieldBreak;
+            public bool Restrained, SeparateLaunch;
             public Color Color;
         }
         [System.AttributeUsage(System.AttributeTargets.Class)]
@@ -116,7 +116,6 @@ namespace KarmaPrototype
             public virtual void Interrupt(bool preservePressure)
             { foreach (var pattern in patterns.Values) pattern.Interrupt(); }
             public virtual Transform PersistentEffects { get { return null; } }
-            protected KarmaBossBalance Settings { get { return Balance; } }
             static readonly KarmaBossBalance neutralBalance = new KarmaBossBalance();
             public virtual KarmaBossBalance Balance { get { return neutralBalance; } }
             public virtual float DecisionDelay { get { return owner.game.Config.enemyDecisionDelay * owner.Tuning.decisionMultiplier * owner.Tempo * Balance.decisionScale; } }

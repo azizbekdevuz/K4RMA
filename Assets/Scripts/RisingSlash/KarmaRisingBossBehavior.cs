@@ -13,7 +13,7 @@ namespace KarmaPrototype
 #if UNITY_EDITOR
             public bool PracticeHold;
 #endif
-            new KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
+            KarmaRisingBossSettings Settings { get { return owner.Tuning.rising; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("RisingStunStars", "Frame00"); } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride, nextAirPursuit;

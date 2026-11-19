@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace KarmaPrototype
@@ -182,8 +181,8 @@ namespace KarmaPrototype
         {
             string pose = essence == Essence.SwordWave ? "SwordWave"
                 : essence == Essence.RisingSlash ? "Rising" : "Guard";
-            LoadNativePlayerPose(pose);
-            if (playerSequences.TryGetValue(pose, out var sequence) && sequence.Length > 0)
+            var sequence = LoadNativePlayerPose(pose);
+            if (sequence.Length > 0)
                 picture.sprite = sequence[Mathf.Clamp(Mathf.FloorToInt(seconds * playerSampleRate), 0, sequence.Length - 1)];
             else picture.sprite = KarmaArtwork.Sprite("Player", essence == Essence.SwordWave ? "Slash" : pose);
             picture.transform.localScale = pictureScale;

@@ -117,7 +117,6 @@ namespace KarmaPrototype
         internal bool SwordBodyReleased => !float.IsNegativeInfinity(swordBodyReleasedAt) || SwordPreviousReleaseVisible;
         internal int SwordMotionStrike => SwordPreviousReleaseVisible ? swordPreviousStrike : SwordStrikeIndex;
         internal float SwordBodyAge => SwordFrameTime(Time.time - swordBodyAt);
-        internal float SwordBodySmoothAge => Mathf.Max(0, Time.time - swordBodyAt);
         internal float SwordAscentProgress { get; private set; }
         internal void SampleSwordAscent(float progress)
         {
@@ -129,7 +128,6 @@ namespace KarmaPrototype
         internal bool SwordBodyVisible { get; private set; }
         internal bool SwordHeavyLocked => sw02VisualPhase == SW02VisualPhase.Locked;
         float swordBodyAt, swordBodyReleasedAt = float.NegativeInfinity;
-        float swordRecoveryAt = float.NegativeInfinity;
         float swordPreviousRelease = float.NegativeInfinity;
         int swordPreviousStrike;
         internal static float SwordFrameTime(float seconds) => Mathf.Floor(Mathf.Max(0, seconds) * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
@@ -142,7 +140,6 @@ namespace KarmaPrototype
             swordPreviousStrike = SwordStrikeIndex;
             SwordBodyAction = action; SwordBodyDuration = seconds; SwordStrikeIndex = strike;
             swordBodyAt = Time.time; swordBodyReleasedAt = float.NegativeInfinity;
-            swordRecoveryAt = float.NegativeInfinity;
             if (action == "UltimateAscent") SwordAscentProgress = 0;
         }
         internal void ReleaseSwordBody(string action, int strike = 0)
@@ -163,12 +160,11 @@ namespace KarmaPrototype
         void EndSwordBodyAction()
         {
             EndSW02PresentationAction();
-            if (sw02Owner == null || !sw02Owner.Alive) { CancelSwordBodyPresentation(); return; }
-            swordRecoveryAt = Time.time;
+            if (sw02Owner == null || !sw02Owner.Alive) CancelSwordBodyPresentation();
         }
         internal void CancelSwordBodyPresentation()
         {
-            SwordBodyAction = null; swordBodyReleasedAt = swordRecoveryAt = float.NegativeInfinity;
+            SwordBodyAction = null; swordBodyReleasedAt = float.NegativeInfinity;
             SwordBodyVisible = false; swordPreviousRelease = float.NegativeInfinity;
             wavePhase = null; waveReleasedUntil = 0; waveSwingAt = wavePhaseSwingAt = float.PositiveInfinity;
             basicPresentationActive = basicReleaseStarted = false;

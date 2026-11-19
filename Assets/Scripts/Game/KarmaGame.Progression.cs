@@ -222,8 +222,13 @@ namespace KarmaPrototype
             transitionLeft = PlayerFallDuration;
             playerFallSettled = false; playerFallAge = playerFallSettledAt = 0;
             Player.Essences.Cancel();
-            foreach (var enemy in Enemies.ToArray()) if (enemy != null)
-            { enemy.CancelCombat(); enemy.BeginVictoryPresentation(); }
+            using var snapshot = GetEnemySnapshot(out var targets);
+            foreach (var enemy in targets)
+            {
+                if (enemy == null) continue;
+                enemy.CancelCombat();
+                enemy.BeginVictoryPresentation();
+            }
             ClearProjectiles();
             Player.BeginDefeat();
         }

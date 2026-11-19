@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace KarmaPrototype
@@ -13,7 +12,7 @@ namespace KarmaPrototype
 #if UNITY_EDITOR
             public bool PracticeHold;
 #endif
-            new KarmaGuardBossSettings Settings { get { return owner.Tuning.guard; } }
+            KarmaGuardBossSettings Settings { get { return owner.Tuning.guard; } }
             public override Sprite StunSprite { get { return KarmaArtwork.Sprite("GuardStunStars", "Frame00"); } }
             public override KarmaBossBalance Balance { get { return Settings; } }
             readonly GD01Pattern shield;

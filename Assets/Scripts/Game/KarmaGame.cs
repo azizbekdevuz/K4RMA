@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace KarmaPrototype
 {
@@ -32,6 +33,15 @@ namespace KarmaPrototype
         Transform runRoot;
         float transitionLeft;
         bool ownsConfig;
+
+        // Damage and defeat callbacks can remove enemies or start a nested attack during iteration.
+        internal PooledObject<List<KarmaEnemy>> GetEnemySnapshot(out List<KarmaEnemy> targets)
+        {
+            var lease = ListPool<KarmaEnemy>.Get(out targets);
+            targets.AddRange(Enemies);
+            return lease;
+        }
+
         void OnEnable()
         {
             if (World == null) return;

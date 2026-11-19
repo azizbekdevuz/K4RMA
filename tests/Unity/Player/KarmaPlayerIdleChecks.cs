@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;

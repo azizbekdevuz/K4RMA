@@ -20,13 +20,14 @@ namespace KarmaPrototype
             SamplePlayerClip("Idle", true);
         }
         // Animation clips are authored from this same timeline. Live playback needs only its drawings and loop flag.
-        void LoadNativePlayerPose(string name)
+        Sprite[] LoadNativePlayerPose(string name)
         {
-            if (playerSequences.ContainsKey(name)) return;
+            if (playerSequences.TryGetValue(name, out var sequence)) return sequence;
             var motion = KarmaPlayerTimeline.Find(name);
-            if (motion == null) return;
-            playerSequences[name] = KarmaMotionArt.TryPreparedPlayer(motion.Source, out var sequence)
-                ? sequence : motion.Load();
+            if (motion == null) return System.Array.Empty<Sprite>();
+            if (!KarmaMotionArt.TryPreparedPlayer(motion.Source, out sequence)) sequence = motion.Load();
+            playerSequences[name] = sequence;
+            return sequence;
         }
         float playerExplicitRecoveryEnd;
         internal bool PlayerActionPlaying => Time.time < actionUntil || Time.time < poseUntil;
@@ -69,15 +70,14 @@ namespace KarmaPrototype
             if (picture == null) return;
             playerStatusPose = null;
             if (name == "Riposte" && SampleParrySuccess(restart)) return;
-            LoadNativePlayerPose(name);
-            if (!playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) return;
+            var sequence = LoadNativePlayerPose(name);
+            if (sequence.Length == 0) return;
             if (restart || playerClip != name) { playerClip = name; playerClipAt = Time.time; }
             float elapsed = Mathf.Max(0, Time.time - playerClipAt);
-            float sampleRate = playerSampleRate;
             var motion = KarmaPlayerTimeline.Find(name);
             float sample = motion.Loop ? elapsed % motion.Duration : elapsed;
             // Quantize visuals only. Physics, damage and input windows keep their original clocks.
-            picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * sampleRate + 0.00001f))];
+            picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * playerSampleRate + 0.00001f))];
             picture.flipX = false;
             picture.transform.localScale = pictureScale;
             CurrentPose = name;

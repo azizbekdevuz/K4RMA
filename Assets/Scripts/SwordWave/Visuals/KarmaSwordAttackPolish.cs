@@ -11,16 +11,6 @@ namespace KarmaPrototype
             if (marker == null) return;
             marker.GetComponent<KarmaAttackWarning>()?.SetTint(new Color(0.22f, 0.72f, 1, 0.42f));
         }
-        public static KarmaSwordChargePolish Charge(KarmaGame game, KarmaEnemy owner, Transform art, Vector2 at, float seconds, bool heavy, bool locked = true, bool followOwner = false)
-        {
-            var node = new GameObject(locked ? "Sword locked concentration / no damage" : "Sword tracking concentration / no damage");
-            node.transform.SetParent(art, false);
-            var cue = node.AddComponent<KarmaSwordChargePolish>();
-            cue.Initialize(game, owner, at, seconds, heavy, locked, followOwner);
-            if (!followOwner && game.IsCombat && owner.Alive)
-                KarmaAudio.Play(KarmaSfxId.SwEnergyCharge, seconds, cue);
-            return cue;
-        }
         public static void Release(KarmaGame game, KarmaEnemy owner, Transform art, Vector2 at, Vector2 velocity, Vector2 size, bool heavy, Transform scope = null)
         {
             if (scope == null) KarmaAudio.StopSlot("sw-bed");
@@ -29,7 +19,7 @@ namespace KarmaPrototype
             bool animated = owner.CurrentPattern == (int)EnemyAttack.SW01 || owner.CurrentPattern == (int)EnemyAttack.SW02;
             if (animated) KarmaSwordWaveAnimation.Release(game, owner, at, size, heavy, velocity.x);
             else
-            pool.Flash(owner, "Sword_Release_v6", at, new Vector2(Mathf.Min(size.x * 0.65f, 3.4f), Mathf.Min(size.y * 0.7f, 5.8f)), 0.13f, angle, scope);
+                pool.Flash(owner, "Sword_Release_v6", at, new Vector2(Mathf.Min(size.x * 0.65f, 3.4f), Mathf.Min(size.y * 0.7f, 5.8f)), 0.13f, angle, scope);
             pool.Sparks(owner, at, velocity.normalized, heavy ? 6 : 3, heavy ? 10 : 6, scope);
             if (owner.CurrentPattern == (int)EnemyAttack.SW02)
                 pool.Flash(owner, "Sword_Release_v6", at - velocity.normalized * 1.2f, new Vector2(5.8f, 0.28f), 0.09f, angle, scope);
@@ -68,12 +58,6 @@ namespace KarmaPrototype
             var light = shot.Visual.transform.Find("Attack radiance");
             if (light != null) light.gameObject.SetActive(false);
             shot.Visual.color = Color.white;
-        }
-        public static void Hit(KarmaGame game, KarmaEnemy owner, Vector2 at, bool strong)
-        {
-            var pool = KarmaSwordVfxPool.For(game);
-            pool.Flash(owner, "Sword_Impact_v6", at, Vector2.one * (strong ? 3.4f : 2.3f), strong ? 0.18f : 0.13f);
-            pool.Sparks(owner, at, Vector2.up, strong ? 6 : 3, 8);
         }
         public static void ParrySuccess(KarmaGame game, KarmaEnemy owner, Vector2 at)
         {
@@ -242,37 +226,6 @@ namespace KarmaPrototype
         }
     }
 
-    public sealed class KarmaSwordChargePolish : MonoBehaviour
-    {
-        KarmaGame game; KarmaEnemy owner; SpriteRenderer ring;
-        Vector2 at, offset; float life, age, nextMote; bool heavy, locked, follow;
-        public void Initialize(KarmaGame director, KarmaEnemy enemy, Vector2 position, float seconds, bool strong, bool committed, bool followOwner)
-        {
-            game = director; owner = enemy; at = position; offset = position - owner.Position; follow = followOwner; life = Mathf.Max(0.05f, seconds); heavy = strong; locked = committed;
-            ring = gameObject.AddComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(ring); ring.sortingOrder = 23;
-            ring.sprite = KarmaWaveArtwork.Sprite("Sword_GuardRing_v6"); transform.SetParent(game.World, true); transform.position = at;
-            KarmaSwordSkillSurface.Apply(ring, 6);
-            KarmaSwordVfxPool.For(game);
-        }
-        void Update()
-        {
-            if (game == null || owner == null || !owner.PresentationActive || owner.Stunned || owner.CurrentPattern == (int)EnemyAttack.SW05)
-            { Destroy(gameObject); return; }
-            if (game.Paused) return;
-            age += Time.deltaTime; if (age >= life) { Destroy(gameObject); return; }
-            if (follow) { at = owner.Position + offset; transform.position = at; }
-            float t = age / life; float diameter = follow ? 6.4f * (0.98f + 0.02f * Mathf.Sin(age * 8)) : (heavy ? 2.8f : 1.5f) * Mathf.Lerp(1.1f, 0.48f, t);
-            bool aimed = owner.CurrentPattern == (int)EnemyAttack.SW02;
-            bool staggered = owner.CurrentPattern == (int)EnemyAttack.SW01;
-            float focus = aimed && !follow ? Mathf.Lerp(1.12f, 0.72f, t * t) : 1;
-            transform.localScale = new Vector3(diameter * focus * (staggered ? 1.3f : 1) / ring.sprite.bounds.size.x,
-                diameter * focus * (staggered ? 0.72f : 1) / ring.sprite.bounds.size.y, 1);
-            transform.rotation = Quaternion.Euler(0, 0, (locked ? -150 : 90) * t);
-            ring.color = aimed ? new Color(Mathf.Lerp(0.3f, 0.88f, t), Mathf.Lerp(0.7f, 0.96f, t), 1, Mathf.Lerp(0.25f, 0.88f, t))
-                : new Color(0.4f, 0.82f, 1, follow ? 0.55f : Mathf.Lerp(0.25f, 0.88f, t));
-            if (age >= nextMote) { KarmaSwordVfxPool.For(game).Sparks(owner, at, Vector2.up, 1, 1.2f, transform); nextMote = age + 0.10f; }
-        }
-    }
 
     [DefaultExecutionOrder(325)]
     public sealed class KarmaSwordAttackAccent : MonoBehaviour
@@ -327,7 +280,7 @@ namespace KarmaPrototype
         Transform scope;
         MeshRenderer geometry; MeshFilter filter; Buffers buffer;
         Vector2 size;
-        float age, life;
+        float age;
         int stroke, strikeIndex;
         float facing;
         bool released;
@@ -410,11 +363,6 @@ namespace KarmaPrototype
         static Color Alpha(Color c, float a) { c.a = a; return c; }
         void Edge(float width, float alpha)
         { Stroke(width * 2.2f, Alpha(Cyan, alpha * 0.5f)); Stroke(width * 0.6f, Alpha(White, alpha)); }
-        void Line(Vector2 from, Vector2 to, float width, float alpha)
-        {
-            for (int p = 0; p < Points; p++) buffer.path[p] = Vector2.Lerp(from, to, p / (float)(Points - 1));
-            Edge(width, alpha);
-        }
         void PaintMelee()
         {
             float sweep = Mathf.Clamp01(age / KarmaCharacterAnimator.BasicSwingSeconds), fade = 1 - Mathf.Clamp01(age / KarmaCharacterAnimator.BasicSwingSeconds);

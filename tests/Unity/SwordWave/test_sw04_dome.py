@@ -22,7 +22,7 @@ class WardChecks(unittest.TestCase):
         for token in ("AddComponent<Collider", "AddComponent<KarmaBossAttack", ".TakeDamage(",
                       ".Stun(", "body.color =", "body.transform.localScale ="):
             self.assertNotIn(token, source)
-        self.assertIn("float clock=age;FrameIndex=(int)Mathf.Floor(age*24)%24", source)
+        self.assertIn("FrameIndex=(int)Mathf.Floor(age*KarmaBootstrap.FramesPerSecond)%KarmaBootstrap.FramesPerSecond", source)
         self.assertIn("swordGuard", (ROOT / "Assets/Scripts/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig"))
         pattern = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
         self.assertIn("new KarmaAttackContact[4]", pattern)
@@ -55,7 +55,7 @@ class WardChecks(unittest.TestCase):
         self.assertIn("? Color.clear : base.ShieldColor", method(behavior,"public override Color ShieldColor"))
         self.assertNotIn("WardBurst(transform,game,Center", method(source,"public void Absorb()"))
         self.assertNotIn("WardBurst(",method(source,"public void Collapse()"))
-        feedback=method(behavior,"public override void ReducedDamageFeedback()")
+        feedback=method(behavior,"public override void ReducedDamageFeedback(")
         self.assertNotIn("KarmaRemnantVFX.Impact(",feedback)
         self.assertIn("counter.GuardImpact()",feedback)
 
@@ -176,6 +176,7 @@ namespace KarmaPrototype {
  public class KarmaCharacterAnimator:MonoBehaviour{public float SwordChargeBodyHeight=5;public Vector3 SwordVisualHome,SwordFoot;}
  public class KarmaBossAttack:MonoBehaviour{public SpriteRenderer Visual=new GameObject().AddComponent<SpriteRenderer>();}
  public static class KarmaCombatVFX{public static Material GlowMaterial=new Material();}public static class KarmaVisuals{public static Material DefaultMaterial=new Material();}
+ public static class KarmaBootstrap{public const int FramesPerSecond=12;}
  public static class KarmaSpace{public const float GuardianGroundY=2.3f;}
  public static class KarmaSwordAttackPolish{public static void Core(KarmaBossAttack s){}}
  public static class KarmaSW05VFX{public static void ApplySword(SpriteRenderer s,Vector2 size,Vector2 velocity){}}
@@ -272,7 +273,7 @@ namespace KarmaPrototype {
     for(int i=0;i<hexCount*4;i++)Check(hexColors[i].a>=.048f&&hexColors[i].a<.23f,"grid remains visible and translucent at rest");
     for(int i=0;i<24*16*4;i++)Check(shellMesh.colors[i].a>=.035f&&shellMesh.colors[i].a<.15f,"pale continuous membrane leaves the opaque swords and body readable");
     Check(shellMesh.colors[0].a>shellMesh.colors[7*4].a,"denser outer surface conveys rounded barrier");
-    float before=(float)Get(v,"age");int frame=v.FrameIndex;game.Paused=true;Tick(v);Check((float)Get(v,"age")==before&&v.FrameIndex==frame,"pause freezes dome");game.Paused=false;
+    float before=(float)Get(v,"age");int frame=v.FrameIndex;Check(frame==(int)System.Math.Floor(before*12)%12,"guard animation uses the 12fps clock");game.Paused=true;Tick(v);Check((float)Get(v,"age")==before&&v.FrameIndex==frame,"pause freezes dome");game.Paused=false;
     art.position=new Vector3(43,2,0);Tick(v);var foot=(Vector2)Get(v,"foot");Check(foot.x==43&&foot.y==2,"registered support follows boss translation and facing");
     int bursts=KarmaSW05Energy.bursts;v.Absorb();Check(v.Countering&&KarmaSW05Energy.bursts==bursts,"absorb stays on dome without duplicate circular burst");foreach(var b in blades)Check(b.enabled,"existing counter blades remain visible");
     for(int i=0;i<4;i++){v.Aim(i,new Vector2(42+i,3),new Vector2(facing,0),new Vector2(7,5),false);Tick(v);v.Aim(i,new Vector2(42+i,3),new Vector2(facing,0),new Vector2(7,5),true);for(int t=0;t<20;t++)Tick(v);Geometry(v);v.Released(new Vector2(42+i,3),new Vector2(facing,0));Geometry(v);}

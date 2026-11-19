@@ -324,9 +324,6 @@ public static class KarmaSW05PlayChecks
                         "compact afterimage inherits the live blade artwork and orientation");
                 }
             Check(wake && echoes == 1, "falling sword owns one bounded electric wake and one compact blade echo");
-            Check(!Array.Exists(Root.GetComponentsInChildren<KarmaSwordPackedVfx>(),
-                packed => packed.ClipId == KarmaSwordPackedVfx.Clip.FallingAura),
-                "a second broad falling aura does not obscure the blade silhouette");
             await Seconds(0.035f); Capture("rain");
             Check(!enemy.Stunned && Get<bool>(enemy, "running") && Forming().Length == 0,
                 "ultimate continues its existing rain after parry without spawning stun feedback");

@@ -304,7 +304,7 @@ public static class KarmaSwordWallCounterChecks
             "single visible success ring is cosmetic only");
         Check(Vector2.Distance(success[0].transform.position, game.Player.GetComponent<Collider2D>().bounds.center) < 0.001f,
             "success feedback stays at the player's confirmed parry point");
-        Call(Behavior, "CounterParried", contacts[index]);
+        Call(Counter, "OnParried", contacts[index]);
         Check(game.World.GetComponentsInChildren<KarmaSwordParryFeedback>().Length == 1, "duplicate contact cannot replay success or cancellation");
         for (int later = index + 1; later < 4; later++)
         {
@@ -346,7 +346,7 @@ public static class KarmaSwordWallCounterChecks
         await StartCounter(); await HoldShots(1); var oldContact = Contacts[0]; int oldId = (int)Get(Volley, "Id"); RealParry(Shots[0]);
         Set(Shots[0], "remaining", 0f); await Until(() => Volley == null);
         await StartCounter(false); await HoldShots(1); int id = (int)Get(Volley, "Id");
-        Call(Behavior, "CounterParried", oldContact);
+        Call(Counter, "OnParried", oldContact);
         Check(id > oldId && (int)Get(Volley, "LastAllowed") == 3, "stale volley identity cannot cancel a reused ward");
         await HoldShots(4); Check(Shots[3] != null, "reuse resets all four shots");
         Log("reused SW04 creates fresh group ID and four releases; stale contact ignored");

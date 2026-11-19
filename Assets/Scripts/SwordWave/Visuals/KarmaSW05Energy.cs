@@ -237,12 +237,6 @@ namespace KarmaPrototype
                 i++;
             }
         }
-        public static void Eruption(Transform root, KarmaGame game, Vector2 at, float width)
-        {
-            var fx = Create(root,game,Kind.Eruption,0.2f);
-            fx.name = "SW03 synchronized eruption flash / no damage";
-            fx.at = at; fx.size = new Vector2(width,1); fx.display.sortingOrder = 34;
-        }
         public static KarmaSW05Energy Scar(Transform root,KarmaGame game,Transform attack,Vector2 ground,Vector2 size,float life)
         {
             var fx=Create(root,game,Kind.Scar,life,512);fx.follow=attack;fx.at=ground;fx.size=size;

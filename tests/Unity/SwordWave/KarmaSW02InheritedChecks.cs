@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using KarmaPrototype;
 using UnityEditor;
-using UnityEditor.U2D.Sprites;
 using UnityEngine;
 
 // Focused phase3 check: inherited SW02 only. Reuses the existing real-cast
@@ -17,7 +16,6 @@ public static class KarmaSW02InheritedChecks
 {
     const string Folder = "output/validation/sw02-animation-phase3-20261105";
     const string Key = "K4RMA.SW02Inherited";
-    const string Library = "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags F = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
     static readonly string[] Forms = { "WaveRise", "WaveWard", "WaveFinal" };
     static readonly string[] Names = { "Prepare01", "Prepare02", "Swing01", "Swing02", "Recover01", "Recover02" };

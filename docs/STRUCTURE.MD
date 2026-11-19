@@ -434,7 +434,6 @@ K4RMA/
 │       │   ├── KarmaBossRules.cs
 │       │   ├── KarmaPatternCatalog.cs
 │       │   ├── KarmaProgressionState.cs
-│       │   ├── KarmaStory.cs
 │       │   ├── KarmaTechniqueState.cs
 │       │   └── KarmaTypes.cs
 │       ├── Game/
@@ -583,7 +582,6 @@ K4RMA/
 │       │   │   ├── KarmaSW05VFX.cs
 │       │   │   ├── KarmaSwordAttackPolish.cs
 │       │   │   ├── KarmaSwordHitFeedback.cs
-│       │   │   ├── KarmaSwordPackedVfx.cs
 │       │   │   ├── KarmaSwordRetreatAfterimages.cs
 │       │   │   ├── KarmaSwordScarRise.cs
 │       │   │   ├── KarmaSwordSkillSurface.cs

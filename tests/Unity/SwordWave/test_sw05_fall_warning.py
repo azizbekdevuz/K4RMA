@@ -1,5 +1,4 @@
 """Production falling-warning geometry, clocks and cleanup; no Unity launch."""
-import re
 import unittest
 from pathlib import Path
 

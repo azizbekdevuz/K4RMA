@@ -39,7 +39,7 @@ namespace KarmaPrototype
             var visual = behavior.AttackVisual(attack, velocity);
             return KarmaBossAttack.Spawn(game, this, parent != null ? parent : effectsRoot, at, velocity, size, life,
                 Damage * multiplier, visual.Color, contact, stun, visualPose ?? visual.Pose,
-                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, visual.ShieldBreak, sourcePattern: attack);
+                visual.Restrained, visual.SeparateLaunch, visual.ExtraPose, visual.Sheet, parryStun, sourcePattern: attack);
         }
         IEnumerator Motion(Vector2 target, float duration, Vector2 hitSize, KarmaAttackContact contact = null, Sprite sweepSprite = null)
         {

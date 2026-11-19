@@ -51,18 +51,38 @@ namespace KarmaPrototype
             geometry.Add(pose.sprite,pose);
             return pose.sprite;
         }
+        static Sprite Find(List<Pose> poses, string name)
+        {
+            foreach (var pose in poses)
+                if (pose.name == name) return Resolve(pose);
+            return null;
+        }
+
         public static Sprite Get(string group, string name)
         {
             Read();
-            if (groups.TryGetValue(group,out var poses))
-                foreach (var pose in poses) if (pose.name == name) return Resolve(pose);
-            return null;
+            return groups.TryGetValue(group, out var poses) ? Find(poses, name) : null;
         }
+
         public static Sprite[] All(string group)
         {
             Read();
-            return groups.TryGetValue(group,out var poses) ? poses.ConvertAll(Resolve).ToArray() : Array.Empty<Sprite>();
+            if (!groups.TryGetValue(group, out var poses)) return Array.Empty<Sprite>();
+            var sprites = new Sprite[poses.Count];
+            for (int i = 0; i < sprites.Length; i++) sprites[i] = Resolve(poses[i]);
+            return sprites;
         }
+
+        public static Sprite[] InOrder(string group, string[] names)
+        {
+            Read();
+            if (!groups.TryGetValue(group, out var poses)) return Array.Empty<Sprite>();
+            var sprites = new Sprite[names.Length];
+            for (int i = 0; i < names.Length; i++)
+                sprites[i] = Find(poses, names[i]) ?? throw new InvalidOperationException(group + " missing inherited pose " + names[i]);
+            return sprites;
+        }
+
         public static Bounds HitBounds(Sprite s) => geometry.TryGetValue(s,out var pose) ? pose.bounds : s.bounds;
         public static bool TryFloor(Sprite s, out float y)
         {

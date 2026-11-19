@@ -9,7 +9,6 @@ namespace KarmaPrototype
         Sprite displaySprite;
         Bounds displayDamage;
         internal string MotionForm => motionForm;
-        internal string DisplayMotion => displayMotion;
 
         void DrawMotion(string form, string motion, float elapsed, bool loop = false)
         {

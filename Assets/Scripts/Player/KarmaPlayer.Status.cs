@@ -134,25 +134,6 @@ namespace KarmaPrototype
             body.linearVelocity = new Vector2(0, body.linearVelocity.y);
             SuppressLandingAudioIfGrounded();
         }
-        public void ResolveBarrier(float centerX, float width, float top = float.PositiveInfinity)
-        {
-            if (Position.y - KarmaSpace.PlayerHalfHeight >= top - 0.02f) return;
-            float separation = width / 2 + KarmaSpace.PlayerHalfWidth + KarmaSpace.Units(0.05f);
-            if (Mathf.Abs(Position.x - centerX) >= separation) return;
-            CancelAirSlash();
-            if (!float.IsPositiveInfinity(top))
-            {
-                // Adjacent rising steps must lift, rather than shove into an already solid neighbor.
-                Vector2 above = new Vector2(Position.x, top + KarmaSpace.PlayerHalfHeight + KarmaSpace.Units(0.03f));
-                body.position = above; transform.position = above; body.linearVelocity = Vector2.zero;
-                ResetLandingAudio();
-                return;
-            }
-            Vector2 p = new Vector2(centerX + (Position.x < centerX ? -separation : separation), Position.y);
-            body.position = p; transform.position = p;
-            body.linearVelocity = new Vector2(0, body.linearVelocity.y);
-            SuppressLandingAudioIfGrounded();
-        }
         public void ClearStatus()
         {
             CancelAirSlash(); stunUntil = shockUntil = airborneUntil = knockbackUntil = knockdownUntil = getUpUntil = 0;

@@ -22,7 +22,6 @@ subprocess.run(['python3', '-m', 'unittest', 'discover', '-s', str(root / 'tests
 version = (root / 'ProjectSettings/ProjectVersion.txt').read_text().splitlines()[0].split(': ')[1]
 editor = args.unity or Path(f'/Applications/Unity/Hub/Editor/{version}/Unity.app/Contents/MacOS/Unity')
 output = root / 'output/validation'
-output.mkdir(parents=True, exist_ok=True)
 suites = [('artwork', 'KarmaEndingMoonChecks', 'ending-moon/result.txt'),
           ('isolation', 'KarmaBossIsolationChecks', 'boss-isolation-validation.txt'),
           ('guard', 'KarmaGuardPlayChecks', 'guard-play-validation.txt'),
@@ -68,6 +67,7 @@ with (nullcontext(str(args.work_project)) if args.work_project else tempfile.Tem
         shutil.copy2(check, assets / 'Editor' / check.name)
     if 'build' in args.suite or 'all' in args.suite:
         shutil.copy2(root / 'tests/Standalone/KarmaFramePacingProbe.cs', assets)
+    output.mkdir(parents=True, exist_ok=True)
     failures = []
     selected = suites if 'all' in args.suite else [next(row for row in suites if row[0] == key)
                                                  for key in dict.fromkeys(args.suite)]

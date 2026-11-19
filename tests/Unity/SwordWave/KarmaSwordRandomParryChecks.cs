@@ -26,7 +26,6 @@ public static class KarmaSwordRandomParryChecks
     static object Movement => Get(Behavior, "movement");
     static object Counter => Get(Behavior, "counter");
     static Transform Art => (Transform)Get(Enemy, "art");
-    static Transform Root => (Transform)Get(Enemy, "effectsRoot");
     static object Get(object target, string name)
     {
         for (var type = target.GetType(); type != null; type = type.BaseType)

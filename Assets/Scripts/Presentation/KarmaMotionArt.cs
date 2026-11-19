@@ -9,7 +9,7 @@ namespace KarmaPrototype
     internal sealed class KarmaMotionArt
     {
         public const string Root = "Motions12/";
-        static Dictionary<string, int> counts;
+        static Dictionary<(string form, string motion), int> counts;
         readonly Dictionary<(string form, string motion), Sprite[]> loaded = new Dictionary<(string, string), Sprite[]>();
         static KarmaMotionArt commonPlayer = new KarmaMotionArt();
         static readonly string[] playerOpening = {
@@ -44,31 +44,31 @@ namespace KarmaPrototype
                 yield return null;
             }
         }
-        static Dictionary<string, int> Counts
+        static Dictionary<(string form, string motion), int> Counts
         {
             get
             {
                 if (counts != null) return counts;
                 var catalog = Resources.Load<TextAsset>(Root + "Catalog");
-                var result = new Dictionary<string, int>(StringComparer.Ordinal);
+                var result = new Dictionary<(string, string), int>();
                 foreach (string line in catalog.text.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries))
                 {
                     var columns = line.Split('\t');
-                    result.Add(columns[0] + "/" + columns[1], int.Parse(columns[4]));
+                    result.Add((columns[0], columns[1]), int.Parse(columns[4]));
                 }
                 return counts = result;
             }
         }
-        public static bool Has(string form, string motion) => motion == "Idle" || Counts.ContainsKey(form + "/" + motion);
+        public static bool Has(string form, string motion) => motion == "Idle" || Counts.ContainsKey((form, motion));
         public Sprite[] Frames(string form, string motion)
         {
-            if (loaded.TryGetValue((form, motion), out var sequence)) return sequence;
-            string key = form + "/" + motion;
-            sequence = motion == "Idle" ? new[] { KarmaArtwork.StageIdle(form) } : KarmaArtResource.Frames(Root + key);
+            var key = (form, motion);
+            if (loaded.TryGetValue(key, out var sequence)) return sequence;
+            sequence = motion == "Idle" ? new[] { KarmaArtwork.StageIdle(form) } : KarmaArtResource.Frames(Root + form + "/" + motion);
             if (motion != "Idle" && (!Counts.TryGetValue(key, out int expected) || sequence.Length != expected))
-                throw new InvalidOperationException("Missing motion drawings: " + key);
+                throw new InvalidOperationException("Missing motion drawings: " + form + "/" + motion);
             Array.Sort(sequence, (a,b) => string.CompareOrdinal(a.name,b.name));
-            return loaded[(form, motion)] = sequence;
+            return loaded[key] = sequence;
         }
         public Sprite Sample(string form, string motion, float elapsed, bool loop = false)
         {

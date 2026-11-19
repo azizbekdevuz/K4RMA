@@ -36,6 +36,29 @@ public static class KarmaIntegrationChecks
     }
     static void Log(string message, string trace, LogType type)
     { if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) runtimeError = message; }
+    static void CheckMultiTargetDefeat(KarmaGame game)
+    {
+        game.StartRun();
+        var first = game.Enemies[0];
+        var node = new GameObject("Second guardian");
+        node.transform.SetParent(game.World, false);
+        node.transform.position = first.transform.position;
+        var second = node.AddComponent<KarmaEnemy>();
+        second.Initialize(game, game.StageIndex);
+        game.Enemies.Add(second);
+
+        var health = typeof(KarmaEnemy).GetProperty(nameof(KarmaEnemy.Health));
+        health.SetValue(first, 1f);
+        health.SetValue(second, 1f);
+        var finalArt = second.GetComponentInChildren<KarmaCharacterAnimator>().transform;
+        game.Player.ResetForRoom(new Vector2(first.Position.x, KarmaSpace.PlayerHalfHeight), true);
+        Physics2D.SyncTransforms();
+        game.Player.BeginRisingSlash();
+        Check(!first.Alive && !second.Alive && game.Enemies.Count == 0, "One rising slash can defeat two targets removed during the hit loop");
+        Check(game.Phase == RunPhase.GuardianFallen && (Transform)typeof(KarmaGame).GetField("fallenGuardian", Hidden).GetValue(game) == finalArt,
+            "The last target in attack order owns the defeat ceremony");
+    }
+
     static async void Run()
     {
         string verdict;
@@ -89,6 +112,7 @@ public static class KarmaIntegrationChecks
                 Check(library.All("empty").Length == 0 && library.Get("empty", "missing") == null, "Null entries are safe");
             }
             finally { UnityEngine.Object.DestroyImmediate(library); }
+            CheckMultiTargetDefeat(game);
             await KarmaEndingMoonChecks.CheckFinalSpacing(game, Check);
             Check(runtimeError == null, "No runtime error: " + runtimeError);
             verdict = "PASS: " + assertions + " integration assertions, plus 16 parry frame/facing samples";

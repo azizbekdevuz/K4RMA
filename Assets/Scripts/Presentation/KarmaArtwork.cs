@@ -115,8 +115,11 @@ namespace KarmaPrototype
         }
         public static Sprite[] Sprites(string sheet)
         {
-            var body = KarmaBodyPoses.All(sheet);
-            if (body.Length > 0 && sheet != "Inheritance") return body;
+            if (sheet != "Inheritance")
+            {
+                var body = KarmaBodyPoses.All(sheet);
+                if (body.Length > 0) return body;
+            }
             var common = Settings.spriteLibrary != null ? Settings.spriteLibrary.All(sheet) : Array.Empty<Sprite>();
             // These character sheets are wholly owned by the shared library.
             if (sheet == "Player" || sheet == "Neutral") return common;
@@ -147,17 +150,8 @@ namespace KarmaPrototype
                 return Array.Empty<Sprite>();
             var folder = GuardianFolder(form);
             if (folder == null) return Array.Empty<Sprite>();
-            var drawings = KarmaBodyPoses.All("@" + folder + "/Forms/" + form);
-            if (drawings.Length == 0) return drawings;
             var names = folder == "Guard" ? WardPoseNames : folder == "RisingSlash" ? RisePoseNames : WavePoseNames;
-            var poses = new Sprite[names.Length];
-            for (int i = 0; i < poses.Length; i++)
-            {
-                string name = names[i];
-                poses[i] = Array.Find(drawings, sprite => sprite.name == name);
-                if (poses[i] == null) throw new InvalidOperationException(form + " missing inherited pose " + name);
-            }
-            return poses;
+            return KarmaBodyPoses.InOrder("@" + folder + "/Forms/" + form, names);
         }
         internal static Sprite[] RevivalPoses(string form)
         {

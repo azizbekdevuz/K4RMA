@@ -1,4 +1,3 @@
-using UnityEngine;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy

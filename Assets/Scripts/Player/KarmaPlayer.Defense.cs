@@ -32,7 +32,8 @@ namespace KarmaPrototype
                 invulnerableUntil = Time.time + 0.12f;
                 Essences.NotifyUnique(Essence.Guard);
                 if (!counterDamage) return;
-                foreach (var enemy in game.Enemies.ToArray())
+                using var snapshot = game.GetEnemySnapshot(out var targets);
+                foreach (var enemy in targets)
                 {
                     if (enemy == null || !enemy.Alive) continue;
                     if (Vector2.Distance(enemy.ClosestDamagePoint(Position), Position) < KarmaSpace.Units(3.5f)) enemy.TakeDamage(game.Config.Techniques.counterDamage);

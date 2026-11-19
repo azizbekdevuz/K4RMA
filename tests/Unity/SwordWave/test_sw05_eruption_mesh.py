@@ -8,14 +8,12 @@ Run: python -X utf8 -B tests/Unity/SwordWave/test_sw05_eruption_mesh.py
 import json
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 ENERGY = ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaSW05Energy.cs"
 HISTORICAL_REVISION = "036c22b"
-HISTORICAL_PATH = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/KarmaSW05VFX.cs"
 METHODS = ("Noise", "Direction", "Quad", "Line", "Shard", "SwordShard", "Bolt", "Ring",
            "HazardVolumes", "FinalEnergy", "FinalEruption", "EruptionPlume", "ClipFinalRegion",
            "RibbonSegment", "Facet", "JudgementBlade", "FinalSite", "GroundSigil")
@@ -98,8 +96,6 @@ static class KarmaSW05RainBlade {public const float ExplosionActiveSeconds=0.12f
 public class SW05MeshProbe {
     class Storage {public int capacity=16384;public Vector3[] vertices=new Vector3[65536];public Color[] colors=new Color[65536];}
     enum Kind { Charge, Detonation }
-    class PackedLayer { public void SetProgress(float t){} }
-    PackedLayer[] chargedLayers=new PackedLayer[0];
     Vector3[] sites=new Vector3[54],zones;
     Vector2[] chargeFeet=new Vector2[54],chargeHilts=new Vector2[54];
     Storage buffer=new Storage();
@@ -166,31 +162,20 @@ PROBE = r"""
 """
 
 
-def history(path=HISTORICAL_PATH):
+def history(path):
     return subprocess.check_output(["git", "--no-optional-locks", "show", HISTORICAL_REVISION + ":" + path], cwd=ROOT)
 
 
-def samples(source, historical=False):
-    names = tuple(n for n in METHODS if n not in ("ClipFinalRegion", "FinalEruption")) if historical else METHODS
-    code = SHIM + "\n".join(method(source, name) for name in names) + PROBE
-    if historical:
-        # Historical capacity was 16384; do not truncate the historical fixtures.
-        code = code.replace("capacity=16384", "capacity=32768").replace("new Vector3[65536]", "new Vector3[131072]").replace("new Color[65536]", "new Color[131072]")
-    script = ("[Console]::InputEncoding=New-Object System.Text.UTF8Encoding;"
-              "$code=[Console]::In.ReadToEnd();"
-              "Add-Type -TypeDefinition $code -ErrorAction Stop;[SW05MeshProbe]::Run()")
-    result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
-                            input=code, text=True, encoding="utf-8", capture_output=True)
-    if result.returncode:
-        raise AssertionError(result.stderr)
-    return [json.loads(line) for line in result.stdout.splitlines() if line.startswith("{")]
+def samples(source):
+    from test_sword_presentation import run_cs
+    code = SHIM + "\n".join(method(source, name) for name in METHODS) + PROBE
+    output = run_cs(code, "SW05MeshProbe", modern=True)
+    return [json.loads(line) for line in output.splitlines() if line.startswith("{")]
 
 
 class SW05RestoredExplosionChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if not shutil.which("powershell"):
-            raise unittest.SkipTest("Windows PowerShell required for in-memory C# compilation")
         cls.source = ENERGY.read_text(encoding="utf-8")
         cls.samples = samples(cls.source)
         if len(cls.samples) != 90:

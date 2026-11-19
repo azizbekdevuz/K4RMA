@@ -9,10 +9,10 @@ namespace KarmaPrototype
         internal void ResetPlayerStatus() { playerStatusPose = null; }
         internal bool PresentPlayerStatus(string pose, float elapsed, bool recovery = false, bool reverse = false)
         {
-            LoadNativePlayerPose(pose);
-            if (sheet != "Player" || picture == null || deathAt >= 0 || Time.time < empowermentUntil
-                || !playerSequences.TryGetValue(pose, out var sequence) || sequence.Length == 0) return false;
+            if (sheet != "Player" || picture == null || deathAt >= 0 || Time.time < empowermentUntil) return false;
             if (recovery && (Time.time < actionUntil || Time.time < poseUntil || Time.time < hurtUntil)) return false;
+            var sequence = LoadNativePlayerPose(pose);
+            if (sequence.Length == 0) return false;
             if (playerStatusPose != pose) { playerStatusPose = pose; playerStatusAt = Time.time; }
             if (pose.StartsWith("Airborne", System.StringComparison.Ordinal)) elapsed = Time.time - playerStatusAt;
             int frame = Mathf.FloorToInt(elapsed * KarmaBootstrap.FramesPerSecond);

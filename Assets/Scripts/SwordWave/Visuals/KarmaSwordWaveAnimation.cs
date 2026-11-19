@@ -560,17 +560,6 @@ namespace KarmaPrototype
                 Ribbon(width * 2.4f, Alpha(Cyan, alpha * 0.48f));
                 Ribbon(width * 0.62f, Alpha(White, alpha));
             }
-            void Lightning(Vector2 from, Vector2 to, float width, float alpha, float irregularity, int key)
-            {
-                Vector2 normal = new Vector2(-(to - from).y, (to - from).x).normalized;
-                for (int p = 0; p < Points; p++)
-                {
-                    float t = p / (float)(Points - 1);
-                    float kink = Flicker(key, p) * irregularity + Mathf.Sin(t * 14 + age * 23 + key) * irregularity * 0.3f;
-                    path[p] = Vector2.Lerp(from, to, t) + normal * (kink * Mathf.Sin(t * Mathf.PI));
-                }
-                ElectricRibbon(width, alpha);
-            }
             void BladeBolt(Vector2 from, Vector2 to, float width, float alpha, float kink, int key)
             {
                 Vector2 delta = to - from;

@@ -17,7 +17,7 @@ namespace KarmaPrototype.EditorTools
                 if (!frames.TryGetValue((form, motion), out var sequence))
                 {
                     string resource = motion == "Idle" ? KarmaArtwork.StageArt + form + "_Idle" : "Motions12/" + form + "/" + motion;
-                    sequence = Resources.LoadAll<Sprite>(resource).OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
+                    sequence = KarmaArtResource.Frames(resource).OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
                     frames.Add((form, motion), sequence);
                 }
                 return sequence[index];

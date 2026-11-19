@@ -13,13 +13,19 @@ namespace KarmaPrototype
             if (Mathf.Abs(x - Position.x) > 0.01f) Facing = x < Position.x ? -1 : 1;
             art.localScale = new Vector3(Facing, 1, 1);
         }
+        internal bool NeedsCeremonySpacing(Bounds guardianBounds, float guardianX, out float left, out float right)
+        {
+            float padding = KarmaSpace.PlayerHalfWidth + KarmaSpace.Units(0.65f);
+            left = Mathf.Min(guardianX - KarmaSpace.Units(3.5f), guardianBounds.min.x - padding);
+            right = Mathf.Max(guardianX + KarmaSpace.Units(3.5f), guardianBounds.max.x + padding);
+            return Position.x > left && Position.x < right;
+        }
+
         public void BeginCeremonySpacing(Bounds guardianBounds, float guardianX)
         {
             ceremonyGuardianX = guardianX;
-            float padding = KarmaSpace.PlayerHalfWidth + KarmaSpace.Units(0.65f);
-            float left = Mathf.Min(guardianX - KarmaSpace.Units(3.5f), guardianBounds.min.x - padding);
-            float right = Mathf.Max(guardianX + KarmaSpace.Units(3.5f), guardianBounds.max.x + padding);
-            if (Position.x <= left || Position.x >= right) { FinishCeremonySpacing(); return; }
+            if (!NeedsCeremonySpacing(guardianBounds, guardianX, out float left, out float right))
+            { FinishCeremonySpacing(); return; }
             float min = KarmaStage.ArenaLeft + KarmaSpace.PlayerHalfWidth + 0.2f;
             float max = KarmaStage.ArenaRight - KarmaSpace.PlayerHalfWidth - 0.2f;
             bool canLeft = left >= min && ClearCeremonyPath(left);

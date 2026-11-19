@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using KarmaPrototype;
 using UnityEditor;
-using UnityEditor.U2D.Sprites;
 using UnityEngine;
 
 // One SW05 rain group only, at 60 Hz. Capture the actual URP game camera and
@@ -17,9 +16,8 @@ public static class KarmaSW05ArtworkChecks
 {
     const string Output = "output/validation/sw05-artwork-20261105";
     const string Key = "K4RMA.SW05Artwork";
-    const string Artwork = "Assets/Arts/Resources/SwordWave/";
-    public static string EffectPath(string name) => Artwork
-        + (name.StartsWith("Sword_", StringComparison.Ordinal) ? "Shared" : name.Substring(0, 4)) + "/" + name + ".png";
+    const string Artwork = "Assets/Arts/SwordWave/Effects/";
+    public static string EffectPath(string name) => Artwork + name + ".png";
     const string Library = "Assets/Data/Resources/BossArtwork/KarmaSwordBossSprites.asset";
     const BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
     static KarmaGame game;
@@ -75,57 +73,7 @@ public static class KarmaSW05ArtworkChecks
     }
     public static void RunBaseline() => Begin(true);
     public static void RunUpdated() => Begin(false);
-    // Import only the six additional sheets. Existing GUIDs, sprites and
-    // logical names are retained, including on a repeated import.
-    public static void ImportSuppliedPack()
-    {
-        try
-        {
-            var names = new[] { "SW03_GroundCharge_6f", "SW03_BladeSurge_6f", "SW05_FallingSwordAura_6f",
-                "SW05_LandingShock_6f", "SW05_FinalOvercharge_6f", "SW05_FinalDetonation_8f" };
-            var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Library);
-            var sheet = library.sheets.Single(s => s.id == "SwordBossVFX");
-            var sprites = sheet.sprites.ToList(); var poses = sheet.poses.ToList();
-            while (poses.Count < sprites.Count) poses.Add(sprites[poses.Count].name);
-            foreach (var name in names)
-            {
-                string path = EffectPath(name);
-                AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
-                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Multiple;
-                importer.spritePixelsPerUnit = 100; importer.mipmapEnabled = false; importer.alphaIsTransparency = true;
-                importer.filterMode = FilterMode.Bilinear; importer.wrapMode = TextureWrapMode.Clamp;
-                importer.npotScale = TextureImporterNPOTScale.None; importer.maxTextureSize = 4096;
-                importer.textureCompression = TextureImporterCompression.Uncompressed;
-                var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
-                settings.spriteMeshType = SpriteMeshType.FullRect; importer.SetTextureSettings(settings);
-                var factories = new SpriteDataProviderFactories(); factories.Init();
-                var provider = factories.GetSpriteEditorDataProviderFromObject(importer); provider.InitSpriteEditorDataProvider();
-                var old = provider.GetSpriteRects().ToDictionary(r => r.name,r => r.spriteID);
-                int count = name.EndsWith("8f") ? 8 : 6;
-                var rects = Enumerable.Range(0,count).Select(i => new SpriteRect {
-                    name = name + "_" + i, rect = new Rect(i*512,0,512,512), alignment = SpriteAlignment.Custom,
-                    pivot = name.Contains("Aura") ? new Vector2(0.5f,0.5f) : new Vector2(0.5f,96f/512),
-                    spriteID = old.TryGetValue(name+"_"+i,out var id) ? id : GUID.Generate()
-                }).ToArray();
-                provider.SetSpriteRects(rects);
-                provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name,r.spriteID)));
-                provider.Apply(); importer.SaveAndReimport();
-                foreach (var sprite in AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s => s.name))
-                {
-                    int index = poses.IndexOf(sprite.name);
-                    if (index >= 0) sprites[index] = sprite;
-                    else { sprites.Add(sprite); poses.Add(sprite.name); }
-                }
-                Check(sprites.Count(s => s != null && s.name.StartsWith(name+"_")) == count,"supplied frame count: " + name);
-            }
-            sheet.sprites = sprites.ToArray(); sheet.poses = poses.ToArray();
-            EditorUtility.SetDirty(library); AssetDatabase.SaveAssets();
-            Debug.Log("PACK PASS: six native horizontal sheets / 38 PPU100 frames imported; existing sprite entries preserved");
-            EditorApplication.Exit(0);
-        }
-        catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
-    }
+    public static void ImportSuppliedPack() => ImportGrandPack();
     public static void ImportGrandPack()
     {
         try
@@ -133,7 +81,7 @@ public static class KarmaSW05ArtworkChecks
             var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Library);
             var sheet = library.sheets.Single(s => s.id == "SwordBossVFX");
             var sprites = sheet.sprites.ToList(); var poses = sheet.poses.ToList();
-            foreach (string name in new[] { "SW04_OrbitingSwordGuard_16f", "SW04_OrbitingSwordGuard_Base", "SW05_HeavyJudgementSword_optional" })
+            foreach (string name in new[] { "SW04_OrbitingSwordGuard_Base", "SW05_HeavyJudgementSword_optional" })
             {
                 string path = EffectPath(name); AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
@@ -145,19 +93,7 @@ public static class KarmaSW05ArtworkChecks
                 settings.spriteMeshType = SpriteMeshType.FullRect; settings.spriteAlignment = (int)SpriteAlignment.Custom;
                 settings.spritePivot = name.Contains("Heavy") ? new Vector2(255f/512,509f/1024) : new Vector2(193f/384,193f/384);
                 importer.SetTextureSettings(settings);
-                bool animated = name.EndsWith("16f"); importer.spriteImportMode = animated ? SpriteImportMode.Multiple : SpriteImportMode.Single;
-                if (animated)
-                {
-                    var factories = new SpriteDataProviderFactories(); factories.Init();
-                    var provider = factories.GetSpriteEditorDataProviderFromObject(importer); provider.InitSpriteEditorDataProvider();
-                    var existing = provider.GetSpriteRects().ToDictionary(r => r.name,r => r.spriteID);
-                    var rects = Enumerable.Range(0,16).Select(i => new SpriteRect { name=name+"_"+i, rect=new Rect(i*384,0,384,384),
-                        alignment=SpriteAlignment.Custom,pivot=new Vector2(193f/384,193f/384),
-                        spriteID=existing.TryGetValue(name+"_"+i,out var id)?id:GUID.Generate() }).ToArray();
-                    provider.SetSpriteRects(rects);
-                    provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(rects.Select(r=>new SpriteNameFileIdPair(r.name,r.spriteID)));
-                    provider.Apply();
-                }
+                importer.spriteImportMode = SpriteImportMode.Single;
                 importer.SaveAndReimport();
                 foreach (var sprite in AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s=>s.name))
                 {
@@ -166,7 +102,7 @@ public static class KarmaSW05ArtworkChecks
                 }
             }
             sheet.sprites=sprites.ToArray();sheet.poses=poses.ToArray();EditorUtility.SetDirty(library);AssetDatabase.SaveAssets();
-            Debug.Log("GRAND IMPORT PASS: one baked four-sword formation, its ring base, and one heavy sword; existing GUIDs preserved");
+            Debug.Log("GRAND IMPORT PASS: guard ring base and heavy sword; existing GUIDs preserved");
             EditorApplication.Exit(0);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
@@ -178,70 +114,8 @@ public static class KarmaSW05ArtworkChecks
         UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/KarmaPrototype.unity");
         EditorApplication.EnterPlaymode();
     }
-    // Explicit editor operation for these two new assets only. Existing PNGs,
-    // GUIDs, slices and logical library entries are retained.
-    public static void ImportArtwork()
-    {
-        try
-        {
-            string swordPath = EffectPath("SW05JudgementSword_v2");
-            string impactPath = EffectPath("SW05GroundImpact_v2");
-            foreach (string path in new[] { swordPath, impactPath })
-            {
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-                importer.textureType = TextureImporterType.Sprite;
-                importer.spritePixelsPerUnit = 100; importer.mipmapEnabled = false;
-                importer.alphaIsTransparency = true; importer.filterMode = FilterMode.Bilinear;
-                importer.wrapMode = TextureWrapMode.Clamp; importer.npotScale = TextureImporterNPOTScale.None;
-                importer.textureCompression = TextureImporterCompression.Uncompressed; importer.maxTextureSize = 2048;
-                var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
-                settings.spriteMeshType = SpriteMeshType.FullRect;
-                if (path == swordPath)
-                {
-                    settings.spriteAlignment = (int)SpriteAlignment.Custom;
-                    settings.spritePivot = new Vector2(0.5f, 771.5f / 1536);
-                    importer.SetTextureSettings(settings); importer.spriteImportMode = SpriteImportMode.Single;
-                    importer.SaveAndReimport();
-                }
-                else
-                {
-                    importer.SetTextureSettings(settings);
-                    importer.spriteImportMode = SpriteImportMode.Multiple;
-                    var factories = new SpriteDataProviderFactories(); factories.Init();
-                    var provider = factories.GetSpriteEditorDataProviderFromObject(importer); provider.InitSpriteEditorDataProvider();
-                    var existing = provider.GetSpriteRects().ToDictionary(r => r.name, r => r.spriteID);
-                    var pivots = new[] { new Vector2(313, 132), new Vector2(308, 131), new Vector2(313, 137), new Vector2(308.5f, 137) };
-                    var rects = Enumerable.Range(0, 4).Select(i => new SpriteRect
-                    {
-                        name = "SW05_Impact_" + i, rect = new Rect((i % 2) * 627, (1 - i / 2) * 627, 627, 627),
-                        alignment = SpriteAlignment.Custom, pivot = pivots[i] / 627,
-                        spriteID = existing.TryGetValue("SW05_Impact_" + i, out var id) ? id : GUID.Generate()
-                    }).ToArray();
-                    provider.SetSpriteRects(rects);
-                    provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));
-                    provider.Apply(); importer.SaveAndReimport();
-                }
-            }
-            var sword = AssetDatabase.LoadAssetAtPath<Sprite>(swordPath);
-            var frames = AssetDatabase.LoadAllAssetsAtPath(impactPath).OfType<Sprite>().OrderBy(s => s.name).ToArray();
-            Check(sword != null && frames.Length == 4, "one sword and four impact sprites imported");
-            Check(sword.name == "SW05JudgementSword_v2" && Vector2.Distance(sword.pivot, new Vector2(512, 771.5f)) < 0.001f,
-                "single sword Sprite retains its authored opaque-core pivot");
-            var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Library);
-            var sheet = library.sheets.Single(s => s.id == "SwordBossVFX");
-            var names = new[] { "SW05_JudgementSword_v2", "SW05_Impact_0", "SW05_Impact_1", "SW05_Impact_2", "SW05_Impact_3" };
-            var old = Enumerable.Range(0, sheet.poses.Length).Where(i => !names.Contains(sheet.poses[i])).ToArray();
-            sheet.sprites = old.Select(i => sheet.sprites[i]).Concat(new[] { sword }).Concat(frames).ToArray();
-            sheet.poses = old.Select(i => sheet.poses[i]).Concat(names).ToArray();
-            Check(sheet.poses.Distinct().Count() == sheet.poses.Length, "unique owned logical names");
-            EditorUtility.SetDirty(library); AssetDatabase.SaveAssets();
-            Directory.CreateDirectory(Output);
-            File.WriteAllText(Output + "/import-result.txt", "PASS: two RGBA textures, one PPU100 sword, four grounded PPU100 impact frames; original logical entries retained\n");
-            EditorApplication.Exit(0);
-        }
-        catch (Exception error) { Debug.LogException(error); EditorApplication.Exit(1); }
-    }
+    public static void ImportArtwork() => ImportSuppliedPack();
+
     static void Capture(string name)
     {
         var camera = game.GameCamera;
@@ -388,13 +262,13 @@ public static class KarmaSW05ArtworkChecks
             Check(data.shots.Count >= 16 && data.shots.Count <= 18 && ended.Count == data.shots.Count, "one complete dense group");
             Check(data.frames.Last().playerHealth < data.frames.First().playerHealth, "real descending blade damages player");
             foreach (string material in new[] { "SwordWave/SW05/SW05Celestial", "SwordWave/SW05/SW05CrimsonBlade", "SwordWave/SW05/SW05EmbeddedWood" })
-            { var mat = Resources.Load<Material>(material); Check(mat != null && !ShaderUtil.ShaderHasError(mat.shader), material + " compiles"); }
+            { var mat = KarmaArtResource.Load<Material>(material); Check(mat != null && !ShaderUtil.ShaderHasError(mat.shader), material + " compiles"); }
             File.WriteAllText(Output + "/" + (baseline ? "baseline" : "updated") + ".json", JsonUtility.ToJson(data, true));
             if (!baseline)
             {
                 var old = JsonUtility.FromJson<Data>(File.ReadAllText(Output + "/baseline.json"));
                 Check(JsonUtility.ToJson(old) == JsonUtility.ToJson(data), "exact launch/landing, trajectories, damage, bounds and health comparison");
-                foreach (string pose in new[] { "SW05_JudgementSword_v2", "SW05_Impact_0", "SW05_Impact_1", "SW05_Impact_2", "SW05_Impact_3" })
+                foreach (string pose in new[] { "SW05_HeavyJudgementSword_optional", "SW05_AerialSword" })
                     Check(KarmaArtwork.Sprite("SwordBossVFX", pose) != null, pose + " loads by owned logical name");
                 Check(revealed && dissolved && groundedLandingSeen, "formation, grounded landing batch and dissolve animate");
                 lines.Add("PASS: exact baseline comparison of all shot recipes, per-frame trajectories, landing ticks, boss bounds and actual player damage");

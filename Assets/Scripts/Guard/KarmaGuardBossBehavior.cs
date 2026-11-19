@@ -91,7 +91,7 @@ namespace KarmaPrototype
             public override string VictoryPose => "Guard";
             public override string VictoryLine(int stage) => stage == 1 ? "그 힘만으로는… 뚫을 수 없다."
                 : stage == 2 ? "막는 것만 배운 줄 알았나…" : "끝내 무너지지 않은 건… 나였구나.";
-            public override Sprite GrowthReflection => Resources.Load<Sprite>("Guard/Growth/Reflection");
+            public override Sprite GrowthReflection => KarmaArtResource.First("Guard/Growth/Reflection");
             public override Vector2 GrowthInspectionAnchor => new Vector2(1.25f, 1.8f);
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {

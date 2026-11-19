@@ -260,8 +260,7 @@ public static class KarmaPresentationChecks
         var stage = new GameObject("Presentation checks");
         try
         {
-            var fallen = Resources.LoadAll<Sprite>("Neutral/Revival/Neutral")
-                .OrderBy(s => s.name).First();
+            var fallen = KarmaArtwork.Sprite("@Neutral/Revival/Neutral", "Revive00");
             float silhouetteBottom = fallen.vertices.Min(v => v.y);
             float supportHeight = Support(fallen);
             Check(supportHeight > silhouetteBottom + 0.05f,

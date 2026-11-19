@@ -24,7 +24,7 @@ namespace KarmaPrototype
                 var motion = KarmaPlayerTimeline.Find(name);
                 if (motion != null) endingFrames.Add(name, motion.Load());
             }
-            var material = Resources.Load<Material>("Shared/Rendering/KarmaPlayer12");
+            var material = KarmaArtResource.Load<Material>("Shared/Rendering/KarmaPlayer12");
             if (material != null) picture.sharedMaterial = material;
         }
 

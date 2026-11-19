@@ -21,7 +21,7 @@ namespace KarmaPrototype
             var child = new GameObject("GD02 sword charge");
             child.transform.SetParent(body.transform, false);
             overlay = child.AddComponent<SpriteRenderer>();
-            material = new Material(Resources.Load<Shader>("Guard/Effects/KarmaGuardHeavyGlow"));
+            material = new Material(KarmaArtResource.Load<Shader>("Guard/Effects/KarmaGuardHeavyGlow"));
             overlay.sharedMaterial = material;
             overlay.enabled = false;
         }

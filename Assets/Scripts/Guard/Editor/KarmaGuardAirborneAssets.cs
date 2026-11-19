@@ -6,7 +6,7 @@ namespace KarmaPrototype.EditorTools
     {
         public static void Import()
         {
-            AssetDatabase.ImportAsset("Assets/Arts/Resources/Motions12/Player/GD04AirborneHit.png",
+            AssetDatabase.ImportAsset("Assets/Arts/Player/GD04AirborneHit.png",
                 ImportAssetOptions.ForceUpdate);
             KarmaMotionBindings.Apply();
         }

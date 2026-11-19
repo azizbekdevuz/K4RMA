@@ -348,7 +348,7 @@ public static partial class KarmaGuardPlayChecks
             var animator = Get<Transform>(enemy, "art").GetComponent<KarmaCharacterAnimator>();
             var picture = Get<SpriteRenderer>(animator, "picture");
             Force(EnemyAttack.GD02, facing);
-            var frames = Resources.LoadAll<Sprite>("Motions12/" + form + "/GD02");
+            var frames = KarmaArtResource.Frames("Motions12/" + form + "/GD02");
             var glow = animator.GetComponentInChildren<KarmaGuardHeavyGlow>(true);
             Check(Array.Exists(frames, frame => picture.sprite == frame && frame.name.EndsWith("_00")) &&
                 !enemy.HeavyParryWindowOpen, "GD02 starts on the first cool drawing: " + form);
@@ -752,7 +752,7 @@ public static partial class KarmaGuardPlayChecks
             foreach (string pose in new[] { "Windup", "Descent", "Contact", "Rebound" })
             {
                 await Until(() => animator.CurrentPose == "GD04/" + pose, 2);
-                Check(Array.IndexOf(Resources.LoadAll<Sprite>("Motions12/" + form + "/GD04"), picture.sprite) >= 0,
+                Check(Array.IndexOf(KarmaArtResource.Frames("Motions12/" + form + "/GD04"), picture.sprite) >= 0,
                     "GD04 retains the matching overhead shield slam frames: " + form + "/" + pose);
                 if (pose == "Contact") Check(SlamFan() != null, "GD04 creates the fan at shield-floor contact");
             }

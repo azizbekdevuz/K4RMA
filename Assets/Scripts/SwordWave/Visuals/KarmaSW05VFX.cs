@@ -33,7 +33,7 @@ namespace KarmaPrototype
         {
             get
             {
-                if (celestial == null) celestial = Resources.Load<Material>("SwordWave/SW05/SW05Celestial");
+                if (celestial == null) celestial = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05Celestial");
                 return celestial;
             }
         }
@@ -42,7 +42,7 @@ namespace KarmaPrototype
             if (judgementSword == null) judgementSword = KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional");
             if (judgementSword == null) throw new System.InvalidOperationException("Missing SW05 judgement sword artwork");
             renderer.sprite = judgementSword;
-            if (crimsonBlade == null) crimsonBlade = Resources.Load<Material>("SwordWave/SW05/SW05CrimsonBlade");
+            if (crimsonBlade == null) crimsonBlade = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05CrimsonBlade");
             if (crimsonBlade == null) throw new System.InvalidOperationException("Missing SW05 crimson blade material");
             renderer.sharedMaterial = crimsonBlade;
             renderer.flipX = renderer.flipY = false;
@@ -164,7 +164,7 @@ namespace KarmaPrototype
             // Keep exactly the airborne picture, palette and depth tint. A
             // separate floor-clipping material buries its lower 14% in the wood.
             ApplySword(sword, size, axis);
-            if (woodMaterial == null) woodMaterial = Resources.Load<Material>("SwordWave/SW05/SW05EmbeddedWood");
+            if (woodMaterial == null) woodMaterial = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05EmbeddedWood");
             sword.sharedMaterial = woodMaterial;
             ApplyDepth(sword, depth);
             var fx = sword.gameObject.AddComponent<KarmaSW05VFX>();
@@ -180,7 +180,7 @@ namespace KarmaPrototype
         { charging = true; chargeAge = 0; chargeSeconds = seconds; chargeTint = sigil.color; }
         static void WoodContact(Transform root, KarmaGame game, Vector2 at, Vector2 size)
         {
-            if (contactMaterial == null) contactMaterial = Resources.Load<Material>("SwordWave/SW05/SW05WoodContact");
+            if (contactMaterial == null) contactMaterial = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05WoodContact");
             var shadow = KarmaVisuals.Box(root, "SW05 wood penetration / no damage", at,
                 new Vector2(Mathf.Max(0.3f, size.y * 0.38f), 0.1f), new Color(0.035f, 0.016f, 0.01f, 0.88f), 30);
             shadow.sharedMaterial = contactMaterial;

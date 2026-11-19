@@ -159,8 +159,8 @@ namespace KarmaPrototype
 
         void BuildOrnaments()
         {
-            var seal = Resources.Load<Sprite>("Guard/Effects/GD05_GoldenSeal");
-            var foot = Resources.Load<Sprite>("Guard/Effects/GD05_GoldenFoot");
+            var seal = KarmaArtResource.First("Guard/Effects/GD05_GoldenSeal");
+            var foot = KarmaArtResource.First("Guard/Effects/GD05_GoldenFoot");
             if (seal == null || foot == null) throw new System.InvalidOperationException("GD05 golden seal artwork missing");
             ornaments = new SpriteRenderer[10]; ornamentHomes = new Vector3[10];
             for (int i = 0; i < 7; i++)
@@ -264,7 +264,7 @@ namespace KarmaPrototype
                 for (int p = 0; p < detail.Length; p++) detail[p] = detail[p] * Radius - fragmentHomes[plate];
                 fragmentHairlines[i] = Line("Traced hairline on flying plate", fragments[plate], detail, Radius * (i == 0 ? 0.0024f : 0.0013f), 15);
             }
-            var sprite = Resources.Load<Sprite>("Guard/Effects/GD05_InternalBlast");
+            var sprite = KarmaArtResource.First("Guard/Effects/GD05_InternalBlast");
             if (sprite == null) throw new System.InvalidOperationException("GD05 internal blast artwork missing");
             var node = new GameObject("GD05 internal detonation"); node.transform.SetParent(transform, false);
             blast = node.AddComponent<SpriteRenderer>(); blast.sprite = sprite; blast.sortingOrder = 16;

@@ -17,8 +17,8 @@ using KarmaPrototype;
 [InitializeOnLoad]
 public static class KarmaPlayerIdleChecks
 {
-    const string Art = "Assets/Arts/Resources/Reference/GameScale_HD_StageStyle/Player_Idle.png";
-    const string Clips = "Assets/Arts/Resources/Player/Animation12";
+    const string Art = "Assets/Arts/Reference/Player_Idle.png";
+    const string Clips = "Assets/Data/Resources/Player/Animation12";
     const string Output = "output/validation/player-idle";
     const string Session = "K4RMA.IdleChecks";
     const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;

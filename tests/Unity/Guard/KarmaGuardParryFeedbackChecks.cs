@@ -134,7 +134,7 @@ public static class KarmaGuardParryFeedbackChecks
                 Check(!Get<SpriteRenderer>(enemy,"shieldHalo").enabled,"old shield renderer hidden");
                 var flash=game.Player.GetComponentInChildren<KarmaPlayerParryFlash>();
                 Check(flash!=null&&flash.Visible,"successful player parry flash visible");
-                Check(!ShaderUtil.ShaderHasError(Resources.Load<Shader>("Player/ParryFlash")),"flash shader compiled");
+                Check(!ShaderUtil.ShaderHasError(KarmaArtResource.Load<Shader>("Player/ParryFlash")),"flash shader compiled");
                 Check(game.Player.DamageBounds.size==bounds.size,"player collision size unchanged");
                 if(movie)
                 {

@@ -38,7 +38,7 @@ namespace KarmaPrototype
             foreach (string motion in motions)
             {
                 if (!Has(form, motion) || loaded.ContainsKey((form, motion))) continue;
-                var request = Resources.LoadAsync<Texture2D>(Root + form + "/" + motion);
+                var request = Resources.LoadAsync<KarmaArtResource>(Root + form + "/" + motion);
                 yield return request;
                 if (request.asset != null) Frames(form, motion);
                 yield return null;
@@ -64,7 +64,7 @@ namespace KarmaPrototype
         {
             if (loaded.TryGetValue((form, motion), out var sequence)) return sequence;
             string key = form + "/" + motion;
-            sequence = motion == "Idle" ? new[] { KarmaArtwork.StageIdle(form) } : Resources.LoadAll<Sprite>(Root + key);
+            sequence = motion == "Idle" ? new[] { KarmaArtwork.StageIdle(form) } : KarmaArtResource.Frames(Root + key);
             if (motion != "Idle" && (!Counts.TryGetValue(key, out int expected) || sequence.Length != expected))
                 throw new InvalidOperationException("Missing motion drawings: " + key);
             Array.Sort(sequence, (a,b) => string.CompareOrdinal(a.name,b.name));

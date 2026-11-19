@@ -54,7 +54,7 @@ namespace KarmaPrototype
         internal void Initialize(KarmaEnemy enemy, KarmaGame director, KarmaSwordBossSettings tuning)
         {
             owner = enemy; game = director; settings = tuning;
-            echoMaterial = Resources.Load<Material>("SwordWave/Shared/KarmaSwordRetreatEcho");
+            echoMaterial = KarmaArtResource.Load<Material>("SwordWave/Shared/KarmaSwordRetreatEcho");
             sourceSprites = GetComponentsInChildren<SpriteRenderer>(true);
             // Retain the entire transform chain, including reflected/nonuniform
             // ancestors. Copying individual world TRS values would lose shear.

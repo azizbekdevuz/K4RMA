@@ -333,7 +333,7 @@ namespace KarmaPrototype
         bool released;
         static Material crescentMaterial;
         internal static Material CrescentMaterial => crescentMaterial != null ? crescentMaterial
-            : crescentMaterial = Resources.Load<Material>("SwordWave/Shared/SWBasicCrescent");
+            : crescentMaterial = KarmaArtResource.Load<Material>("SwordWave/Shared/SWBasicCrescent");
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ClearBuffers()

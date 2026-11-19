@@ -250,13 +250,13 @@ public static partial class KarmaGuardPlayChecks
         string motion = form == "WardFinal" ? (hurt ? "Hurt" : "GD03Release") : (hurt ? "GD03ShieldAwayHurt" : "GD03");
         string resource = "Motions12/" + (form == "WardFinal" ? "WardFinal_NoShield" : form) + "/" + motion;
         Sprite visible = picture.sprite;
-        Check(Array.IndexOf(Resources.LoadAll<Sprite>(resource), visible) >= 0 &&
+        Check(Array.IndexOf(KarmaArtResource.Frames(resource), visible) >= 0 &&
             animator.CurrentPose == "GD03/ShieldAway/" + form + "/" + pose, "visible shieldless " + resource + " actual=" + visible.name);
         Check(Array.TrueForAll(enemy.GetComponentsInChildren<Transform>(true), child =>
             !child.name.Contains("FloatingWoodRing") && !child.name.Contains("Floating Wood Ring"))
             && typeof(KarmaEnemy).Assembly.GetType("KarmaPrototype.KarmaGuardFloatingRing") == null,
             "Inherited shield throw has no floating ring");
-        var damagePose = Array.Find(Resources.LoadAll<Sprite>("Guard/Forms/" + form), sprite => sprite.name == (hurt ? "Hurt" : "Thrust"));
+        var damagePose = KarmaArtwork.Sprite("@Guard/Forms/" + form, hurt ? "Hurt" : "Thrust");
         Check(damagePose != null, "Original shielded damage silhouette resolves");
         var actualDamageBounds = enemy.DamageBounds;
         picture.sprite = damagePose;

@@ -345,7 +345,7 @@ namespace KarmaPrototype
             public override string VictoryPose => "Recovery";
             public override string VictoryLine(int stage) => stage == 1 ? "그 움직임… 이제는 보인다."
                 : stage == 2 ? "네가 준 힘, 내 검에 익었다." : "내 검이… 너를 넘어섰구나.";
-            public override Sprite GrowthReflection => Resources.Load<Sprite>("SwordWave/Growth/Reflection");
+            public override Sprite GrowthReflection => KarmaArtResource.First("SwordWave/Growth/Reflection");
             public override Vector2 GrowthInspectionAnchor => new Vector2(1.4f, 2.8f);
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {

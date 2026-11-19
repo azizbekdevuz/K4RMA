@@ -22,7 +22,7 @@ namespace KarmaPrototype
         public static void Apply(SpriteRenderer renderer, int mode)
         {
             if (renderer == null) return;
-            if (material == null) material = Resources.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish");
+            if (material == null) material = KarmaArtResource.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish");
             if (material == null) return;
             var surface = renderer.GetComponent<KarmaSwordSkillSurface>();
             if (surface == null) surface = renderer.gameObject.AddComponent<KarmaSwordSkillSurface>();

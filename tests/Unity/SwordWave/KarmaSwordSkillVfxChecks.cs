@@ -130,8 +130,8 @@ public static class KarmaSwordSkillVfxChecks
             for(int i=0;i<a.casts.Count;i++)
             {Compare(a.casts[i],b.casts[i]);lines.Add("PASS: "+b.casts[i].key+" shots="+b.casts[i].shots.Count+", first release="+b.casts[i].shots[0].tick+", physical samples="+b.casts[i].frames.Count);}
             foreach(string name in new[]{"SwordWave/Shared/KarmaSwordSkillPolish","SwordWave/SW03/KarmaSwordRisePolish","SwordWave/SW05/SW05Celestial"})
-            {var material=Resources.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" loads/compiles");}
-            foreach(string pose in new[]{"Sword_Crescent_v6","SW03_GroundScar_v6","SW03_RisingBlade_v6","SW04_CounterBlade_v6","SW05_JudgementSword","Sword_Release_v6","Sword_Impact_v6"})
+            {var material=KarmaArtResource.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" loads/compiles");}
+            foreach(string pose in new[]{"Sword_Crescent_v6","SW03_GroundScar_v7","SW03_RisingBlade_v7","SW04_CounterBlade_v6","SW05_HeavyJudgementSword_optional","Sword_Release_v6","Sword_Impact_v6"})
                 Check(KarmaWaveArtwork.Sprite(pose)!=null,pose+" loads");
             File.WriteAllText(Folder+"/comparison-baseline.json",JsonUtility.ToJson(a,true));
             File.WriteAllText(Folder+"/comparison-updated.json",JsonUtility.ToJson(b,true));
@@ -159,8 +159,8 @@ public static class KarmaSwordSkillVfxChecks
                 data.casts.Add(await Observe(EnemyAttack.SWBasic,true));
             }
             if(!baseline){var old=JsonUtility.FromJson<Data>(File.ReadAllText(Folder+"/baseline.json"));for(int i=0;i<data.casts.Count;i++)Compare(old.casts[i],data.casts[i]);
-                var material=Resources.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish");Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),"skill material compiles and loads");
-                foreach(string name in new[]{"SwordWave/SW03/KarmaSwordRisePolish","SwordWave/SW05/SW05Celestial"}){material=Resources.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" compiles");}}
+                var material=KarmaArtResource.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish");Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),"skill material compiles and loads");
+                foreach(string name in new[]{"SwordWave/SW03/KarmaSwordRisePolish","SwordWave/SW05/SW05Celestial"}){material=KarmaArtResource.Load<Material>(name);Check(material!=null&&!ShaderUtil.ShaderHasError(material.shader),name+" compiles");}}
             results.Insert(0,"PASS: "+(baseline?"baseline":"updated geometry/timing comparison")+"; edited skills only; first SW03 round / first SW05 rain group");
         }catch(Exception e){results.Insert(0,"FAIL: "+e);Debug.LogException(e);exit=1;}
         File.WriteAllText(Folder+"/"+(baseline?"baseline":"updated")+".json",JsonUtility.ToJson(data,true));File.WriteAllLines(Folder+"/"+(baseline?"baseline-result":"result")+".txt",results);Time.captureDeltaTime=0;SessionState.SetBool(Key,false);EditorApplication.Exit(exit);

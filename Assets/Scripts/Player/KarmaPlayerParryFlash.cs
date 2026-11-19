@@ -13,7 +13,7 @@ namespace KarmaPrototype
 
         public void Initialize(SpriteRenderer anchor)
         {
-            var shader = Resources.Load<Shader>("Player/ParryFlash");
+            var shader = KarmaArtResource.Load<Shader>("Player/ParryFlash");
             if (shader == null) throw new System.InvalidOperationException("Player parry flash shader missing");
             material = new Material(shader) { name = "Player parry flash (runtime)" };
             properties = new MaterialPropertyBlock();

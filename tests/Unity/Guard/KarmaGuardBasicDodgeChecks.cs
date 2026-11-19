@@ -202,8 +202,11 @@ public static class KarmaGuardBasicDodgeChecks
                         if (!baseline && shielded)
                         {
                             string form = KarmaArtwork.GuardianFormName(order);
-                            var original = Resources.LoadAll<Sprite>("Guard/Forms/" + form).Single(sprite => sprite.name == (order.Length == 1 ? "Guard" : "Idle"));
-                            float expectedWidth = original.bounds.size.x * Mathf.Abs(animator.transform.lossyScale.x)
+                            string pose = order.Length == 1 ? "Guard" : "Idle";
+                            var row = Resources.Load<TextAsset>("Motions12/BodyPoses").text.Split('\n')
+                                .Select(line => line.Split('\t')).Single(f => f[0] == "@Guard/Forms/" + form && f[1] == pose);
+                            float width = float.Parse(row[7], System.Globalization.CultureInfo.InvariantCulture);
+                            float expectedWidth = width * Mathf.Abs(animator.transform.lossyScale.x)
                                 * ((Vector3)Get(animator, "pictureScale")).x;
                             Check(Mathf.Abs(enemy.DamageBounds.size.x - expectedWidth) < 0.01f,
                                 "Moving with GD01 keeps the original shielded damage silhouette: " + scenario + " width=" + enemy.DamageBounds.size.x + " expected=" + expectedWidth);

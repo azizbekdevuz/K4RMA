@@ -23,7 +23,7 @@ namespace KarmaPrototype.EditorTools
             void Check(SpriteRenderer renderer, string form, string action, string motion)
             {
                 string actual = AssetDatabase.GetAssetPath(renderer.sprite.texture);
-                string expected = "Assets/Arts/Resources/" + (motion == "Idle" ? KarmaArtwork.StageArt + form + "_Idle" : "Motions12/" + form + "/" + motion) + ".png";
+                string expected = KarmaMotionSheetImport.SheetPath(form, motion);
                 checks.Add(string.Join(",", form, action, motion, actual));
                 if (actual != expected) throw new InvalidOperationException(form + "/" + action + " expected " + motion + ", got " + actual);
             }
@@ -80,8 +80,10 @@ namespace KarmaPrototype.EditorTools
                     {
                         string id = motion == "UPBasic" || motion == "GDBasic" ? "GroundStrike" : motion;
                         if (!Enum.TryParse(id, out EnemyAttack attack)) continue;
+                        if (motion == "UPBasic") Call(animator, "StartRisingBasicStrike");
                         animator.GuardianPose("Attack", attack, false, false);
                         Check(renderer, form, "Attack/" + id, motion);
+                        if (motion == "UPBasic") Call(animator, "ClearRisingBasicStrike");
                     }
                     animator.GuardianPose("Recover", EnemyAttack.GroundStrike, false, false);
                     Check(renderer, form, "Recover", sword ? "FollowThrough" : rise ? "Landing" : guard ? "Recover" : "Recovery");

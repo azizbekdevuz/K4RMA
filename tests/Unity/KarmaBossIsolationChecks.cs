@@ -207,7 +207,7 @@ public static class KarmaBossIsolationChecks
             if (row[3] == "Idle") return KarmaArtwork.StageIdle(row[2]);
             string key = "Motions12/" + row[2] + "/" + row[3];
             string name = row[3] + "_" + int.Parse(row[4]).ToString("00");
-            return Resources.LoadAll<Sprite>(key).Single(frame => frame.name == name);
+            return KarmaArtResource.Frames(key).Single(frame => frame.name == name);
         }
         foreach (var path in Directory.GetFiles("Assets/Arts", "*.png", SearchOption.AllDirectories))
         {
@@ -231,7 +231,7 @@ public static class KarmaBossIsolationChecks
                     string source = AssetDatabase.GetAssetPath(sprite);
                     if (bindings.TryGetValue((sheet.id, pose), out var binding))
                         Check(SameFrame(sprite, BoundFrame(binding)), library.name + "/" + pose + " uses its catalog drawing");
-                    else Check(usesSharedParry ? sprite == sharedParry : source.StartsWith("Assets/Arts/Resources/" + folder + "/"),
+                    else Check(usesSharedParry ? sprite == sharedParry : source.StartsWith("Assets/Arts/" + folder + "/Effects/"),
                         library.name + "/" + sheet.id + " uses its dedicated or shared image source");
                     Check(SameFrame(KarmaArtwork.Sprite(sheet.id, pose), sprite), "Artwork routing resolves " + sheet.id + "/" + pose);
                 }
@@ -239,7 +239,8 @@ public static class KarmaBossIsolationChecks
             foreach (string kind in new[] { "Base", "Revival", "Inherited" })
             {
                 string key = kind == "Inherited" ? form + "Final" : form;
-                Check(Resources.LoadAll<Sprite>(folder + "/" + (kind == "Revival" ? "Revival" : "Forms") + "/" + key).Length > 0,
+                string motion = kind == "Revival" ? "ReviveRise" : folder == "RisingSlash" ? "Dash" : "Move";
+                Check(KarmaArtResource.Frames("Motions12/" + key + "/" + motion).Length > 0,
                     "Animation Resources path survives move: " + kind + "/" + key);
             }
             Check(KarmaArtwork.InheritedPoses(form).Length == 0, "Base form is not an inherited pose set: " + form);
@@ -262,7 +263,7 @@ public static class KarmaBossIsolationChecks
     static void CheckResourcePaths()
     {
         int loaded = 0;
-        foreach (string root in new[] { "Assets/Arts/Resources", "Assets/Data/Resources", "Assets/Audio/Resources" })
+        foreach (string root in Directory.GetDirectories("Assets", "Resources", SearchOption.AllDirectories))
         {
             Check(Directory.Exists(root), "Resource owner folder exists: " + root);
             foreach (string file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
@@ -274,6 +275,12 @@ public static class KarmaBossIsolationChecks
                 string key = path.Substring(root.Length + 1);
                 key = key.Substring(0, key.Length - Path.GetExtension(key).Length);
                 Check(Resources.Load(key, asset.GetType()) == asset, "Resource key resolves exact asset: " + key);
+                if (asset is KarmaArtResource art)
+                {
+                    Check(art.asset != null || (art.frames.Length > 0 && art.frames.All(frame => frame != null)),
+                        "Artwork key has its original native asset or ordered frames: " + key);
+                    if (art.asset != null) asset = art.asset;
+                }
                 if (asset is Material material)
                     Check(material.shader != null && !ShaderUtil.ShaderHasError(material.shader), "Resource material compiles: " + key);
                 loaded++;

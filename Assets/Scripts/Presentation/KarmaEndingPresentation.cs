@@ -51,7 +51,7 @@ namespace KarmaPrototype
                 ending.fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
                 ending.fallenPictures = fallen.GetComponentsInChildren<SpriteRenderer>();
                 ending.fallenAnimator?.PresentEndingDefeat(0);
-                var material = Resources.Load<Material>("Shared/Rendering/KarmaEndingDissolve");
+                var material = KarmaArtResource.Load<Material>("Shared/Rendering/KarmaEndingDissolve");
                 if (material != null) foreach (var picture in ending.fallenPictures) picture.sharedMaterial = material;
                 ending.dissolveBlock = new MaterialPropertyBlock();
             }

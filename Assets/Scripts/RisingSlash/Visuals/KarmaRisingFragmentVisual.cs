@@ -12,7 +12,7 @@ namespace KarmaPrototype
         {
             picture = GetComponent<SpriteRenderer>();
             if (fragmentMaterial == null)
-                fragmentMaterial = Resources.Load<Material>("RisingSlash/Effects/KarmaRisingTranslucentFragment");
+                fragmentMaterial = KarmaArtResource.Load<Material>("RisingSlash/Effects/KarmaRisingTranslucentFragment");
             if (fragmentMaterial != null) picture.sharedMaterial = fragmentMaterial;
             spin = degreesPerSecond; life = seconds;
             initialAngle = transform.localEulerAngles.z;

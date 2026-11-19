@@ -57,7 +57,7 @@ public static class KarmaSW03ArtworkChecks
     {
         try
         {
-            var names = new[] { "SW03_GroundScar_v7", "SW03_RisingBlade_v7", "SW03_HitCut_v7" };
+            var names = new[] { "SW03_GroundScar_v7", "SW03_RisingBlade_v7" };
             var sprites = new List<Sprite>();
             foreach (string name in names)
             {
@@ -72,7 +72,7 @@ public static class KarmaSW03ArtworkChecks
                 var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
                 settings.spriteMeshType = SpriteMeshType.FullRect; settings.spriteAlignment = (int)SpriteAlignment.Center;
                 settings.spritePivot = Vector2.one * 0.5f; importer.SetTextureSettings(settings);
-                if (name == "SW03_GroundScar_v7" || name == "SW03_HitCut_v7")
+                if (name == "SW03_GroundScar_v7")
                 {
                     settings.spriteAlignment = (int)SpriteAlignment.Custom;
                     settings.spritePivot = name == "SW03_GroundScar_v7"

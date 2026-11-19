@@ -580,7 +580,7 @@ public static class KarmaSwordSkillRefreshChecks
         await Seconds(0.24f);
         foreach(var blade in (SpriteRenderer[])Get(volley,"Blades"))
             Check(blade.color.a>=0.96f,"fully formed front/rear SW04 blades remain opaque");
-        Check(!ShaderUtil.ShaderHasError(Resources.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish").shader),"SW04 core shader compiles");
+        Check(!ShaderUtil.ShaderHasError(KarmaArtResource.Load<Material>("SwordWave/Shared/KarmaSwordSkillPolish").shader),"SW04 core shader compiles");
         Capture("sw04-solid-orbit");
         using var recording=SessionState.GetBool(Key+".AreaRecording",false)?new SkillRecording("sw04",false):null;
         float absorbed=enemy.FightSeconds; enemy.TakeDamage(1);
@@ -1025,7 +1025,7 @@ public static class KarmaSwordSkillRefreshChecks
         public void Dispose()
         {
             Check(sawDelay && sawIgnition && sawResidual && sawDescent,"delayed aura ignition, continuous contact-free sinking and final fade");
-            Check(!ShaderUtil.ShaderHasError(Resources.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish").shader),"split sword/aura shader compiles");
+            Check(!ShaderUtil.ShaderHasError(KarmaArtResource.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish").shader),"split sword/aura shader compiles");
             Pass("SW03: delayed aura, continuous cosmetic descent and residual cleanup verified in Play Mode");
             Check(count>150 && costs.Count>10,"real-time warning/rise/active/fade and repeated-wave footage captured");
             costs.Sort();Pass("SW03 RENDER "+folder+" frames="+count+" maximum-density SubmitRenderRequest CPU ms median="+costs[costs.Count/2].ToString("F3")+" p95="+costs[(int)(costs.Count*0.95)].ToString("F3")+" (readback/PNG excluded; not GPU frame time)");
@@ -1179,7 +1179,7 @@ public static class KarmaSwordSkillRefreshChecks
         var block = new MaterialPropertyBlock(); renderer.GetPropertyBlock(block);
         Check(renderer.enabled && renderer.gameObject.activeInHierarchy && renderer.sortingOrder == 4,
             "release remains visible below character bodies");
-        Check(renderer.sharedMaterial == Resources.Load<Material>("SwordWave/SW05/SW05Celestial")
+        Check(renderer.sharedMaterial == KarmaArtResource.Load<Material>("SwordWave/SW05/SW05Celestial")
             && block.GetFloat("_Mode") == 6,"procedural vertex-color shader path is selected");
         Check(energy.transform.parent == Root && energy.GetComponentInParent<KarmaSW05RainBlade>() == null
             && Mathf.Abs((float)Get(energy,"life")-0.48f)<0.001f,
@@ -2027,7 +2027,7 @@ public static class KarmaSwordSkillRefreshChecks
                 sr.sprite = KarmaArtwork.Sprite("SwordBossVFX", pose); Check(sr.sprite != null, "linked " + pose);
                 sr.color = Color.white; sr.transform.position = -sr.sprite.bounds.center * (4.5f / Mathf.Max(sr.sprite.bounds.size.x, sr.sprite.bounds.size.y));
                 sr.transform.localScale = Vector3.one * (4.5f / Mathf.Max(sr.sprite.bounds.size.x, sr.sprite.bounds.size.y));
-                sr.sharedMaterial = Resources.Load<Material>(pose.StartsWith("SW05") ? "SwordWave/SW05/SW05CrimsonBlade" : pose == "SW03_RisingBlade_v7" ? "SwordWave/SW03/KarmaSwordRisePolish" : "SwordWave/Shared/KarmaSwordSkillPolish");
+                sr.sharedMaterial = KarmaArtResource.Load<Material>(pose.StartsWith("SW05") ? "SwordWave/SW05/SW05CrimsonBlade" : pose == "SW03_RisingBlade_v7" ? "SwordWave/SW03/KarmaSwordRisePolish" : "SwordWave/Shared/KarmaSwordSkillPolish");
                 Check(sr.sharedMaterial != null && !UnityEditor.ShaderUtil.ShaderHasError(sr.sharedMaterial.shader), "valid shader " + pose);
                 RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
                 RenderTexture.active = rt; pixels.ReadPixels(new Rect(0, 0, 256, 256), 0, 0); pixels.Apply();
@@ -2416,7 +2416,7 @@ public static class KarmaSwordSkillRefreshChecks
                 if (!rainOnly && !vfxOnly) await JumpExplosion();
                 foreach (string material in new[] { "SwordWave/SW05/SW05Celestial", "SwordWave/SW05/SW05CrimsonBlade", "SwordWave/SW05/SW05EmbeddedWood" })
                 {
-                    var asset = Resources.Load<Material>(material);
+                    var asset = KarmaArtResource.Load<Material>(material);
                     Check(asset != null && !UnityEditor.ShaderUtil.ShaderHasError(asset.shader),"SW05 shader compiles: " + material);
                 }
                 Check(error == null,"runtime error: " + error); Pass("REQUESTED SW03/SW05 CHECKS COMPLETE at normal speed");

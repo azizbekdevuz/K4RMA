@@ -78,7 +78,7 @@ namespace KarmaPrototype
                 { fx.buffer = spare[i]; spare.RemoveAt(i); break; }
             if (fx.buffer == null) fx.buffer = new Buffer(segments);
             fx.filter = go.AddComponent<MeshFilter>(); fx.filter.sharedMesh = fx.buffer.mesh;
-            fx.display = go.AddComponent<MeshRenderer>(); fx.display.sharedMaterial = Resources.Load<Material>("SwordWave/SW05/SW05Celestial");
+            fx.display = go.AddComponent<MeshRenderer>(); fx.display.sharedMaterial = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05Celestial");
             var properties = new MaterialPropertyBlock(); properties.SetFloat("_Mode",6); fx.display.SetPropertyBlock(properties);
             fx.display.sortingOrder = kind == Kind.Charge ? 28 : 30;
             fx.display.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; fx.display.receiveShadows = false;

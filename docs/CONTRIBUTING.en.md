@@ -2,7 +2,7 @@
 
 [한국어](CONTRIBUTING.md) | [English](CONTRIBUTING.en.md)
 
-> Public visibility does **not** make this an open-source project accepting unrestricted contributions. Coordinate outside contributions with maintainers **before** submitting changes. See [LICENSE](../LICENSE.en.md) and [GOVERNANCE](../GOVERNANCE.en.md).
+> Public visibility does **not** make this an open-source project accepting unrestricted contributions. Coordinate outside contributions with maintainers **before** submitting changes. See [LICENSE](LICENSE.en.md) and [GOVERNANCE](GOVERNANCE.en.md).
 
 ## Before starting
 1. Read [README](../README.en.md), [AGENTS](../AGENTS.md), [team rules](RULES.MD) and [structure](STRUCTURE.MD). Inspect the actual scene and code; don't treat obsolete planning notes as current behavior.
@@ -18,7 +18,7 @@
 ## Unity and assets
 - Preserve Unity `.meta` references. Exclude `Library/`, `Temp/`, builds and secrets.
 - Check sprite/animation/VFX consistency and readability in the actual game.
-- For every sourced or generated asset, record creator/tool, acquisition evidence, terms and source-publication rights in [third-party notices](../THIRD_PARTY_NOTICES.en.md). Don't distribute unverified assets.
+- For every sourced or generated asset, record creator/tool, acquisition evidence, terms and source-publication rights in [third-party notices](THIRD_PARTY_NOTICES.en.md). Don't distribute unverified assets.
 - Do not casually add test/practice tools to shared runtime code.
 
 ## Definition of done
@@ -27,4 +27,4 @@
 - Review GUIDs, scene references, build impact, performance and input behavior.
 - Update user-facing docs and decision records for changed behavior.
 
-Follow the [Code of Conduct](../CODE_OF_CONDUCT.en.md) and [Security Policy](../SECURITY.en.md). Never expose vulnerabilities or secrets in public PRs.
+Follow the [Code of Conduct](CODE_OF_CONDUCT.en.md) and [Security Policy](SECURITY.en.md). Never expose vulnerabilities or secrets in public PRs.

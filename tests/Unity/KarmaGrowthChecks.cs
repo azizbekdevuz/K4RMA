@@ -204,7 +204,7 @@ public static class KarmaGrowthChecks
         Check(((SpriteRenderer)Get(growth, "original")).sprite != null, "Original player effect exists");
         var reflection = (Sprite)Get(growth, "inspectionPose");
         if (stage == 2) Check(reflection != null && reflection.texture.width >= 1024, "Second inheritance loads the guardian's weapon inspection");
-        if (stage == 1) Check(Resources.LoadAll<Sprite>("Motions12/Neutral/GrowthHesitate").Length == 3, "Neutral reaching sequence");
+        if (stage == 1) Check(KarmaArtResource.Frames("Motions12/Neutral/GrowthHesitate").Length == 3, "Neutral reaching sequence");
         Check(growth.GetComponentsInChildren<Collider2D>().Length == 0
             && growth.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "Rehearsal cannot hit");
         var beats = new HashSet<KarmaGuardianGrowth.Beat>();
@@ -365,7 +365,7 @@ public static class KarmaGrowthChecks
             Check(halo != null && game.Enemies[0].AutoShieldActive, "The guard shield remains active during its visual introduction");
         var previousForm = (string)Get(guardianArt, "previousMotionForm");
         bool PreviousBody(Sprite sprite) => sprite != null && (sprite == KarmaArtwork.StageIdle(previousForm)
-            || AssetDatabase.GetAssetPath(sprite.texture).StartsWith("Assets/Arts/Resources/Motions12/" + previousForm + "/"));
+            || AssetDatabase.GetAssetPath(sprite.texture) == KarmaPrototype.EditorTools.KarmaMotionSheetImport.SheetPath(previousForm, sprite.texture.name));
         while (growth != null)
         {
             Check(HudOpacity == 0, "Combat UI cannot reveal the new guardian's name before the entrance");
@@ -461,7 +461,7 @@ public static class KarmaGrowthChecks
             {
                 string path = AssetDatabase.GetAssetPath(body.sprite);
                 string owner = previousForm == "Wave" ? "SwordWave" : previousForm == "Ward" ? "Guard" : "RisingSlash";
-                Check(path == "Assets/Arts/Resources/" + owner + "/Growth/Reflection.png", "Original weapon inspection is displayed by the previous guardian");
+                Check(path == "Assets/Arts/" + owner + "/" + previousForm + "/InspectWeapon.png", "Original weapon inspection is displayed by the previous guardian");
                 inspectedWeapon = true;
             }
             if (beats.Add(growth.CurrentBeat))

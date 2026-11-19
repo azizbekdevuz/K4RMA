@@ -15,6 +15,15 @@ namespace KarmaPrototype.EditorTools
     public static class KarmaMotionSheetImport
     {
         internal const string Root = "Assets/Arts/Resources/Motions12/";
+        public static string SheetPath(string form, string motion)
+        {
+            if (motion == "Idle") return "Assets/Arts/Reference/" + form + "_Idle.png";
+            string owner = form.StartsWith("Wave", StringComparison.Ordinal) ? "SwordWave"
+                : form.StartsWith("Rise", StringComparison.Ordinal) ? "RisingSlash"
+                : form.StartsWith("Ward", StringComparison.Ordinal) ? "Guard" : form;
+            return "Assets/Arts/" + owner + "/" + (owner == form ? "" : form + "/") + motion + ".png";
+        }
+
         public static void Import()
         {
             var factory = new SpriteDataProviderFactories();
@@ -25,7 +34,7 @@ namespace KarmaPrototype.EditorTools
                 foreach (string line in File.ReadLines(Root + "Catalog.txt"))
                 {
                     string[] fields = line.Split('\t');
-                    string path = Root + fields[0] + "/" + fields[1] + ".png";
+                    string path = SheetPath(fields[0], fields[1]);
                     var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                     int columns = int.Parse(fields[2]), rows = int.Parse(fields[3]), count = int.Parse(fields[4]);
                     int w = int.Parse(fields[5]), h = int.Parse(fields[6]);
@@ -60,6 +69,26 @@ namespace KarmaPrototype.EditorTools
                 }
             }
             finally { AssetDatabase.StopAssetEditing(); }
+            foreach (string line in File.ReadLines(Root + "Catalog.txt"))
+            {
+                string[] fields = line.Split('\t');
+                string key = fields[0] + "/" + fields[1];
+                string bindingPath = "Assets/Data/Resources/Motions12/" + key + ".asset";
+                var binding = AssetDatabase.LoadAssetAtPath<KarmaArtResource>(bindingPath);
+                if (binding == null)
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(bindingPath));
+                    AssetDatabase.Refresh();
+                    binding = ScriptableObject.CreateInstance<KarmaArtResource>();
+                    AssetDatabase.CreateAsset(binding, bindingPath);
+                }
+                var sprites = AssetDatabase.LoadAllAssetsAtPath(SheetPath(fields[0], fields[1])).OfType<Sprite>()
+                    .OrderBy(sprite => sprite.name, StringComparer.Ordinal).ToArray();
+                if (binding.frames != null && binding.frames.SequenceEqual(sprites)) continue;
+                binding.frames = sprites;
+                EditorUtility.SetDirty(binding);
+            }
+            AssetDatabase.SaveAssets();
         }
     }
 
@@ -73,17 +102,23 @@ namespace KarmaPrototype.EditorTools
         static Dictionary<string, float[]> scales;
         static DateTime catalogTime;
 
-        bool IsMotionSheet => assetPath.StartsWith(KarmaMotionSheetImport.Root, StringComparison.Ordinal)
-            && assetPath.EndsWith(".png", StringComparison.Ordinal);
-
+        bool IsMotionSheet
+        {
+            get
+            {
+                if (!assetPath.StartsWith("Assets/Arts/", StringComparison.Ordinal) ||
+                    !assetPath.EndsWith(".png", StringComparison.Ordinal)) return false;
+                EnsureScales();
+                return scales.ContainsKey(assetPath);
+            }
+        }
         void OnPreprocessTexture()
         {
             if (IsMotionSheet) context.DependsOnSourceAsset(Catalog);
         }
 
-        void OnPostprocessSprites(Texture2D texture, Sprite[] sprites)
+        static void EnsureScales()
         {
-            if (!IsMotionSheet) return;
             var stamp = File.GetLastWriteTimeUtc(Catalog);
             if (scales == null || stamp != catalogTime)
             {
@@ -91,7 +126,7 @@ namespace KarmaPrototype.EditorTools
                 foreach (string row in File.ReadLines(Catalog))
                 {
                     var fields = row.Split('\t');
-                    string path = KarmaMotionSheetImport.Root + fields[0] + "/" + fields[1] + ".png";
+                    string path = KarmaMotionSheetImport.SheetPath(fields[0], fields[1]);
                     if (fields.Length != 11) throw new InvalidDataException("Missing sprite scales for " + path);
                     var values = fields[10].Split(',').Select(v => float.Parse(v, CultureInfo.InvariantCulture)).ToArray();
                     if (values.Length != int.Parse(fields[4]) || values.Any(v => !(v > 0f) || float.IsInfinity(v)))
@@ -101,7 +136,13 @@ namespace KarmaPrototype.EditorTools
                 scales = parsed;
                 catalogTime = stamp;
             }
-            if (!scales.TryGetValue(assetPath, out var targets) || targets.Length != sprites.Length)
+        }
+
+        void OnPostprocessSprites(Texture2D texture, Sprite[] sprites)
+        {
+            if (!IsMotionSheet) return;
+            var targets = scales[assetPath];
+            if (targets.Length != sprites.Length)
                 throw new InvalidDataException("Unregistered motion sheet or frame count for " + assetPath);
             var frames = sprites.OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
             string motion = Path.GetFileNameWithoutExtension(assetPath);

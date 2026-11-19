@@ -141,11 +141,11 @@ class BossBoundaries(unittest.TestCase):
                     self.assertTrue((ROOT / source).exists(), source)
                     if owner is None:
                         for other in OWNERS:
-                            self.assertNotIn('Arts/Resources/' + other + '/', source)
+                            self.assertNotIn('Arts/' + other + '/', source)
                     else:
                         for other in OWNERS:
                             if other != owner:
-                                self.assertNotIn('Arts/Resources/' + other + '/', source)
+                                self.assertNotIn('Arts/' + other + '/', source)
 
     def test_boss_registrations_are_local_and_preserved(self):
         for owner, name in [('SwordWave', 'Sword'), ('RisingSlash', 'Rising'), ('Guard', 'Guard')]:

@@ -297,7 +297,7 @@ class ScarSelectionProbe:Base{
                 with self.subTest(form=form, motion=motion):
                     row = rows[form, motion]
                     columns, lines, count, width, height = map(int, row[2:7])
-                    path = root / form / (motion + ".png")
+                    path = ROOT / "Assets/Arts/SwordWave" / form / (motion + ".png")
                     names = re.findall(r"^      name: (.+)$", Path(str(path) + ".meta").read_text(), re.M)
                     self.assertEqual(names, [f"{motion}_{i:02d}" for i in range(count)])
                     with Image.open(path) as image:
@@ -408,11 +408,11 @@ public class KarmaSwordWaveAnimation{
     def test_own_idle_and_motion_registration(self):
         root = ROOT / "Assets/Arts/Resources"
         for form in ("Wave", "WaveRise", "WaveWard", "WaveFinal"):
-            idle = root / "Reference/GameScale_HD_StageStyle" / (form + "_Idle.png")
+            idle = ROOT / "Assets/Arts/Reference" / (form + "_Idle.png")
             with Image.open(idle) as image:
                 self.assertIsNotNone(image.getchannel("A").getbbox())
             for motion in ("SWBasic", "SWBasicRanged", "SW01", "SW02", "Move"):
-                meta = (root / "Motions12" / form / (motion + ".png.meta")).read_text()
+                meta = (ROOT / "Assets/Arts/SwordWave" / form / (motion + ".png.meta")).read_text()
                 self.assertIn("spriteMode: 2", meta)
                 self.assertIn("enableMipMap: 0", meta)
                 pivots = re.findall(r"^      pivot: (.+)$", meta, re.M)
@@ -462,7 +462,7 @@ public class FlashProbe {
         self.assertIn("PASS shared flash", run_cs(code, "FlashProbe", modern=True))
 
     def test_basic_surface_cannot_darken_background(self):
-        root=ROOT/"Assets/Arts/Resources/SwordWave/Shared"
+        root=ROOT/"Assets/Arts/SwordWave/Effects"
         shader=(root/"SWBasicCrescent.shader").read_text()
         self.assertIn("Blend SrcAlpha One, One OneMinusSrcAlpha",shader)
         self.assertNotIn("SW05CrimsonPalette",shader)

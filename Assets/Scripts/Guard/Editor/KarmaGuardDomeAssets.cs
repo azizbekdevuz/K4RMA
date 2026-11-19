@@ -274,7 +274,7 @@ namespace KarmaPrototype.EditorTools
         }
         static void Import(string name, Vector2 pivot)
         {
-            string path = "Assets/Arts/Resources/Guard/Effects/" + name + ".png";
+            string path = "Assets/Arts/Guard/Effects/" + name + ".png";
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) throw new Exception("Missing GD05 artwork: " + path);
             importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Single;

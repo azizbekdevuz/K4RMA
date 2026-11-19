@@ -357,7 +357,7 @@ namespace KarmaPrototype
             }
             var nextPhase = game.Phase;
             bool nextInheriting = game.GuardianInheriting;
-            if (nextPhase == RunPhase.GuardianFallen && phase != RunPhase.GuardianFallen)
+            if (nextPhase == RunPhase.GuardianFallen && phase != RunPhase.GuardianFallen && game.StageIndex < 3)
                 Play(KarmaSfxId.CombatBossDefeat);
             if (nextInheriting && !inheriting)
             {

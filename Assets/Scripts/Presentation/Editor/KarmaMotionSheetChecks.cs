@@ -30,8 +30,8 @@ namespace KarmaPrototype.EditorTools
                 {
                     var f = line.Split('\t');
                     string path = "Motions12/" + f[0] + "/" + f[1];
-                    CheckCellEdges("Assets/Arts/Resources/" + path + ".png", f);
-                    var sprites = Resources.LoadAll<Sprite>(path).OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
+                    CheckCellEdges(KarmaMotionSheetImport.SheetPath(f[0], f[1]), f);
+                    var sprites = KarmaArtResource.Frames(path).OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
                     if (sprites.Length != int.Parse(f[4])) throw new Exception(path + ": count");
                     var scales = f[10].Split(',').Select(v => float.Parse(v, CultureInfo.InvariantCulture)).ToArray();
                     var pivot = new Vector2(float.Parse(f[8], CultureInfo.InvariantCulture), float.Parse(f[9], CultureInfo.InvariantCulture));
@@ -39,7 +39,7 @@ namespace KarmaPrototype.EditorTools
                     {
                         picture.sprite = sprites[i];
                         if (picture.sprite.name != f[1] + "_" + i.ToString("00") ||
-                            AssetDatabase.GetAssetPath(picture.sprite) != "Assets/Arts/Resources/" + path + ".png")
+                            AssetDatabase.GetAssetPath(picture.sprite) != KarmaMotionSheetImport.SheetPath(f[0], f[1]))
                             throw new Exception(path + ": incorrect frame " + i);
                         CheckGeometry(sprites[i], scales[i], pivot);
                     }

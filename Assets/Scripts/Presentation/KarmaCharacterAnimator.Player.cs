@@ -15,7 +15,7 @@ namespace KarmaPrototype
         {
             playerSequences.Clear(); playerClip = null;
             if (sheet != "Player") return;
-            var material = Resources.Load<Material>("Shared/Rendering/KarmaPlayer12");
+            var material = KarmaArtResource.Load<Material>("Shared/Rendering/KarmaPlayer12");
             if (material != null && picture != null) picture.sharedMaterial = material;
             SamplePlayerClip("Idle", true);
         }

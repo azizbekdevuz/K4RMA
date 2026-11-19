@@ -8,7 +8,9 @@ namespace KarmaPrototype
         {
             var names = new[] { "01_Dojo_NoMaster", "04_Boss_Gate", "Master", "TrainingDummy" };
             var requests = new ResourceRequest[names.Length];
-            for (int i = 0; i < names.Length; i++) requests[i] = Resources.LoadAsync<Texture2D>(PicturePath(names[i]));
+            for (int i = 0; i < names.Length; i++)
+                requests[i] = names[i] == "Master" ? Resources.LoadAsync<KarmaArtResource>(PicturePath(names[i]))
+                    : Resources.LoadAsync<Texture2D>(PicturePath(names[i]));
             foreach (var request in requests) yield return request;
         }
         static string PicturePath(string name) => name == "Master" ? KarmaArtwork.StageArt + "Master_Idle" : "Tutorial/" + name;

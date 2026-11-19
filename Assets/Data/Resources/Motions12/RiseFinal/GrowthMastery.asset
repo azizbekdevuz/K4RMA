@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aba87f58e676474b87c6f825b4aed1e0, type: 3}
+  m_Name: GrowthMastery
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtResource
+  asset: {fileID: 0}
+  frames:
+  - {fileID: 58571648, guid: ed82608a0ed734668b1b79bebd759adb, type: 3}
+  - {fileID: -732179139, guid: ed82608a0ed734668b1b79bebd759adb, type: 3}
+  - {fileID: 1223778370, guid: ed82608a0ed734668b1b79bebd759adb, type: 3}
+  - {fileID: -110235519, guid: ed82608a0ed734668b1b79bebd759adb, type: 3}
+  - {fileID: 740150571, guid: ed82608a0ed734668b1b79bebd759adb, type: 3}
+  - {fileID: -1159373068, guid: ed82608a0ed734668b1b79bebd759adb, type: 3}

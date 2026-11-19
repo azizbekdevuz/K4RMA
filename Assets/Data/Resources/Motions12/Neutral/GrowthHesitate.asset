@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aba87f58e676474b87c6f825b4aed1e0, type: 3}
+  m_Name: GrowthHesitate
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtResource
+  asset: {fileID: 0}
+  frames:
+  - {fileID: -1893692962, guid: 967348d41a3ec41c79a979b889e12274, type: 3}
+  - {fileID: 1540953576, guid: 967348d41a3ec41c79a979b889e12274, type: 3}
+  - {fileID: 417982318, guid: 967348d41a3ec41c79a979b889e12274, type: 3}

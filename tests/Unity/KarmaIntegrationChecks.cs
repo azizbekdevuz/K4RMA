@@ -89,6 +89,7 @@ public static class KarmaIntegrationChecks
                 Check(library.All("empty").Length == 0 && library.Get("empty", "missing") == null, "Null entries are safe");
             }
             finally { UnityEngine.Object.DestroyImmediate(library); }
+            await KarmaEndingMoonChecks.CheckFinalSpacing(game, Check);
             Check(runtimeError == null, "No runtime error: " + runtimeError);
             verdict = "PASS: " + assertions + " integration assertions, plus 16 parry frame/facing samples";
         }

@@ -54,7 +54,7 @@ MonoBehaviour:
     - WardRise
     - WardFinal
   - id: GuardBossVFX
-    source: Assets/Arts/Resources/Guard/Effects
+    source: Assets/Arts/Guard/Effects
     sprites:
     - {fileID: -1391105952, guid: 9b218306696bf764bb2bb494d1dc6a42, type: 3}
     - {fileID: -1163106952, guid: b9af6a72124ecf64fa57b43e3c88d72a, type: 3}
@@ -62,10 +62,7 @@ MonoBehaviour:
     - {fileID: -1533835179, guid: 0900b06d290254f4a84c6520e9617af5, type: 3}
     - {fileID: -1470651544, guid: 6f7a3d5052864fa41ac650aaa87a4f04, type: 3}
     - {fileID: 129665699, guid: bcead75ee0358764b9feeb1e8fac873d, type: 3}
-    - {fileID: 21300000, guid: f2c49d182455fcb4da00d6f06eb81897, type: 3}
     - {fileID: 1660225870, guid: 0b5cdb24514051d48879fd35b7f44b06, type: 3}
-    - {fileID: 1361301739, guid: 446db59d0f5992044be6cd85e4477b72, type: 3}
-    - {fileID: -1486744105, guid: 446db59d0f5992044be6cd85e4477b72, type: 3}
     poses:
     - Bash
     - Pillar
@@ -73,10 +70,7 @@ MonoBehaviour:
     - Shard
     - Shield
     - Wave
-    - ParryRed
     - WholeHot
-    - ShardHot
-    - ShardCooled
   - id: GuardHeavyWard
     source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
@@ -156,7 +150,7 @@ MonoBehaviour:
     poses:
     - Ward
   - id: GuardStunStars
-    source: Assets/Arts/Resources/Guard/Effects/StunStars.png
+    source: Assets/Arts/Guard/Effects/StunStars.png
     sprites:
     - {fileID: 21310000, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310002, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
@@ -296,7 +290,7 @@ MonoBehaviour:
     - Contact
     - Descent
   - id: GuardBasalt
-    source: Assets/Arts/Resources/Guard/GD04/Basalt.png
+    source: Assets/Arts/Guard/Effects/Basalt.png
     sprites:
     - {fileID: 949698326, guid: 6677cb49aae36be4d979ea78c53e76eb, type: 3}
     - {fileID: 833113399, guid: 6677cb49aae36be4d979ea78c53e76eb, type: 3}
@@ -306,23 +300,23 @@ MonoBehaviour:
     - {fileID: -1734824841, guid: 6677cb49aae36be4d979ea78c53e76eb, type: 3}
     poses: []
   - id: GuardBasaltDebris
-    source: Assets/Arts/Resources/Guard/GD04/Debris.png
+    source: Assets/Arts/Guard/Effects/Debris.png
     sprites:
     - {fileID: 1283565460, guid: 5c772a8136dc91746a70246ba9c4da6a, type: 3}
     poses: []
   - id: GuardBasaltHeat
-    source: Assets/Arts/Resources/Guard/GD04/FootSparks.png
+    source: Assets/Arts/Guard/Effects/FootSparks.png
     sprites:
     - {fileID: 1816893865, guid: b6b47d26f84452b4c9fb14cac3ce1e2b, type: 3}
     poses: []
   - id: GuardDomeShield
-    source: Assets/Arts/Resources/Guard/Effects/DomeShield.png
+    source: Assets/Arts/Guard/Effects/DomeShield.png
     sprites:
     - {fileID: 21300000, guid: 57c58aa78a9ed6e429f9f3ffd0966c54, type: 3}
     poses:
     - Ricochet
   - id: GuardSlamFan
-    source: Assets/Arts/Resources/Guard/GD04/FanShock.png
+    source: Assets/Arts/Guard/Effects/FanShock.png
     sprites:
     - {fileID: 21300000, guid: c40c0267790048bbac6eb13318170b9a, type: 3}
     poses:

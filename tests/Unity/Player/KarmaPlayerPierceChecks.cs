@@ -95,7 +95,7 @@ public static class KarmaPlayerPierceChecks
                 {
                     clock.SetValue(animator, Time.time - (i + 0.1f) / 12f);
                     sample.Invoke(animator, new object[] { sheet.id, false });
-                    Check(picture.sprite == sheet.sprites[i] && AssetDatabase.GetAssetPath(picture.sprite).Contains("/Motions12/Player/"), sheet.id + " original frame " + i);
+                    Check(picture.sprite == sheet.sprites[i] && AssetDatabase.GetAssetPath(picture.sprite).Contains("/Arts/Player/"), sheet.id + " original frame " + i);
                 }
             }
             Vector2 origin = new Vector2(25, KarmaSpace.Units(7));

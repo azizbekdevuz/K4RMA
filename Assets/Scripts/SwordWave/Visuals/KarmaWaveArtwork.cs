@@ -89,7 +89,7 @@ namespace KarmaPrototype
             else if (Resolve(pose) == "SW04_CounterBlade_v6") KarmaSwordSkillSurface.Apply(renderer, 3);
             if (pose == "SW05_AerialSword")
             {
-                var material = Resources.Load<Material>("SwordWave/SW05/KarmaAerialSword");
+                var material = KarmaArtResource.Load<Material>("SwordWave/SW05/KarmaAerialSword");
                 if (material == null) throw new System.InvalidOperationException("Missing KarmaAerialSword material");
                 renderer.sharedMaterial = material;
             }

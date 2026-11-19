@@ -54,48 +54,7 @@ public static class KarmaSW02InheritedChecks
     {
         try
         {
-            var library = AssetDatabase.LoadAssetAtPath<KarmaSpriteLibrary>(Library);
-            var imports = new List<string>();
-            foreach (string name in Forms)
-            {
-                string sheet = "Assets/Arts/Resources/SwordWave/SW02/" + name + "_SW02_Transitions.png";
-                string group = name + "SW02";
-                var frames = JsonUtility.FromJson<KarmaSW02SpriteImportChecks.Frames>(File.ReadAllText(Folder + "/" + name + "-import.json")).frames;
-                AssetDatabase.ImportAsset(sheet, ImportAssetOptions.ForceSynchronousImport);
-                var importer = (TextureImporter)AssetImporter.GetAtPath(sheet);
-                importer.textureType = TextureImporterType.Sprite; importer.spriteImportMode = SpriteImportMode.Multiple;
-                // Match the authored form's ready body height without adding a
-                // runtime scale policy or changing any original Sprite.
-                var idle = KarmaArtwork.InheritedPoses(name).Single(s => s.name == "Idle");
-                var readyOutline = frames[5].outlines.SelectMany(p => p.points).ToArray();
-                float readyHeight = readyOutline.Max(p => p.y) - readyOutline.Min(p => p.y);
-                importer.spritePixelsPerUnit = readyHeight / idle.bounds.size.y;
-                importer.mipmapEnabled = false; importer.alphaIsTransparency = true;
-                importer.filterMode = FilterMode.Bilinear; importer.wrapMode = TextureWrapMode.Clamp;
-                importer.textureCompression = TextureImporterCompression.Uncompressed; importer.maxTextureSize = 2048;
-                var settings = new TextureImporterSettings(); importer.ReadTextureSettings(settings);
-                settings.spriteMeshType = SpriteMeshType.Tight; importer.SetTextureSettings(settings);
-                var factories = new SpriteDataProviderFactories(); factories.Init();
-                var provider = factories.GetSpriteEditorDataProviderFromObject(importer); provider.InitSpriteEditorDataProvider();
-                var existing = provider.GetSpriteRects().ToDictionary(r => r.name, r => r.spriteID);
-                var rects = frames.Select(f => new SpriteRect { name = f.name, rect = new Rect(f.x, f.y, 512, 512),
-                    alignment = SpriteAlignment.Custom, pivot = new Vector2(f.pivotX, f.pivotY),
-                    spriteID = existing.TryGetValue(f.name, out var id) ? id : GUID.Generate() }).ToArray();
-                provider.SetSpriteRects(rects);
-                provider.GetDataProvider<ISpriteNameFileIdDataProvider>().SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)));
-                var outline = provider.GetDataProvider<ISpriteOutlineDataProvider>();
-                for (int i = 0; i < rects.Length; i++) outline.SetOutlines(rects[i].spriteID, frames[i].outlines.Select(p => p.points).ToList());
-                provider.Apply(); importer.SaveAndReimport();
-                var sprites = AssetDatabase.LoadAllAssetsAtPath(sheet).OfType<Sprite>().ToArray();
-                Check(sprites.Length == 6, name + " six sprites");
-                var sheets = library.sheets.Where(s => s.id != group).ToList();
-                sheets.Add(new KarmaSpriteLibrary.Sheet { id = group, source = sheet, poses = Names,
-                    sprites = Names.Select(n => sprites.Single(s => s.name == n)).ToArray() });
-                library.sheets = sheets.ToArray(); EditorUtility.SetDirty(library);
-                imports.Add("PASS: " + name + " six sprites; PPU=" + importer.spritePixelsPerUnit + "; ready height=" + idle.bounds.size.y);
-            }
-            AssetDatabase.SaveAssets();
-            File.WriteAllLines(Folder + "/import-result.txt", imports);
+            foreach (string form in Forms) KarmaSW02SpriteImportChecks.CheckSheet(form);
             if (SessionState.GetBool(Key + ".PlayAfterImport", false)) RunBatch();
             else EditorApplication.Exit(0);
         }
@@ -111,7 +70,7 @@ public static class KarmaSW02InheritedChecks
         if (Enemy == null) return;
         var animator = (KarmaCharacterAnimator)Get(Enemy, "animator");
         var picture = (SpriteRenderer)Get(animator, "picture");
-        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || AssetDatabase.GetAssetPath(picture.sprite) != "Assets/Arts/Resources/Motions12/" + Forms[form - 1] + "/SW02.png")
+        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || AssetDatabase.GetAssetPath(picture.sprite) != KarmaPrototype.EditorTools.KarmaMotionSheetImport.SheetPath(Forms[form - 1], "SW02"))
         {
             if (side > 0 && picture.sprite == KarmaArtwork.StageIdle(Forms[form - 1]) && captured.Add("OriginalIdle"))
                 CapturePicture(picture, "OriginalIdle");

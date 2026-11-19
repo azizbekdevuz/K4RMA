@@ -16,7 +16,7 @@ namespace KarmaPrototype
             if (parryFrames == null)
             {
                 parryFrames = motionArt.Frames("Player", "ParrySuccess");
-                parryEffects = Resources.LoadAll<Sprite>("Shared/Effects/ParrySuccess");
+                parryEffects = KarmaArtResource.Frames("Shared/Effects/ParrySuccess");
                 Array.Sort(parryFrames, (a, b) => string.CompareOrdinal(a.name, b.name));
                 Array.Sort(parryEffects, (a, b) => string.CompareOrdinal(a.name, b.name));
             }

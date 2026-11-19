@@ -9,7 +9,7 @@ from test_sword_presentation import method, run_cs
 from test_sw05_eruption_mesh import SHIM, method as mesh_method
 
 ROOT = Path(__file__).resolve().parents[3]
-ART = ROOT / 'Assets/Arts/Resources/SwordWave/SW03'
+ART = ROOT / 'Assets/Arts/SwordWave/Effects'
 CODE = ROOT / 'Assets/Scripts/SwordWave/Visuals'
 
 

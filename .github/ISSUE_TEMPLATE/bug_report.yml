@@ -5,7 +5,7 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: "보안 취약점과 비밀정보는 공개하지 마세요. / Do not disclose security vulnerabilities or secrets publicly. [SECURITY](https://github.com/azizbekdevuz/K4RMA/blob/main/SECURITY.md)"
+      value: "보안 취약점과 비밀정보는 공개하지 마세요. / Do not disclose security vulnerabilities or secrets publicly. [SECURITY](https://github.com/azizbekdevuz/K4RMA/blob/main/docs/SECURITY.md)"
   - type: textarea
     id: summary
     attributes:

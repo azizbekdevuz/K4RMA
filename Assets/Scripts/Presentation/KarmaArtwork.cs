@@ -8,10 +8,10 @@ namespace KarmaPrototype
     public static class KarmaArtwork
     {
         public const string SettingsResourcePath = "KarmaArtworkSettings";
-        public const string StageArt = "Reference/GameScale_HD_StageStyle/";
+        public const string StageArt = "GameScale_HD_StageStyle/";
         public static Sprite StageIdle(string form)
         {
-            var sprite = Resources.Load<Sprite>(StageArt + form + "_Idle");
+            var sprite = KarmaArtResource.First(StageArt + form + "_Idle");
             if (sprite == null) throw new InvalidOperationException("Missing StageStyle Idle: " + form);
             return sprite;
         }

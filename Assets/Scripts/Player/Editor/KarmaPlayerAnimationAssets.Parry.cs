@@ -12,7 +12,7 @@ namespace KarmaPrototype.EditorTools
         public static void ImportParrySuccess()
         {
 
-            ImportParrySheet("Assets/Arts/Resources/Shared/Effects/ParrySuccess.png");
+            ImportParrySheet("Assets/Arts/Player/Effects/ParrySuccess.png");
             AssetDatabase.SaveAssets();
             Debug.Log("Parry success import PASS: two sheets, four frames each.");
         }

@@ -119,7 +119,7 @@ public static class KarmaGuardHeavyGlowChecks
             camera.orthographicSize=8;camera.aspect=1280f/720;
             camera.transform.position=new Vector3(30,5.5f,-10);
             Check(Mathf.Approximately(game.Config.BossTuning.guard.heavyParryCueSeconds,0.3f),"saved parry cue = 0.3 seconds");
-            Check(!ShaderUtil.ShaderHasError(Resources.Load<Shader>("Guard/Effects/KarmaGuardHeavyGlow")),"glow shader compiled");
+            Check(!ShaderUtil.ShaderHasError(KarmaArtResource.Load<Shader>("Guard/Effects/KarmaGuardHeavyGlow")),"glow shader compiled");
             var orders=new[]{new[]{Essence.Guard},new[]{Essence.Guard,Essence.SwordWave},
                 new[]{Essence.Guard,Essence.RisingSlash},new[]{Essence.Guard,Essence.SwordWave,Essence.RisingSlash}};
             foreach(var order in orders)

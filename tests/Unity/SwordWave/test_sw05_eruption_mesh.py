@@ -313,18 +313,14 @@ class SW05RestoredExplosionChecks(unittest.TestCase):
         print(output.strip())
 
     def test_original_packed_art_guid_and_shader_are_reused(self):
-        from PIL import Image
-        from io import BytesIO
-        for name in ("SW05_FinalOvercharge_6f.png", "SW05_FinalDetonation_8f.png"):
-            old_path = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/" + name
-            current = ROOT / "Assets/Arts/Resources/SwordWave/SW05" / name
-            a, b = Image.open(BytesIO(history(old_path))), Image.open(current)
-            self.assertEqual(a.size, b.size)
-            self.assertEqual(a.convert("RGBA").tobytes(), b.convert("RGBA").tobytes())
-            self.assertEqual(re.search(rb"guid: (\w+)", history(old_path + ".meta"))[1],
-                             re.search(rb"guid: (\w+)", Path(str(current) + ".meta").read_bytes())[1])
+        name = "SW05_FinalDetonation_8f.png"
+        old_path = "Assets/K4RMA/Arts/Bosses/SwordWave/Effects/" + name
+        archived = ROOT / "Assets/Arts/Backup/SwordWave/Effects/SwordWave_SW05_FinalDetonation_8f.png"
+        self.assertEqual(history(old_path), archived.read_bytes())
+        for retired in (name, "SW05_FinalOvercharge_6f.png"):
+            self.assertFalse((ROOT / "Assets/Arts/SwordWave/Effects" / retired).exists())
         old_shader = "Assets/K4RMA/Arts/Bosses/SwordWave/Resources/SW05/SW05Celestial.shader"
-        current = (ROOT / "Assets/Arts/Resources/SwordWave/SW05/SW05Celestial.shader").read_text(encoding="utf-8")
+        current = (ROOT / "Assets/Arts/SwordWave/Effects/SW05Celestial.shader").read_text(encoding="utf-8")
         self.assertEqual(history(old_shader).decode("utf-8").splitlines(), current.splitlines())
 
 

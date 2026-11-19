@@ -80,9 +80,16 @@ namespace KarmaPrototype
             fallenGuardianPosition = enemy.transform.position;
             fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
             guardianInheriting = false;
-            if (StageIndex == 3) { BeginEnding(); return; }
-            var defeatedPicture = fallenArt != null ? fallenArt.GetComponentInChildren<SpriteRenderer>() : null;
-            defeatedGuardianSprites[StageIndex] = defeatedPicture != null ? defeatedPicture.sprite : null;
+            if (StageIndex == 3)
+            {
+                if (!Player.NeedsCeremonySpacing(FallenGuardianBounds(), fallenGuardianPosition.x, out _, out _))
+                { BeginEnding(); return; }
+            }
+            else
+            {
+                var picture = fallenArt != null ? fallenArt.GetComponentInChildren<SpriteRenderer>() : null;
+                defeatedGuardianSprites[StageIndex] = picture != null ? picture.sprite : null;
+            }
             Phase = RunPhase.GuardianFallen;
             ceremonySpacingStarted = ceremonySpacingFinished = false;
             transitionLeft = GuardianFallDuration;
@@ -90,6 +97,12 @@ namespace KarmaPrototype
             Player.ClearStatus();
             ClearProjectiles();
         }
+        Bounds FallenGuardianBounds()
+        {
+            var picture = fallenGuardian != null ? fallenGuardian.GetComponentInChildren<SpriteRenderer>() : null;
+            return picture != null ? picture.bounds : new Bounds(fallenGuardianPosition, Vector3.one * 4);
+        }
+
         void UpdateGuardianFall()
         {
             transitionLeft -= Time.deltaTime;
@@ -97,18 +110,17 @@ namespace KarmaPrototype
             if (!ceremonySpacingStarted)
             {
                 ceremonySpacingStarted = true;
-                var picture = fallenGuardian != null ? fallenGuardian.GetComponentInChildren<SpriteRenderer>() : null;
-                var bounds = picture != null ? picture.bounds : new Bounds(fallenGuardianPosition, Vector3.one * 4);
-                Player.BeginCeremonySpacing(bounds, fallenGuardianPosition.x);
+                Player.BeginCeremonySpacing(FallenGuardianBounds(), fallenGuardianPosition.x);
             }
             if (Player.SeparatingForCeremony) return;
+            if (StageIndex == 3) { BeginEnding(); return; }
             if (!ceremonySpacingFinished)
             {
                 ceremonySpacingFinished = true;
                 transitionLeft = Mathf.Max(transitionLeft, 0.3f);
             }
             if (transitionLeft <= 0)
-                Phase = StageIndex == 3 ? RunPhase.Victory : RunPhase.Choosing;
+                Phase = RunPhase.Choosing;
         }
         public void Choose(Essence essence)
         {

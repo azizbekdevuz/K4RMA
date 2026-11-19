@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aba87f58e676474b87c6f825b4aed1e0, type: 3}
+  m_Name: UP05_NoFX
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtResource
+  asset: {fileID: 0}
+  frames:
+  - {fileID: -1730575959, guid: 25cdb37d5e5d6420496fe25ee73a50bf, type: 3}
+  - {fileID: 500711694, guid: 25cdb37d5e5d6420496fe25ee73a50bf, type: 3}
+  - {fileID: -900906014, guid: 25cdb37d5e5d6420496fe25ee73a50bf, type: 3}

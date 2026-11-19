@@ -8,7 +8,7 @@ namespace KarmaPrototype.EditorTools
 {
     public static class KarmaPlayer12AnimationAssets
     {
-        const string ResourcesRoot = "Assets/Arts/Resources/";
+        const string ResourcesRoot = "Assets/Data/Resources/";
         const string Folder = ResourcesRoot + KarmaPlayerTimeline.Clips;
         public static readonly string[] Names = KarmaPlayerTimeline.Motions.Select(m => m.Name).ToArray();
 
@@ -43,7 +43,7 @@ namespace KarmaPrototype.EditorTools
         internal static KarmaSpriteLibrary.Sheet WriteClip(string folder, string name)
         {
             var motion = KarmaPlayerTimeline.Find(name);
-            string path = ResourcesRoot + motion.ResourcePath + ".png";
+            string path = KarmaMotionSheetImport.SheetPath("Player", motion.Source);
             var drawings = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().ToArray();
             var frames = motion.Sequence(drawings);
             var keys = frames.Select((sprite, i) => new ObjectReferenceKeyframe {

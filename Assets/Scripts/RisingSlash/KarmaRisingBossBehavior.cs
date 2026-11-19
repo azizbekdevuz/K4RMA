@@ -229,7 +229,7 @@ namespace KarmaPrototype
             public override string VictoryPose => "Landing";
             public override string VictoryLine(int stage) => stage == 1 ? "네 움직임을 따라잡았다…"
                 : stage == 2 ? "네 다음 움직임까지… 따라잡았다." : "이번에는… 내가 먼저 닿았다.";
-            public override Sprite GrowthReflection => Resources.Load<Sprite>("RisingSlash/Growth/Reflection");
+            public override Sprite GrowthReflection => KarmaArtResource.First("RisingSlash/Growth/Reflection");
             public override Vector2 GrowthInspectionAnchor => new Vector2(0.9f, 1.1f);
             public override void OnAttackParried(bool stun)
             {

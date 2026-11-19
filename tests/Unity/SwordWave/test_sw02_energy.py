@@ -58,7 +58,7 @@ class ClipProbe {
         references = re.findall(r"fileID: (-?\d+), guid: (\w+)", group)
         poses = group.split("    poses:\n", 1)[1].splitlines()
         pose_refs = dict(zip((line.strip()[2:] for line in poses), references))
-        sheet = ROOT / "Assets/Arts/Resources/SwordWave/Shared/SW01_SW02_EnergyFrames.png"
+        sheet = ROOT / "Assets/Arts/SwordWave/Effects/SW01_SW02_EnergyFrames.png"
         meta = Path(str(sheet) + ".meta").read_text()
         guid = re.search(r"^guid: (.+)$", meta, re.M)[1]
         with Image.open(sheet) as image:
@@ -83,7 +83,7 @@ class ClipProbe {
             row = catalog[form, motion]
             cols, _, _, width, height = map(int, row[2:7])
             if (form, motion) not in images:
-                with Image.open(MOTIONS / form / (motion + ".png")) as sheet:
+                with Image.open(ROOT / "Assets/Arts/SwordWave" / form / (motion + ".png")) as sheet:
                     images[form, motion] = sheet.convert("RGBA")
             image = images[form, motion]
             for x, y in ((x1, y1), (x2, y2)):

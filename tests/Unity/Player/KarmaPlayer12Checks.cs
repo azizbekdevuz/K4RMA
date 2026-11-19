@@ -288,7 +288,7 @@ public static class KarmaPlayer12Checks
                     clock.SetValue(animator, Time.time - (i + 0.1f) / 12);
                     sample.Invoke(animator, new object[] { sheet.id, false });
                     Check(AssetDatabase.GetAssetPath(sheet.sprites[i]).Contains(sheet.id == "Idle" ?
-                        "/Reference/GameScale_HD_StageStyle/" : "/Motions12/Player/"), sheet.id + " source artwork");
+                        "/Arts/Reference/" : "/Arts/Player/"), sheet.id + " source artwork");
                     Check(picture.sprite == sheet.sprites[i] && picture.transform.localScale == scale, sheet.id + " frame " + i);
                     await Task.Yield();
                 }

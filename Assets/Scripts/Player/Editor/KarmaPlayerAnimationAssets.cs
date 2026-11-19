@@ -11,7 +11,7 @@ namespace KarmaPrototype.EditorTools
     [InitializeOnLoad]
     public static partial class KarmaPlayerAnimationAssets
     {
-        const string Clips = "Assets/Arts/Resources/Player/Animation";
+        const string Clips = "Assets/Data/Resources/Player/Animation";
         static KarmaPlayerAnimationAssets()
         {
             EditorApplication.delayCall += () => {
@@ -26,7 +26,7 @@ namespace KarmaPrototype.EditorTools
             var names = new[] { "Run", "Jump", "Land", "Crouch" };
             foreach (string name in names)
             {
-                string path = "Assets/Arts/Resources/" + KarmaPlayerTimeline.Sheets + name + ".png";
+                string path = KarmaMotionSheetImport.SheetPath("Player", name);
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 importer.GetSourceTextureWidthAndHeight(out int width, out int height);
                 string input = Path.Combine(sourceFolder, name + ".png");
@@ -41,7 +41,7 @@ namespace KarmaPrototype.EditorTools
             }
             foreach (string name in names)
             {
-                string path = "Assets/Arts/Resources/" + KarmaPlayerTimeline.Sheets + name + ".png";
+                string path = KarmaMotionSheetImport.SheetPath("Player", name);
                 File.Copy(Path.Combine(sourceFolder, name + ".png"), path, true);
                 AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             }

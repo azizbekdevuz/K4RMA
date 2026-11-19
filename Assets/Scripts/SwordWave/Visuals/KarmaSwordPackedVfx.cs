@@ -45,7 +45,7 @@ namespace KarmaPrototype
             // Validate before creating a live component: a missing pack must not
             // leave a half-initialized object retrying the failure every frame.
             Frame(clip, 0);
-            var material = Resources.Load<Material>("SwordWave/SW05/SW05Celestial");
+            var material = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05Celestial");
             if (material == null) throw new System.InvalidOperationException("Missing SW05/SW05Celestial material.");
             var node = new GameObject(Names[(int)clip]+" / animated light / no damage");
             node.transform.SetParent(root,false); node.transform.position = at;

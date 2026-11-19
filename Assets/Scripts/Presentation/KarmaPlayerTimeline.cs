@@ -45,7 +45,7 @@ namespace KarmaPrototype
                 return frames;
             }
 
-            public Sprite[] Load() => Sequence(Resources.LoadAll<Sprite>(ResourcePath));
+            public Sprite[] Load() => Sequence(KarmaArtResource.Frames(ResourcePath));
         }
 
         public static readonly Motion[] Motions = {

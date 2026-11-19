@@ -78,7 +78,7 @@ MonoBehaviour:
     - Kneel
     - Death
   - id: PlayerVFX
-    source: Assets/Arts/Resources/Shared/Effects/Player.png
+    source: Assets/Arts/Player/Effects/PlayerSkillEffects.png
     sprites:
     - {fileID: 1530285540, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}
     - {fileID: -1729306486, guid: 8db8cfead497e4a218c10b266897e73f, type: 3}

@@ -17,9 +17,9 @@
 
 | 담당 | 코드 | 아트·효과·재질·셰이더 | 검사 |
 |---|---|---|---|
-| RisingSlash · 상승베기 | `Assets/Scripts/RisingSlash/` | `Assets/Arts/Resources/RisingSlash/` | `tests/Unity/RisingSlash/` |
-| SwordWave · 검기 | `Assets/Scripts/SwordWave/` | `Assets/Arts/Resources/SwordWave/` | `tests/Unity/SwordWave/` |
-| Guard · 방어 | `Assets/Scripts/Guard/` | `Assets/Arts/Resources/Guard/` | `tests/Unity/Guard/` |
+| RisingSlash · 상승베기 | `Assets/Scripts/RisingSlash/` | `Assets/Arts/RisingSlash/` | `tests/Unity/RisingSlash/` |
+| SwordWave · 검기 | `Assets/Scripts/SwordWave/` | `Assets/Arts/SwordWave/` | `tests/Unity/SwordWave/` |
+| Guard · 방어 | `Assets/Scripts/Guard/` | `Assets/Arts/Guard/` | `tests/Unity/Guard/` |
 
 - 보스의 공격·선택·이동·방어·피격·자세·효과·수치와 검사 기대값은 그 보스의 담당 폴더에서 수정한다. 다른 보스의 구체 타입·전용 상태·전용 애니메이션 메서드를 참조하지 않는다. `partial`은 공통 호스트 접근 수단이며 다른 보스 상태 접근 허가가 아니다.
 - `Behavior`는 공격 목록(`BuildCycle`)·선택(`Eligible`)·이동(`TickMovement`)·공격 주기·연결을 담당한다. 검기 이동은 `KarmaSwordBossMovement.cs`, 개별 공격은 `Patterns/`, 전용 연출은 `Visuals/`, 방어 기본 공격은 `Patterns/GDBasic.cs`다.
@@ -43,11 +43,11 @@
 ### 배치와 연결
 
 - `Assets` 바로 아래에 `Arts`(이미지·애니메이션·재질·셰이더), `Audio`(소리·카탈로그), `Scripts`(코드), `Data`(게임·렌더링 설정), `Scenes`(씬)를 둔다. 새 중간 프로젝트 폴더나 별도의 `Art` 폴더를 만들지 않는다.
-- 아트는 `Arts/Resources/<소유자 또는 화면>/`에 둔다. 소유자는 `Player`, `Guard`, `RisingSlash`, `SwordWave`, `Neutral`이며, 배경·튜토리얼·UI는 `Backgrounds`, `Tutorial`, `UI`, 여러 기능이 함께 쓰는 원본은 `Shared`에 둔다. 오디오는 `Audio/<기능>/`에서 별도로 관리한다.
+- 동작 이미지는 `Arts/Player/`, `Arts/Master/`, `Arts/Neutral/` 바로 아래에 둔다. 보스는 `Arts/Guard/WardRise/`처럼 보스 아래 외형 한 단계로 나눈다. 캐릭터별 전용 연출은 각각의 `Effects/`, 공용 효과·배경·튜토리얼·UI는 `Arts/Resources/`에 둔다. `Arts/Reference/`에는 GameScale_HD_StageStyle 공식 원화를, `Arts/Backup/`에는 통합 직전 사용 이미지와 이전 사용처 색인을 보관한다. 오디오는 `Audio/<기능>/`에 둔다.
 - 코드는 `Scripts/<기능>/`에 둔다. `Game`은 초기화·진행·입력·설정, `Combat`은 공통 전투 계약과 적 호스트, `Presentation`은 공통 연출을 담당한다. 전용 에디터 코드는 해당 기능의 `Editor/`에 두며, `Core`의 독립 어셈블리 경계는 유지한다.
 - 파일·폴더·시트·아틀라스는 보스·캐릭터·동작·효과·배경·UI 등 함께 관리·로딩할 의미 단위를 유지한다. 파일 수를 줄이기 위해 관련 없는 이미지를 섞지 않는다.
-- 현재 사용되는 몸 동작과 부활 시트는 `Motions12/<외형>/<동작>`에 둔다. 기본 자세는 `Reference/GameScale_HD_StageStyle/<외형>_Idle`을 사용한다. 패턴별 이미지·재질·셰이더는 `<소유자>/<패턴 ID>/`에 함께 두고, 여러 패턴이 공유하면 해당 소유자의 `Shared/` 또는 작은 `Effects/` 묶음에 둔다. 새 파일은 의미 있는 동작·효과 이름과 필요한 프레임 수를 사용하며 `Variants`나 수정 버전별 보관 폴더를 만들지 않는다. 기존 Sprite 이름·논리 키와 연결된 파일명은 호환성을 위해 유지한다.
-- 아트의 로딩 키는 `Arts/Resources/` 아래 상대 경로다. 플레이어 클립은 `Player/Animation/`·`Player/Animation12/`이다. 계승 로더는 `Motions12/BodyPoses`에서 해당 외형의 논리 포즈 16개를 찾는다. 논리 외형명·포즈명과 저장 데이터 키는 유지한다.
+- 몸 동작과 부활은 `Motions12/<외형>/<동작>`, 기본 자세는 `GameScale_HD_StageStyle/<외형>_Idle` 논리 키로 읽는다. 동작과 이펙트 파일에는 용도를 식별할 이름을 붙이고 Sprite 이름과 프레임 순서를 유지한다.
+- 개별 동작의 프레임 및 경로로 로딩하는 전용 이펙트는 `Data/Resources/`의 `KarmaArtResource`에서 원본을 참조한다. 플레이어 클립은 `Player/Animation/`·`Player/Animation12/` 키를 사용한다. 계승 포즈는 `Motions12/BodyPoses`에서 찾는다.
 - 설정 에셋은 `Data/Resources/`, 보스 Sprite 연결은 그 아래 `BossArtwork/`, 오디오 카탈로그는 `Audio/Resources/`에 둔다. 이 설정들의 기존 Resources 로딩 키는 유지한다.
 - 외형 참조 atlas를 포함해 픽셀·색상 정보·슬라이스·피벗·PPU·임포트 설정·사용 목적이 호환되는 동일 이미지는 공용 원본을 공유한다. 실제 차이가 필요한 전용 이미지는 유지하고, 비슷하게 보인다는 이유만으로 합치지 않는다. 공용 이미지 변경은 모든 참조 보스에 영향을 준다.
 - Sprite와 논리 이름(`poses`)은 담당 `Assets/Data/Resources/BossArtwork/Karma…BossSprites.asset`의 같은 인덱스에 연결한다. 보스 라이브러리는 자동 검색된다. 공통 라이브러리에 전용 이미지를 등록하거나 그룹/이름 조합을 중복 등록하지 않는다.
@@ -145,6 +145,6 @@
 | `sword-scar` | SW03 80개 검·이동 병행·중단·패링·사망·후속 패턴 |
 | `build` | macOS Player 빌드 |
 
-플레이어와 수호자·스승의 동작은 `Motions12/<외형>/<동작>`에서 읽고 Idle은 `Reference/GameScale_HD_StageStyle` 원화를 쓴다. `player12`는 복제 프로젝트에서 12 FPS 클립을 재생성하고 실제 재생을 검사한다. `--visible`은 화면이 있는 Editor에서 Play Mode 검사를 실행한다. `--work-project`는 실행기가 만든 복제 프로젝트만 재사용하며 열려 있는 Editor의 파일은 교체하지 않는다. `build`는 macOS 모듈이 설치된 환경에서 실행한다. 정적 에셋 검사는 `python3 -m unittest discover -s tests -p test_asset_integrity.py`로 GUID·메타·대소문자·Resources·셰이더 경로를 확인한다.
+플레이어와 수호자·스승의 동작은 `Motions12/<외형>/<동작>`에서 읽고 Idle은 `GameScale_HD_StageStyle` 원화를 쓴다. `player12`는 복제 프로젝트에서 12 FPS 클립을 재생성하고 실제 재생을 검사한다. `--visible`은 화면이 있는 Editor에서 Play Mode 검사를 실행한다. `--work-project`는 실행기가 만든 복제 프로젝트만 재사용하며 열려 있는 Editor의 파일은 교체하지 않는다. `build`는 macOS 모듈이 설치된 환경에서 실행한다. 정적 에셋 검사는 `python3 -m unittest discover -s tests -p test_asset_integrity.py`로 GUID·메타·대소문자·Resources·셰이더 경로를 확인한다.
 
 상승형의 모든 피격·패링 조합과 수동 플레이 전체를 보장하지 않는다. 결과는 `output/validation/`에 생성하며 보존·삭제는 6절을 따른다.

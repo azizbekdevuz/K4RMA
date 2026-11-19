@@ -418,6 +418,38 @@ public static class KarmaEndingMoonChecks
         CheckCoverage();
         Render("campaign-" + shot);
     }
+    public static async Task CheckFinalSpacing(KarmaGame campaign, Action<bool, string> check)
+    {
+        game = campaign;
+        foreach (var primary in new[] { Essence.Guard, Essence.RisingSlash, Essence.SwordWave })
+        {
+            Reset(primary);
+            float guardianX = enemy.Position.x;
+            bool distant = primary == Essence.SwordWave;
+            float x = distant ? guardianX - 18 : guardianX;
+            float y = KarmaSpace.PlayerHalfHeight + (primary == Essence.RisingSlash ? 3 : 0.05f);
+            game.Player.ResetForRoom(new Vector2(x, y), true);
+            Physics2D.SyncTransforms();
+            enemy.TakeDamage(enemy.MaxHealth * 100);
+            float finishTime = game.Elapsed;
+            if (distant)
+                check(game.Phase == RunPhase.Ending && Mathf.Abs(game.Player.Position.x - x) < 0.01f,
+                    "Ranged final kill starts the ending in place");
+            else
+            {
+                check(game.Phase == RunPhase.GuardianFallen && game.World.Find("Ending presentation") == null,
+                    primary + " overlapping final kill waits for ceremony spacing");
+                await Until(() => game.Phase == RunPhase.Ending, 12);
+                check(Mathf.Abs(game.Player.Position.x - guardianX) >= KarmaSpace.Units(3.5f) - 0.05f &&
+                    game.Player.Facing == (guardianX < game.Player.Position.x ? -1 : 1),
+                    primary + " ends grounded and clear of the guardian, facing it");
+            }
+            check(game.Elapsed == finishTime, "Final run time stays fixed during the ending approach");
+            game.ReturnToTitle();
+            await Task.Yield();
+        }
+    }
+
     static async Task CheckEnding()
     {
         Reset(Essence.SwordWave);

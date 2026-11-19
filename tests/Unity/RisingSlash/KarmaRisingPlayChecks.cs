@@ -94,7 +94,7 @@ public static class KarmaRisingPlayChecks
                     string motion = state == "Attack" ? attack.ToString() : state == "Stunned" ? "Stun" : name;
                     var sprite = renderer.sprite;
                     bool connected = motion == "Idle" ? sprite == KarmaArtwork.StageIdle(form)
-                        : Array.IndexOf(Resources.LoadAll<Sprite>("Motions12/" + form + "/" + motion), sprite) >= 0;
+                        : Array.IndexOf(KarmaArtResource.Frames("Motions12/" + form + "/" + motion), sprite) >= 0;
                     Check(connected,
                         "Actual Rising Sprite connection: " + string.Join(">", order) + "/" + name + " got=" + renderer.sprite.name);
                     count++;
@@ -159,7 +159,7 @@ public static class KarmaRisingPlayChecks
         Check(Frames("Rise", "Stun").Contains(renderer.sprite), "Stun overrides strike playback");
     }
     static Sprite[] Frames(string form, string motion) =>
-        Resources.LoadAll<Sprite>("Motions12/" + form + "/" + motion)
+        KarmaArtResource.Frames("Motions12/" + form + "/" + motion)
             .OrderBy(frame => frame.name, StringComparer.Ordinal).ToArray();
 
     static async Task ObserveClip(SpriteRenderer renderer, string form, string motion, string landing = null)

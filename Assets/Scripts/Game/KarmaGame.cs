@@ -104,7 +104,8 @@ namespace KarmaPrototype
                 UpdatePlayerFall();
                 return;
             }
-            if (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Phase == RunPhase.Choosing || Phase == RunPhase.Transition || Phase == RunPhase.GuardianFallen)
+            if (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Phase == RunPhase.Choosing || Phase == RunPhase.Transition
+                || (Phase == RunPhase.GuardianFallen && StageIndex < 3))
                 Elapsed += Time.deltaTime;
             if (Phase == RunPhase.GuardianFallen)
             {

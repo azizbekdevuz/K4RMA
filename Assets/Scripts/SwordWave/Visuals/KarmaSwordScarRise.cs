@@ -85,7 +85,7 @@ namespace KarmaPrototype
             picture = GetComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(picture); picture.color = Color.white;
             if (clip == ScarSequence.Blade)
             {
-                picture.sharedMaterial = Resources.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish");
+                picture.sharedMaterial = KarmaArtResource.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish");
                 bladeProperties = new MaterialPropertyBlock();
                 picture.sprite=KarmaArtwork.Sprite("SwordBossVFX","SW03_RisingBlade_v7");
                 picture.flipX=false;picture.flipY=false;

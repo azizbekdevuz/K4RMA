@@ -7,6 +7,7 @@ namespace KarmaPrototype
     sealed class KarmaHeavyStrikeMotion
     {
         readonly SpriteRenderer picture;
+        readonly KarmaGuardHeavyGlow glow;
         readonly Vector3 home, scale, damageScale;
         readonly Sprite[] poses = new Sprite[3];
         readonly Sprite[] heatedPoses = new Sprite[3];
@@ -23,9 +24,11 @@ namespace KarmaPrototype
             IReadOnlyList<Essence> order)
         {
             picture = renderer; home = position;
+            glow = renderer.gameObject.AddComponent<KarmaGuardHeavyGlow>();
             string key = order.Count >= 3 ? "WardFinal" : order.Count == 2
                 ? order[1] == Essence.SwordWave ? "WardWave" : "WardRise" : "Ward";
             FormKey = key;
+            glow.Initialize(renderer, key);
             string[] names = { "Windup", "Downstroke", "FollowThrough" };
             foreach (var sprite in KarmaArtwork.Sprites("GuardHeavy" + key))
                 for (int i = 0; i < names.Length; i++) if (sprite.name == names[i]) poses[i] = sprite;
@@ -49,10 +52,10 @@ namespace KarmaPrototype
             // Weapon reach and transparent padding must not change the body's pixel density.
             scale = originalScale * (poses[0].pixelsPerUnit / (standing.pixelsPerUnit * 1.35f));
         }
-        public void Prepare() { active = true; swinging = heated = false; Apply(0); }
-        public void Heat() { heated = true; if (active && !swinging) Apply(0); }
-        public void Swing() { swinging = true; swingAt = Time.time; Apply(1); }
-        public void Stop() { active = swinging = heated = false; }
+        public void Prepare(float chargeSeconds = 0.6f) { active = true; swinging = heated = false; glow.Prepare(chargeSeconds); Apply(0); }
+        public void Heat() { heated = true; glow.Cue(); if (active && !swinging) Apply(0); }
+        public void Swing() { swinging = true; swingAt = Time.time; glow.Strike(); Apply(1); }
+        public void Stop() { active = swinging = heated = false; glow.Stop(); }
         public bool Show(EnemyAttack attack)
         {
             if (!active || (attack != EnemyAttack.GD02 && attack != EnemyAttack.GD05)) return false;
@@ -67,6 +70,8 @@ namespace KarmaPrototype
             picture.transform.localPosition = home;
             picture.transform.localScale = scale;
             picture.transform.localRotation = Quaternion.identity;
+            glow.SetPose(ShieldAway ? shieldlessPoses[index] : poses[index],
+                ShieldAway ? shieldlessHeatedPoses[index] : heatedPoses[index]);
             CurrentPose = index == 0 ? "GD02/Windup" : index == 1 ? "GD02/Downstroke" : "GD02/FollowThrough";
         }
     }

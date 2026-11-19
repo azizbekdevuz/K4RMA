@@ -21,7 +21,7 @@ MonoBehaviour:
     autoShieldPeriod: 8
     autoShieldWarning: 0.8
     parryStunSeconds: 2
-    heavyParryCueSeconds: 0.5
+    heavyParryCueSeconds: 0.3
     heavyHitStunSeconds: 1
     shieldThrowSpeed: 30
     shieldDamageMultiplier: 0.3

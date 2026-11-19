@@ -42,9 +42,10 @@ namespace KarmaPrototype
                 Vector2 center = new Vector2(owner.Position.x + owner.direction * (Settings.heavyStrikeReach / 2), KarmaSpace.Units(2.2f));
                 Vector2 size = new Vector2(Settings.heavyStrikeReach, KarmaSpace.Units(4.4f));
                 var mark = owner.Mark("GD02 강공격 · 패링 가능", center, size);
-                owner.state = ActionState.Telegraph; owner.animator.PrepareHeavyStrike();
                 float cueSeconds = CueSeconds;
-                yield return owner.Wait(Mathf.Max(0, owner.Warning(0.9f) - cueSeconds));
+                float chargeSeconds = Mathf.Max(0, owner.Warning(0.9f) - cueSeconds);
+                owner.state = ActionState.Telegraph; owner.animator.PrepareHeavyStrike(chargeSeconds);
+                yield return owner.Wait(chargeSeconds);
                 heavyParryQueued = false; heavyParryUntil = owner.FightSeconds + cueSeconds;
                 owner.animator.HeatHeavyStrike();
 

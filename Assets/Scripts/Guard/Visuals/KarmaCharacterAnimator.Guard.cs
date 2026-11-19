@@ -17,6 +17,13 @@ namespace KarmaPrototype
         string guardFlightPose;
         Sprite[] groundSlam;
         int groundSlamFrame = -1;
+        internal void ConfigureGuardFloatingRing(KarmaGame game, System.Func<bool> preparing, System.Func<bool> moving)
+        {
+            // WardFinal deliberately keeps its existing shield; this change belongs to WardWave only.
+            if (heavyStrike == null || heavyStrike.FormKey != "WardWave") return;
+            picture.gameObject.AddComponent<KarmaGuardFloatingRing>().Initialize(game, picture, preparing, moving,
+                () => guardThrownShield);
+        }
         public void ConfigureHeavyStrike(IReadOnlyList<Essence> order)
         {
             // Boss-local libraries also provide the base Ward poses after asset separation.
@@ -151,7 +158,7 @@ namespace KarmaPrototype
                 guardFlightPose = null;
             }
         }
-        public void PrepareHeavyStrike() { heavyStrike.Prepare(); }
+        public void PrepareHeavyStrike(float chargeSeconds = 0.6f) { heavyStrike.Prepare(chargeSeconds); }
         public void HeatHeavyStrike() { heavyStrike.Heat(); }
         public void SwingHeavyStrike() { heavyStrike.Swing(); }
         public void EndHeavyStrike() { if (heavyStrike != null) heavyStrike.Stop(); }

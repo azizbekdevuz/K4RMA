@@ -1,35 +1,31 @@
-# Contributing to K4RMA / 협업 가이드
+# K4RMA 기여 및 팀 협업 가이드
 
-This is a working team protocol, not evidence that the Unity project is already implemented. Adjust it together once the engine version, roles, and asset workflow are confirmed.
+[한국어](CONTRIBUTING.md) | [English](CONTRIBUTING.en.md)
 
-## 1. Before starting / 작업 전
-- Read `README.md`, `docs/PROJECT_CONTEXT.md`, and `docs/DECISIONS.md`.
-- Agree on a small task, owner, acceptance criteria, and any shared scene/prefab changes.
-- Use the **same team-approved Unity editor version and project settings** when they become available.
-- Ask for missing technical context rather than letting an AI assistant invent a parallel architecture.
+> 저장소는 공개적으로 열람할 수 있어도 오픈소스 프로젝트로 일반 기여를 허용한다는 뜻이 아닙니다. 외부 기여는 관리자와 **사전 협의**하세요. [LICENSE](../LICENSE.md) · [GOVERNANCE](../GOVERNANCE.md)
 
-## 2. Branches and reviews / 브랜치·리뷰
-- Keep `main` in a usable state when a runnable project exists.
-- Work on short-lived branches: `feat/ability-sacrifice`, `fix/boss-hitbox`, `docs/game-loop`.
-- Make focused commits with plain-English or Korean intent: `feat: add skill sacrifice state`.
-- Open a pull request (PR) with **what changed, why, how to test, and screenshots/video if visual**. Request review before merging shared gameplay/scene changes.
-- Coordinate ownership of shared Unity scenes and prefabs before simultaneous edits; text merges do not guarantee scene correctness.
+## 작업 전
+1. [README](../README.md), [AGENTS](../AGENTS.md), [팀 규칙](RULES.MD), [구조](STRUCTURE.MD)를 확인하고 실제 코드와 씬을 살핍니다. 초기 기획 문서의 미확정 정보를 현재 동작으로 가정하지 마세요.
+2. 작업 범위, 담당자, 이슈, 완료 기준을 정하고 공유 Unity 씬·프리팹·공통 전투 코드 수정은 사전 조율합니다.
+3. Unity `6000.6.2f1` 및 현재 `Packages/manifest.json`의 의존성에 맞춥니다.
 
-## 3. Unity and binary assets / 유니티 파일
-- Commit source assets, project settings, and Unity-generated `.meta` files for any committed Unity project.
-- Do **not** commit `Library/`, `Temp/`, caches, build outputs, local IDE files, or personal credentials.
-- For large binary files, agree on Git LFS **or** Unity Version Control/asset locking where appropriate. Avoid two independently edited authoritative copies of the same project. Document where source of truth lives.
-- Attribute third-party code/assets and check whether the license permits the intended classroom demo and repository visibility.
+## 브랜치와 PR
+- `main` 직접 수정 대신 단기 브랜치를 사용합니다: `feat/awakening`, `fix/boss-hitbox`, `docs/credits`.
+- 관련 없는 변경·자동 생성 파일을 제거하고, 목적이 드러나는 커밋을 만듭니다.
+- PR에는 목적, 주요 변경 사항, 영향받는 시스템/에셋, 확인 방법, 실제 테스트 결과, 미검증 사항, 스크린샷/영상(시각 변경 시)을 포함합니다.
+- 공유 게임 로직·아트 교체는 관련 담당자의 리뷰 후 병합합니다. PR 승인은 기여물 저작권 양도나 외부 배포 승인을 의미하지 않습니다.
 
-## 4. Definition of done / 완료 기준
-- The assigned behavior works in the agreed editor/build target.
-- Relevant edge cases are tested (e.g., sacrificed skill unavailable to player but available to later enemy).
-- Existing movement/combat/stage transitions still work.
-- No missing scene, prefab, package, `.meta`, or asset references; no unrelated changes.
-- Update the project context/decision log for user-visible design changes.
+## Unity 및 아트
+- `.meta` 참조를 보존하고 `Library/`, `Temp/`, 빌드, 비밀정보를 커밋하지 않습니다.
+- 원본 스프라이트, 아틀라스, VFX, 애니메이션의 일관성 및 실제 게임 화면에서의 가독성을 확인합니다.
+- 에셋 생성/추가 시 [제3자 자료 등록부](../THIRD_PARTY_NOTICES.md)에 원저작자·도구·취득 증거·약관·소스 공개 가능 여부를 기록합니다. 출처 불명 자료는 배포하지 않습니다.
+- 테스트/연습 메뉴 및 에디터 전용 도구를 공용 런타임에 임의로 포함하지 않습니다.
 
-## 5. AI usage / AI 활용
-Provide the current source files, relevant scene/prefab structure, engine version, exact error, desired behavior, and `docs/PROJECT_CONTEXT.md`. Review output for made-up APIs, hard-coded single-player assumptions, redundant duplicate systems, and unrelated edits. **AI-written ≠ tested**; the assigned teammate owns validation.
+## 완료 기준
+- 변경 대상 및 정상 동작을 실제 Unity에서 검증; 불가하면 그 사실과 재현 절차를 명확히 남깁니다.
+- 기술 3종, 계승 순서, 죽음/재시작, 공용 전투 시스템 등 변경과 관련 있는 회귀를 확인합니다.
+- 리소스 GUID/`.meta`, 씬 참조, 빌드 영향, 성능, 조작성을 검토합니다.
+- 변경된 사용자 동작 및 결정 사항을 README나 문서에 반영합니다.
 
-## 6. Communication / 의사소통
-Use the agreed chat/Notion space for tasks and decisions. Surface blockers early. Discuss a major scope change (3D → 2D, new networking requirements, different source-control system) with the team before implementing it.
+## 안전과 행동
+[행동 강령](../CODE_OF_CONDUCT.md)과 [보안 정책](../SECURITY.md)을 지킵니다. 취약점·비밀정보를 공개 PR로 올리지 않습니다.

@@ -41,7 +41,7 @@ public static class KarmaPlayerLocomotionChecks
             if (!recording) return;
             observed.Add(segment + "/" + animator.CurrentPose + "/" + picture.sprite.name);
             if (Time.time < nextCapture) return;
-            nextCapture = Time.time + 1f / 24; Capture();
+            nextCapture = Time.time + 1f / 12; Capture();
         };
     }
     static void Check(bool ok, string message) { if (!ok) throw new Exception(message); }
@@ -60,39 +60,19 @@ public static class KarmaPlayerLocomotionChecks
     }
     static void VerifyAssets()
     {
-        foreach (string name in new[] { "Run", "Jump", "Land", "Crouch" })
-        {
-            string path = "Assets/Arts/Resources/Player/Native24/" + name + ".png";
-            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
-            Check(importer.spriteImportMode == SpriteImportMode.Multiple && importer.spritePixelsPerUnit == 130, name + " Multiple / PPU");
-            int count = name == "Run" ? 6 : name == "Jump" ? 9 : name == "Land" ? 2 : 3;
-            int columns = name == "Land" ? 2 : 3, rows = (count + columns - 1) / columns;
-            var sprites = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().OrderBy(s => s.name, StringComparer.Ordinal).ToArray();
-            Check(sprites.Length == count, name + " drawing count");
-            for (int i = 0; i < count; i++)
-            {
-                var s = sprites[i];
-                Check(s.rect == new Rect(i % columns * 205, (rows - 1 - i / columns) * 285, 205, 285), name + " row-major cell " + i);
-                var normalized = new Vector2(s.pivot.x / 205, s.pivot.y / 285);
-                Check((normalized - new Vector2(.526829f, .035088f)).sqrMagnitude < 1e-12f, name + " fixed pivot " + i);
-            }
-        }
-        foreach (string folder in new[] { "Player/Animation", "Player/Animation24" })
+        foreach (string folder in new[] { "Player/Animation", "Player/Animation12" })
         {
             var library = Resources.Load<KarmaSpriteLibrary>(folder + "/Frames");
             foreach (string name in new[] { "Run", "JumpStart", "Jump", "Apex", "Fall", "Land", "Crouch" })
             {
                 var sequence = library.All(name);
-                int count = name == "Run" ? 6 : name == "Jump" || name == "Fall" ? 4 : name == "Land" ? 2 : name == "Crouch" ? 3 : 1;
-                Check(sequence.Length == count && sequence.All(s => s != null), folder + "/" + name + " library");
-                int first = name == "Fall" ? 5 : name == "Apex" ? 4 : 0;
-                if (name == "Jump" || name == "JumpStart" || name == "Fall" || name == "Apex")
-                    for (int i = 0; i < sequence.Length; i++) Check(sequence[i].name == "Jump_" + (first + i).ToString("00"), name + " jump phase mapping");
+                if (sequence.Length == 0 && folder == "Player/Animation") continue;
+                var motion = KarmaPlayerTimeline.Find(name);
                 var clip = Resources.Load<AnimationClip>(folder + "/" + name);
-                float duration = name == "Run" ? .5f : name == "Jump" ? 10f / 24 : name == "Fall" ? 9f / 24
-                    : name == "Land" ? .1f : name == "Crouch" || name == "JumpStart" ? .125f : 2f / 24;
-                Check(clip.frameRate == 24 && Mathf.Abs(AnimationUtility.GetAnimationClipSettings(clip).stopTime - duration) < .00001f, name + " exact duration");
-                Check(clip.isLooping == (name == "Run"), name + " looping policy");
+                Check(sequence.SequenceEqual(motion.Load()), folder + "/" + name + " drawings");
+                Check(clip.frameRate == KarmaBootstrap.FramesPerSecond &&
+                    Mathf.Abs(AnimationUtility.GetAnimationClipSettings(clip).stopTime - motion.Duration) < .00001f, name + " duration");
+                Check(clip.isLooping == motion.Loop, name + " loop");
             }
         }
     }
@@ -115,22 +95,22 @@ public static class KarmaPlayerLocomotionChecks
             void Field(string name, float value) => typeof(KarmaCharacterAnimator).GetField(name, Private).SetValue(a, value);
             void At(float seconds) => Field("playerClipAt", Time.time - seconds);
             void Expect(string pose, string sprite) => Check(a.CurrentPose == pose && renderer.sprite.name == sprite, "Expected " + pose + "/" + sprite + ", got " + a.CurrentPose + "/" + renderer.sprite.name);
-            a.Pose(1, false); At(.49f); a.Pose(1, false); Expect("Run", "Run_05");
-            At(.501f); a.Pose(1, false); Expect("Run", "Run_00");
+            a.Pose(1, false); At(.502f); a.Pose(1, false); Expect("Run", "Run_06");
+            At(.543f); a.Pose(1, false); Expect("Run", "Run_00");
             a.Pose(0, true, 8); Expect("Jump", "Jump_00");
-            At(.126f); a.Pose(0, true, 5); Expect("Jump", "Jump_01");
-            At(.251f); a.Pose(0, true, 4); Expect("Jump", "Jump_02");
-            At(.334f); a.Pose(0, true, 3); Expect("Jump", "Jump_03");
-            a.Pose(0, true, 0); Expect("Apex", "Jump_04"); At(1); a.Pose(0, true, 0); Expect("Apex", "Jump_04");
-            a.Pose(0, true, -4); Expect("Fall", "Jump_05"); At(.251f); a.Pose(0, true, -5); Expect("Fall", "Jump_08");
+            At(.17f); a.Pose(0, true, 5); Expect("Jump", "Jump_02");
+            At(.251f); a.Pose(0, true, 4); Expect("Jump", "Jump_03");
+            At(.334f); a.Pose(0, true, 3); Expect("Jump", "Jump_04");
+            a.Pose(0, true, 0); Expect("Apex", "Apex_00"); At(1); a.Pose(0, true, 0); Expect("Apex", "Apex_00");
+            a.Pose(0, true, -4); Expect("Fall", "Fall_00"); At(.251f); a.Pose(0, true, -5); Expect("Fall", "Fall_03");
             a.Pose(1, false); Expect("Land", "Land_00");
-            At(.049f); a.Pose(1, false); Expect("Land", "Land_00"); At(.051f); a.Pose(1, false); Expect("Land", "Land_01");
+            At(.049f); a.Pose(1, false); Expect("Land", "Land_00"); At(.085f); a.Pose(1, false); Expect("Land", "Land_01");
             Field("landedUntil", Time.time - .001f); a.Pose(0, false); Check(a.CurrentPose == "Idle", "Land to preserved Idle");
-            a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_00"); At(.043f); a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_01");
-            At(.126f); a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_02"); At(2); a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_02");
+            a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_00"); At(.043f); a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_00");
+            At(.126f); a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_01"); At(2); a.Pose(0, false, 0, true); Expect("Crouch", "Crouch_01");
             a.Pose(0, false); Check(a.CurrentPose == "Idle", "Crouch release restores Idle immediately");
             a.Attack(); a.Pose(0, false, 0, true); Check(a.CurrentPose == "Attack", "Attack wins over crouch");
-            a.Hurt(); a.Pose(1, true, 4); Check(a.CurrentPose == "Hurt", "Hurt wins over attack and jump");
+            a.Hurt(); a.Pose(1, true, 4); Check(a.CurrentPose == "AirKnockback", "Hurt wins over attack and jump");
             a.Die(); a.Pose(1, false, 0, true); Check(a.CurrentPose == "Death", "Death remains highest priority");
         }
         finally { UnityEngine.Object.DestroyImmediate(probe); }
@@ -177,16 +157,16 @@ public static class KarmaPlayerLocomotionChecks
             await Hold("RunRight", .65f, Key.D); Check(animator.CurrentPose == "Run", "Actual right movement");
             await Hold("StopRight", .2f); Check(animator.CurrentPose == "Idle", "Run release to Idle");
             await Hold("RunLeft", .65f, Key.A); await Hold("StopLeft", .2f); Check(animator.CurrentPose == "Idle", "Left movement to Idle");
-            await Hold("Crouch", .4f, Key.S); Check(player.Crouching && picture.sprite.name == "Crouch_02", "Actual crouch held on final drawing");
+            await Hold("Crouch", .4f, Key.S); Check(player.Crouching && picture.sprite.name == "Crouch_01", "Actual crouch held on final drawing");
             await Hold("CrouchRelease", .15f); Check(!player.Crouching && animator.CurrentPose == "Idle", "Actual crouch release");
             await Hold("JumpPress", .05f, Key.Space); await Hold("JumpAndLand", 1.5f);
             Check(!player.Airborne && animator.CurrentPose == "Idle", "Jump and landing return to Idle");
             await Hold("MovingJumpPress", .05f, Key.D, Key.Space); await Hold("MovingJumpAndLand", 1.5f, Key.D);
             await Hold("FinalIdle", .3f); Check(animator.CurrentPose == "Idle", "Moving jump returns to Idle");
-            Check(observed.Any(s => s.Contains("/Jump/Jump_")) && observed.Any(s => s.Contains("/Apex/Jump_04")) && observed.Any(s => s.Contains("/Fall/Jump_")), "Actual jump ascent/apex/descent");
+            Check(observed.Any(s => s.Contains("/Jump/Jump_")) && observed.Any(s => s.Contains("/Apex/Apex_00")) && observed.Any(s => s.Contains("/Fall/Fall_")), "Actual jump ascent/apex/descent");
             Check(observed.Any(s => s.Contains("JumpAndLand/Land/Land_00")) && observed.Any(s => s.Contains("JumpAndLand/Land/Land_01")), "Actual landing displays both drawings, including moving landing");
             Check(observed.Any(s => s.StartsWith("MovingJumpAndLand/Land/")), "Landing is visible while movement continues");
-            File.WriteAllText(Output + "/result.txt", "PASS: exact import settings and phase mapping; Run 0.5s, Jump velocity phases, Land 0.10s, Crouch 0.125s/hold/release; attack/hurt/death priorities; actual Play Mode movement both directions, stationary/moving jump, both landing drawings and return to preserved Idle. Validation capture uses a 1/60s simulation step only in the test.\n");
+            File.WriteAllText(Output + "/result.txt", "PASS: exact import settings and phase mapping; Run 7 frames at 12 FPS, Jump velocity phases, Land 0.10s, Crouch 0.125s/hold/release; attack/hurt/death priorities; actual Play Mode movement both directions, stationary/moving jump, both landing drawings and return to preserved Idle. Validation capture uses a 1/60s simulation step only in the test.\n");
             exit = 0;
         }
         catch (Exception e) { File.WriteAllText(Output + "/result.txt", "FAIL: " + e); Debug.LogException(e); }

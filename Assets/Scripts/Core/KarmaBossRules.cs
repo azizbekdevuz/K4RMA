@@ -20,8 +20,14 @@ namespace KarmaPrototype
         public static bool SweptOrientedBox(float ax, float ay, float bx, float by,
             float px, float py, float ux, float uy, float length, float thickness,
             float playerHalfWidth, float playerHalfHeight)
+            => SweptOrientedBox(ax, ay, bx, by, px, py, ux, uy, length, thickness, playerHalfWidth, playerHalfHeight, out _);
+
+        public static bool SweptOrientedBox(float ax, float ay, float bx, float by,
+            float px, float py, float ux, float uy, float length, float thickness,
+            float playerHalfWidth, float playerHalfHeight, out float first)
         {
-            float first = 0, last = 1;
+            first = 0;
+            float last = 1;
             float dx = ax - px, dy = ay - py, vx = bx - ax, vy = by - ay;
             float hx = length / 2, hy = thickness / 2;
             return Axis(dx, vx, Math.Abs(ux) * hx + Math.Abs(uy) * hy + playerHalfWidth, ref first, ref last)
@@ -34,8 +40,13 @@ namespace KarmaPrototype
         // Segment versus expanded AABB: exact swept rectangular attack, including target size.
         public static bool SweptBox(float ax, float ay, float bx, float by,
             float px, float py, float halfWidth, float halfHeight)
+            => SweptBox(ax, ay, bx, by, px, py, halfWidth, halfHeight, out _);
+
+        public static bool SweptBox(float ax, float ay, float bx, float by,
+            float px, float py, float halfWidth, float halfHeight, out float first)
         {
-            float first = 0, last = 1;
+            first = 0;
+            float last = 1;
             return Axis(ax - px, bx - ax, halfWidth, ref first, ref last)
                 && Axis(ay - py, by - ay, halfHeight, ref first, ref last);
         }

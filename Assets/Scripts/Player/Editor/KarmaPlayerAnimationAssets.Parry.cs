@@ -11,10 +11,10 @@ namespace KarmaPrototype.EditorTools
         // Re-import only the approved parry sheets without rebuilding unrelated player clips.
         public static void ImportParrySuccess()
         {
-            ImportParrySheet(Art + "ParrySuccess.png");
+
             ImportParrySheet("Assets/Arts/Resources/Shared/Effects/ParrySuccess.png");
             AssetDatabase.SaveAssets();
-            Debug.Log("Parry success import PASS: two sheets, eight frames each.");
+            Debug.Log("Parry success import PASS: two sheets, four frames each.");
         }
 
         public static void VerifyParrySuccess()
@@ -36,12 +36,13 @@ namespace KarmaPrototype.EditorTools
                 foreach (int facing in new[] { 1, -1 })
                 {
                     art.localScale = new Vector3(facing, 1, 1);
-                    for (int i = 0; i < 8; i++)
+                    int[] expected = { 0, 2, 4, 7 };
+                    for (int i = 0; i < expected.Length; i++)
                     {
-                        clock.SetValue(animator, Time.time - (i / 24f + 0.001f));
+                        clock.SetValue(animator, Time.time - (i * KarmaBootstrap.Step + 0.001f));
                         animator.Pose(0, false);
                         var flash = body.transform.Find("Parry success flash").GetComponent<SpriteRenderer>();
-                        if (body.sprite.name != "Frame" + i.ToString("00") || flash.sprite.name != body.sprite.name || !flash.enabled)
+                        if (body.sprite.name != "ParrySuccess_" + i.ToString("00") || flash.sprite.name != "Frame" + expected[i].ToString("00") || !flash.enabled)
                             throw new Exception("Parry frame synchronization failed: " + i);
                         if (Mathf.Sign(flash.transform.position.x - body.transform.position.x) != facing)
                             throw new Exception("Parry facing failed");
@@ -59,7 +60,7 @@ namespace KarmaPrototype.EditorTools
                     throw new Exception("Hurt did not interrupt parry presentation");
                 animator.Die();
                 if (animator.ParrySuccessVisible) throw new Exception("Death did not interrupt parry presentation");
-                Debug.Log("Parry presentation PASS: input-only excluded, 16 facing/frame samples, unchanged deadline, expiry, hurt, death.");
+                Debug.Log("Parry presentation PASS: input-only excluded, 8 facing/frame samples, unchanged deadline, expiry, hurt, death.");
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
@@ -85,11 +86,12 @@ namespace KarmaPrototype.EditorTools
             if (capability == null || !capability.GetEditCapability().HasCapability(EEditCapability.CreateAndDeleteSprite))
                 throw new InvalidOperationException("Parry slicing unsupported: " + path);
             var old = provider.GetSpriteRects();
-            var rects = Enumerable.Range(0, 8).Select(i => new SpriteRect {
-                name = "Frame" + i.ToString("00"),
-                rect = new Rect(i % 4 * 384, (1 - i / 4) * 512, 384, 512),
+            int[] drawings = { 0, 2, 4, 7 };
+            var rects = Enumerable.Range(0, drawings.Length).Select(i => new SpriteRect {
+                name = "Frame" + drawings[i].ToString("00"),
+                rect = new Rect(i % 2 * 384, (1 - i / 2) * 512, 384, 512),
                 alignment = SpriteAlignment.Custom, pivot = new Vector2(0.5f, 74f / 512),
-                spriteID = old.FirstOrDefault(s => s.name == "Frame" + i.ToString("00"))?.spriteID ?? GUID.Generate()
+                spriteID = old.FirstOrDefault(s => s.name == "Frame" + drawings[i].ToString("00"))?.spriteID ?? GUID.Generate()
             }).ToArray();
             provider.SetSpriteRects(rects);
             var names = provider.GetDataProvider<ISpriteNameFileIdDataProvider>();
@@ -97,7 +99,7 @@ namespace KarmaPrototype.EditorTools
             names.SetNameFileIdPairs(rects.Select(s => new SpriteNameFileIdPair(s.name, s.spriteID)));
             provider.Apply(); importer.SaveAndReimport();
             var sprites = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().ToArray();
-            if (sprites.Length != 8) throw new InvalidOperationException("Parry frame count mismatch");
+            if (sprites.Length != drawings.Length) throw new InvalidOperationException("Parry frame count mismatch");
         }
     }
 }

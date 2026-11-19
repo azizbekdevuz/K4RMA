@@ -60,7 +60,7 @@ namespace KarmaPrototype
             animator.Attack(direction); nextSword = Time.time + game.Config.swordCooldown;
             string piercePose = direction.y > 0.75f ? "PierceUp" : direction.y < -0.25f ? "PierceDown"
                 : direction.y > 0.25f ? "PierceDiagonal" : "Pierce";
-            animator.PlayPlayerAction(piercePose, "Pierce", 0.22f);
+            animator.PlayPlayerAction(piercePose, 0.22f);
             if (direction.x != 0) Facing = direction.x > 0 ? 1 : -1;
             FaceAction();
             Vector2 from = Position;
@@ -78,7 +78,8 @@ namespace KarmaPrototype
                 new Vector2(Mathf.Max(KarmaSpace.Units(0.2f), Vector2.Distance(from, to)), KarmaSpace.Units(0.3f)));
             flash.gameObject.AddComponent<KarmaEffect>().Initialize(0.2f);
             flash.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
-            KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f), game.Config.Techniques.slashLife);
+            KarmaRemnantVFX.SwordSlash(game.World, to, direction, KarmaSpace.Units(1.6f), KarmaSpace.Units(2.1f),
+                game.Config.Techniques.slashLife, emitSparks: false);
             Essences.NotifyUnique(essence);
             foreach (var enemy in game.Enemies.ToArray())
             {
@@ -137,6 +138,6 @@ namespace KarmaPrototype
                     if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
                 }
         }
-        public void BeginSwordWave() { FaceAction(); animator.PlayPlayerAction("SwordWave", "SwordWave", 0.25f); }
+        public void BeginSwordWave() { FaceAction(); animator.PlayPlayerAction("SwordWave", 0.25f); }
     }
 }

@@ -19,6 +19,7 @@ namespace KarmaPrototype
                 picture.transform.localScale = pictureScale * appearanceScale;
             }
             CurrentPose = "Backstep";
+            PlayBody("Backstep");
             GuardianDamageSprite = damageSprite;
             GuardianDamageScale = damageScale;
             GuardianPhaseOverridesPose = true;

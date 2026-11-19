@@ -25,7 +25,7 @@ namespace KarmaPrototype
             if (body == null || picture == null)
                 throw new System.InvalidOperationException("GD04 feedback requires the player's body and artwork.");
             var fx = player.GetComponent<KarmaGuardAirborneHit>();
-            var frames = fx != null && fx.frames != null ? fx.frames : KarmaArtwork.Sprites("GuardPlayerAirborneHit");
+            var frames = fx != null && fx.frames != null ? fx.frames : new KarmaMotionArt().Frames("Player", "GD04AirborneHit");
             if (frames.Length != 4 || System.Array.Exists(frames, frame => frame == null))
                 throw new System.InvalidOperationException("GD04 feedback requires four airborne frames.");
             if (fx == null) fx = player.gameObject.AddComponent<KarmaGuardAirborneHit>();
@@ -47,10 +47,11 @@ namespace KarmaPrototype
                 || age > 3 || leftGround && !airborne)
             { enabled = false; return; }
             if (game.Paused) return;
+
+            // Pose changes are quantized to 12 FPS; physical ascent/descent is not retimed.
+            int tick = Mathf.FloorToInt(age * KarmaBootstrap.FramesPerSecond);
+            int index = tick < 1 ? 0 : body.linearVelocity.y > 3 ? 1 : body.linearVelocity.y > -3 ? 2 : 3;
             age += Time.deltaTime;
-            // Pose changes are quantized to 24 FPS; physical ascent/descent is not retimed.
-            int tick = Mathf.FloorToInt(age * 24);
-            int index = tick < 2 ? 0 : body.linearVelocity.y > 3 ? 1 : body.linearVelocity.y > -3 ? 2 : 3;
             displayed = frames[index]; picture.sprite = displayed;
         }
 

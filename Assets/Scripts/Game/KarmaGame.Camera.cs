@@ -13,7 +13,7 @@ namespace KarmaPrototype
             presentationShakeStrength = Mathf.Max(0, strength);
         }
         Vector3 lastShake;
-        Bounds stageBackgroundBounds;
+        Bounds stageBackgroundBounds, paintedBackgroundBounds;
         bool hasStageBackground;
         internal static Rect ScreenViewport(float width, float height)
         {
@@ -29,9 +29,10 @@ namespace KarmaPrototype
                 view.width / Screen.width, view.height / Screen.height);
             GameCamera.aspect = 16f / 9;
         }
-        public void FrameStageBackground(Bounds bounds)
+        public void FrameStageBackground(Bounds bounds, Bounds? paintedBounds = null)
         {
             stageBackgroundBounds = bounds;
+            paintedBackgroundBounds = paintedBounds ?? bounds;
             hasStageBackground = true;
             UpdateCameraViewport();
             FitStageBackground(true);
@@ -63,15 +64,40 @@ namespace KarmaPrototype
                     blend);
             lastShake = Vector3.zero;
         }
+        // The combat frame is a crop of the panorama. Film edge kills against
+        // the full painting, leaving room around the silhouette and its effects.
+        static Vector3 InsideBackdrop(Vector3 focus, float size, float aspect, Bounds painting)
+        {
+            float width = size * aspect;
+            focus.x = painting.extents.x <= width ? painting.center.x
+                : Mathf.Clamp(focus.x, painting.min.x + width, painting.max.x - width);
+            focus.y = painting.extents.y <= size ? painting.center.y
+                : Mathf.Clamp(focus.y, painting.min.y + size, painting.max.y - size);
+            return focus;
+        }
+
+        bool Offscreen(Vector3 focus) =>
+            Mathf.Abs(focus.x - GameCamera.transform.position.x) > GameCamera.orthographicSize * GameCamera.aspect;
+
+        void FrameCeremony(Vector3 focus, float size, float blend)
+        {
+            GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize, size, blend);
+            Vector3 position = Vector3.Lerp(GameCamera.transform.position - lastShake, focus, blend);
+            GameCamera.transform.position = hasStageBackground
+                ? InsideBackdrop(position, GameCamera.orthographicSize, GameCamera.aspect, paintedBackgroundBounds) : position;
+            lastShake = Vector3.zero;
+        }
+
         public void SwordHitFeedback()
         {
             if (!IsCombat) return;
             var tuning = Config.Techniques;
             hitFeedback.Trigger(Time.unscaledTime, tuning.hitStopSeconds, tuning.hitShakeSeconds);
+            UpdateHitFeedback();
         }
         void UpdateHitFeedback()
         {
-            Time.timeScale = GameplayFrozen ? 0 : hitFeedback.TimeScale(Time.unscaledTime, IsCombat, Paused);
+            Time.timeScale = GameplayFrozen ? 0 : hitFeedback.TimeScale(Time.unscaledTime, IsCombat, Paused, Time.unscaledDeltaTime);
         }
         void ResetHitFeedback()
         {
@@ -98,8 +124,14 @@ namespace KarmaPrototype
                 lastShake = Vector3.zero;
                 return;
             }
-            if (Phase == RunPhase.GuardianFallen || Phase == RunPhase.Choosing
-                || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)
+            if (Phase == RunPhase.GuardianFallen)
+            {
+                float x = fallenGuardianPosition.x;
+                var focus = new Vector3(x + Mathf.Clamp((Player.Position.x - x) * 0.5f, -4, 4), 3.6f, -10);
+                FrameCeremony(focus, 11.5f, Offscreen(fallenGuardianPosition) ? 1 : 1 - Mathf.Exp(-5 * Time.deltaTime));
+                return;
+            }
+            if (Phase == RunPhase.Choosing || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat)
             {
                 // Hold the combat framing through the fall and selection screen.
                 GameCamera.transform.position -= lastShake;
@@ -129,25 +161,25 @@ namespace KarmaPrototype
                     wideFocus.x = right - left <= halfWidth * 2 ? (left + right) * 0.5f
                         : Mathf.Clamp(wideFocus.x, left + halfWidth, right - halfWidth);
                 }
+                // Keep both fighters on screen while the next name is up, even
+                // if the previous fight ended with a projectile from the other wall.
+                float nameSize = combatSize;
+                if (returnBlend > 0 && Enemies.Count > 0)
+                {
+                    float leftActor = Mathf.Min(Player.Position.x, actor.position.x);
+                    float rightActor = Mathf.Max(Player.Position.x, actor.position.x);
+                    nameSize = Mathf.Max(combatSize, ((rightActor - leftActor) * 0.5f + 5) / GameCamera.aspect);
+                    float reach = nameSize * GameCamera.aspect - 5;
+                    wideFocus.x = Mathf.Clamp(wideFocus.x, rightActor - reach, leftActor + reach);
+                }
+                // The return is already eased by the transition clock. Settle
+                // exactly on the two-shot when the confirmation gate opens.
+                blend = Mathf.Lerp(blend, 1, returnBlend);
+                if (returnBlend == 0 && Offscreen(actor.position)) blend = 1;
                 focus = Vector3.Lerp(focus, wideFocus, returnBlend);
-                GameCamera.transform.position = Vector3.Lerp(GameCamera.transform.position - lastShake, focus, blend);
                 float shotSize = Mathf.Max(GuardianInheriting ? 10.5f : 8.8f,
                     combatSize * (GuardianInheriting ? 0.76f : 0.62f));
-                GameCamera.orthographicSize = Mathf.Lerp(GameCamera.orthographicSize,
-                    Mathf.Lerp(shotSize, combatSize, returnBlend), blend);
-                // A guardian may fall at either wall. Keep the wider shot inside
-                // the existing panorama, including the original-skill memory.
-                if (hasStageBackground)
-                {
-                    float halfHeight = GameCamera.orthographicSize, halfWidth = halfHeight * GameCamera.aspect;
-                    var position = GameCamera.transform.position;
-                    position.x = stageBackgroundBounds.size.x <= halfWidth * 2 ? stageBackgroundBounds.center.x
-                        : Mathf.Clamp(position.x, stageBackgroundBounds.min.x + halfWidth, stageBackgroundBounds.max.x - halfWidth);
-                    position.y = stageBackgroundBounds.size.y <= halfHeight * 2 ? stageBackgroundBounds.center.y
-                        : Mathf.Clamp(position.y, stageBackgroundBounds.min.y + halfHeight, stageBackgroundBounds.max.y - halfHeight);
-                    GameCamera.transform.position = position;
-                }
-                lastShake = Vector3.zero;
+                FrameCeremony(focus, Mathf.Lerp(shotSize, nameSize, returnBlend), blend);
                 if (!Paused && !GuardianInheriting && Time.time < presentationShakeUntil)
                 {
                     lastShake = new Vector3(Mathf.Sin(Time.time * 83), Mathf.Sin(Time.time * 67) * 0.5f, 0)

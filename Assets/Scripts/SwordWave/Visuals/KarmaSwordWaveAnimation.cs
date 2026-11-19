@@ -9,12 +9,14 @@ namespace KarmaPrototype
     {
         enum Playback { Charge, Flight, Burst }
         const int FrameCount = 5;
-        const float FlightFPS = 30;
+        // Five flight drawings originally occupied one sixth of a second.
+        static readonly int[] FlightDrawings = { 0, 3 };
         static readonly string[] Clips = { "Charge", "SW01Flight", "SW02Flight", "Impact" };
         static readonly Sprite[,] frames = new Sprite[4, FrameCount];
         KarmaGame game;
         KarmaEnemy owner;
         SpriteRenderer picture, swordPicture;
+        string swordForm;
         Transform chargeScope;
         Playback playback;
         Vector2 size, velocity;
@@ -51,6 +53,7 @@ namespace KarmaPrototype
             animation.playback = Playback.Charge; animation.duration = Mathf.Max(0.01f, seconds);
             animation.heavy = heavy; animation.aiming = aiming;
             animation.chargeScope = scope;
+            animation.swordForm = art.GetComponent<KarmaCharacterAnimator>().MotionForm;
             var sword = art.Find("Guardian sprite");
             animation.swordPicture = sword != null ? sword.GetComponent<SpriteRenderer>() : null;
             animation.picture.sortingOrder = 27;
@@ -143,43 +146,30 @@ namespace KarmaPrototype
         {
             // A fixed footprint and pivot keep the cutting edge legible at the
             // existing fast speed; only the authored energy shapes change.
-            Paint(clip, (int)(age * FlightFPS) % FrameCount, size,
+            Paint(clip, FlightDrawings[(int)(age * KarmaBootstrap.FramesPerSecond) % FlightDrawings.Length], size,
                 heavy ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f));
             picture.flipX = velocity.x < 0; picture.flipY = false;
             picture.transform.localRotation = Quaternion.identity;
         }
-        // Blade anchors measured on the existing sprites, normalized to a 256px cell.
-        // Columns are Windup, Slash, Prepare01, Prepare02, Swing01 and Swing02.
-        static readonly Vector2[,] ChargeBladeSockets = {
-            { new(96, 52), new(55, 38), new(15, 24),
-              new(142, 85), new(196, 93), new(247, 93),
-              new(145, 111), new(166, 86), new(185, 66),
-              new(106, 74), new(75, 61), new(45, 54),
-              new(171, 99), new(191, 86), new(212, 66),
-              new(152, 101), new(197, 103), new(237, 101) },
-            { new(187, 31), new(141, 13), new(97, 5),
-              new(173, 104), new(212, 94), new(250, 77),
-              new(144, 102), new(159, 79), new(174, 63),
-              new(122, 79), new(94, 67), new(68, 63),
-              new(175, 94), new(193, 80), new(209, 64),
-              new(169, 103), new(191, 102), new(212, 99) },
-            { new(100, 27), new(53, 46), new(7, 76),
-              new(162, 82), new(208, 75), new(249, 55),
-              new(136, 109), new(156, 89), new(175, 69),
-              new(107, 69), new(84, 59), new(61, 54),
-              new(161, 92), new(181, 77), new(200, 57),
-              new(155, 96), new(187, 96), new(217, 92) },
-            { new(112, 16), new(55, 33), new(7, 58),
-              new(167, 104), new(209, 102), new(249, 91),
-              new(139, 113), new(158, 95), new(177, 77),
-              new(116, 73), new(85, 62), new(56, 58),
-              new(169, 94), new(186, 79), new(203, 59),
-              new(164, 100), new(195, 100), new(223, 98) },
-        };
+        // Endpoints are measured on the displayed 96-unit cell, before sprite and parent mirroring.
+        static System.Collections.Generic.Dictionary<string, Vector4> chargeBladeSockets;
+        static bool TryBladeEndpoints(string key, out Vector4 endpoints)
+        {
+            if (chargeBladeSockets == null)
+            {
+                chargeBladeSockets = new System.Collections.Generic.Dictionary<string, Vector4>();
+                foreach (var line in Resources.Load<TextAsset>("Motions12/BladeSockets").text.Split(new[] {'\n'}, System.StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var f = line.Split('\t');
+                    chargeBladeSockets.Add(f[0], new Vector4(int.Parse(f[1]), int.Parse(f[2]), int.Parse(f[3]), int.Parse(f[4])));
+                }
+            }
+            return chargeBladeSockets.TryGetValue(key, out endpoints);
+        }
         static Vector2 ChargeBladePoint(SpriteRenderer renderer, Vector2 socket)
         {
             var sprite = renderer.sprite;
-            var pixel = new Vector2(socket.x / 256 * sprite.rect.width, (1 - socket.y / 256) * sprite.rect.height);
+            var pixel = new Vector2(socket.x / 96 * sprite.rect.width, (1 - socket.y / 96) * sprite.rect.height);
             Vector2 local = (pixel - sprite.pivot) / sprite.pixelsPerUnit;
             if (renderer.flipX) local.x = -local.x;
             if (renderer.flipY) local.y = -local.y;
@@ -191,23 +181,10 @@ namespace KarmaPrototype
             heel = bend = tip = default;
             if (swordPicture == null || swordPicture.sprite == null) return false;
             var sprite = swordPicture.sprite;
-            int form = sprite.texture.name switch
-            {
-                "Wave" or "Wave_SW02_Transitions" => 0,
-                "WaveRise" or "WaveRise_SW02_Transitions" => 1,
-                "WaveWard" or "WaveWard_SW02_Transitions" => 2,
-                "WaveFinal" or "WaveFinal_SW02_Transitions" => 3,
-                _ => -1
-            };
-            int frame = sprite.name switch
-            {
-                "Windup" => 0, "Slash" => 1, "Prepare01" => 2, "Prepare02" => 3,
-                "Swing01" => 4, "Swing02" => 5, _ => -1
-            };
-            if (form < 0 || frame < 0) return false;
-            heel = ChargeBladePoint(swordPicture, ChargeBladeSockets[form, frame * 3]);
-            bend = ChargeBladePoint(swordPicture, ChargeBladeSockets[form, frame * 3 + 1]);
-            tip = ChargeBladePoint(swordPicture, ChargeBladeSockets[form, frame * 3 + 2]);
+            if (!TryBladeEndpoints(swordForm + "/" + sprite.name, out var ends)) return false;
+            heel = ChargeBladePoint(swordPicture, new Vector2(ends.x, ends.y));
+            tip = ChargeBladePoint(swordPicture, new Vector2(ends.z, ends.w));
+            bend = Vector2.Lerp(heel, tip, 0.5f);
             return true;
         }
 

@@ -2,7 +2,7 @@ using UnityEngine;
 namespace KarmaPrototype
 {
     // Boss-owned lifetime. Directional artwork is independent of the unrotated swept hit box.
-    public class KarmaBossAttack : MonoBehaviour
+    public class KarmaBossAttack : KarmaHostileFlight
     {
         protected KarmaGame game;
         KarmaEnemy owner;
@@ -40,7 +40,8 @@ namespace KarmaPrototype
             {
                 var burst = KarmaCombatVFX.Burst(root, at, sr.sprite, "Guardian launch/" + pose,
                     new Vector2(sr.sprite.bounds.size.x * sr.transform.localScale.x, sr.sprite.bounds.size.y * sr.transform.localScale.y)
-                        * (restrainedVisual ? 0.8f : 1.15f), 0.24f, angle, color, restrainedVisual);
+                        * (restrainedVisual ? 0.8f : 1.15f), 0.24f, angle, color, restrainedVisual,
+                    emitSparks: owner.PrimaryType.HasValue);
                 burst.transform.parent.localScale = new Vector3(sr.flipX ? -1 : 1, 1, 1);
             }
             attack.game = game; attack.owner = owner; attack.velocity = velocity; attack.size = size;
@@ -82,21 +83,21 @@ namespace KarmaPrototype
             Visual.transform.localScale = new Vector3(size.x / sprite.bounds.size.x, size.y / sprite.bounds.size.y, 1);
             if (upright) Visual.transform.localRotation = Quaternion.identity;
         }
-        protected void Update()
+        protected override void AdvanceFlight(float tickEnd)
         {
             if (game == null || owner == null || !owner.Alive || game.Phase != RunPhase.Combat)
             { gameObject.SetActive(false); Destroy(gameObject); return; }
             if (game.Paused) return;
-            float dt = Mathf.Min(Time.deltaTime, Mathf.Max(0, remaining));
-            Vector2 from = transform.position, to = from + velocity * dt;
+            float dt = Mathf.Min(Time.fixedDeltaTime, Mathf.Max(0, remaining));
+            Vector2 from = transform.position;
             dt = FlightStep(from, dt);
-            to = from + velocity * dt;
+            Vector2 to = from + velocity * dt;
             transform.position = to;
-            owner.TryAttackHit(from, to, size, damage, contact, stun, Oriented ? (velocity.sqrMagnitude > 0.000001f ? velocity.normalized : Vector2.right) : (Vector2?)null, parryStun, shieldBreak, sourcePattern);
-            remaining -= Time.deltaTime;
+            owner.TryAttackHit(from, to, size, damage, contact, stun, Oriented ? (velocity.sqrMagnitude > 0.000001f ? velocity.normalized : Vector2.right) : (Vector2?)null, parryStun, shieldBreak, sourcePattern, tickEnd - Time.fixedDeltaTime, dt);
+            remaining -= Time.fixedDeltaTime;
             if (FinishFlight(to))
             { gameObject.SetActive(false); Destroy(gameObject); return; }
-            if (remaining <= 0 || Oriented && dt < Time.deltaTime - 0.000001f || to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12))
+            if (remaining <= 0 || Oriented && dt < Time.fixedDeltaTime - 0.000001f || to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight || to.y < 0 || to.y > KarmaSpace.Units(12))
             { gameObject.SetActive(false); Destroy(gameObject); }
         }
     }

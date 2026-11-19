@@ -21,10 +21,12 @@ namespace KarmaPrototype
             public override bool ReduceDamage(Vector2 source) => barrier != null && barrier.Formed;
             public void BeginBarrier(float seconds)
             {
+                owner.animator.RisingBarrierVisible = true;
                 if (barrier == null) barrier = KarmaRisingBarrier.Begin(owner, seconds);
             }
             public void ClearBarrier()
             {
+                if (owner.animator != null) owner.animator.RisingBarrierVisible = false;
                 if (barrier != null) barrier.End();
                 barrier = null;
             }

@@ -216,7 +216,7 @@ public static class KarmaRisingBarrierChecks
         try
         {
             Directory.CreateDirectory(Output);
-            Application.runInBackground = true; Time.captureDeltaTime = 1f / 24;
+            Application.runInBackground = true; Time.captureDeltaTime = 1f / 12;
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             Application.logMessageReceived += Log;
             target = new RenderTexture(1280, 720, 24);

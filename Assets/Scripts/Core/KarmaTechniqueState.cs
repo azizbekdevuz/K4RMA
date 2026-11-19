@@ -9,9 +9,14 @@ namespace KarmaPrototype
             slowUntil = Math.Max(slowUntil, now + Math.Max(0, slowSeconds));
             shakeUntil = Math.Max(shakeUntil, now + Math.Max(0, shakeSeconds));
         }
-        public float TimeScale(float now, bool combat, bool paused)
+        public float TimeScale(float now, bool combat, bool paused, float step = 0)
         {
-            return paused ? 0 : combat && now < slowUntil ? 0.08f : 1;
+            if (paused) return 0;
+            if (!combat || now >= slowUntil) return 1;
+            // Average the remaining slow interval over the next display step.
+            // A 35 ms impact still removes exactly 35 ms x 0.92 at normal cadence.
+            float portion = step > 0 ? Math.Min(1, (slowUntil - now) / step) : 1;
+            return 1 - 0.92f * portion;
         }
         public float Shake(float now, float seconds)
         {
@@ -39,7 +44,7 @@ namespace KarmaPrototype
     // Runtime supplies scaled time; no physics, input or visuals here.
     public sealed class KarmaTechniqueState
     {
-        float counterUntil;
+        float counterStart, counterUntil;
         bool counterArmed, airSlashUsed;
         public bool TryAirSlash()
         {
@@ -47,10 +52,11 @@ namespace KarmaPrototype
             airSlashUsed = true; return true;
         }
         public void Land() { airSlashUsed = false; }
-        public void ArmCounter(float now, float window) { counterArmed = true; counterUntil = now + Math.Max(0, window); }
-        public bool CounterReady(float now) { return counterArmed && now < counterUntil; }
+        public void ArmCounter(float now, float window) { counterArmed = true; counterStart = now; counterUntil = now + Math.Max(0, window); }
+        public bool CounterReady(float now) { return counterArmed && now >= counterStart && now < counterUntil; }
         public bool ConsumeCounter(float now)
         {
+            if (now < counterStart) return false;
             bool ready = CounterReady(now); counterArmed = false; return ready;
         }
         public void Reset() { Land(); counterArmed = false; counterUntil = 0; }

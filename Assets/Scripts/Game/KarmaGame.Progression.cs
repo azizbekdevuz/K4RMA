@@ -75,6 +75,7 @@ namespace KarmaPrototype
             Enemies.Remove(enemy);
             if (Enemies.Count != 0) return;
             OpeningArrivalSpeech = null;
+            GetComponent<KarmaHUD>().BeginCombatHudFade(enemy.DisplayName);
             fallenGuardian = fallenArt;
             fallenGuardianPosition = enemy.transform.position;
             fallenGuardianScale = fallenArt != null ? fallenArt.localScale : Vector3.one * KarmaSpace.GuardianArtScale;
@@ -136,6 +137,7 @@ namespace KarmaPrototype
             Phase = RunPhase.Transition; transitionLeft = PersonalizationDuration;
             KarmaGrowthFocus.Begin(this, fallenGuardian);
             KarmaPersonalizationVFX.Play(this, Player.transform, essence, PersonalizationDuration, false);
+            KarmaArtwork.PrepareLibrary(KarmaPatternCatalog.Primary(Player.Essences.PersonalizationOrder));
         }
         void UpdatePersonalization()
         {
@@ -176,7 +178,7 @@ namespace KarmaPrototype
                 // The reveal follows the action; a fresh Space press/release still
                 // starts combat, so a held Jump cannot escape the transition.
                 transitionLeft = guardianGrowth.Duration + GrowthReturnDuration;
-                GetComponent<KarmaHUD>().BeginBossEntrance(Enemies[0], guardianGrowth.Duration - 0.2f);
+                GetComponent<KarmaHUD>().BeginBossEntrance(Enemies[0], guardianGrowth.Duration);
             }
         }
 
@@ -203,6 +205,7 @@ namespace KarmaPrototype
         {
             if (Player == null || Phase == RunPhase.PlayerFallen || Phase == RunPhase.Defeat || Phase == RunPhase.Victory || Phase == RunPhase.Ending) return;
             ResetHitFeedback();
+            GetComponent<KarmaHUD>().BeginCombatHudFade(null);
             Phase = RunPhase.PlayerFallen;
             transitionLeft = PlayerFallDuration;
             playerFallSettled = false; playerFallAge = playerFallSettledAt = 0;

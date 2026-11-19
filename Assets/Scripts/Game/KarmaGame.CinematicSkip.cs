@@ -6,6 +6,7 @@ namespace KarmaPrototype
     {
         public const float CinematicSkipHoldSeconds = 1f;
         float cinematicSkipHeld;
+        double cinematicSkipPressedAt = -1;
         RunPhase cinematicSkipPhase;
         bool cinematicSkipNeedsRelease;
         public bool CanSkipCinematic => !Paused && !SettingsOpen
@@ -16,6 +17,7 @@ namespace KarmaPrototype
 
         void ResetCinematicSkip()
         {
+            cinematicSkipPressedAt = -1;
             cinematicSkipHeld = 0; cinematicSkipPhase = Phase;
             cinematicSkipNeedsRelease = true;
         }
@@ -25,17 +27,35 @@ namespace KarmaPrototype
             bool held = KarmaInput.Held(KarmaAction.SkipCinematic);
             if (cinematicSkipPhase != Phase)
             {
-                cinematicSkipPhase = Phase; cinematicSkipHeld = 0;
+                ResetCinematicSkip();
                 cinematicSkipNeedsRelease = held;
+                return false;
             }
             if (!CanSkipCinematic || KarmaInput.RebindingThisFrame)
-            { cinematicSkipHeld = 0; cinematicSkipNeedsRelease = true; return false; }
-            if (!held) { cinematicSkipHeld = 0; cinematicSkipNeedsRelease = false; return false; }
-            if (cinematicSkipNeedsRelease) return false;
-            // Tutorial dialogue and guard practice can freeze scaled time.
-            cinematicSkipHeld += Time.unscaledDeltaTime;
-            if (cinematicSkipHeld < CinematicSkipHoldSeconds) return false;
-            cinematicSkipHeld = 0; cinematicSkipNeedsRelease = true;
+            { ResetCinematicSkip(); return false; }
+
+            var edges = KarmaInput.Edges(KarmaAction.SkipCinematic);
+            bool completedHold = false;
+            for (int i = 0; i < edges.Count; i++)
+            {
+                var edge = edges[i];
+                if (edge.Down)
+                {
+                    if (!cinematicSkipNeedsRelease) cinematicSkipPressedAt = edge.RealTime;
+                }
+                else
+                {
+                    completedHold |= cinematicSkipPressedAt >= 0 &&
+                        edge.RealTime - cinematicSkipPressedAt >= CinematicSkipHoldSeconds;
+                    cinematicSkipPressedAt = -1;
+                    cinematicSkipNeedsRelease = false;
+                }
+            }
+            if (!held) { cinematicSkipPressedAt = -1; cinematicSkipNeedsRelease = false; }
+            cinematicSkipHeld = held && cinematicSkipPressedAt >= 0
+                ? (float)(Time.realtimeSinceStartupAsDouble - cinematicSkipPressedAt) : 0;
+            if (!completedHold && cinematicSkipHeld < CinematicSkipHoldSeconds) return false;
+            ResetCinematicSkip();
             if (Phase == RunPhase.Tutorial) Tutorial.Skip(); else SkipEnding();
             return true;
         }

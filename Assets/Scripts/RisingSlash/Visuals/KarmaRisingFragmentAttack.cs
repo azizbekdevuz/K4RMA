@@ -33,24 +33,24 @@ namespace KarmaPrototype
         protected override float FlightStep(Vector2 from, float dt)
         {
             return fragmentContact != null && !Reflected
-                ? Mathf.Min(dt, Mathf.Max(0, outboundLife - age + Time.deltaTime)) : base.FlightStep(from, dt);
+                ? Mathf.Min(dt, Mathf.Max(0, outboundLife - age + Time.fixedDeltaTime)) : base.FlightStep(from, dt);
         }
-        private new void Update()
+        protected override void AdvanceFlight(float tickEnd)
         {
-            if (fragmentContact == null) { base.Update(); return; }
+            if (fragmentContact == null) { base.AdvanceFlight(tickEnd); return; }
             if (game == null || target == null || !target.PresentationActive)
             { End(); return; }
             if (game.Paused) return;
-            age += Time.deltaTime;
+            float remainingReturnTime = 3f - age;
+            age += Time.fixedDeltaTime;
             if (!Reflected)
             {
                 // Spawn reserves three extra seconds for a return; outbound lifetime is unchanged.
-                base.Update();
+                base.AdvanceFlight(tickEnd);
                 if (!Reflected && age >= outboundLife) End();
                 return;
             }
-            if (age >= 3f) { End(); return; }
-            Vector2 from = transform.position, to = from + velocity * Time.deltaTime;
+            Vector2 from = transform.position, to = from + velocity * Mathf.Min(Time.fixedDeltaTime, Mathf.Max(0, remainingReturnTime));
             transform.position = to;
             var bounds = target.DamageBounds;
             if (KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, bounds.center.x, bounds.center.y,
@@ -64,7 +64,7 @@ namespace KarmaPrototype
                 }
                 End(); return;
             }
-            if (to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight
+            if (age >= 3f || to.x < KarmaStage.ArenaLeft || to.x > KarmaStage.ArenaRight
                 || to.y < 0 || to.y > KarmaSpace.Units(12)) End();
         }
         void End() { gameObject.SetActive(false); Destroy(gameObject); }

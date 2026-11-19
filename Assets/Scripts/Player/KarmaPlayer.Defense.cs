@@ -3,30 +3,32 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaPlayer
     {
-        public void BeginCounter()
+        public void BeginCounter() => BeginCounterAt(Time.time);
+        internal void BeginCounterAt(float pressedAt)
         {
             FaceAction();
-            techniques.ArmCounter(Time.time, game.Config.Techniques.counterWindow);
-            animator.PlayPlayerAction("Parry", "Parry", game.Config.Techniques.counterWindow);
+            techniques.ArmCounter(pressedAt, game.Config.Techniques.counterWindow);
+            animator.PlayPlayerAction("Parry", Mathf.Max(0, pressedAt + game.Config.Techniques.counterWindow - Time.time));
         }
         public void BeginGuard(float seconds)
         {
             FaceAction();
             aura.flipX = Facing < 0;
-            guardUntil = Time.time + seconds; animator.PlayPlayerAction("Guard", "Guard", seconds);
+            guardUntil = Time.time + seconds; animator.PlayPlayerAction("Guard", seconds);
             KarmaAudio.Play(KarmaSfxId.GdShieldActivate);
         }
         public void TakeDamage(float damage)
         { TakeDamage(damage, true); }
-        internal void TakeDamage(float damage, bool counterDamage)
+        internal void TakeDamage(float damage, bool counterDamage) => TakeDamageAt(damage, counterDamage, Time.time);
+        internal void TakeDamageAt(float damage, bool counterDamage, float hitAt)
         {
             if (!game.AllowsPlayerActions || Health <= 0 || damage <= 0) return;
             bool invulnerable = Time.time < invulnerableUntil;
-            if ((!invulnerable || !counterDamage) && techniques.ConsumeCounter(Time.time))
+            if ((!invulnerable || !counterDamage) && techniques.ConsumeCounter(hitAt))
             {
                 ParryCount++;
                 KarmaAudio.Play(KarmaSfxId.CombatPerfectParry);
-                animator.PlayPlayerAction("Riposte", "Riposte", 0.3f);
+                animator.PlayPlayerAction("Riposte", 0.3f);
                 invulnerableUntil = Time.time + 0.12f;
                 Essences.NotifyUnique(Essence.Guard);
                 if (!counterDamage) return;

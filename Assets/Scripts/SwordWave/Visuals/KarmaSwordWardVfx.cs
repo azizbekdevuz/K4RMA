@@ -105,16 +105,20 @@ namespace KarmaPrototype
                 line.SetPosition(i,center+Vector2.Scale(Direction(a),new Vector2(radius*teeth,radius*squash*teeth)));
             }
         }
+        static readonly int[] OrbitDrawings = { 0, 2, 5, 7, 9, 12, 14 };
         void Paint()
         {
-            FrameIndex=(int)(age*28)%16;
+            // The old quarter-turn lasted 4/7 s. Keep that angular velocity when sampling at 12 Hz.
+            float sampleTime = Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
+            float quarters = sampleTime * 1.75f;
+            FrameIndex = OrbitDrawings[(int)(Mathf.Repeat(quarters, 1f) * OrbitDrawings.Length)];
             formation.enabled=!countering;Frame(formation,frames[FrameIndex],properties,1,false);
             float hit=1-Mathf.Clamp01((age-absorbedAt)/0.22f);
             absorbed.enabled=hit>0;Frame(absorbed,absorbed.sprite,pulseProperties,hit,true);
             Vector2 center=Center;
             // The authored strip covers one clockwise quarter turn, not a
             // complete revolution. Four-fold symmetry closes that loop.
-            float orbitAngle=-Mathf.Floor(age*28)*Mathf.PI/32-0.02f;
+            float orbitAngle=-(Mathf.Floor(quarters) * 16 + FrameIndex) * Mathf.PI/32-0.02f;
             Ring(outer,center,4.65f,age*0.7f,1);
             Ring(inner,center,3.75f,-age*1.2f,0.85f);
             for(int i=0;i<4;i++)

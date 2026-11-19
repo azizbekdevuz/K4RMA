@@ -6,35 +6,29 @@ namespace KarmaPrototype
     public sealed partial class KarmaCharacterAnimator
     {
         bool growthActive, personalizationProofActive;
-        readonly Dictionary<string, Sprite> growthPrevious = new Dictionary<string, Sprite>();
 
         internal void BeginGrowth(Sprite fallen, string previousForm)
         {
             EndGuardianAction();
             deathAt = -1; empowermentUntil = 0;
-            growthActive = true;
-            beforeInheritance = fallen;
-            beforeRevivalFrames = LoadRevivalFrames(previousForm);
-            growthPrevious.Clear();
-            var previous = KarmaArtwork.InheritedPoses(previousForm);
-            if (previous.Length == 0) previous = KarmaArtwork.Sprites(previousForm);
-            foreach (var sprite in previous) if (sprite != null) growthPrevious[sprite.name] = sprite;
+            growthActive = true; previousMotionForm = previousForm;
         }
 
         internal Sprite GrowthSprite(string pose, bool previous = false)
         {
-            var source = previous ? growthPrevious : poses;
-            if (source.TryGetValue(pose, out var sprite)) return sprite;
-            return source.TryGetValue("Idle", out sprite) ? sprite : guardianAppearance ?? picture.sprite;
+            string form = previous ? previousMotionForm : motionForm;
+            string motion = KarmaMotionArt.Has(form, pose) ? pose : KarmaMotionArt.Has(form, "GrowthTechnique")
+                ? "GrowthTechnique" : KarmaMotionArt.Has(form, "GrowthMastery") ? "GrowthMastery" : "Idle";
+            return motionArt.Sample(form, motion, motion == "Idle" ? 0 : 1);
         }
 
         internal void GrowthRevive(float progress)
         {
             if (!growthActive || picture == null) return;
             int frame = Mathf.Clamp(Mathf.FloorToInt(progress * 5), 0, 5);
-            picture.sprite = beforeRevivalFrames != null && beforeRevivalFrames.Length == 6
-                ? beforeRevivalFrames[frame] : frame == 0 && beforeInheritance != null
-                ? beforeInheritance : GrowthSprite(frame < 3 ? "Hurt" : "Idle", true);
+            string pose = frame == 0 ? "Death" : frame == 1 ? "RevivePush" : frame == 2 ? "ReviveKneel"
+                : frame == 3 ? "ReviveRise" : frame == 4 ? "ReviveStand" : "Idle";
+            PlayBody(pose, previousMotionForm);
             picture.transform.localScale = pictureScale;
             picture.transform.localPosition = pictureHome;
             picture.transform.localRotation = Quaternion.identity;
@@ -45,7 +39,8 @@ namespace KarmaPrototype
         internal void GrowthPose(string pose, bool previous, Vector2 offset, float angle = 0)
         {
             if (!growthActive || picture == null) return;
-            picture.sprite = GrowthSprite(pose, previous);
+            string form = previous ? previousMotionForm : motionForm;
+            PlayBody(KarmaMotionArt.Has(form, pose) ? pose : "Idle", form);
             picture.transform.localScale = pictureScale;
             // Offset is visual only: never move the combat body or its facing.
             picture.transform.localPosition = pictureHome + (Vector3)offset / KarmaSpace.GuardianArtScale;
@@ -61,6 +56,7 @@ namespace KarmaPrototype
             GrowthPose(elapsed < 0.18f ? "Hurt" : ready, true,
                 new Vector2(-Mathf.Sin(t * Mathf.PI) * (attempt == 1 ? 0.3f : 0.65f), 0),
                 wobble * (attempt == 1 ? 4 : 8));
+            DrawMotion(previousMotionForm, "GrowthStumble", elapsed);
             CurrentPose = "Growth/Unsteady/" + attempt;
         }
 
@@ -74,37 +70,28 @@ namespace KarmaPrototype
             else
             {
                 GrowthPose("Death", true, Vector2.zero);
-                if (beforeRevivalFrames != null && beforeRevivalFrames.Length == 6)
-                    picture.sprite = beforeRevivalFrames[0];
                 picture.color = new Color(0.62f, 0.62f, 0.68f);
             }
+            DrawMotion(previousMotionForm, "GrowthFalter", elapsed);
             CurrentPose = "Growth/FailedCopy";
         }
 
         internal void EndGrowth()
         {
             if (!growthActive) return;
-            growthActive = false; growthPrevious.Clear();
+            growthActive = false;
             picture.transform.localPosition = pictureHome;
             picture.transform.localRotation = Quaternion.identity;
             picture.transform.localScale = pictureScale;
             picture.color = pictureColor;
             guardianPreviousPosition = transform.position;
             ApplyGuardianPose("Idle");
+            PlayBody("Idle");
         }
 
-        internal void GrowthKeyPose(Sprite keyPose, string pose, float relativeHeight, float lean = 0)
+        internal void ShowGrowthMotion(string motion, bool previous, float elapsed)
         {
-            if (!growthActive || keyPose == null || picture == null) return;
-            picture.sprite = keyPose;
-            // Calibrate once against the old standing body, not the bounding box
-            // of the last hurt/slash pose. The new art has a foot-aligned pivot.
-            float height = GrowthSprite("Idle", true).bounds.size.y * relativeHeight;
-            picture.transform.localScale = pictureScale * (height / keyPose.bounds.size.y);
-            picture.transform.localPosition = pictureHome;
-            picture.transform.localRotation = Quaternion.Euler(0, 0, lean);
-            picture.color = pictureColor;
-            CurrentPose = pose;
+            DrawMotion(previous ? previousMotionForm : motionForm, motion, elapsed);
         }
 
         internal void PresentVictory(string pose, float elapsed)
@@ -114,6 +101,7 @@ namespace KarmaPrototype
             picture.transform.localRotation = Quaternion.Euler(0, 0,
                 -3 * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.7f, 1.5f, elapsed)));
             picture.color = pictureColor;
+            DrawMotion(motionForm, "Victory", elapsed);
             CurrentPose = "Victory/" + pose;
         }
 
@@ -126,9 +114,9 @@ namespace KarmaPrototype
         {
             if (!personalizationProofActive)
             {
-                // The ending already samples these authored 24 FPS gestures
+                // The ending already samples these authored 12 FPS gestures
                 // independently of the optional combat animation profile.
-                BeginEndingPoses("Idle", "Pierce", "Recovery", "Jump", "AirDiagonal", "Land", "Parry", "Riposte");
+                BeginEndingPoses("Idle", "Pierce", "Recovery", "Jump", "AirDiagonal", "Fall", "Land", "Parry", "Riposte");
                 personalizationProofActive = true;
             }
             string pose = "Idle"; float sample = seconds;
@@ -173,7 +161,7 @@ namespace KarmaPrototype
         }
 
         // Samples a display-only copy of the player's original skill, including the
-        // optional Native24 profile. No Player, input, Rigidbody or hitbox is copied.
+        // equipped technique, independently of combat input and physics.
         internal void SampleGrowthSource(Essence essence, float seconds)
         {
             string pose = essence == Essence.SwordWave ? "SwordWave"

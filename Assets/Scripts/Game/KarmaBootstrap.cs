@@ -3,6 +3,9 @@ namespace KarmaPrototype
 {
     public static class KarmaBootstrap
     {
+        public const int FramesPerSecond = 12;
+        public const float Step = 1f / FramesPerSecond;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void StartEmptyScene()
         {

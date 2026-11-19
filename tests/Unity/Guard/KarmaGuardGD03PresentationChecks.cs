@@ -69,7 +69,7 @@ public static partial class KarmaGuardPlayChecks
             if (verify)
             {
                 flightEncoder = new MediaEncoder(FlightOutput + "/GD03-hand-continuity.mp4",
-                    new VideoTrackAttributes { width = 1280, height = 720, frameRate = new MediaRational(24), includeAlpha = false });
+                    new VideoTrackAttributes { width = 1280, height = 720, frameRate = new MediaRational(12), includeAlpha = false });
                 recordedFlightFrames = 0; largestCaptureGap = 0;
                 flightRecordingAt = lastCaptureAt = Time.realtimeSinceStartup;
                 recordingFlight = true;
@@ -265,7 +265,7 @@ public static partial class KarmaGuardPlayChecks
             yield return new WaitForEndOfFrame();
             float now = Time.realtimeSinceStartup;
             if (now < nextAt || !recordingFlight) continue;
-            nextAt = now + 1f / 24;
+            nextAt = now + 1f / 12;
             RenderFlightFrame();
             flightEncoder.AddFrame(flightPixels, new MediaTime((long)((now - flightRecordingAt) * 1000000), 1000000, 1));
             largestCaptureGap = Mathf.Max(largestCaptureGap, now - lastCaptureAt); lastCaptureAt = now;

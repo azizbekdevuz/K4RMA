@@ -15,7 +15,7 @@ parser.add_argument('--work-project', type=Path)
 parser.add_argument('--unity', type=Path, help='Override the Unity executable')
 parser.add_argument('--licensing-ipc')
 parser.add_argument('--visible', action='store_true', help='Run Play Mode checks in a visible Editor when batch mode cannot advance frames')
-parser.add_argument('--suite', choices=('all', 'isolation', 'guard', 'sw05', 'sword', 'rising', 'integration', 'player-cc', 'player24', 'audio', 'audio-release', 'tutorial-skip', 'rising-barrier', 'sword-refresh', 'sword-scar', 'build', 'artwork'), nargs='+', default=['all'])
+parser.add_argument('--suite', choices=('all', 'isolation', 'guard', 'sw05', 'sword', 'rising', 'integration', 'player-cc', 'player12', 'audio', 'audio-release', 'tutorial-skip', 'rising-barrier', 'sword-refresh', 'sword-scar', 'build', 'artwork'), nargs='+', default=['all'])
 args = parser.parse_args()
 subprocess.run(['python3', '-m', 'unittest', 'discover', '-s', str(root / 'tests'),
                 '-p', 'test_boss_boundaries.py'], check=True)
@@ -38,7 +38,7 @@ suites = [('artwork', 'KarmaEndingMoonChecks', 'ending-moon/result.txt'),
           ('sword-refresh', 'KarmaSwordSkillRefreshChecks', None),
           ('sword-scar', 'KarmaSwordSkillRefreshChecks', None),
           ('build', 'KarmaBuildChecks', 'build.txt'),
-          ('player24', 'KarmaPlayer24Checks', 'player24/result.txt')]
+          ('player12', 'KarmaPlayer12Checks', 'player12/result.txt')]
 with (nullcontext(str(args.work_project)) if args.work_project else tempfile.TemporaryDirectory(prefix='karma-boss-checks-')) as folder:
     project = Path(folder).resolve()
     if project == root or root in project.parents or project in root.parents:
@@ -63,12 +63,14 @@ with (nullcontext(str(args.work_project)) if args.work_project else tempfile.Tem
         shutil.copytree(root / name, project / name, dirs_exist_ok=True)
     (assets / 'Editor').mkdir(exist_ok=True)
     for check in (root / 'tests/Unity').rglob('*.cs'):
+        if check.stem.endswith(' 2') and check.with_name(check.stem[:-2] + '.cs').is_file():
+            continue  # Finder copies redeclare the canonical check class.
         shutil.copy2(check, assets / 'Editor' / check.name)
+    if 'build' in args.suite or 'all' in args.suite:
+        shutil.copy2(root / 'tests/Standalone/KarmaFramePacingProbe.cs', assets)
     failures = []
     selected = suites if 'all' in args.suite else [next(row for row in suites if row[0] == key)
                                                  for key in dict.fromkeys(args.suite)]
-    if any(row[0] == 'player24' for row in selected[:-1]):
-        raise SystemExit('Run player24 last: it rebuilds optional animation assets in the validation copy')
     for key, check, filename in selected:
         report = project / 'output/validation' / (filename or key + '.txt')
         report.unlink(missing_ok=True)

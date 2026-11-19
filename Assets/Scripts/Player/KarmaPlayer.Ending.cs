@@ -81,6 +81,8 @@ namespace KarmaPrototype
             {
                 if (t >= KarmaGame.EndingKneelAt && t < KarmaGame.EndingStandAt)
                 { pose = "Kneel"; since = t - KarmaGame.EndingKneelAt; }
+                else if (t >= KarmaGame.EndingStandAt + 0.35f && t < KarmaGame.EndingPierceAt - 0.25f)
+                { pose = "Draw"; since = Mathf.InverseLerp(KarmaGame.EndingStandAt + 0.35f, KarmaGame.EndingPierceAt - 0.25f, t); }
                 else if (t >= KarmaGame.EndingStandAt && t < KarmaGame.EndingPierceAt - 0.25f)
                 { pose = "StandFromKneel"; since = t - KarmaGame.EndingStandAt; }
                 else if (t >= KarmaGame.EndingPierceAt - 0.25f && t < KarmaGame.EndingPierceAt)
@@ -99,6 +101,10 @@ namespace KarmaPrototype
                 { pose = "Fall"; since = t - (KarmaGame.EndingAirSlashAt + 0.32f); }
                 else if (t >= KarmaGame.EndingAirLandAt && t < KarmaGame.EndingCounterAt)
                 { pose = "Land"; since = t - KarmaGame.EndingAirLandAt; }
+                else if (t >= KarmaGame.EndingCounterAt + 0.52f && t < KarmaGame.EndingGatherAt + 0.18f)
+                { pose = "Sheathe"; since = Mathf.InverseLerp(KarmaGame.EndingCounterAt + 0.52f, KarmaGame.EndingGatherAt + 0.18f, t); }
+                else if (t >= KarmaGame.EndingSaluteAt && t < KarmaGame.EndingDepartAt)
+                { pose = "Salute"; since = t - KarmaGame.EndingSaluteAt; }
                 else if (t >= KarmaGame.EndingTurnToMasterAt && t < KarmaGame.EndingTurnToMasterAt + 0.25f)
                 { pose = "Turn"; since = t - KarmaGame.EndingTurnToMasterAt; }
 

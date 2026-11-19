@@ -93,7 +93,7 @@ namespace KarmaPrototype
             public virtual void Tick() { }
             public virtual void OnDamaged() { }
             public virtual void ReducedDamageFeedback(bool basicMelee) { }
-            public virtual Bounds DamageBounds(SpriteRenderer renderer) { return renderer.bounds; }
+            public virtual Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.DisplayDamageBounds(renderer); }
             // Opt in per contact; the damage-inclusive player API still decides
             // whether defenses reject the hit and whether CC can be applied.
             public virtual bool TryPlayerCrowdControl(EnemyAttack pattern, KarmaAttackContact contact,
@@ -108,7 +108,7 @@ namespace KarmaPrototype
             public virtual Color ShieldColor { get { return owner.fullShield ? Color.white : KarmaArtwork.BarrierColor; } }
             public virtual void EndAction(bool keepAutoShield) { }
             public virtual void StopCombat() { }
-            public virtual bool TryQueueParry() { return false; }
+            public virtual bool TryQueueParry(float pressedAt) { return false; }
             public virtual Vector3? CameraFocus { get { return null; } }
             public virtual float CameraSize(float aspect) { return 0; }
             public virtual void OnSelected() { }

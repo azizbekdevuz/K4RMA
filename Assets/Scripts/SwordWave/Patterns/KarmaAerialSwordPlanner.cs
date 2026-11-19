@@ -85,7 +85,7 @@ namespace KarmaPrototype
             var sourceShape = player.GetComponent<BoxCollider2D>();
             Vector2 target = sourceShape.bounds.center;
             Vector2 half = sourceShape.bounds.extents;
-            float step = Mathf.Clamp(Time.fixedDeltaTime, 0.005f, 0.05f);
+            float step = Time.fixedDeltaTime;
             float horizon = warning + 1 + TimingAllowance(step) + step * 2;
             live.RemoveAll(shot => shot == null || !shot.gameObject.activeInHierarchy);
             if (HasLiveShots) return null;

@@ -45,7 +45,7 @@ namespace KarmaPrototype
             // Match the helmet-to-sole body against this form's standing pose, excluding the raised weapon.
             // All three frames and their molten variants share the same authored body scale.
             float bodyFraction = key == "Ward" ? 0.76f : key == "WardRise" ? 0.64f : key == "WardWave" ? 0.60f : 0.65f;
-            scale = originalScale * (standing.bounds.size.y / (poses[0].bounds.size.y * bodyFraction));
+            scale = originalScale * (KarmaBodyPoses.HitBounds(standing).size.y / (KarmaBodyPoses.HitBounds(poses[0]).size.y * bodyFraction));
         }
         public void Prepare() { active = true; swinging = heated = false; Apply(0); }
         public void Heat() { heated = true; if (active && !swinging) Apply(0); }

@@ -32,15 +32,15 @@ namespace KarmaPrototype
                 hadVisualControl = true;
                 recoveryPose = Shocked ? "ShockRecovery" : KnockedBack ? "Recovery" : "StunRecovery";
                 string pose;
-                if (KnockedDown) pose = age < 8f / 24 ? "Knockdown" : "DownLoop";
+                if (KnockedDown) pose = age < 4 * KarmaBootstrap.Step ? "Knockdown" : "DownLoop";
                 else if (GettingUp) { pose = "GetUp"; age = Mathf.Max(0, Time.time - knockdownUntil); }
-                else if (Shocked) pose = age < 4f / 24 ? "ShockStart" : "ShockLoop";
+                else if (Shocked) pose = age < 2 * KarmaBootstrap.Step ? "ShockStart" : "ShockLoop";
                 else if (!grounded && (KnockedAirborne || Stunned))
                     pose = body.linearVelocity.y > 2 ? "AirborneRise" : body.linearVelocity.y < -2 ? "AirborneFall" : "AirborneApex";
                 else if (KnockedBack || Mathf.Abs(travel) > 0.005f) pose = grounded ? "Knockback" : "AirKnockback";
-                else pose = age < 4f / 24 ? "StunStart" : "StunLoop";
-                if (pose == "StunLoop" || pose == "ShockLoop") age = Mathf.Max(0, age - 4f / 24);
-                if (pose == "DownLoop") age = Mathf.Max(0, age - 8f / 24);
+                else pose = age < 2 * KarmaBootstrap.Step ? "StunStart" : "StunLoop";
+                if (pose == "StunLoop" || pose == "ShockLoop") age = Mathf.Max(0, age - 2 * KarmaBootstrap.Step);
+                if (pose == "DownLoop") age = Mathf.Max(0, age - 4 * KarmaBootstrap.Step);
                 return animator.PresentPlayerStatus(pose, age, reverse: (pose == "Knockback" || pose == "AirKnockback")
                     && (Mathf.Abs(travel) > 0.005f ? travel : body.linearVelocity.x) * Facing > 0);
             }
@@ -65,7 +65,7 @@ namespace KarmaPrototype
                     arc.startColor = new Color(0.65f, 0.88f, 1, 0.9f); arc.endColor = new Color(1, 0.94f, 0.5f, 0.2f);
                 }
             }
-            int frame = Mathf.FloorToInt(Time.time * 24);
+            int frame = Mathf.FloorToInt(Time.time * KarmaBootstrap.FramesPerSecond);
             for (int i = 0; i < shockArcs.Length; i++)
             {
                 var arc = shockArcs[i]; arc.enabled = visible && (frame + i) % 4 != 0;

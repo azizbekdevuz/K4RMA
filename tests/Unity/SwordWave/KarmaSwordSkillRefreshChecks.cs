@@ -506,7 +506,7 @@ public static class KarmaSwordSkillRefreshChecks
         var contacts = (KarmaAttackContact[])Get(volley, "Contacts"); var slots = (Transform[])Get(volley, "Slots");
         Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
         shot.transform.position = game.Player.GetComponent<Collider2D>().bounds.center; Set(shot, "velocity", Vector2.zero);
-        int parries = game.Player.ParryCount; Call(shot, "Update");
+        int parries = game.Player.ParryCount; Call(shot, "AdvanceFlight", Time.time + Time.fixedDeltaTime);
         Check(game.Player.ParryCount == parries + 1, "SW04 actual contact parried");
         for (int i = 1; i < 4; i++) Check(contacts[i].Consumed && !slots[i].gameObject.activeInHierarchy, "SW04 successors synchronously canceled");
         Check(game.World.GetComponentInChildren<KarmaSwordParryFeedback>() != null, "SW04 success feedback active"); Capture("sw04-parry");
@@ -713,7 +713,7 @@ public static class KarmaSwordSkillRefreshChecks
             });
             float duration=(float)(fx.EndedAt-fx.StartedAt);
             Check(duration>=0.74f && duration<0.79f && moved && attacked && !player.Shocked,"visual ends with 0.75-second Shock");
-            Check(frames.Count>=16,"24 FPS electrical frames advance during real Shock");
+            Check(frames.Count>=8,"12 FPS electrical frames advance during real Shock");
             player.transform.localScale=Vector3.one;
             if(recording!=null){await Seconds(0.17f);recording.Dispose();}
             Pass("SW04 player "+(enraged?"enraged":"normal")+": one damage event, exact 0.75 s Shock, unchanged hit immunity and synchronized visual duration="+duration.ToString("F4"));

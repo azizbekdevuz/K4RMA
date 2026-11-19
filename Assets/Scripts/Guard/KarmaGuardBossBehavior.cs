@@ -116,7 +116,7 @@ namespace KarmaPrototype
                 ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
             public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
-            public override bool TryQueueParry() { return Heavy.TryQueueParry(); }
+            public override bool TryQueueParry(float pressedAt) { return Heavy.TryQueueParry(pressedAt); }
             public override Vector3? CameraFocus { get { return (owner.Invulnerable || Dome.Active) && owner.selected == EnemyAttack.GD05
                 ? new Vector3(TrialCenter, TrialRadius * 0.625f, -10) : (Vector3?)null; } }
             public override float CameraSize(float aspect)

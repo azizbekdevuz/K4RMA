@@ -14,29 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSpriteLibrary
   sheets:
   - id: Ward
-    source: Assets/Arts/Resources/Guard/Forms/Ward.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1341530238, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: 1404261344, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: 1360540734, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: -1719521772, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: 716719942, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: 2085223276, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: -1874411607, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: 1544438378, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: -428402034, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: -1042672577, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: -260905994, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    - {fileID: 870262399, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 5d0590d7e43ce41eaa64e1e8666735e9, type: 3}
+    - {fileID: 21300000, guid: 5d0590d7e43ce41eaa64e1e8666735e9, type: 3}
+    - {fileID: 21300000, guid: 5d0590d7e43ce41eaa64e1e8666735e9, type: 3}
+    - {fileID: -2061778954, guid: c58b59dbab9d34651b8f5b48066727b0, type: 3}
+    - {fileID: 2028316457, guid: 637606985458641e1aed3b52427a1890, type: 3}
+    - {fileID: -1179321717, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    - {fileID: 301590896, guid: d7c922d9eb634422c8971150771da4ec, type: 3}
+    - {fileID: -1192358109, guid: fe7948465a52d4bf59f77c78e4fb999f, type: 3}
+    - {fileID: -1542288922, guid: 6d7bccd93831042d89a74f29ed1eb390, type: 3}
+    - {fileID: -1853964388, guid: 1afeab77658fb41c981dd212aed3ebab, type: 3}
+    - {fileID: 704450525, guid: c239db29a215b4fdc8a44db32dda7674, type: 3}
+    - {fileID: 572738141, guid: 3e8334c9427054ac29c6e72beb93a4bd, type: 3}
+    poses:
+    - Idle
+    - Side
+    - Back
+    - Guard
+    - Move
+    - ShieldBash
+    - Hurt
+    - Thrust
+    - Crouch
+    - Windup
+    - Recover
+    - Death
   - id: Inheritance
-    source: Assets/Arts/Resources/Shared/ReferencePoses.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -1531423279, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    - {fileID: -1318006208, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    - {fileID: -984783832, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    - {fileID: -303785957, guid: 44b9745326c8144abaf6dbe15a82582e, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 5d0590d7e43ce41eaa64e1e8666735e9, type: 3}
+    - {fileID: 21300000, guid: c72e0ebfa2d5b4269b11216e94047035, type: 3}
+    - {fileID: 21300000, guid: f0de41f9526964d01aba9d92ecb41286, type: 3}
+    - {fileID: 21300000, guid: 8ff6c86a0766e41079edbca733547f01, type: 3}
+    poses:
+    - Ward
+    - WardWave
+    - WardRise
+    - WardFinal
   - id: GuardBossVFX
     source: Assets/Arts/Resources/Guard/Effects
     sprites:
@@ -62,223 +78,223 @@ MonoBehaviour:
     - ShardHot
     - ShardCooled
   - id: GuardHeavyWard
-    source: Assets/Arts/Resources/Guard/HeavyStrike/Ward.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1453833098, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
-    - {fileID: -588242779, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
-    - {fileID: 1634365799, guid: fa17abcfe55f1d04e86f2ad8c2661696, type: 3}
-    poses: []
+    - {fileID: -1179321717, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    - {fileID: 1903747819, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    - {fileID: 2083048711, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    poses:
+    - Windup
+    - Downstroke
+    - FollowThrough
   - id: GuardHeavyWardWave
-    source: Assets/Arts/Resources/Guard/HeavyStrike/WardWave.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -774171877, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
-    - {fileID: -197919176, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
-    - {fileID: 1813446154, guid: adde3087d68c5764094a9e40b6fbe8ff, type: 3}
-    poses: []
+    - {fileID: 2144493196, guid: 2b21c79f62cdd4c70860f33fd92f531e, type: 3}
+    - {fileID: 1021158931, guid: 2b21c79f62cdd4c70860f33fd92f531e, type: 3}
+    - {fileID: 709541267, guid: 2b21c79f62cdd4c70860f33fd92f531e, type: 3}
+    poses:
+    - Windup
+    - Downstroke
+    - FollowThrough
   - id: GuardHeavyWardRise
-    source: Assets/Arts/Resources/Guard/HeavyStrike/WardRise.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1958433419, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
-    - {fileID: 1789754190, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
-    - {fileID: -804145536, guid: 4d7c49716d326d64a897e51467433dba, type: 3}
-    poses: []
+    - {fileID: -82912935, guid: 5047ea295433b46a7b0f6ffc4d789a84, type: 3}
+    - {fileID: -1871038707, guid: 5047ea295433b46a7b0f6ffc4d789a84, type: 3}
+    - {fileID: -1275816481, guid: 5047ea295433b46a7b0f6ffc4d789a84, type: 3}
+    poses:
+    - Windup
+    - Downstroke
+    - FollowThrough
   - id: GuardHeavyWardFinal
-    source: Assets/Arts/Resources/Guard/HeavyStrike/WardFinal.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1952035418, guid: e23e801929fe5cb4597425597e38456f, type: 3}
-    - {fileID: 1393750050, guid: e23e801929fe5cb4597425597e38456f, type: 3}
-    - {fileID: -1144299091, guid: e23e801929fe5cb4597425597e38456f, type: 3}
-    poses: []
+    - {fileID: -1708766851, guid: 4f5f6e71657c94c51861cb0f48714f07, type: 3}
+    - {fileID: 1073707654, guid: 4f5f6e71657c94c51861cb0f48714f07, type: 3}
+    - {fileID: -1545056850, guid: 4f5f6e71657c94c51861cb0f48714f07, type: 3}
+    poses:
+    - Windup
+    - Downstroke
+    - FollowThrough
   - id: GuardStaggerWard
-    source: Assets/Arts/Resources/Guard/Stagger/Ward.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 2055513753, guid: 8cb0f5b7306699f4680da1172c578a9a, type: 3}
-    - {fileID: -403814162, guid: 8cb0f5b7306699f4680da1172c578a9a, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 5d0590d7e43ce41eaa64e1e8666735e9, type: 3}
+    - {fileID: -1542288922, guid: 6d7bccd93831042d89a74f29ed1eb390, type: 3}
+    poses:
+    - Reference
+    - Stagger
   - id: GuardStaggerWardWave
-    source: Assets/Arts/Resources/Guard/Stagger/WardWave.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 267211721, guid: e9dc5d8380fd0b946ba347b0ca554e3d, type: 3}
-    - {fileID: -476478516, guid: e9dc5d8380fd0b946ba347b0ca554e3d, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: c72e0ebfa2d5b4269b11216e94047035, type: 3}
+    - {fileID: 1577606210, guid: eec716bff64154adfb2a3d130832a70a, type: 3}
+    poses:
+    - Reference
+    - Stagger
   - id: GuardStaggerWardRise
-    source: Assets/Arts/Resources/Guard/Stagger/WardRise.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -1476393565, guid: 4fee35af4fbfb26438f78054d9bfff5b, type: 3}
-    - {fileID: -1289503404, guid: 4fee35af4fbfb26438f78054d9bfff5b, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: f0de41f9526964d01aba9d92ecb41286, type: 3}
+    - {fileID: -446222130, guid: 5a00fdc6cdbf3458c8c816016c5a5dea, type: 3}
+    poses:
+    - Reference
+    - Stagger
   - id: GuardStaggerWardFinal
-    source: Assets/Arts/Resources/Guard/Stagger/WardFinal.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 869182589, guid: 844159e55f9d8644f94527dede0f822a, type: 3}
-    - {fileID: 12131052, guid: 844159e55f9d8644f94527dede0f822a, type: 3}
-    poses: []
+    - {fileID: 21300000, guid: 8ff6c86a0766e41079edbca733547f01, type: 3}
+    - {fileID: 87662217, guid: ade1d985a5d1e4490b21545149f457f4, type: 3}
+    poses:
+    - Reference
+    - Stagger
   - id: BossAppearance
-    source: Assets/Arts/Resources/Guard/Forms/Ward.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1341530238, guid: d0a07d7eeb98f4ae9adaf2e72ed2fa84, type: 3}
+    - {fileID: 21300000, guid: 5d0590d7e43ce41eaa64e1e8666735e9, type: 3}
     poses:
     - Ward
   - id: GuardStunStars
     source: Assets/Arts/Resources/Guard/Effects/StunStars.png
     sprites:
     - {fileID: 21310000, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310001, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310002, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310003, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310004, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310005, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310006, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310007, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310008, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310009, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310010, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310011, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310012, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310013, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310014, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310015, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310016, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310017, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310018, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310019, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310020, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310021, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310022, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310023, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310024, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310025, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310026, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310027, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310028, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310029, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310030, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310031, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310032, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310033, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310034, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310035, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310036, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310037, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310038, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310039, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310040, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310041, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310042, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310043, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310044, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310045, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     - {fileID: 21310046, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
-    - {fileID: 21310047, guid: 4fc97745e01941c1ab8e30b1cb675e0b, type: 3}
     poses:
     - Frame00
-    - Frame01
     - Frame02
-    - Frame03
     - Frame04
-    - Frame05
     - Frame06
-    - Frame07
     - Frame08
-    - Frame09
     - Frame10
-    - Frame11
     - Frame12
-    - Frame13
     - Frame14
-    - Frame15
     - Frame16
-    - Frame17
     - Frame18
-    - Frame19
     - Frame20
-    - Frame21
     - Frame22
-    - Frame23
     - Frame24
-    - Frame25
     - Frame26
-    - Frame27
     - Frame28
-    - Frame29
     - Frame30
-    - Frame31
     - Frame32
-    - Frame33
     - Frame34
-    - Frame35
     - Frame36
-    - Frame37
     - Frame38
-    - Frame39
     - Frame40
-    - Frame41
     - Frame42
-    - Frame43
     - Frame44
-    - Frame45
     - Frame46
-    - Frame47
   - id: GuardHeavyMoltenWard
-    source: Assets/Arts/Resources/Guard/MoltenStrike/Ward.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -353859511, guid: 1d805975c26cd8b438f174ac4b3e0e0e, type: 3}
-    - {fileID: 1851282465, guid: 1d805975c26cd8b438f174ac4b3e0e0e, type: 3}
-    - {fileID: 784855131, guid: 1d805975c26cd8b438f174ac4b3e0e0e, type: 3}
-    poses: []
+    - {fileID: 2083048711, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    - {fileID: -1179321717, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    - {fileID: 1903747819, guid: 2388bc00a95014171afab197b2fbbfca, type: 3}
+    poses:
+    - FollowThrough
+    - Windup
+    - Downstroke
   - id: GuardHeavyMoltenWardWave
-    source: Assets/Arts/Resources/Guard/MoltenStrike/WardWave.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: -1767577483, guid: d2452070b71549e4eaa9f6fc909b68c8, type: 3}
-    - {fileID: 142526786, guid: d2452070b71549e4eaa9f6fc909b68c8, type: 3}
-    - {fileID: 2076372216, guid: d2452070b71549e4eaa9f6fc909b68c8, type: 3}
-    poses: []
+    - {fileID: 709541267, guid: 2b21c79f62cdd4c70860f33fd92f531e, type: 3}
+    - {fileID: 2144493196, guid: 2b21c79f62cdd4c70860f33fd92f531e, type: 3}
+    - {fileID: 1021158931, guid: 2b21c79f62cdd4c70860f33fd92f531e, type: 3}
+    poses:
+    - FollowThrough
+    - Windup
+    - Downstroke
   - id: GuardHeavyMoltenWardRise
-    source: Assets/Arts/Resources/Guard/MoltenStrike/WardRise.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 160576016, guid: 42700b1ca378c894ca2f1f2abafda424, type: 3}
-    - {fileID: -1855804974, guid: 42700b1ca378c894ca2f1f2abafda424, type: 3}
-    - {fileID: 1353264309, guid: 42700b1ca378c894ca2f1f2abafda424, type: 3}
-    poses: []
+    - {fileID: -1275816481, guid: 5047ea295433b46a7b0f6ffc4d789a84, type: 3}
+    - {fileID: -82912935, guid: 5047ea295433b46a7b0f6ffc4d789a84, type: 3}
+    - {fileID: -1871038707, guid: 5047ea295433b46a7b0f6ffc4d789a84, type: 3}
+    poses:
+    - FollowThrough
+    - Windup
+    - Downstroke
   - id: GuardHeavyMoltenWardFinal
-    source: Assets/Arts/Resources/Guard/MoltenStrike/WardFinal.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 80612033, guid: 6b07a14dff484e745b5260854375df50, type: 3}
-    - {fileID: 473790212, guid: 6b07a14dff484e745b5260854375df50, type: 3}
-    - {fileID: 368111346, guid: 6b07a14dff484e745b5260854375df50, type: 3}
-    poses: []
+    - {fileID: -1545056850, guid: 4f5f6e71657c94c51861cb0f48714f07, type: 3}
+    - {fileID: -1708766851, guid: 4f5f6e71657c94c51861cb0f48714f07, type: 3}
+    - {fileID: 1073707654, guid: 4f5f6e71657c94c51861cb0f48714f07, type: 3}
+    poses:
+    - FollowThrough
+    - Windup
+    - Downstroke
   - id: GuardSlamWard
-    source: Assets/Arts/Resources/Guard/GD04/Ward.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 103335987, guid: 8861a1a769b374942b0d557c77b2e7e3, type: 3}
-    - {fileID: 245245873, guid: 8861a1a769b374942b0d557c77b2e7e3, type: 3}
-    - {fileID: -1445966963, guid: 8861a1a769b374942b0d557c77b2e7e3, type: 3}
-    - {fileID: 188600768, guid: 8861a1a769b374942b0d557c77b2e7e3, type: 3}
-    poses: []
+    - {fileID: -691815715, guid: fe7948465a52d4bf59f77c78e4fb999f, type: 3}
+    - {fileID: 835359568, guid: fe7948465a52d4bf59f77c78e4fb999f, type: 3}
+    - {fileID: -1445326439, guid: fe7948465a52d4bf59f77c78e4fb999f, type: 3}
+    - {fileID: -1192358109, guid: fe7948465a52d4bf59f77c78e4fb999f, type: 3}
+    poses:
+    - Contact
+    - Descent
+    - Rebound
+    - Windup
   - id: GuardSlamWardWave
-    source: Assets/Arts/Resources/Guard/GD04/WardWave.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1403329506, guid: 10f634ab35ddab54f856a535cf68f393, type: 3}
-    - {fileID: 1629062454, guid: 10f634ab35ddab54f856a535cf68f393, type: 3}
-    - {fileID: 1042567666, guid: 10f634ab35ddab54f856a535cf68f393, type: 3}
-    - {fileID: 2043132302, guid: 10f634ab35ddab54f856a535cf68f393, type: 3}
-    poses: []
+    - {fileID: 1251070612, guid: 91d4c8b6385784dff9b3e84c866d2e46, type: 3}
+    - {fileID: -1944302923, guid: 91d4c8b6385784dff9b3e84c866d2e46, type: 3}
+    - {fileID: 1831327239, guid: 91d4c8b6385784dff9b3e84c866d2e46, type: 3}
+    - {fileID: -1645928857, guid: 91d4c8b6385784dff9b3e84c866d2e46, type: 3}
+    poses:
+    - Rebound
+    - Windup
+    - Contact
+    - Descent
   - id: GuardSlamWardRise
-    source: Assets/Arts/Resources/Guard/GD04/WardRise.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1940847849, guid: cfdcdf42db50aa04d9cfc8ca0ed123fe, type: 3}
-    - {fileID: -917243714, guid: cfdcdf42db50aa04d9cfc8ca0ed123fe, type: 3}
-    - {fileID: -1145097126, guid: cfdcdf42db50aa04d9cfc8ca0ed123fe, type: 3}
-    - {fileID: 56757112, guid: cfdcdf42db50aa04d9cfc8ca0ed123fe, type: 3}
-    poses: []
+    - {fileID: 1101125693, guid: 3317f0387b396446c8378ee5783e2956, type: 3}
+    - {fileID: -2143647473, guid: 3317f0387b396446c8378ee5783e2956, type: 3}
+    - {fileID: 1219686737, guid: 3317f0387b396446c8378ee5783e2956, type: 3}
+    - {fileID: 1514614318, guid: 3317f0387b396446c8378ee5783e2956, type: 3}
+    poses:
+    - Rebound
+    - Windup
+    - Contact
+    - Descent
   - id: GuardSlamWardFinal
-    source: Assets/Arts/Resources/Guard/GD04/WardFinal.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1482224100, guid: c6a39edc33704fb4282a35a07c5fddba, type: 3}
-    - {fileID: -1487921144, guid: c6a39edc33704fb4282a35a07c5fddba, type: 3}
-    - {fileID: -1897851404, guid: c6a39edc33704fb4282a35a07c5fddba, type: 3}
-    - {fileID: 381215290, guid: c6a39edc33704fb4282a35a07c5fddba, type: 3}
-    poses: []
+    - {fileID: 610961856, guid: 92cb3d4a19686497895394cb4e87dff7, type: 3}
+    - {fileID: -1306386605, guid: 92cb3d4a19686497895394cb4e87dff7, type: 3}
+    - {fileID: -1232428500, guid: 92cb3d4a19686497895394cb4e87dff7, type: 3}
+    - {fileID: -1199391049, guid: 92cb3d4a19686497895394cb4e87dff7, type: 3}
+    poses:
+    - Rebound
+    - Windup
+    - Contact
+    - Descent
   - id: GuardBasalt
     source: Assets/Arts/Resources/Guard/GD04/Basalt.png
     sprites:
@@ -312,41 +328,54 @@ MonoBehaviour:
     poses:
     - Impact
   - id: GuardShieldlessWardWave
-    source: Assets/Arts/Resources/Guard/ShieldAway/WardWave.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 21300001, guid: 8c0d19ea62e44009925b8c2caa3b0901, type: 3}
-    - {fileID: 21300003, guid: 8c0d19ea62e44009925b8c2caa3b0901, type: 3}
-    poses: []
+    - {fileID: -1946546551, guid: ebcd63644fdef4fdc9dad061f62ca7c5, type: 3}
+    - {fileID: 825215415, guid: e55fbe2ae29b8450fa8741718084a7f9, type: 3}
+    poses:
+    - Hurt
+    - ShieldBash
   - id: GuardShieldlessWardFinal
-    source: Assets/Arts/Resources/Guard/ShieldAway/WardFinal.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 21300001, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
-    - {fileID: 21300003, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
-    - {fileID: 21300004, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
-    - {fileID: 21300005, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
-    - {fileID: 21300006, guid: 581efd91d0254e91aeca0f07d23ae136, type: 3}
-    poses: []
+    - {fileID: 878240508, guid: bcbcfea8264a54951932620d3c18c734, type: 3}
+    - {fileID: 761229281, guid: bfaa9fea22c6147cd802667d0b1ce119, type: 3}
+    - {fileID: 21300000, guid: 6622f2c9252c34d85b16afc9c4af74df, type: 3}
+    - {fileID: 880787264, guid: e478c55a6729f4e708b312cf7f2e8e3d, type: 3}
+    - {fileID: 310287095, guid: 7be15c2a589644351b4f1fbdcd2861cc, type: 3}
+    poses:
+    - Hurt
+    - ShieldBash
+    - Idle
+    - Move
+    - Crouch
   - id: GuardTrialHeavyWardFinal
-    source: Assets/Arts/Resources/Guard/ShieldAway/WardFinalHeavy.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1393750050, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
-    - {fileID: -1144299091, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
-    - {fileID: 1952035418, guid: f93b2b6f1ab745c794ffe3d78625c1a5, type: 3}
-    poses: []
+    - {fileID: 1452331638, guid: 7e69ea86366d6448380f189ed77bd3a9, type: 3}
+    - {fileID: -419958111, guid: 7e69ea86366d6448380f189ed77bd3a9, type: 3}
+    - {fileID: -1713963186, guid: 7e69ea86366d6448380f189ed77bd3a9, type: 3}
+    poses:
+    - Downstroke
+    - FollowThrough
+    - Windup
   - id: GuardTrialHeavyMoltenWardFinal
-    source: Assets/Arts/Resources/Guard/ShieldAway/WardFinalHeavyMolten.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 368111346, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
-    - {fileID: 80612033, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
-    - {fileID: 473790212, guid: 054003d648ec4e20adb61bf26271e5b9, type: 3}
-    poses: []
+    - {fileID: 1452331638, guid: 7e69ea86366d6448380f189ed77bd3a9, type: 3}
+    - {fileID: -419958111, guid: 7e69ea86366d6448380f189ed77bd3a9, type: 3}
+    - {fileID: -1713963186, guid: 7e69ea86366d6448380f189ed77bd3a9, type: 3}
+    poses:
+    - Downstroke
+    - FollowThrough
+    - Windup
   - id: GuardPlayerAirborneHit
-    source: Assets/Arts/Resources/Guard/GD04/PlayerAirborneHit.png
+    source: Assets/Arts/Resources/Motions12/BodyPoses.txt
     sprites:
-    - {fileID: 1837636187, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
-    - {fileID: -736114145, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
-    - {fileID: -548037179, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
-    - {fileID: -2129928004, guid: ebab7ced3197c5e4a8eb9642cffe8cea, type: 3}
+    - {fileID: 1399432509, guid: f4ebfd5e39e394e8694d4012e1c5fce4, type: 3}
+    - {fileID: 1444918187, guid: f4ebfd5e39e394e8694d4012e1c5fce4, type: 3}
+    - {fileID: 1283279403, guid: f4ebfd5e39e394e8694d4012e1c5fce4, type: 3}
+    - {fileID: 1102146956, guid: f4ebfd5e39e394e8694d4012e1c5fce4, type: 3}
     poses:
     - Frame00
     - Frame01

@@ -16,7 +16,7 @@ public static class KarmaBuildChecks
             if (scenes.Length == 0 || scenes.Any(s => !File.Exists(s))) throw new Exception("Enabled build scene is missing");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = scenes, target = BuildTarget.StandaloneOSX,
-                locationPathName = "output/validation/build/K4RMA.app", options = BuildOptions.StrictMode
+                locationPathName = "output/validation/build/K4RMA.app", options = BuildOptions.StrictMode | BuildOptions.CleanBuildCache
             });
             verdict = report.summary.result == BuildResult.Succeeded
                 ? "PASS: macOS player build, " + report.summary.totalSize + " bytes, " + report.summary.totalWarnings + " warnings"

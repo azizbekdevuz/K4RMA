@@ -124,10 +124,35 @@ public static class KarmaGrowthChecks
         InputSystem.QueueStateEvent(keyboard, new KeyboardState());
         await Until(() => readAge() > age);
     }
+    static float HudOpacity => (float)Property(game.GetComponent<KarmaHUD>(), "CombatHudOpacity");
+    static bool Framed(float x, float margin)
+    {
+        float u = game.GameCamera.WorldToViewportPoint(new Vector3(x, 2, 0)).x;
+        return u >= margin && u <= 1 - margin;
+    }
+
+    static async Task PlaceEdgeKill(bool left, bool ranged)
+    {
+        float wall = left ? KarmaStage.BossLeftWall : KarmaStage.BossRightWall;
+        float player = ranged ? KarmaStage.ArenaCenter * 2 - wall : wall + (left ? 3 : -3);
+        game.Player.ResetForRoom(new Vector2(player, KarmaSpace.PlayerHalfHeight), false);
+        await Frames(20); // Start from the ordinary combat camera at the player's position.
+        game.Enemies[0].transform.position = new Vector3(wall, KarmaSpace.GuardianGroundY, 0);
+    }
+
     static async Task Transition(Essence essence, int stage)
     {
         var defeated = game.Enemies[0];
+        bool edge = focusOnly && stage == 1 && route < 2;
+        if (edge) await PlaceEdgeKill(route == 0, route == 1);
+        float fallenX = defeated.Position.x;
         defeated.TakeDamage(10000000);
+        if (edge)
+        {
+            await Until(() => HudOpacity > 0.12f && HudOpacity < 0.88f);
+            await Until(() => HudOpacity == 0);
+            Check(Framed(fallenX, 0.16f), "The fallen guardian is framed before skill selection");
+        }
         await Until(() => game.Phase == RunPhase.Choosing);
         Vector2 player = game.Player.Position;
         if (focusOnly && route == 0 && stage == 2)
@@ -231,7 +256,10 @@ public static class KarmaGrowthChecks
         if (stage == 3) Check(beats.Contains(KarmaGuardianGrowth.Beat.Combine)
             && beats.Contains(KarmaGuardianGrowth.Beat.Foreshadow)
             && !beats.Contains(KarmaGuardianGrowth.Beat.Imitate), "Mastery has no repeated trial");
+        if (edge) await Until(() => HudOpacity > 0.05f && HudOpacity < 0.95f);
         await Until(() => (bool)Property(game, "EncounterPromptReady"));
+        if (edge) Check(HudOpacity > 0.99f && Framed(boss.Position.x, 0.025f) && Framed(player.x, 0.025f),
+            "Both fighters and the restored HUD fit the name shot");
         Check(Property(game, "CurrentEncounterPrompt").ToString() == "BossName", "Held Space cannot skip reveal");
         var animator = boss.GetComponentInChildren<KarmaCharacterAnimator>();
         Check(!(bool)Get(animator, "growthActive"), "Animation override released before combat");
@@ -276,6 +304,10 @@ public static class KarmaGrowthChecks
                 var memory = (SpriteRenderer)Get(ceremony, "memoryPicture");
                 var source = (SpriteRenderer)Get(ceremony, "sourceEffect");
                 var proof = (SpriteRenderer)Get(ceremony, "proofEffect");
+                Check(HudOpacity == 0, "Combat UI stays hidden during the whole player demonstration");
+                if (age > 0.45f && memory.enabled)
+                    Check(Framed(memory.bounds.min.x, 0.015f) && Framed(memory.bounds.max.x, 0.015f),
+                        "The complete player memory is inside the viewport");
                 if (age > 0.35f && age < 1.3f)
                     Check(Mathf.Abs(memory.color.a - 0.65f) < 0.001f && Mathf.Abs(source.color.a - 0.65f) < 0.001f,
                         "Player memory matches the guardian's 65 percent opacity");
@@ -335,6 +367,14 @@ public static class KarmaGrowthChecks
         var previous = (Dictionary<string, Sprite>)Get(guardianArt, "growthPrevious");
         while (growth != null)
         {
+            Check(HudOpacity == 0, "Combat UI cannot reveal the new guardian's name before the entrance");
+            if (growth.Age > 0.6f)
+            {
+                Check(Framed(body.bounds.min.x, 0.015f) && Framed(body.bounds.max.x, 0.015f),
+                    "The active guardian's silhouette fits in the shot");
+                if (source.enabled) Check(Framed(source.bounds.min.x, 0.015f) && Framed(source.bounds.max.x, 0.015f),
+                    "The guardian's memory stays visible at the wall");
+            }
             if (stage == 1 && (growth.CurrentBeat == KarmaGuardianGrowth.Beat.TakeStance ||
                 growth.CurrentBeat == KarmaGuardianGrowth.Beat.Imitate))
             {
@@ -448,6 +488,7 @@ public static class KarmaGrowthChecks
     {
         // A fresh room restores the boss after the explicit ultimate cancel test.
         typeof(KarmaGame).GetMethod("LoadRoom", F).Invoke(game, new object[] { true });
+        await PlaceEdgeKill(route % 2 == 0, true);
         game.Enemies[0].TakeDamage(10000000);
         await Until(() => game.Phase == RunPhase.Ending);
         if (recordVideo) { recording = "ending"; Directory.CreateDirectory(Output + "/" + recording); videoFrame = 0; lastRecorded = -1; }
@@ -457,6 +498,8 @@ public static class KarmaGrowthChecks
         var art = (Transform)Get(game, "fallenGuardian");
         Check(art != null && art.GetComponent<KarmaCharacterAnimator>().CurrentPose == "Ending/Reflect", "Guardian reflects on the mastered technique");
         var picture = art.GetComponentInChildren<SpriteRenderer>();
+        Check(HudOpacity == 0 && Framed(picture.bounds.min.x, 0.07f) && Framed(picture.bounds.max.x, 0.07f),
+            "The final guardian's acknowledgment is fully visible after a ranged edge kill");
         var block = new MaterialPropertyBlock(); picture.GetPropertyBlock(block);
         Check(block.GetFloat("_Progress") == 0, "Acknowledgment precedes dissolve");
         float at = game.EndingTime; game.TogglePause(); await Frames(5);
@@ -566,7 +609,7 @@ public static class KarmaGrowthChecks
             recordVideo = SessionState.GetBool(Key + ".Video", false);
             SessionState.EraseBool(Key + ".Video");
             Application.logMessageReceived += log; Application.runInBackground = true;
-            Time.captureDeltaTime = 1f / 24;
+            Time.captureDeltaTime = 1f / 12;
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             var routes = new[] {
                 new[] { Essence.SwordWave, Essence.Guard, Essence.RisingSlash },

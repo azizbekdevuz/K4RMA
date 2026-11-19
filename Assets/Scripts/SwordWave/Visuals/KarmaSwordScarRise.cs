@@ -96,7 +96,7 @@ namespace KarmaPrototype
         {
             progress = Mathf.Clamp01(progress);
             // Sample the charge at the artwork clock; retain the committed footprint.
-            float sample = Mathf.Floor(progress * life * 24) / 24;
+            float sample = Mathf.Floor(progress * life * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
             FrameIndex = Mathf.Min(4, (int)(sample / life * 5)); Paint(FrameIndex);
             float charge = Mathf.SmoothStep(0, 1, progress);
             picture.color = new Color(0.72f + charge * 0.28f, 0.88f + charge * 0.12f, 1,
@@ -134,9 +134,9 @@ namespace KarmaPrototype
             if (game.Paused || sequence == ScarSequence.Warning) return;
             age = roundClock != null ? roundClock.Sample(Time.frameCount, Time.deltaTime, game.Paused) : age + Time.deltaTime;
             if (sequence == ScarSequence.Impact && age >= life) { Destroy(gameObject); return; }
-            // Contact stages retain their original clock. Only sprite clips run at 24 FPS.
+            // The blade uses physical contact stages. Impact uses initiation, expansion, then dissipation.
             FrameIndex = sequence == ScarSequence.Blade
-                ? Mathf.Min(4, (int)(age / RiseSeconds * 5)) : Mathf.Min(4, (int)(age * 24));
+                ? Mathf.Min(4, (int)(age / RiseSeconds * 5)) : Mathf.Min(4, 2 * (int)(age * KarmaBootstrap.FramesPerSecond));
             Paint(FrameIndex);
             if (sequence == ScarSequence.Impact)
                 picture.color = new Color(1, 1, 1, 1 - Mathf.SmoothStep(0, 1, (age - 0.12f) / (life - 0.12f)));

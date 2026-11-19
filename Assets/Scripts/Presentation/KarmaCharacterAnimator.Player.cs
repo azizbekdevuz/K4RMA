@@ -5,60 +5,35 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaCharacterAnimator
     {
-        readonly Dictionary<string, AnimationClip> playerClips = new Dictionary<string, AnimationClip>();
         readonly Dictionary<string, Sprite[]> playerSequences = new Dictionary<string, Sprite[]>();
         string playerClip;
         float playerClipAt, jumpVisualUntil;
-        float playerSampleRate = 12;
-        bool nativePlayer24;
+        internal void BeginJumpVisual() => jumpVisualUntil = Time.time + 0.125f;
+        const float playerSampleRate = KarmaBootstrap.FramesPerSecond;
 
         void LoadPlayerClips()
         {
-            playerClips.Clear(); playerSequences.Clear(); playerClip = null;
+            playerSequences.Clear(); playerClip = null;
             if (sheet != "Player") return;
-            nativePlayer24 = Resources.Load<TextAsset>("Player/Animation24/Ready") != null;
-            playerSampleRate = nativePlayer24 ? 24 : 12;
-            if (nativePlayer24)
-            {
-                var material = Resources.Load<Material>("Shared/Rendering/KarmaPlayer24");
-                if (material != null && picture != null) picture.sharedMaterial = material;
-                LoadNativePlayerPose("Idle");
-                if (picture != null && playerSequences.TryGetValue("Idle", out var idle) && idle.Length > 0)
-                { picture.sprite = idle[0]; playerClip = "Idle"; playerClipAt = Time.time; CurrentPose = "Idle"; }
-                return;
-            }
-            foreach (var clip in Resources.LoadAll<AnimationClip>("Player/Animation")) playerClips[clip.name] = clip;
-            var library = Resources.Load<KarmaSpriteLibrary>("Player/Animation/Frames");
-            if (library != null) foreach (var entry in library.sheets) playerSequences[entry.id] = entry.sprites;
+            var material = Resources.Load<Material>("Shared/Rendering/KarmaPlayer12");
+            if (material != null && picture != null) picture.sharedMaterial = material;
+            SamplePlayerClip("Idle", true);
         }
-        // Load a new sheet only when its action is first requested. CC/ending art does not inflate normal startup.
+        // Animation clips are authored from this same timeline. Live playback needs only its drawings and loop flag.
         void LoadNativePlayerPose(string name)
         {
-            if (!nativePlayer24 || playerSequences.ContainsKey(name)) return;
-            string artName = name == "AirSlash" ? "AirHorizontal" : name == "Dash" ? "Pierce"
-                : name == "Transition" ? "PersonalizeWave"
-                : name == "JumpStart" || name == "Apex" || name == "Fall" ? "Jump" : name;
-            var clip = Resources.Load<AnimationClip>("Player/Animation24/" + name);
-            if (clip == null) return;
-            var sequence = Resources.LoadAll<Sprite>("Player/Native24/" + artName);
-            System.Array.Sort(sequence, (a,b) => string.CompareOrdinal(a.name,b.name));
-            if (sequence.Length == 0) return;
-            if (artName == "Jump" && sequence.Length == 9)
-            {
-                int start = name == "Fall" ? 5 : name == "Apex" ? 4 : 0;
-                int count = name == "JumpStart" || name == "Apex" ? 1 : 4;
-                var phase = new Sprite[count];
-                System.Array.Copy(sequence, start, phase, 0, count); sequence = phase;
-            }
-            playerClips[name] = clip; playerSequences[name] = sequence;
+            if (playerSequences.ContainsKey(name)) return;
+            var motion = KarmaPlayerTimeline.Find(name);
+            if (motion == null) return;
+            playerSequences[name] = KarmaMotionArt.TryPreparedPlayer(motion.Source, out var sequence)
+                ? sequence : motion.Load();
         }
         float playerExplicitRecoveryEnd;
         internal bool PlayerActionPlaying => Time.time < actionUntil || Time.time < poseUntil;
-        internal bool UsesNativePlayer24 => nativePlayer24;
-        internal void PlayPlayerAction(string nativePose, string legacyPose, float seconds)
+        internal void PlayPlayerAction(string pose, float seconds)
         {
-            if (nativePlayer24) { playerExplicitRecoveryEnd = Time.time + seconds; hurtUntil = 0; }
-            PlayPose(nativePlayer24 ? nativePose : legacyPose, seconds);
+            playerExplicitRecoveryEnd = Time.time + seconds; hurtUntil = 0;
+            PlayPose(pose, seconds);
         }
         internal void CancelPlayerActionForControl()
         {
@@ -69,15 +44,13 @@ namespace KarmaPrototype
         bool PlayerRecovering(float movement, bool airborne)
         {
             float end = Mathf.Max(actionUntil, playerExplicitRecoveryEnd);
-            float duration = airborne ? 4f / 24 : Mathf.Abs(movement) > 0.1f ? 8f / 24 : 6f / 24;
-            return nativePlayer24 && end > 0 && Time.time >= end && Time.time < end + duration;
+            float duration = airborne ? 2 * KarmaBootstrap.Step : Mathf.Abs(movement) > 0.1f ? 4 * KarmaBootstrap.Step : 3 * KarmaBootstrap.Step;
+            return end > 0 && Time.time >= end && Time.time < end + duration;
         }
         string PlayerRecoveryPose(float movement, bool airborne)
             => airborne ? "AirRecovery" : Mathf.Abs(movement) > 0.1f ? "RunRecovery" : "Recovery";
         internal void ResetNativePlayerForRoom()
         {
-            // Both the legacy profile and optional native profile can be reset
-            // while parrying, hurt or dead; no prior pose may cross a room reset.
             if (sheet != "Player") return;
             EndPersonalizationProof();
             CancelPlayerActionForControl(); ResetPlayerStatus();
@@ -88,47 +61,27 @@ namespace KarmaPrototype
             SamplePlayerClip("Idle", true);
         }
         float playerTurnUntil;
-        internal bool PlayerTurning => nativePlayer24 && Time.time < playerTurnUntil
+        internal bool PlayerTurning => Time.time < playerTurnUntil
             && Time.time >= actionUntil && Time.time >= poseUntil && Time.time >= hurtUntil;
-        internal void BeginPlayerTurn() { if (nativePlayer24) playerTurnUntil = Time.time + 4f / 24; }
+        internal void BeginPlayerTurn() { playerTurnUntil = Time.time + 2 * KarmaBootstrap.Step; }
         void SamplePlayerClip(string name, bool restart = false)
         {
             if (picture == null) return;
             playerStatusPose = null;
             if (name == "Riposte" && SampleParrySuccess(restart)) return;
             LoadNativePlayerPose(name);
-            if (!playerClips.TryGetValue(name, out var clip) || !playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) { if (!nativePlayer24) ShowPose(name); return; }
+            if (!playerSequences.TryGetValue(name, out var sequence) || sequence.Length == 0) return;
             if (restart || playerClip != name) { playerClip = name; playerClipAt = Time.time; }
             float elapsed = Mathf.Max(0, Time.time - playerClipAt);
-            if (SamplePlayerLocomotion(name, elapsed, sequence)) return;
             float sampleRate = playerSampleRate;
-            float duration = sequence.Length / sampleRate;
-            float sample = clip.isLooping ? elapsed % duration : Mathf.Min(elapsed, duration - 0.0001f);
+            var motion = KarmaPlayerTimeline.Find(name);
+            float sample = motion.Loop ? elapsed % motion.Duration : elapsed;
             // Quantize visuals only. Physics, damage and input windows keep their original clocks.
-            picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * sampleRate))];
+            picture.sprite = sequence[Mathf.Min(sequence.Length - 1, Mathf.FloorToInt(sample * sampleRate + 0.00001f))];
             picture.flipX = false;
             picture.transform.localScale = pictureScale;
             CurrentPose = name;
         }
 
-        bool SamplePlayerLocomotion(string name, float elapsed, Sprite[] sequence)
-        {
-            int index, tick = Mathf.FloorToInt(elapsed * 24);
-            switch (name)
-            {
-                case "Run": return false;
-                case "Jump": index = tick < 3 ? 0 : tick < 6 ? 1 : tick < 8 ? 2 : 3; break;
-                case "Fall": index = tick < 2 ? 0 : tick < 4 ? 1 : tick < 6 ? 2 : 3; break;
-                case "JumpStart": case "Apex": index = 0; break;
-                case "Land": index = Mathf.FloorToInt(elapsed * 20); break;
-                case "Crouch": index = tick; break;
-                default: return false;
-            }
-            picture.sprite = sequence[Mathf.Min(index, sequence.Length - 1)];
-            picture.flipX = false;
-            picture.transform.localScale = pictureScale;
-            CurrentPose = name;
-            return true;
-        }
     }
 }

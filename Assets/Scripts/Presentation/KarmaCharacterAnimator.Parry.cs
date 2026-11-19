@@ -14,16 +14,15 @@ namespace KarmaPrototype
         {
             if (parryFrames == null)
             {
-                parryFrames = Resources.LoadAll<Sprite>("Player/ParrySuccess");
+                parryFrames = motionArt.Frames("Player", "ParrySuccess");
                 parryEffects = Resources.LoadAll<Sprite>("Shared/Effects/ParrySuccess");
                 Array.Sort(parryFrames, (a, b) => string.CompareOrdinal(a.name, b.name));
                 Array.Sort(parryEffects, (a, b) => string.CompareOrdinal(a.name, b.name));
             }
-            if (parryFrames.Length != 8 || parryEffects.Length != 8) return false;
+            if (parryFrames.Length != 4 || parryEffects.Length != 4) return false;
             if (restart || playerClip != "Riposte") { playerClip = "Riposte"; playerClipAt = Time.time; }
-            // Seven full 24 FPS intervals, then a short final recovery frame.
-            // The existing poseUntil (0.3 seconds) remains the authority for ending this pose.
-            int index = Mathf.Clamp(Mathf.FloorToInt(Mathf.Max(0, Time.time - playerClipAt) * 24), 0, 7);
+            int tick = Mathf.FloorToInt(Mathf.Max(0, Time.time - playerClipAt) * KarmaBootstrap.FramesPerSecond);
+            int index = Mathf.Min(tick, parryFrames.Length - 1);
             picture.sprite = parryFrames[index];
             picture.flipX = false;
             picture.transform.localScale = pictureScale;

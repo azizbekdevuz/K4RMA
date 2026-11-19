@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: KarmaArtworkSettings
   m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtworkSettings
   spriteLibrary: {fileID: 11400000, guid: 3639d9b9c82684a51a69dc4581b11c4e, type: 2}
-  playerIdle: {fileID: -1166498298, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerMove1: {fileID: 817887777, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerMove2: {fileID: 1760789366, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerSlash1: {fileID: 62152086, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerSlash2: {fileID: -1365063686, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerRising: {fileID: 343864838, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerFalling: {fileID: -225161381, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerHurt: {fileID: -1445634849, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  playerDeath: {fileID: 897304144, guid: 96d176c2a45b0450db43376916e2d092, type: 3}
-  neutralGuardian: {fileID: 180812220, guid: b13752b81622c46cdb6158bd036ffe3d, type: 3}
+  playerIdle: {fileID: 21300000, guid: e31cf09e2675940d29881c3f000b7333, type: 3}
+  playerMove1: {fileID: -1996039169, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
+  playerMove2: {fileID: -1195384028, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
+  playerSlash1: {fileID: -1741662668, guid: 4cdc04f27802e4ff1a83a0c58f027b06, type: 3}
+  playerSlash2: {fileID: 939713956, guid: 4cdc04f27802e4ff1a83a0c58f027b06, type: 3}
+  playerRising: {fileID: -120784231, guid: 56629021e250744658508ab7f00bb094, type: 3}
+  playerFalling: {fileID: 1403176521, guid: af4d696842a564fbc9f54cac5ad967ad, type: 3}
+  playerHurt: {fileID: -2026558918, guid: b7540c1c6a0c543c8b535aa674fe79bd, type: 3}
+  playerDeath: {fileID: 1592687243, guid: 2562a39ecb9b24ffa9047a2909c10126, type: 3}
+  neutralGuardian: {fileID: 21300000, guid: 95889af325e0f4eb193ad53f4526d8ab, type: 3}
   dojoBackground: {fileID: 21300000, guid: 105788dea150a46078f38ce8d5054b63, type: 3}
   mountainBackground: {fileID: 21300000, guid: f50e2414a6e4a472396c88342242ada4, type: 3}
   mountainPanorama: {fileID: 21300000, guid: 743f9494aeae49d994242ccfc5a298e0, type: 3}
-  panoramaCoverage: 2
   dojoPanorama: {fileID: 21300000, guid: ffa6793fdf054c498d28c174e39a59f1, type: 3}
+  panoramaCoverage: 2
   menuBackground: {fileID: 2800000, guid: c8f392333173940a496c0588b30e4551, type: 3}
   skillIcons:
   - {fileID: -765498871, guid: 16969ce7b2a124866b73b43cdfa045d1, type: 3}

@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Linq;
 using System.Collections;
 using System.IO;
 using System.Reflection;
@@ -150,7 +151,7 @@ public static class KarmaRisingPlayChecks
             return !(bool)Get(enemy, "running");
         });
         Check(dash && first && second, "A visible dash precedes the two actual strike starts");
-        Check(observed.Count == 6, "All six strike frames appear during the basic combo");
+        Check(observed.SetEquals(new[] { frames[0], frames[3], frames[5] }), "All three strike keys appear during the basic combo");
         Check(((Transform)Get(enemy, "art")).localScale.x < 0, "The existing facing mirrors the new frames");
         await CheckBaseDescent(animator, renderer);
 
@@ -172,6 +173,11 @@ public static class KarmaRisingPlayChecks
     static Task ObserveClip(Sprite[] frames, SpriteRenderer renderer, string label)
     {
         Check(frames != null && frames.Length > 1, label + " loads a multi-frame clip");
+        bool descent = frames.Any(f => f.name.StartsWith("Land", StringComparison.Ordinal));
+        int length = frames.Length - (descent ? 2 : 0);
+        int[] keys = length == 7 ? new[] { 0, 2, 4, 6 } : length == 2 ? new[] { 1 } : new[] { 0, 2 };
+        if (descent) keys = keys.Concat(new[] { frames.Length - 1 }).ToArray();
+        frames = keys.Select(i => frames[i]).ToArray();
         var completed = new TaskCompletionSource<bool>();
         game.StartCoroutine(ObserveRenderedFrames());
         return completed.Task;
@@ -239,11 +245,11 @@ public static class KarmaRisingPlayChecks
                 foreach (var sprite in clip)
                     Check(Mathf.Approximately(sprite.pixelsPerUnit, idle.pixelsPerUnit), form + " preserves its authored PPU");
             }
-            foreach (int frame in new[] { 0, 1, 2 })
+            foreach (int tick in new[] { 0, 1 })
             {
                 var method = typeof(KarmaCharacterAnimator).GetMethod("RisingFrame", BindingFlags.Static | BindingFlags.NonPublic);
-                var start = Time.timeAsDouble - (frame + 0.5d) / 24d;
-                Check((int)method.Invoke(null, new object[] { start, 3 }) == frame, form + " samples at 24 FPS");
+                var start = Time.timeAsDouble - (tick + 0.5d) / 12d;
+                Check((int)method.Invoke(null, new object[] { start, 3 }) == tick * 2, form + " samples at 12 FPS");
             }
             if (order.Length > 1)
             {
@@ -270,7 +276,7 @@ public static class KarmaRisingPlayChecks
                 Force(EnemyAttack.UP05);
                 await ObserveClip(crossing, renderer, form + " UP05 crossing");
             }
-            Debug.Log("PASS: " + form + " in-game 24 FPS clip coverage (" + string.Join(">", order) + ")");
+            Debug.Log("PASS: " + form + " in-game 12 FPS clip coverage (" + string.Join(">", order) + ")");
         }
     }
     static EnemyAttack SelectAttack(float distance)
@@ -358,7 +364,7 @@ public static class KarmaRisingPlayChecks
             Reset(); float health = enemy.Health; enemy.TakeDamage(1);
             Check(enemy.Health < health, "Rising retains normal damage");
             Check(error == null, "no runtime error: " + error);
-            result = "PASS: Rising 24 FPS all-form playback, basic/UP01-UP05 execution, landing, defense cleanup, interruption and damage";
+            result = "PASS: Rising 12 FPS all-form playback, basic/UP01-UP05 execution, landing, defense cleanup, interruption and damage";
         }
         catch (Exception e) { exit = 1; result = "FAIL: " + e; Debug.LogException(e); }
         Directory.CreateDirectory("output/validation");

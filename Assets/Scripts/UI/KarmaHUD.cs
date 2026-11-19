@@ -88,7 +88,7 @@ namespace KarmaPrototype
                 SettingsScreen(); GUI.matrix = saved; return;
             }
             if (game.Phase == RunPhase.Ending || game.EndingCompleted)
-            { EndingScreen(); CinematicSkipHint(); GUI.matrix = saved; return; }
+            { if (game.Phase == RunPhase.Ending) TopBar(); EndingScreen(); CinematicSkipHint(); GUI.matrix = saved; return; }
             if (game.Phase == RunPhase.Title) TitleScreen();
             else
             {
@@ -185,11 +185,11 @@ namespace KarmaPrototype
         }
 
         const float DialoguePanelOpacity = 0.7f;
-        static void Panel(Rect rect)
+        static void Panel(Rect rect, float opacity = 1)
         {
-            Fill(rect, WithOpacity(HudInk, 0.93f));
-            Fill(new Rect(rect.x, rect.y, rect.width, 1), HudRule);
-            Fill(new Rect(rect.x, rect.yMax - 1, rect.width, 1), HudRule);
+            Fill(rect, WithOpacity(HudInk, 0.93f * opacity));
+            Fill(new Rect(rect.x, rect.y, rect.width, 1), WithOpacity(HudRule, opacity));
+            Fill(new Rect(rect.x, rect.yMax - 1, rect.width, 1), WithOpacity(HudRule, opacity));
         }
 
         static Color WithOpacity(Color color, float opacity)

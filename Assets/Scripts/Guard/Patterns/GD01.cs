@@ -31,6 +31,7 @@ namespace KarmaPrototype
                 if (!owner.running && owner.FightSeconds >= owner.nextShield && owner.FightSeconds >= owner.shieldUntil)
                 {
                     owner.shieldWarningUntil = owner.FightSeconds + Mathf.Max(0.3f, Settings.autoShieldWarning);
+                    owner.animator.ShowAutoShield(owner.shieldWarningUntil - owner.FightSeconds);
                     KarmaAudio.Play(KarmaSfxId.GdProtectionPulse, owner.shieldWarningUntil - owner.FightSeconds);
                 }
                 if (owner.shieldWarningUntil > 0)
@@ -40,7 +41,7 @@ namespace KarmaPrototype
             {
                 owner.shieldUntil = float.PositiveInfinity;
                 owner.shieldWarningUntil = 0;
-                if (owner.engaged) KarmaAudio.Play(KarmaSfxId.GdShieldActivate);
+                if (owner.engaged) { owner.animator.ShowAutoShield(3 * KarmaBootstrap.Step); KarmaAudio.Play(KarmaSfxId.GdShieldActivate); }
                 else announceShield = true;
             }
             public override IEnumerator Execute() { yield break; }

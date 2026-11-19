@@ -106,7 +106,8 @@ namespace KarmaPrototype
         static void SetDisplay(Vector2Int size, FullScreenMode mode)
         {
             // The Editor's Game view is a preview; only a standalone player changes OS window modes.
-            if (!Application.isEditor) Screen.SetResolution(size.x, size.y, mode);
+            if (!Application.isEditor && (Screen.width != size.x || Screen.height != size.y || Screen.fullScreenMode != mode))
+                Screen.SetResolution(size.x, size.y, mode);
         }
         public void KeepDisplaySettings()
         {

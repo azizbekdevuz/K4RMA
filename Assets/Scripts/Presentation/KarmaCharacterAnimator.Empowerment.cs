@@ -30,38 +30,17 @@ namespace KarmaPrototype
             empowermentAt = Time.time;
             empowermentUntil = Time.time + seconds;
             empowermentEssence = essence;
-            beforeInheritance = previousAppearance;
-            beforeRevivalFrames = !string.IsNullOrEmpty(previousForm) ? LoadRevivalFrames(previousForm)
-                : fromNeutral ? LoadRevivalFrames("Neutral") : revivalFrames;
+            previousMotionForm = previousForm ?? (fromNeutral ? "Neutral" : motionForm);
             EmpowermentPose();
         }
         void GuardianRevivalPose(float t)
         {
-            ShowPose("Idle");
-            var after = guardianAppearance != null ? guardianAppearance : picture.sprite;
-            bool hasFrames = revivalFrames != null && revivalFrames.Length == 6
-                && beforeRevivalFrames != null && beforeRevivalFrames.Length == 6;
-            // Every new pose is authored at a shared body scale with a ground pivot.
-            // Never stretch a lying sprite to the standing character's height.
-            if (t < 0.12f && beforeInheritance != null)
-            {
-                picture.sprite = beforeInheritance;
-                picture.transform.localScale = pictureScale;
-                CurrentPose = "ReviveFallen";
-            }
-            else if (hasFrames && t < 0.9f)
-            {
-                int frame = t < 0.24f ? 1 : t < 0.36f ? 2 : t < 0.62f ? 3 : t < 0.76f ? 4 : 5;
-                picture.sprite = t < 0.48f ? beforeRevivalFrames[frame] : revivalFrames[frame];
-                picture.transform.localScale = pictureScale;
-                CurrentPose = "Revive" + frame.ToString("00");
-            }
-            else
-            {
-                picture.sprite = after;
-                picture.transform.localScale = pictureScale * (guardianAppearance != null ? appearanceScale : 1);
-                CurrentPose = "ReviveReady";
-            }
+            string form = t < .48f ? previousMotionForm : motionForm;
+            string pose = t < .12f ? "Death" : t < .24f ? "RevivePush" : t < .36f ? "ReviveKneel"
+                : t < .62f ? "ReviveRise" : t < .76f ? "ReviveStand" : "Idle";
+            if (!KarmaMotionArt.Has(form, pose)) form = previousMotionForm;
+            PlayBody(pose, form);
+            CurrentPose = pose;
         }
         bool EmpowermentPose()
         {
@@ -78,7 +57,7 @@ namespace KarmaPrototype
                 }
                 bool ceremony = elapsed >= KarmaPersonalizationVFX.CeremonyStart
                     && elapsed < KarmaPersonalizationVFX.CeremonyStart + KarmaPersonalizationVFX.CeremonyDuration;
-                string pose = !ceremony ? "Idle" : !nativePlayer24 ? "Transition" : empowermentEssence == Essence.SwordWave ? "PersonalizeWave"
+                string pose = !ceremony ? "Idle" : empowermentEssence == Essence.SwordWave ? "PersonalizeWave"
                     : empowermentEssence == Essence.RisingSlash ? "PersonalizeRising" : "PersonalizeGuard";
                 SamplePlayerClip(pose);
             }

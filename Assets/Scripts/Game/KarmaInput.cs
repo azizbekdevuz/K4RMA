@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -17,6 +18,42 @@ namespace KarmaPrototype
         static InputActionMap map;
         static InputAction[] actions;
 
+        internal readonly struct Edge
+        {
+            public readonly double RealTime;
+            public readonly bool Down;
+            public Edge(double realTime, bool down) { RealTime = realTime; Down = down; }
+        }
+
+        sealed class ButtonHistory
+        {
+            public int Frame = -1;
+            public readonly List<Edge> Edges = new List<Edge>(4);
+            public void Record(double time, bool down)
+            {
+                if (Frame != Time.frameCount) { Frame = Time.frameCount; Edges.Clear(); }
+                Edges.Add(new Edge(time, down));
+            }
+        }
+        static ButtonHistory[] history;
+
+        internal static IReadOnlyList<Edge> Edges(KarmaAction id)
+        {
+            Initialize();
+            var button = history[(int)id];
+            if (button.Frame == Time.frameCount) return button.Edges;
+            return System.Array.Empty<Edge>();
+        }
+
+        internal static float GameTimeOf(double eventTime)
+        {
+            // Input System timestamps and realtimeSinceStartup share a clock. Map into
+            // this frame's actual scaled interval (also works across slow motion).
+            double age = System.Math.Max(0, Time.realtimeSinceStartupAsDouble - eventTime);
+            float fraction = Time.unscaledDeltaTime > 0 ? Mathf.Clamp01((float)age / Time.unscaledDeltaTime) : 0;
+            return Time.time - fraction * Time.deltaTime;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Reset()
         {
@@ -24,7 +61,7 @@ namespace KarmaPrototype
             CancelRebinding();
             if (map != null) map.Dispose();
             map = null;
-            actions = null;
+            actions = null; history = null;
             RebindMessage = null; rebindHandledFrame = -1;
             Application.quitting -= Reset;
         }
@@ -35,6 +72,7 @@ namespace KarmaPrototype
             if (map != null) return;
             map = new InputActionMap("K4RMA");
             actions = new InputAction[System.Enum.GetValues(typeof(KarmaAction)).Length];
+            history = new ButtonHistory[actions.Length];
             Bind(KarmaAction.Left, "a", "leftArrow");
             Bind(KarmaAction.Right, "d", "rightArrow");
             Bind(KarmaAction.Up, "w", "upArrow");
@@ -77,6 +115,9 @@ namespace KarmaPrototype
         {
             var action = map.AddAction(id.ToString(), InputActionType.Button);
             foreach (var key in keys) action.AddBinding("<Keyboard>/" + key);
+            var button = history[(int)id] = new ButtonHistory();
+            action.performed += context => button.Record(context.time, true);
+            action.canceled += context => button.Record(context.time, false);
             actions[(int)id] = action;
         }
 
@@ -91,6 +132,10 @@ namespace KarmaPrototype
             Initialize();
             // Preserve alias edges: pressing an arrow while its WASD alias is held
             // still counts, but simultaneous aliases count as one direction.
+            var buttonHistory = history[(int)id];
+            if (buttonHistory.Frame == Time.frameCount)
+                for (int i = 0; i < buttonHistory.Edges.Count; i++)
+                    if (buttonHistory.Edges[i].Down) return true;
             foreach (var control in actions[(int)id].controls)
                 if (control is ButtonControl button && button.wasPressedThisFrame) return true;
             return false;

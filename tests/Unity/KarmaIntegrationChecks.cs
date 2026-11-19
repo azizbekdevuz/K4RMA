@@ -56,38 +56,26 @@ public static class KarmaIntegrationChecks
             Check(true, "Parry input, frames, facing, expiry, hurt and death");
             var player = game.Player;
             var animator = player.GetComponentInChildren<KarmaCharacterAnimator>(true);
-            var nativeMode = typeof(KarmaCharacterAnimator).GetField("nativePlayer24", Hidden);
-            bool originalNative = (bool)nativeMode.GetValue(animator);
-            Check(originalNative == (Resources.Load<TextAsset>("Player/Animation24/Ready") != null),
-                "Preserve the repository's native animation activation gate");
-            try
+            for (int i = 0; i < 3; i++)
             {
-                foreach (bool native in new[] { false, true })
-                {
-                    nativeMode.SetValue(animator, native);
-                    for (int i = 0; i < 3; i++)
-                    {
-                        player.ResetForRoom(new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.05f), true);
-                        typeof(KarmaPlayer).GetField("invulnerableUntil", Hidden).SetValue(player, 0f);
-                        animator.PlayPose("Riposte", 0.3f);
-                        Check(animator.ParrySuccessVisible, "Parry can replay after room reset");
-                        player.ClearStatus();
-                        typeof(KarmaPlayer).GetField("invulnerableUntil", Hidden).SetValue(player, 0f);
-                        Check(player.ApplyShock(0.75f), "A new shock is accepted");
-                        animator.SendMessage("LateUpdate");
-                        Check(!animator.ParrySuccessVisible, "Shock cancels parry without changing CC timing");
-                        var flash = animator.transform.GetComponentInChildren<SpriteRenderer>(true).transform.Find("Parry success flash");
-                        Check(flash != null && !flash.GetComponent<SpriteRenderer>().enabled, "No stale parry flash after shock");
-                        animator.Die();
-                        player.ResetForRoom(new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.05f), true);
-                        animator.PlayPose("Riposte", 0.3f);
-                        Check(animator.ParrySuccessVisible, "Death state cannot cross a room reset");
-                        player.ResetForRoom(new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.05f), true);
-                        Check(!animator.ParrySuccessVisible, "Room reset clears an active parry");
-                    }
-                }
+                player.ResetForRoom(new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.05f), true);
+                typeof(KarmaPlayer).GetField("invulnerableUntil", Hidden).SetValue(player, 0f);
+                animator.PlayPose("Riposte", 0.3f);
+                Check(animator.ParrySuccessVisible, "Parry can replay after room reset");
+                player.ClearStatus();
+                typeof(KarmaPlayer).GetField("invulnerableUntil", Hidden).SetValue(player, 0f);
+                Check(player.ApplyShock(0.75f), "A new shock is accepted");
+                animator.SendMessage("LateUpdate");
+                Check(!animator.ParrySuccessVisible, "Shock cancels parry without changing CC timing");
+                var flash = animator.transform.GetComponentInChildren<SpriteRenderer>(true).transform.Find("Parry success flash");
+                Check(flash != null && !flash.GetComponent<SpriteRenderer>().enabled, "No stale parry flash after shock");
+                animator.Die();
+                player.ResetForRoom(new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.05f), true);
+                animator.PlayPose("Riposte", 0.3f);
+                Check(animator.ParrySuccessVisible, "Death state cannot cross a room reset");
+                player.ResetForRoom(new Vector2(32, KarmaSpace.PlayerHalfHeight + 0.05f), true);
+                Check(!animator.ParrySuccessVisible, "Room reset clears an active parry");
             }
-            finally { nativeMode.SetValue(animator, originalNative); }
             KarmaGuardIntegrationChecks.Run(game, Check);
             KarmaSwordCacheChecks.Run(Check);
             KarmaPhysicsQueryChecks.Run(player, Check);

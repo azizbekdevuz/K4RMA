@@ -40,8 +40,8 @@ namespace KarmaPrototype
             if (picture == null || follow == null) return;
             // Fixed body-centered size: weapon poses must not inflate the shield.
             transform.localPosition = Vector3.up * KarmaSpace.Units(0.75f);
-            // Sprite presentation samples at 24 FPS without altering attack or physics clocks.
-            float sample = Mathf.Floor(age * 24f) / 24f;
+            // Sprite presentation samples at 12 FPS without altering attack or physics clocks.
+            float sample = Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
             float t = growSeconds <= 0 ? 1 : Mathf.SmoothStep(0, 1, Mathf.Clamp01(sample / growSeconds));
             float fit = diameter / Mathf.Max(picture.sprite.bounds.size.x, picture.sprite.bounds.size.y);
             transform.localScale = Vector3.one * fit;

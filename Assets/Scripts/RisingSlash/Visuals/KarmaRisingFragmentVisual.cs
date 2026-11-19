@@ -25,7 +25,7 @@ namespace KarmaPrototype
         {
             if (picture == null || Time.deltaTime <= 0) return;
             age += Time.deltaTime;
-            float sample = Mathf.Floor(age * 24f) / 24f;
+            float sample = Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
             transform.localRotation = Quaternion.Euler(0, 0, initialAngle + spin * sample);
             picture.color = new Color(1, 1, 1, 1 - Mathf.InverseLerp(Mathf.Max(0, life - 0.2f), life, sample));
         }

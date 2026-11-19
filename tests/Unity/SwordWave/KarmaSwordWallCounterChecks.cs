@@ -258,7 +258,7 @@ public static class KarmaSwordWallCounterChecks
         Set(game.Player, "invulnerableUntil", 0f); Set(game.Player, "guardUntil", 0f); game.Player.BeginCounter();
         shot.transform.position = game.Player.GetComponent<Collider2D>().bounds.center;
         Set(shot, "velocity", Vector2.zero); int before = game.Player.ParryCount;
-        Call(shot, "Update"); Check(game.Player.ParryCount == before + 1, "real ConsumeCounter parry success path");
+        Call(shot, "AdvanceFlight", Time.time + Time.fixedDeltaTime); Check(game.Player.ParryCount == before + 1, "real ConsumeCounter parry success path");
     }
     static async Task CheckParry(int index, bool allFlying)
     {
@@ -333,7 +333,7 @@ public static class KarmaSwordWallCounterChecks
         {
             await StartCounter(); await HoldShots(1); var volley = Volley; var shot = Shots[0];
             Set(game.Player, "invulnerableUntil", 0f); if (guarding) game.Player.BeginGuard(1);
-            shot.transform.position = game.Player.GetComponent<Collider2D>().bounds.center; int parries = game.Player.ParryCount; Call(shot, "Update");
+            shot.transform.position = game.Player.GetComponent<Collider2D>().bounds.center; int parries = game.Player.ParryCount; Call(shot, "AdvanceFlight", Time.time + Time.fixedDeltaTime);
             Check(game.Player.ParryCount == parries && (int)Get(volley, "LastAllowed") == 3, "ordinary hit/guard never cancels volley");
             await HoldShots(4); Check(Shots[3] != null, "non-parry keeps four normal releases");
         }

@@ -188,7 +188,6 @@ namespace KarmaPrototype
             void UpdateSwordGuardPathMark(SpriteRenderer mark, Vector2 from, Vector2 to, Vector2 size, bool locked)
             {
                 mark.GetComponent<KarmaAttackWarning>().SetPath(mark, from, to, size, locked, true);
-                KarmaSwordAttackPolish.CounterWarning(owner.game, mark, from, to, size, locked);
             }
             void ClearSwordGuard(bool stopRoutine = true)
             {

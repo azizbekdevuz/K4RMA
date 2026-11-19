@@ -11,20 +11,6 @@ namespace KarmaPrototype
             if (marker == null) return;
             marker.GetComponent<KarmaAttackWarning>()?.SetTint(new Color(0.22f, 0.72f, 1, 0.42f));
         }
-        public static void FlowWarning(KarmaGame game, SpriteRenderer marker, Vector2 from, Vector2 to)
-        {
-            if (marker == null) return;
-            var flow = marker.GetComponent<KarmaSwordPathWarning>();
-            if (flow == null) flow = marker.gameObject.AddComponent<KarmaSwordPathWarning>();
-            flow.SetPath(game, marker, to.x >= from.x ? 1 : -1);
-        }
-        public static void CounterWarning(KarmaGame game, SpriteRenderer marker, Vector2 from, Vector2 to, Vector2 size, bool locked)
-        {
-            if (marker == null) return;
-            var flow = marker.GetComponent<KarmaSwordPathWarning>();
-            if (flow == null) flow = marker.gameObject.AddComponent<KarmaSwordPathWarning>();
-            flow.SetCounterPath(game, marker, from, to, size, locked);
-        }
         public static KarmaSwordChargePolish Charge(KarmaGame game, KarmaEnemy owner, Transform art, Vector2 at, float seconds, bool heavy, bool locked = true, bool followOwner = false)
         {
             var node = new GameObject(locked ? "Sword locked concentration / no damage" : "Sword tracking concentration / no damage");
@@ -100,114 +86,6 @@ namespace KarmaPrototype
             node.transform.SetParent(game.World, false); node.transform.position = at;
             node.AddComponent<KarmaSwordParryFeedback>().Initialize(game, owner);
         }
-    }
-
-    // SW01/SW02/SW04 keep the shared swept footprint and lifetime, replacing only
-    // its box outline with open blue currents. No body or damage geometry writes.
-    [DefaultExecutionOrder(450)]
-    public sealed class KarmaSwordPathWarning : MonoBehaviour
-    {
-        const int Segments = 48, Capacity = Segments * 6;
-        readonly Vector3[] vertices = new Vector3[Capacity * 4];
-        readonly Color[] colors = new Color[Capacity * 4];
-        Mesh mesh; MeshRenderer display; SpriteRenderer source; LineRenderer[] genericLines;
-        KarmaGame game; float age, direction; int count;
-        Vector2 pathAlong = Vector2.right, pathAcross = Vector2.up;
-        float pathWidth, strength = 1;
-        public void SetCounterPath(KarmaGame director, SpriteRenderer marker, Vector2 from, Vector2 to, Vector2 size, bool locked)
-        {
-            Vector2 delta = to - from;
-            Vector2 axis = delta.sqrMagnitude > 0.000001f ? delta.normalized : Vector2.right;
-            Vector2 normal = new Vector2(-axis.y, axis.x);
-            // The shared marker is an unrotated world bounding box. Map the
-            // current into its actual swept blade rectangle, including both
-            // end caps, so diagonal safe corners remain visibly open.
-            pathAlong = transform.InverseTransformVector(axis * (delta.magnitude + size.x));
-            pathAcross = transform.InverseTransformVector(normal * size.y);
-            pathWidth = size.y;
-            strength = locked ? 1 : 0.65f;
-            SetPath(director, marker, 1);
-        }
-        public void SetPath(KarmaGame director, SpriteRenderer marker, float facing)
-        {
-            game = director; source = marker; direction = facing;
-            if (mesh == null)
-            {
-                mesh = new Mesh { name = "Sword flowing path warning" }; mesh.MarkDynamic();
-                var indices = new int[Capacity * 6];
-                for (int i = 0; i < Capacity; i++)
-                { int v = i * 4, n = i * 6; indices[n] = v; indices[n+1] = v+1; indices[n+2] = v+2; indices[n+3] = v+2; indices[n+4] = v+1; indices[n+5] = v+3; }
-                mesh.vertices = vertices; mesh.colors = colors; mesh.triangles = indices;
-                var node = new GameObject("Open sword current / warning only"); node.transform.SetParent(transform, false);
-                node.AddComponent<MeshFilter>().sharedMesh = mesh;
-                display = node.AddComponent<MeshRenderer>();
-                display.sharedMaterial = KarmaCombatVFX.GlowMaterial ?? KarmaVisuals.DefaultMaterial;
-                display.sortingLayerID = source.sortingLayerID; display.sortingOrder = 16;
-                display.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; display.receiveShadows = false;
-                genericLines = source.GetComponentsInChildren<LineRenderer>();
-            }
-            Paint();
-        }
-        void Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d, float alphaA, float alphaB)
-        {
-            int v = count++ * 4;
-            vertices[v] = Project(a); vertices[v+1] = Project(b); vertices[v+2] = Project(c); vertices[v+3] = Project(d);
-            alphaA *= strength; alphaB *= strength;
-            colors[v] = colors[v+1] = new Color(0.20f + 0.45f * EdgeGlint(a.x + 0.5f),0.68f + 0.30f * EdgeGlint(a.x + 0.5f),1.15f,alphaA);
-            colors[v+2] = colors[v+3] = new Color(0.20f + 0.45f * EdgeGlint(c.x + 0.5f),0.68f + 0.30f * EdgeGlint(c.x + 0.5f),1.15f,alphaB);
-        }
-        Vector2 Project(Vector2 point) => pathAlong * point.x + pathAcross * point.y;
-        float Envelope(float u) => 0.12f + 0.88f * Mathf.Pow(Mathf.Clamp01(Mathf.Sin(u * Mathf.PI)), 0.45f);
-        float EdgeGlint(float u)
-        {
-            if (direction < 0) u = 1 - u;
-            // Broad, quiet blade facets along the border; the center stays open.
-            float crest = 0;
-            for (int i = 0; i < 3; i++)
-            {
-                float d = u - (0.24f + i * 0.28f);
-                float taper = 1 - Mathf.Clamp01(Mathf.Abs(d) / (d < 0 ? 0.16f : 0.07f));
-                crest = Mathf.Max(crest, taper * taper);
-            }
-            return crest;
-        }
-        void Paint()
-        {
-            if (mesh == null) return;
-            source.enabled = false;
-            source.forceRenderingOff = true;
-            foreach (var line in genericLines) if (line != null) line.enabled = false;
-            count = 0;
-            float pulse = 0.85f + 0.15f * Mathf.Sin(age * 7);
-            // Keep the full damage footprint legible, but feather the two
-            // borders inward. There are no center waves or travelling stripes.
-            for (int i = 0; i < Segments; i++)
-            {
-                float u = i/(float)Segments, v = (i+1f)/Segments;
-                float x = u-0.5f, z = v-0.5f;
-                float a = Envelope(u), b = Envelope(v);
-                Quad(new Vector2(x,-0.5f),new Vector2(x,0),new Vector2(z,-0.5f),new Vector2(z,0),0.03f,0.03f);
-                Quad(new Vector2(x,0),new Vector2(x,0.5f),new Vector2(z,0),new Vector2(z,0.5f),0.03f,0.03f);
-                float insetA=0.012f+0.012f*Mathf.Sin(u*Mathf.PI)*Mathf.Sin(u*Mathf.PI*2-age*1.5f);
-                float insetB=0.012f+0.012f*Mathf.Sin(v*Mathf.PI)*Mathf.Sin(v*Mathf.PI*2-age*1.5f);
-                for(int side=-1;side<=1;side+=2)
-                {
-                    float edge=side*0.5f,crestA=side*(0.48f-insetA),crestB=side*(0.48f-insetB);
-                    float gainA=(0.65f+a*0.35f)*pulse*(0.17f+0.06f*EdgeGlint(u)),gainB=(0.65f+b*0.35f)*pulse*(0.17f+0.06f*EdgeGlint(v));
-                    Quad(new Vector2(x,edge),new Vector2(x,crestA),new Vector2(z,edge),new Vector2(z,crestB),gainA,gainB);
-                    colors[(count-1)*4].a=colors[(count-1)*4+2].a=0;
-                    Quad(new Vector2(x,crestA),new Vector2(x,side*(0.40f-insetA)),
-                        new Vector2(z,crestB),new Vector2(z,side*(0.40f-insetB)),gainA,gainB);
-                    colors[(count-1)*4+1].a=colors[(count-1)*4+3].a=0;
-                }
-            }
-            mesh.SetVertices(vertices); mesh.SetColors(colors);
-            // Aimed Basic paths rotate inside the marker; include their real extents.
-            mesh.RecalculateBounds();
-        }
-        void LateUpdate() { if (game != null && !game.Paused) age += Time.deltaTime; Paint(); }
-        void OnDisable() { if (display != null) display.enabled = false; }
-        void OnDestroy() { if (mesh != null) Destroy(mesh); }
     }
 
     // A room-local, fixed-size sprite pool. Dense SW03 rounds never allocate
@@ -452,8 +330,7 @@ namespace KarmaPrototype
         float age, life;
         int stroke, strikeIndex;
         float facing;
-        bool released, meleeWarning;
-        LineRenderer[] warningLines;
+        bool released;
         static Material crescentMaterial;
         internal static Material CrescentMaterial => crescentMaterial != null ? crescentMaterial
             : crescentMaterial = Resources.Load<Material>("SwordWave/Shared/SWBasicCrescent");
@@ -477,18 +354,6 @@ namespace KarmaPrototype
             geometry.sharedMaterial = KarmaCombatVFX.GlowMaterial ?? KarmaVisuals.DefaultMaterial;
             geometry.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; geometry.receiveShadows = false;
             buffer.mesh.bounds = new Bounds(Vector3.zero, new Vector3(16, 16, 2));
-        }
-        public static void MeleeWarning(KarmaGame game, KarmaEnemy owner, SpriteRenderer marker,
-            Vector2 size, float seconds, int strike = 0)
-        {
-            var node = new GameObject("SWBasic curved cut anticipation / no damage");
-            node.transform.SetParent(game.World, false);
-            var fx = node.AddComponent<KarmaSwordBasicPresentation>(); fx.Initialize(game, owner);
-            fx.meleeWarning = true; fx.scope = marker.transform; fx.life = seconds;
-            fx.source = marker; fx.size = size; fx.facing = owner.Facing; fx.strikeIndex = strike;
-            fx.warningLines = marker.GetComponentsInChildren<LineRenderer>();
-            fx.geometry.sortingLayerID = marker.sortingLayerID; fx.geometry.sortingOrder = 17;
-            fx.PaintWarning(); fx.UploadGeometry();
         }
         public static void Ranged(KarmaGame game, KarmaEnemy owner, KarmaBossAttack shot,
             Vector2 velocity, Vector2 size, Vector2 sw01Footprint)
@@ -572,67 +437,27 @@ namespace KarmaPrototype
                 Stroke(0.075f, Alpha(Cyan, (1 - age / 0.09f) * 0.55f));
             }
         }
-        void PaintWarning()
-        {
-            // A quiet blade-shaped arc describes the melee cut, unlike a travelling
-            // wave's two lane borders. Four tiny notches retain the committed box.
-            source.enabled = false; source.forceRenderingOff = true;
-            foreach (var line in warningLines) if (line != null) line.enabled = false;
-            transform.position = scope.position;
-            float t = Mathf.Clamp01(age / Mathf.Max(life, 0.001f));
-            float ready = Mathf.SmoothStep(0, 1, t);
-            float sign = strikeIndex == 0 ? 1 : -1;
-            for (int p = 0; p < Points; p++)
-            {
-                float angle = Mathf.Lerp(0.95f, -0.95f, p / (float)(Points - 1)) * sign;
-                buffer.path[p] = new Vector2(facing * size.x * (0.11f + Mathf.Cos(angle) * 0.34f),
-                    Mathf.Sin(angle) * size.y * 0.44f);
-            }
-            Stroke(0.045f, new Color(0.52f, 0.80f, 0.96f, 0.20f + ready * 0.22f));
-            // The bright short stroke travels in the actual first/return-cut direction.
-            for (int p = 0; p < Points; p++)
-            {
-                float u = Mathf.Lerp(Mathf.Max(0, ready - 0.22f), ready, p / (float)(Points - 1));
-                float angle = Mathf.Lerp(0.95f, -0.95f, u) * sign;
-                buffer.path[p] = new Vector2(facing * size.x * (0.11f + Mathf.Cos(angle) * 0.34f),
-                    Mathf.Sin(angle) * size.y * 0.44f);
-            }
-            Stroke(0.055f, new Color(0.88f, 0.96f, 1, 0.45f + ready * 0.30f));
-            for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2)
-            {
-                Vector2 edge = new Vector2(x * size.x * 0.49f, y * size.y * 0.46f);
-                for (int p = 0; p < Points; p++)
-                    buffer.path[p] = edge - Vector2.right * x * size.x * 0.055f * p / (Points - 1);
-                Stroke(0.022f, new Color(0.42f, 0.68f, 0.86f, 0.25f + ready * 0.16f));
-            }
-        }
         void LateUpdate()
         {
             if (game == null || owner == null || !owner.PresentationActive || owner.Stunned
                 || owner.CurrentPattern != (int)EnemyAttack.SWBasic
                 || scope == null || !scope.gameObject.activeInHierarchy)
             {
-                if (meleeWarning) { if (geometry != null) geometry.enabled = false; Destroy(gameObject); }
-                else { if (source != null) source.enabled = false; enabled = false; }
+                if (source != null) source.enabled = false;
+                enabled = false;
                 return;
             }
             if (game.Paused || buffer == null) return;
             age += Time.deltaTime;
-            // The attack owns a melee warning's end, including frame drops.
-            // Hold the fully ready arc until its marker is actually retired.
             stroke = 0; System.Array.Clear(buffer.colors, 0, buffer.colors.Length);
-            if (meleeWarning) PaintWarning();
-            else
+            if (!released)
             {
-                if (!released)
-                {
-                    released = true; Vector2 axis = new Vector2(facing, strikeIndex == 0 ? -0.35f : 0.35f).normalized;
-                    pool.Flash(owner, "Sword_Release_v6", SwordAnchor(), new Vector2(1.8f, 0.28f), 0.10f,
-                        Mathf.Atan2(axis.y, axis.x) * Mathf.Rad2Deg, transform, CrescentMaterial);
-                    pool.Sparks(owner, SwordAnchor(), axis, 3, 4, transform, CrescentMaterial);
-                }
-                PaintMelee();
+                released = true; Vector2 axis = new Vector2(facing, strikeIndex == 0 ? -0.35f : 0.35f).normalized;
+                pool.Flash(owner, "Sword_Release_v6", SwordAnchor(), new Vector2(1.8f, 0.28f), 0.10f,
+                    Mathf.Atan2(axis.y, axis.x) * Mathf.Rad2Deg, transform, CrescentMaterial);
+                pool.Sparks(owner, SwordAnchor(), axis, 3, 4, transform, CrescentMaterial);
             }
+            PaintMelee();
             UploadGeometry();
         }
         void UploadGeometry()

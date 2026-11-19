@@ -70,7 +70,7 @@ class KarmaEnemy{public Vector2 Position,markFrom,markTo,markSize,shotFrom,shotV
 struct Bounds{public Vector2 center;}
 enum EnemyAttack{SW01}class Settings{public float basicDamageMultiplier=1.2f;}
 class SwordBossBehavior{public bool BasicMeleeSelected;public Vector2 BasicSwordSize=new Vector2(2,3);public float BasicSwordSpeed=41.6f,BasicSwordLife=10f/41.6f,BasicReleaseWait=.390625f,BasicWaveRange=30;public Vector2 reachOrigin,reachVelocity;public bool BasicMeleeCanReach(Vector2 a,Vector2 b)=>false;public bool SwordShotCanReach(Vector2 a,Vector2 b,Vector2 z,float life,Vector2 target){reachOrigin=a;reachVelocity=b;return true;}public Bounds SwordPlayerBounds;public object PersistentRoot;AIM ENDPOINT public Vector2 SwordSize(EnemyAttack e)=>new Vector2(3,4);}
-static class KarmaSwordAttackPolish{public static Vector2 flowFrom,flowTo,flowSize;public static bool locked;public static void Warning(object m){}public static void CounterWarning(object g,object m,Vector2 from,Vector2 to,Vector2 size,bool isLocked){flowFrom=from;flowTo=to;flowSize=size;locked=isLocked;}}
+static class KarmaSwordAttackPolish{public static object marker; public static void Warning(object m){marker=m;}}
 static class KarmaSwordBasicPresentation{public static void Ranged(object g,object o,object s,Vector2 v,Vector2 a,Vector2 b){}}
 enum KarmaSfxId{SwWaveLaunch}static class KarmaAudio{public static void Play(KarmaSfxId id,object lifetimeOwner){}}
 static class KarmaSwordWaveAnimation{ORIGIN public static Vector2 BasicLaunchOrigin(KarmaEnemy o,Vector2 from,float facing)=>BasicTorsoOrigin(from,4,facing);public static void AlignBasicVisual(object s){}public static void Charge(object g,object o,object a,object m,float w,bool h,bool basicRanged){}}
@@ -86,7 +86,7 @@ public class Probe{
  p.owner.game.Player.Position=p.sword.SwordPlayerBounds.center;var run=p.Execute();while(run.MoveNext()){}
  var o=p.owner;Check(p.CanReach(o.Position,p.sword.SwordPlayerBounds.center),"can reach from waist");Check(Vector2.Distance(p.sword.reachOrigin,o.shotFrom)<.00001f&&Vector2.Distance(p.sword.reachVelocity,o.shotVelocity)<.00001f,"selection geometry uses same origin and aim");Check(o.shots==1&&o.damage==1.2f,"one unchanged-damage shot");Check(Vector2.Distance(o.shotFrom,o.markFrom)<.00001f,"warning and real launch origins match");
  Vector2 end=o.shotFrom+o.shotVelocity*o.shotLife;Check(Vector2.Distance(end,o.markTo)<.00001f,"same warning and boundary endpoint");
- Check(KarmaSwordAttackPolish.locked&&Vector2.Distance(KarmaSwordAttackPolish.flowFrom,o.markFrom)<.00001f&&Vector2.Distance(KarmaSwordAttackPolish.flowTo,end)<.00001f&&Vector2.Distance(KarmaSwordAttackPolish.flowSize,o.shotSize)<.00001f,"blue flow shares actual aimed damage footprint");
+ Check(KarmaSwordAttackPolish.marker!=null,"original aimed-path marker is active");
  var target=p.sword.SwordPlayerBounds.center;float at=(target.x-o.shotFrom.x)/o.shotVelocity.x;Check(at>=0&&at<=o.shotLife,"target reached before boundary");Check(Math.Abs(o.shotFrom.y+o.shotVelocity.y*at-target.y)<.00001f,"aim intersects player center rather than passing overhead");
  Check(Math.Abs(o.shotVelocity.magnitude-41.6f)<.0001f,"speed preserved");Check(o.shotSize.x==o.markSize.x&&o.shotSize.y==o.markSize.y,"same collision and warning dimensions");cases++;
  }Console.WriteLine("PASS "+cases+" production warning/launch/player-intersection paths");}

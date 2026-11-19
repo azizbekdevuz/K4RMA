@@ -86,14 +86,6 @@ namespace KarmaPrototype
             fx.sigil.sortingOrder = 32;
             return fx.sigil;
         }
-        public static SpriteRenderer FallWarning(Transform root,KarmaGame game,Vector2 at,Vector2 size)
-        {
-            // Lifetime token only. The batched sword glyph replaces the square
-            // renderer entirely; landing still removes this exact token.
-            var marker=KarmaVisuals.Box(root,"SW05 fall glyph lifetime / no damage",at,size,Color.clear,10);
-            marker.enabled=false;
-            return marker;
-        }
         public static void EmphasizeExplosion(SpriteRenderer renderer)
         {
             var fx = renderer.GetComponent<KarmaSW05VFX>();

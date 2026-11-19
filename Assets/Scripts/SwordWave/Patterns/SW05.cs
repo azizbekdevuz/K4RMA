@@ -153,7 +153,7 @@ namespace KarmaPrototype
                         // This fixed ground mark never tracks after the sky layout locks.
                         Vector2 axis = shot.velocity.normalized;
                         Vector2 tip = shot.PositionAt(shot.life) + axis * (shot.size.x / 2);
-                        marks[member] = KarmaSW05VFX.FallWarning(owner.effectsRoot, owner.game, new Vector2(tip.x, 0.18f),
+                        marks[member] = KarmaSW05VFX.Warning(owner.effectsRoot, owner.game, new Vector2(tip.x, 0.18f),
                             new Vector2(shot.size.y / Mathf.Abs(axis.y), 0.34f));
                         marks[member].name = "SW05 낙하 지면 전조";
                         blades[member] = KarmaVisuals.Box(owner.effectsRoot, "Forming aerial sword / no damage",
@@ -165,7 +165,6 @@ namespace KarmaPrototype
                         reveals[member] = KarmaSW05VFX.Ascent(blades[member], shot.size, owner.game);
                     }
 
-                    var fallWarnings = KarmaSW05Energy.FallWarnings(owner.effectsRoot, owner.game, owner, marks, plan.shots, warning);
                     yield return FormAerialSword(blades, reveals, plan, warning);
                     if (!owner.Active) yield break;
                     for (int member = 0; member < plan.shots.Length; member++)
@@ -173,7 +172,6 @@ namespace KarmaPrototype
                         var shot = plan.shots[member];
                         var attack = KarmaSW05RainBlade.Spawn(owner.game, owner, owner.effectsRoot,
                             shot, owner.Damage * Settings.aerialSwordDamageMultiplier, marks[member]);
-                        fallWarnings.BindFallWarning(member, attack);
                         KarmaSW05VFX.ReleaseFormation(blades[member], attack.Visual);
                         blades[member].gameObject.SetActive(false); Destroy(blades[member].gameObject);
                         planner.RegisterLaunch(attack.transform);

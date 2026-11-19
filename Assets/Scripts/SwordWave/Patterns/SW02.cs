@@ -49,7 +49,6 @@ namespace KarmaPrototype
                 advertisedOrigin = origin; advertisedVelocity = velocity; advertisedFacing = facing;
                 marker.GetComponent<KarmaAttackWarning>().SetPath(marker, origin,
                     origin + velocity * AimedSlashLife(origin, velocity), sword.SwordSize(EnemyAttack.SW02), false, true);
-                KarmaSwordAttackPolish.FlowWarning(owner.game, marker, origin, origin + velocity * AimedSlashLife(origin, velocity));
             }
             IEnumerator TrackWarning(SpriteRenderer marker, float seconds)
             {
@@ -74,7 +73,6 @@ namespace KarmaPrototype
                 Vector2 velocity = Vector2.right * facing * AimedSlashSpeed;
                 var marker = owner.PathMark(origin, origin + velocity * AimedSlashLife(origin, velocity), size, false);
                 KarmaSwordAttackPolish.Warning(marker);
-                KarmaSwordAttackPolish.FlowWarning(owner.game, marker, origin, origin + velocity * AimedSlashLife(origin, velocity));
                 float tracking = TrackingSeconds * owner.Tempo, elapsed = 0;
 
                 owner.animator.PlayPose("Windup", tracking + 0.18f);
@@ -93,7 +91,6 @@ namespace KarmaPrototype
                 marker = owner.PathMark(origin, origin + velocity * life, size, false);
                 KarmaSwordAttackPolish.Warning(marker);
                 marker.GetComponent<KarmaAttackWarning>().Emphasize();
-                KarmaSwordAttackPolish.FlowWarning(owner.game, marker, origin, origin + velocity * life);
 
                 // Retain the same preparation budget. The presentation's Locked
                 // phase is only its pose clock; targeting continues until firing.

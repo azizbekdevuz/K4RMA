@@ -32,10 +32,6 @@ namespace KarmaPrototype
                 float warning = owner.Warning(0.4f);
                 var mark = owner.PathMark(origin, origin + velocity * flightLife, sword.BasicSwordSize);
                 KarmaSwordAttackPolish.Warning(mark);
-                // Use the same open blue borders as the other sword skills,
-                // following this aimed wave's oriented footprint, including diagonals.
-                KarmaSwordAttackPolish.CounterWarning(owner.game, mark, origin,
-                    origin + velocity * flightLife, sword.BasicSwordSize, true);
                 KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, mark.transform, warning, false, basicRanged: true);
                 owner.animator.PrepareBasicAttack(warning, false);
                 yield return owner.Wait(warning);
@@ -68,7 +64,6 @@ namespace KarmaPrototype
                 owner.state = ActionState.Telegraph;
                 var mark = owner.Mark("SWBasic 근거리 칼질", center, size);
                 KarmaSwordAttackPolish.Warning(mark);
-                KarmaSwordBasicPresentation.MeleeWarning(owner.game, owner, mark, size, warning);
                 owner.animator.PrepareBasicAttack(warning, true);
                 yield return owner.Wait(warning);
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
@@ -106,7 +101,6 @@ namespace KarmaPrototype
                         // its same fixed footprint visible throughout the link.
                         var returnMark = owner.Mark("SWBasic return cut warning", center, size);
                         KarmaSwordAttackPolish.Warning(returnMark);
-                        KarmaSwordBasicPresentation.MeleeWarning(owner.game, owner, returnMark, size, linkSeconds, 1);
                         owner.animator.BeginBasicLink(linkSeconds);
                         yield return owner.Wait(linkSeconds);
                         if (returnMark != null) { returnMark.gameObject.SetActive(false); Destroy(returnMark.gameObject); }

@@ -18,7 +18,7 @@ HISTORICAL_REVISION = "036c22b"
 HISTORICAL_PATH = "Assets/K4RMA/Runtime/Enemies/Bosses/SwordWave/Presentation/KarmaSW05VFX.cs"
 METHODS = ("Noise", "Direction", "Quad", "Line", "Shard", "SwordShard", "Bolt", "Ring",
            "HazardVolumes", "FinalEnergy", "FinalEruption", "EruptionPlume", "ClipFinalRegion",
-           "RibbonSegment", "Facet", "JudgementBlade", "FinalSite", "GroundSigil", "WarningGround")
+           "RibbonSegment", "Facet", "JudgementBlade", "FinalSite", "GroundSigil")
 
 
 
@@ -260,7 +260,7 @@ class SW05RestoredExplosionChecks(unittest.TestCase):
         self.assertNotIn("HazardVolumes(", charge)
         self.assertNotIn("JudgementBlade(", charge)
         self.assertNotIn("Shard(", charge)
-        self.assertIn("WarningGround(", charge)
+        self.assertNotIn("WarningGround(", charge)
         for s in self.samples:
             if s["mode"] == 0:
                 with self.subTest(sample=s):

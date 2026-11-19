@@ -25,7 +25,6 @@ namespace KarmaPrototype
                 if (mark != null)
                 {
                     mark.GetComponent<KarmaAttackWarning>().SetPath(mark, origin, origin + velocity * life, size, false, true);
-                    KarmaSwordAttackPolish.FlowWarning(owner.game, mark, origin, origin + velocity * life);
                 }
             }
             static IEnumerator TrackSW01(KarmaEnemy owner, SwordBossBehavior sword, bool high, SpriteRenderer mark, Vector2 size, float seconds, AdvertisedShot aim)
@@ -66,7 +65,6 @@ namespace KarmaPrototype
                     if (!scars)
                     {
                         KarmaSwordAttackPolish.Warning(mark);
-                        KarmaSwordAttackPolish.FlowWarning(owner.game, mark, origin, origin + velocity * life);
                     }
 
                     float warning = i == 0 ? owner.Warning(0.65f) : Mathf.Max(0.42f, 0.54f * owner.Tempo);

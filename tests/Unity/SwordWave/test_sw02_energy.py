@@ -119,7 +119,7 @@ class ClipProbe {
         self.assertIn("owner.animator.PrepareBasicAttack(warning, false)", execute)
         self.assertIn("yield return owner.Wait(warning)", execute)
         self.assertNotIn("KarmaSwordBasicPresentation.Charge(", execute)
-        self.assertIn("KarmaSwordBasicPresentation.MeleeWarning(", method(source, "IEnumerator Melee()"))
+        self.assertIn("KarmaSwordAttackPolish.Warning(returnMark)", method(source, "IEnumerator Melee()"))
         self.assertNotIn("FlowWarning(", method(source, "IEnumerator Melee()"))
 
     def test_restored_speed_boundary_life_and_reach(self):

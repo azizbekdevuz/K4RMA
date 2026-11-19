@@ -215,7 +215,7 @@ public static class KarmaSwordPlayChecks
     static async Task CheckSW03(bool enraged)
     {
         await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(enraged);
-        results.Add("PASS: SW03 5 x (8+8), locked warnings, stagger, vulnerability, gating and cleanup");
+        results.Add("PASS: SW03 five maximum-density cluster rounds, locked warnings, simultaneous release, vulnerability, gating and cleanup");
     }
     static async Task CheckScarCancellation()
     {
@@ -271,11 +271,22 @@ public static class KarmaSwordPlayChecks
         Check(!(bool)Behavior.GetType().GetProperty("BasicMeleeSelected").GetValue(Behavior), "medium basic is a wave");
         await Until(() => Attacks().Length > 0);
         Check(Get<Vector2>(Attacks()[0], "velocity").x > 0, "medium wave aims toward player");
-        bool rangedFrame = false;
-        for (int i = 0; i < 5; i++)
-            rangedFrame |= Attacks()[0].Visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_" + i);
-        Check(rangedFrame && Attacks()[0].GetComponent<KarmaSwordWaveAnimation>() != null,
-            "medium wave shares the full SW01 crescent presentation");
+        var wave = Attacks()[0];
+        var selectedCrescent = Resources.Load<Sprite>("SwordWave/SWBasic/SWBasic_BlueCrescent");
+        Check(selectedCrescent != null && wave.Visual.sprite == selectedCrescent
+            && wave.GetComponent<KarmaSwordWaveAnimation>() != null,
+            "medium wave preserves Basic artwork through the shared SW01 flight path");
+        Check(wave.GetComponent<KarmaSwordBasicPresentation>() == null
+            && wave.GetComponent<MeshRenderer>() == null,
+            "no melee presentation or replacement mesh overwrites the ranged crescent");
+        var footprint = (Vector2)Behavior.GetType().GetMethod("SwordSize", Flags).Invoke(Behavior,
+            new object[] { EnemyAttack.SW01 });
+        var expected = new Vector2(footprint.x * 1.12f / 0.65f, footprint.y / 0.81f);
+        Check(Vector2.Distance(wave.Visual.bounds.size, expected) < 0.002f,
+            "medium wave retains the full shared flight footprint, not the old half-size version");
+        Check(Get<EnemyAttack>(wave, "sourcePattern") == EnemyAttack.SWBasic
+            && Get<Vector2>(wave, "size") == footprint * 0.90f,
+            "shared flight preserves Basic contact identity and independent collision size");
         Snapshot("swbasic-wave");
         Reset(); typeof(KarmaEnemy).GetProperty("Health").SetValue(enemy, enemy.MaxHealth * 0.49f);
         object[] args = { 15f, true, true, EnemyAttack.SWBasic };

@@ -100,6 +100,30 @@ public static class KarmaSW05PlayChecks
     static void Log(string message, string stack, LogType type)
     { if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
             && !stack.Contains("UnityEditor.Search")) runtimeError = message; }
+    static async Task CheckPresentationPause(SpriteRenderer blade)
+    {
+        KarmaSW05Energy aura = null;
+        foreach (var energy in Root.GetComponentsInChildren<KarmaSW05Energy>())
+            if (Get<Transform>(energy, "follow") == blade.transform) { aura = energy; break; }
+        Check(aura != null, "formation electricity follows its own blade");
+        Vector3 position = blade.transform.position, scale = blade.transform.localScale;
+        Quaternion rotation = blade.transform.rotation;
+        var properties = new MaterialPropertyBlock(); blade.GetPropertyBlock(properties);
+        float visualTime = properties.GetFloat("_VisualTime"), auraAge = aura.Age;
+        Check(visualTime > 0, "blade shimmer receives the pause-aware visual clock");
+        game.TogglePause();
+        try
+        {
+            await Task.Delay(120);
+            blade.GetPropertyBlock(properties);
+            Check(blade.transform.position == position && blade.transform.localScale == scale
+                && Quaternion.Angle(blade.transform.rotation, rotation) < 0.001f,
+                "pause freezes formation position, rotation and proportion");
+            Check(aura.Age == auraAge && properties.GetFloat("_VisualTime") == visualTime,
+                "pause freezes procedural lightning and shader shimmer together");
+        }
+        finally { if (game.Paused) game.TogglePause(); }
+    }
     static async Task CheckStandingRisk()
     {
         foreach (float x in new[] { KarmaStage.ArenaLeft + 0.25f, 13f, KarmaStage.ArenaRight - 0.25f })
@@ -139,10 +163,11 @@ public static class KarmaSW05PlayChecks
         KarmaSW05RainBlade.Spawn(game, enemy, Root, shot, damage, null);
         await Until(() => game.Player.Health < before, 2);
         Check(Mathf.Abs((before - game.Player.Health) - damage) < 0.01f, "real rain contact applies the full ultimate damage once");
+        Check(!game.Player.Shocked, "falling sword contact does not apply final-explosion Shock");
         await Until(() => Array.TrueForAll(Root.GetComponentsInChildren<KarmaSW05RainBlade>(), blade => blade.Landed), 2);
         float after = game.Player.Health;
         Set(game.Player, "invulnerableUntil", 0f); await Seconds(0.2f);
-        Check(game.Player.Health == after, "planted sword cannot damage the player again");
+        Check(game.Player.Health == after && !game.Player.Shocked, "planted sword cannot damage or Shock the player again");
         game.Player.enabled = true;
     }
     static async Task CheckHealthGates()
@@ -210,6 +235,7 @@ public static class KarmaSW05PlayChecks
             var blades = Forming();
             Check(blades.Length >= config.BossTuning.sword.aerialSwordVolleyMin && blades.Length <= config.BossTuning.sword.aerialSwordVolleyMax, "dense volley respects randomized count");
             await Seconds(0.15f);
+            await CheckPresentationPause(blades[0]);
             Vector3 before = blades[0].transform.position;
             Capture("ascent");
             Check(Root.GetComponentsInChildren<KarmaSW05RainBlade>().Length == 0, "ascent is harmless");
@@ -283,15 +309,24 @@ public static class KarmaSW05PlayChecks
             Check(firstShot.acceleration.magnitude >= 1200, "rain accelerates toward ground");
             float ordinaryDamage = (float)typeof(KarmaEnemy).GetProperty("Damage", Private).GetValue(enemy);
             Check(Get<float>(attacks[0], "damage") >= ordinaryDamage * 2.5f - 0.0001f, "ultimate deals at least 2.5x ordinary damage");
-            bool wake = false, aura = false;
+            bool wake = false;
             foreach (var energy in Root.GetComponentsInChildren<KarmaSW05Energy>())
                 wake |= Get<Transform>(energy, "follow") == attacks[0].Visual.transform
                     && Get<object>(energy, "kind").ToString() == "Fall"
                     && energy.GetComponent<MeshFilter>().sharedMesh != null;
-            foreach (var packed in Root.GetComponentsInChildren<KarmaSwordPackedVfx>())
-                aura |= packed.ClipId == KarmaSwordPackedVfx.Clip.FallingAura
-                    && Get<Transform>(packed, "follow") == attacks[0].transform;
-            Check(wake && aura, "falling sword owns its bounded mesh wake and animated aura");
+            int echoes = 0;
+            foreach (var renderer in attacks[0].Visual.GetComponentsInChildren<SpriteRenderer>())
+                if (renderer.name == "SW05 compact blade echo / no damage")
+                {
+                    echoes++;
+                    Check(renderer.sprite == attacks[0].Visual.sprite
+                        && renderer.transform.parent == attacks[0].Visual.transform,
+                        "compact afterimage inherits the live blade artwork and orientation");
+                }
+            Check(wake && echoes == 1, "falling sword owns one bounded electric wake and one compact blade echo");
+            Check(!Array.Exists(Root.GetComponentsInChildren<KarmaSwordPackedVfx>(),
+                packed => packed.ClipId == KarmaSwordPackedVfx.Clip.FallingAura),
+                "a second broad falling aura does not obscure the blade silhouette");
             await Seconds(0.035f); Capture("rain");
             Check(!enemy.Stunned && Get<bool>(enemy, "running") && Forming().Length == 0,
                 "ultimate continues its existing rain after parry without spawning stun feedback");
@@ -372,11 +407,13 @@ public static class KarmaSW05PlayChecks
                 Check(child.name == "Sword persistent attacks" && child.childCount == 0,
                     "completion leaves only the empty persistent attack container");
             Check(Root.GetComponentsInChildren<KarmaBossAttack>(true).Length == 0
-                && Root.GetComponentsInChildren<KarmaSW05VFX>(true).Length == 0,
+                && Root.GetComponentsInChildren<KarmaSW05VFX>(true).Length == 0
+                && Root.GetComponentsInChildren<KarmaSW05Energy>(true).Length == 0,
                 "completion cleans every live and inactive attack/VFX");
             Force(); await Until(() => Forming().Length > 0, 8);
             Call(enemy, "InterruptPattern"); await Seconds(0.1f);
-            Check(Forming().Length == 0 && Root.GetComponentsInChildren<KarmaSW05VFX>().Length == 0, "interrupt cleans sky blades and VFX");
+            Check(Forming().Length == 0 && Root.GetComponentsInChildren<KarmaSW05VFX>().Length == 0
+                && Root.GetComponentsInChildren<KarmaSW05Energy>(true).Length == 0, "interrupt cleans sky blades and pooled electricity");
             await CheckStandingRisk();
             await CheckDamageContact();
             await CheckHealthGates();

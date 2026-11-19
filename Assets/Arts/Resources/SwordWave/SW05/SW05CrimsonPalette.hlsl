@@ -20,11 +20,14 @@ float2 SW05BladeUV(float2 uv, half presence)
     float width = 1 + 1.20 * SW05BladeMask(uv,presence);
     return float2(0.5+(uv.x-0.5)/width,uv.y);
 }
-half3 SW05BladeRadiance(half3 source, float2 uv, half presence)
+half3 SW05BladeRadiance(half3 source, float2 uv, half presence, float visualTime, half energy)
 {
     half mask = SW05BladeMask(uv,presence);
     half core = exp(-abs(uv.x-0.5)*160) * mask;
-    half scan = pow(saturate(cos(uv.y*42-_Time.y*28)),16)*mask;
-    return lerp(SW05CrimsonPalette(source),half3(0.88h,1.08h,1.25h),saturate(core*0.95h+scan*0.28h));
+    // Renderer-owned time freezes on pause and survives form/fall/plant handoff.
+    half scan = pow(saturate(cos(uv.y*42-visualTime*(9+energy*7))),20)*mask;
+    half edge = exp(-abs(abs(uv.x-0.5)-0.055)*95)*mask;
+    return lerp(SW05CrimsonPalette(source),half3(0.88h,1.08h,1.25h),
+        saturate(core*(0.65h+energy*0.30h)+scan*(0.10h+energy*0.16h)+edge*energy*0.16h));
 }
 #endif

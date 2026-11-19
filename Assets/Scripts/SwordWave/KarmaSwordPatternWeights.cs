@@ -12,8 +12,8 @@ namespace KarmaPrototype
             [Min(0)] public float swBasicWeight = 3f;
             [Min(0)] public float sw01Weight = 3f;
             [Min(0)] public float sw02Weight = 3f;
-            [Min(0)] public float sw03Weight = 2f;
-            [Min(0)] public float sw04Weight = 1f;
+            [Min(0)] public float sw03Weight = 3f;
+            [Min(0)] public float sw04Weight = 3f;
             [Tooltip("다른 후보가 없을 때에만 같은 기술을 연속 사용")] public bool allowRepeatFallback = true;
             [Min(0), Tooltip("근접 시 기본 공격 가중치 배율")] public float closeBasicMultiplier = 2f;
         }

@@ -25,6 +25,7 @@ namespace KarmaPrototype
         KarmaEnemy guardian;
         KarmaCharacterAnimator animator, sourceAnimator;
         Transform sourceRoot;
+        Sprite inspectionPose;
         SpriteRenderer sourcePicture, original, focus;
         SpriteRenderer formPicture, formReveal;
         Material formMaterial, originalFormMaterial;
@@ -101,6 +102,7 @@ namespace KarmaPrototype
                     growth.haloColor = shieldHalo.color;
                 }
             }
+            if (growth.Stage == 2) growth.inspectionPose = guardian.GrowthReflection;
             growth.facing = guardian.GetComponentInChildren<SpriteRenderer>().transform.lossyScale.x < 0 ? -1 : 1;
             // The memory stands between player and guardian, close enough for the
             // camera to connect the same movement without cutting away to a panel.
@@ -291,7 +293,8 @@ namespace KarmaPrototype
                 }
                 var technique = techniques[latest];
                 animator.GrowthPose(technique.Inspect, true, Vector2.zero, -3);
-                animator.ShowGrowthMotion("GrowthInspect", true, t - FailureHeld - 0.6f);
+                if (inspectionPose != null) animator.GrowthKeyPose(inspectionPose, "Growth/InspectWeapon", 0.95f);
+                else animator.ShowGrowthMotion("GrowthInspect", true, t - FailureHeld - 0.6f);
                 Vector2 anchor = guardian.GrowthInspectionAnchor;
                 Vector2 hand = guardian.Position + new Vector2(facing * anchor.x, anchor.y);
                 float gather = Smooth(FailureHeld + 0.9f, Reflected - 0.15f, t);

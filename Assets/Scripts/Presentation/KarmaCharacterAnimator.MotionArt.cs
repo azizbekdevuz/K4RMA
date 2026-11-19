@@ -45,7 +45,7 @@ namespace KarmaPrototype
             else if (sheet == "Rise") motion = RisingBodyMotion(action, attack, moved);
             else motion = action == "Attack" ? "GroundStrike" : action == "Recover" ? "Recovery"
                 : action == "Telegraph" ? "Windup" : moved ? "Move" : "Idle";
-            if (sheet == "Wave" && PresentSwordIntermediate(attack)) return;
+            if (sheet == "Wave" && (PresentSwordIntermediate(attack) || SwordBodyVisible && SwordBodyAction != null && displayMotion == motion)) return;
             PlayBody(motion, form, motion == "Move" || motion == "Dash" || motion == "Stun" || motion == "Guard");
         }
     }

@@ -118,7 +118,7 @@ public static class KarmaSW03ArtworkChecks
             // baseline JSON is no longer a gameplay-equivalence oracle.
             await KarmaSwordSkillRefreshChecks.CheckSW03Redesign(null,true);
             Directory.CreateDirectory(Output);
-            File.WriteAllText(Output+"/result.txt","PASS: current SW03 5 x (8+8); preserved artwork/anchor/aura and full warnings; physical safe-route checks\n");
+            File.WriteAllText(Output+"/result.txt","PASS: current SW03 five maximum-density cluster rounds; preserved artwork/anchor/aura and full warnings; physical safe-route checks\n");
         }
         catch(Exception e){Debug.LogException(e);exit=1;}
         Time.captureDeltaTime=0;SessionState.SetBool(Key,false);EditorApplication.Exit(exit);

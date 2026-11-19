@@ -61,9 +61,11 @@ Shader "K4RMA/SwordSkillPolish"
                 }
                 else if (_Style > 2.5 && _Style < 3.5)
                 {
-                    // Steel glint sweeps along a counter weapon, not a crescent.
-                    energy = 0.10 + sweep * 0.55;
-                    hot = half3(0.73, 1.35, 1.55);
+                    // Solid steel first; the glint occupies only a narrow strip.
+                    // Preserve transparent canvas pixels and renderer lifetime fades.
+                    tex.a = lerp(tex.a, 1, smoothstep(0.28, 0.72, tex.a));
+                    energy = 0.055 + sweep * 0.24;
+                    hot = half3(0.78, 1.10, 1.24);
                 }
                 else if (_Style > 3.5 && _Style < 4.5)
                 {

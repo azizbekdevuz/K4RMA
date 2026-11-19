@@ -94,6 +94,20 @@ namespace KarmaPrototype
             DrawMotion(previous ? previousMotionForm : motionForm, motion, elapsed);
         }
 
+        internal void GrowthKeyPose(Sprite keyPose, string pose, float relativeHeight, float lean = 0)
+        {
+            if (!growthActive || keyPose == null || picture == null) return;
+            picture.sprite = keyPose;
+            // Calibrate once against the old standing body, not the bounding box
+            // of the last hurt/slash pose. The new art has a foot-aligned pivot.
+            float height = GrowthSprite("Idle", true).bounds.size.y * relativeHeight;
+            picture.transform.localScale = pictureScale * (height / keyPose.bounds.size.y);
+            picture.transform.localPosition = pictureHome;
+            picture.transform.localRotation = Quaternion.Euler(0, 0, lean);
+            picture.color = pictureColor;
+            CurrentPose = pose;
+        }
+
         internal void PresentVictory(string pose, float elapsed)
         {
             if (picture == null) return;

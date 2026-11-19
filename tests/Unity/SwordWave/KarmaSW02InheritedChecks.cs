@@ -111,7 +111,7 @@ public static class KarmaSW02InheritedChecks
         if (Enemy == null) return;
         var animator = (KarmaCharacterAnimator)Get(Enemy, "animator");
         var picture = (SpriteRenderer)Get(animator, "picture");
-        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || picture.sprite.texture.name != Forms[form - 1] + "_SW02_Transitions")
+        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || picture.sprite.texture.name != Forms[form - 1] + "_Combat")
         {
             if (side > 0 && picture.sprite.name == "Idle" && picture.sprite.texture.name == Forms[form - 1] && captured.Add("OriginalIdle"))
                 CapturePicture(picture, "OriginalIdle");

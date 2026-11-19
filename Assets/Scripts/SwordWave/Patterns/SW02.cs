@@ -9,6 +9,8 @@ namespace KarmaPrototype
         {
             public SW02Pattern(KarmaEnemy owner, SwordBossBehavior sword) : base(owner, sword) { }
             public const float Floor = 0.05f;
+            Vector2 advertisedOrigin, advertisedVelocity;
+            float advertisedFacing;
             const float TrackingSeconds = 0.34f, ReleaseSeconds = 0.10f;
             float AimedSlashSpeed { get { return Mathf.Max(0.1f, Settings.swordSpeed * 1.25f * 1.3f); } }
             Vector2 AimedSlashOrigin(Vector2 from, float facing)
@@ -44,15 +46,21 @@ namespace KarmaPrototype
                 var scale = owner.art.localScale; scale.x = Mathf.Abs(scale.x) * facing; owner.art.localScale = scale;
                 origin = AimedSlashOrigin(owner.Position, facing);
                 velocity = Vector2.right * facing * AimedSlashSpeed;
+                advertisedOrigin = origin; advertisedVelocity = velocity; advertisedFacing = facing;
                 marker.GetComponent<KarmaAttackWarning>().SetPath(marker, origin,
                     origin + velocity * AimedSlashLife(origin, velocity), sword.SwordSize(EnemyAttack.SW02), false, true);
+                KarmaSwordAttackPolish.FlowWarning(owner.game, marker, origin, origin + velocity * AimedSlashLife(origin, velocity));
             }
             IEnumerator TrackWarning(SpriteRenderer marker, float seconds)
             {
                 float elapsed = 0;
                 while (elapsed < seconds && owner.Active)
                 {
-                    if (!owner.game.Paused) RefreshAim(marker, out _, out _, out _);
+                    if (!owner.game.Paused)
+                    {
+                        sword.ChargeDash(seconds-elapsed);
+                        RefreshAim(marker, out _, out _, out _);
+                    }
                     yield return null;
                     if (!owner.game.Paused) elapsed += Time.deltaTime;
                 }
@@ -66,6 +74,7 @@ namespace KarmaPrototype
                 Vector2 velocity = Vector2.right * facing * AimedSlashSpeed;
                 var marker = owner.PathMark(origin, origin + velocity * AimedSlashLife(origin, velocity), size, false);
                 KarmaSwordAttackPolish.Warning(marker);
+                KarmaSwordAttackPolish.FlowWarning(owner.game, marker, origin, origin + velocity * AimedSlashLife(origin, velocity));
                 float tracking = TrackingSeconds * owner.Tempo, elapsed = 0;
 
                 owner.animator.PlayPose("Windup", tracking + 0.18f);
@@ -74,6 +83,7 @@ namespace KarmaPrototype
                 while (elapsed < tracking && owner.Active)
                 {
                     if (owner.game.Paused) { yield return null; continue; }
+                    sword.ChargeDash(tracking-elapsed+0.8f);
                     RefreshAim(marker, out origin, out velocity, out facing);
                     elapsed += Time.deltaTime; yield return null;
                 }
@@ -83,6 +93,7 @@ namespace KarmaPrototype
                 marker = owner.PathMark(origin, origin + velocity * life, size, false);
                 KarmaSwordAttackPolish.Warning(marker);
                 marker.GetComponent<KarmaAttackWarning>().Emphasize();
+                KarmaSwordAttackPolish.FlowWarning(owner.game, marker, origin, origin + velocity * life);
 
                 // Retain the same preparation budget. The presentation's Locked
                 // phase is only its pose clock; targeting continues until firing.
@@ -91,8 +102,10 @@ namespace KarmaPrototype
                 owner.animator.PrepareWaveAttack(warning, true);
                 owner.animator.LockSW02Presentation(warning);
                 yield return TrackWarning(marker, warning);
+                sword.EndChargeDash();
                 if (!owner.Active) yield break;
-                RefreshAim(marker, out origin, out velocity, out facing);
+                // Keep the last visible path after the final coroutine yield.
+                origin = advertisedOrigin; velocity = advertisedVelocity; facing = advertisedFacing;
                 life = AimedSlashLife(origin, velocity);
                 marker.gameObject.SetActive(false); Destroy(marker.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack(Vector2.right * facing);

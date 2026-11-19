@@ -11,6 +11,7 @@ namespace KarmaPrototype
             Transform groundRoot, roundRoot;
             int? seedOverride;
             float[] previousPlacement;
+            bool firstRoundReleased;
             public int Seed { get; private set; }
             public KarmaSwordScarPlanner.Plan CurrentPlan { get; private set; }
             public bool Running { get { return groundRoot != null && groundRoot.gameObject.activeSelf; } }
@@ -37,13 +38,17 @@ namespace KarmaPrototype
             public override IEnumerator Execute()
             {
                 if (Running || !owner.Active) yield break;
+                firstRoundReleased = false;
+                owner.state = ActionState.Telegraph;
+                owner.animator.BeginSwordGroundStrike(Mathf.Max(KarmaSwordScarPlanner.MinimumWarning, owner.Warning(Settings.scarWarningSeconds)));
                 groundRoot = new GameObject("SW03 independent ground timeline").transform;
                 groundRoot.SetParent(sword.PersistentRoot, false);
                 groundRoot.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
                 groundRoutine = owner.StartCoroutine(RunGround());
-                // Return the action slot to the existing movement AI. The
-                // persistent root survives ordinary attack completion/recovery.
-                yield break;
+                // Plant only for the initial command. Later rounds retain their
+                // independent clock and the existing mobile evasion behaviour.
+                while (Running && owner.Active && !firstRoundReleased) yield return null;
+                if (firstRoundReleased && owner.Active) yield return owner.Wait(2f / 24);
             }
             IEnumerator RunGround()
             {
@@ -155,6 +160,7 @@ namespace KarmaPrototype
                         {
                             elapsed = 0;
                             foreach (var mark in marks) mark.SetWarningProgress(0);
+                            if (round == 0) owner.animator.SampleSwordGroundStrike(0);
                             continue;
                         }
                         elapsed += Time.deltaTime;
@@ -162,12 +168,22 @@ namespace KarmaPrototype
                         {
                             float progress = Mathf.Clamp01(elapsed / warning);
                             foreach (var mark in marks) mark.SetWarningProgress(progress);
+                            if (round == 0) owner.animator.SampleSwordGroundStrike(progress);
                             // Frame drops may extend the common warning, never shorten it.
                             if (elapsed < warning) continue;
                             warningRoot.gameObject.SetActive(false);
                             Destroy(warningRoot.gameObject);
                             releaseAt = elapsed;
                             // No yields or delayed starts inside this whole-round pass.
+                            if (round == 0)
+                            {
+                                firstRoundReleased = true;
+                                owner.state = ActionState.Attack;
+                                owner.animator.ReleaseSwordGroundStrike();
+                                KarmaSW05Energy.GroundStrike(groundRoot, owner.game,
+                                    new Vector2(owner.Position.x + owner.direction * owner.animator.SwordChargeBodyHeight * 0.12f, 0.04f),
+                                    owner.animator.SwordChargeBodyHeight);
+                            }
                             ReleaseRound(releaseRoot, size, active, contacts);
                             KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_Release_v6",
                                 owner.Position + new Vector2(owner.direction * 1.1f, -0.8f),

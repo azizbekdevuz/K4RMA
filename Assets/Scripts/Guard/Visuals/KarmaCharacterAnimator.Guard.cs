@@ -102,11 +102,8 @@ namespace KarmaPrototype
                 heavyStrike.ShieldAway = GuardTrialShieldAway;
                 if (heavyStrike.Show(attack))
                 {
-                    if (GuardTrialShieldAway)
-                    {
-                        guardDamageSprite = heavyStrike.DamageSprite;
-                        guardDamageScale = heavyStrike.DamageScale; guardDamageOverride = true;
-                    }
+                    guardDamageSprite = heavyStrike.DamageSprite;
+                    guardDamageScale = heavyStrike.DamageScale; guardDamageOverride = true;
                     CurrentPose = (GuardTrialShieldAway ? "GD05/ShieldAway/" : "") + heavyStrike.CurrentPose;
                     return;
                 }
@@ -181,7 +178,7 @@ namespace KarmaPrototype
                 guardFlightPose = null;
             }
         }
-        public void PrepareHeavyStrike() { heavyStrike.Prepare(); HeavyBody(0); }
+        public void PrepareHeavyStrike(float chargeSeconds = 0.6f) { heavyStrike.Prepare(chargeSeconds); HeavyBody(0); }
         public void HeatHeavyStrike() { heavyStrike.Heat(); HeavyBody(0); }
         public void SwingHeavyStrike() { heavyStrike.Swing(); HeavyBody(2); }
         void HeavyBody(int frame)

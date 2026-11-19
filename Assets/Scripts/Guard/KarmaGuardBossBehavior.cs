@@ -19,7 +19,13 @@ namespace KarmaPrototype
             readonly GD01Pattern shield;
             public readonly GD02Pattern Heavy;
             public readonly GD05Pattern Dome;
+            Sprite gd01Shield, invulnerableShield;
+            Vector2 shieldVisualSize;
+            MaterialPropertyBlock shieldProperties;
+            KarmaGuardBarrierBreak barrierBreak;
             int domeUses;
+            bool resolvingContact;
+            int parriesBeforeContact;
             [UnityEngine.Scripting.Preserve]
             public GuardBossBehavior(KarmaEnemy owner) : base(owner)
             {
@@ -39,6 +45,14 @@ namespace KarmaPrototype
                     KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost))
                     throw new System.InvalidOperationException("GD01 이전 방어막 이미지가 없습니다.");
                 owner.shieldHalo.transform.localPosition = Vector2.up * KarmaSpace.Units(1.2f);
+                gd01Shield = owner.shieldHalo.sprite;
+                barrierBreak = owner.gameObject.AddComponent<KarmaGuardBarrierBreak>();
+                barrierBreak.Initialize(owner.game, owner, owner.shieldHalo, gd01Shield);
+                invulnerableShield = KarmaArtwork.Sprite("PlayerVFX", "Barrier");
+                if (invulnerableShield == null)
+                    throw new System.InvalidOperationException("방어형 상태별 방어막 이미지가 없습니다.");
+                shieldVisualSize = KarmaSpace.Units(new Vector2(4.4f, 3.8f)) * KarmaSpace.GuardianSizeBoost;
+                shieldProperties = new MaterialPropertyBlock();
                 shield.RefreshAutoShield(); owner.shieldHalo.enabled = true;
                 owner.animator.ConfigureHeavyStrike(owner.game.Player.Essences.PersonalizationOrder);
                 owner.gameObject.AddComponent<KarmaGuardStunStars>().Initialize(owner.game,
@@ -106,14 +120,17 @@ namespace KarmaPrototype
             { return owner.frontalGuard && (source.x - owner.Position.x) * owner.direction >= 0 || AutoShieldActive; }
             public override void ReducedDamageFeedback(bool basicMelee)
             {
-                KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
+                // The player's immediate riposte lands before OnParried removes GD01.
+                // Suppress only its redundant block pulse; keep damage reduction and sound.
+                if (!resolvingContact || owner.game.Player.ParryCount == parriesBeforeContact)
+                    KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
                 if (AutoShieldActive)
                     KarmaAudio.Play(KarmaSfxId.GdShieldHit, gainScale: basicMelee ? 0.58f : 1f);
                 else
                     KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
             }
-            public override Color ShieldColor { get { return BlocksSelection
-                ? new Color(1, 0.8f, 0.2f, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : base.ShieldColor; } }
+            public override Color ShieldColor { get { return BlocksSelection && !owner.Invulnerable && !AutoShieldActive
+                ? new Color(1, 1, 1, 0.4f + 0.4f * Mathf.Abs(Mathf.Sin(owner.FightSeconds * 8))) : Color.white; } }
             public override void EndAction(bool keepAutoShield) { owner.frontalGuard = false; }
             public override void StopCombat() { owner.shieldUntil = owner.shieldWarningUntil = 0; }
             public override bool TryQueueParry(float pressedAt) { return Heavy.TryQueueParry(pressedAt); }
@@ -132,11 +149,30 @@ namespace KarmaPrototype
             }
             public override void OnParried()
             {
-                if (AutoShieldActive) KarmaAudio.Play(KarmaSfxId.GdShieldBreak);
+                if (AutoShieldActive)
+                {
+                    KarmaAudio.Play(KarmaSfxId.GdShieldBreak);
+                    if (!owner.Invulnerable && owner.shieldHalo.sprite == gd01Shield) barrierBreak.Play();
+                }
                 owner.shieldUntil = 0;
                 owner.nextShield = owner.FightSeconds + Mathf.Max(2, Settings.autoShieldPeriod);
             }
-            public override void Tick() { shield.Tick(); }
+            public override void Tick() { shield.Tick(); PaintShield(); }
+            void PaintShield()
+            {
+                // GD04 keeps frontal damage reduction without an additional barrier image.
+                var sprite = owner.Invulnerable ? invulnerableShield : AutoShieldActive || BlocksSelection ? gd01Shield : null;
+                var halo = owner.shieldHalo;
+                if (halo.sprite == sprite) return;
+                halo.sprite = sprite;
+                if (sprite == null) return;
+                // Match the invulnerability ring to GD01 despite its transparent canvas padding.
+                float framing = sprite == invulnerableShield ? 1.15f : 1;
+                halo.transform.localScale = new Vector3(shieldVisualSize.x * framing / sprite.bounds.size.x,
+                    shieldVisualSize.y * framing / sprite.bounds.size.y, 1);
+                halo.GetPropertyBlock(shieldProperties);
+                shieldProperties.SetTexture("_MainTex", sprite.texture); halo.SetPropertyBlock(shieldProperties);
+            }
             public override bool TrySelect(float distance, bool sight, bool escape, out EnemyAttack attack)
             {
                 if (domeUses < 2 && owner.attacks.Contains(EnemyAttack.GD05)
@@ -165,8 +201,14 @@ namespace KarmaPrototype
             public override float DecisionDelay { get { return owner.selected == EnemyAttack.GD03 || owner.selected == EnemyAttack.GD04
                 ? 0.22f : base.DecisionDelay; } }
             public override Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.GuardDamageBounds(renderer); }
+            public override void ContactStarting(EnemyAttack pattern, KarmaAttackContact contact)
+            {
+                resolvingContact = true;
+                parriesBeforeContact = owner.game.Player.ParryCount;
+            }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
+                resolvingContact = false;
                 if (damaged && !parried)
                 {
                     if (pattern == EnemyAttack.GroundStrike) KarmaAudio.Play(KarmaSfxId.GdBasicHit);

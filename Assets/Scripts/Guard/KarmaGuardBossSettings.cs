@@ -16,7 +16,7 @@ namespace KarmaPrototype
         [Min(2)] public float autoShieldPeriod = 8;
         [Min(0.3f)] public float autoShieldWarning = 0.8f;
         [Min(0.1f)] public float parryStunSeconds = 2;
-        [Min(0.1f)] public float heavyParryCueSeconds = 0.5f, heavyHitStunSeconds = 1;
+        [Min(0.1f)] public float heavyParryCueSeconds = 0.3f, heavyHitStunSeconds = 1;
         [Min(1)] public float shieldThrowSpeed = 15 * KarmaSpace.Scale;
         [Header("GD04 전방 지면강타")]
         [Min(0.1f)] public float slamRange = 12 * KarmaSpace.Scale, slamHeight = 1.44f * KarmaSpace.Scale;

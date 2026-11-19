@@ -58,6 +58,11 @@ public static partial class KarmaGuardPlayChecks
         SessionState.SetBool(BatchKey + ".GD05Only", true);
         RunBatch();
     }
+    public static void RunShieldDisplayBatch()
+    {
+        SessionState.SetBool(BatchKey + ".ShieldDisplay", true);
+        RunBatch();
+    }
     public static void RunGD03Batch()
     {
         SessionState.SetBool(BatchKey + ".GD03Only", true);
@@ -75,6 +80,8 @@ public static partial class KarmaGuardPlayChecks
     }
     static async void RunBatchChecks()
     {
+        bool moltenOnly = SessionState.GetBool(BatchKey + ".MoltenOnly", false);
+        SessionState.EraseBool(BatchKey + ".MoltenOnly");
         bool trialOnly = SessionState.GetBool(BatchKey + ".TrialOnly", false);
         SessionState.EraseBool(BatchKey + ".TrialOnly");
         bool feedbackOnly = SessionState.GetBool(BatchKey + ".FeedbackOnly", false);
@@ -87,11 +94,13 @@ public static partial class KarmaGuardPlayChecks
         SessionState.EraseBool(BatchKey + ".GD03Only");
         bool gd05Only = SessionState.GetBool(BatchKey + ".GD05Only", false);
         SessionState.EraseBool(BatchKey + ".GD05Only");
-        try { Debug.Log(await (trialOnly ? RunChecks(false, trialOnly: true) : feedbackOnly ? RunChecks(false, feedbackOnly: true) : gd04Preview ? RunChecks(false, gd04PreviewOnly: true) : gd04Only ? RunGD04Only() : gd03Only ? RunGD03Only() : gd05Only ? RunGD05Only() : Run())); SessionState.SetBool(BatchKey, false); EditorApplication.Exit(0); }
+        bool shieldDisplay = SessionState.GetBool(BatchKey + ".ShieldDisplay", false);
+        SessionState.EraseBool(BatchKey + ".ShieldDisplay");
+        try { Debug.Log(await (moltenOnly ? RunMoltenOnly() : shieldDisplay ? RunChecks(false, shieldDisplayOnly: true) : trialOnly ? RunChecks(false, trialOnly: true) : feedbackOnly ? RunChecks(false, feedbackOnly: true) : gd04Preview ? RunChecks(false, gd04PreviewOnly: true) : gd04Only ? RunGD04Only() : gd03Only ? RunGD03Only() : gd05Only ? RunGD05Only() : Run())); SessionState.SetBool(BatchKey, false); EditorApplication.Exit(0); }
         catch (Exception error)
         {
             Directory.CreateDirectory("output/validation");
-            File.WriteAllText("output/validation/" + (gd04Preview ? "gd04-preview-validation.txt" : gd04Only ? "gd04-validation.txt" : gd03Only ? "gd03-boomerang-validation.txt" : gd05Only ? "gd05-validation.txt" : "guard-play-validation.txt"), "FAIL: " + error + "\n");
+            File.WriteAllText("output/validation/" + (shieldDisplay ? "guard-shield-display.txt" : gd04Preview ? "gd04-preview-validation.txt" : gd04Only ? "gd04-validation.txt" : gd03Only ? "gd03-boomerang-validation.txt" : gd05Only ? "gd05-validation.txt" : "guard-play-validation.txt"), "FAIL: " + error + "\n");
             Debug.LogException(error);
             SessionState.SetBool(BatchKey, false); EditorApplication.Exit(1);
         }
@@ -128,7 +137,7 @@ public static partial class KarmaGuardPlayChecks
     public static Task<string> RunMoltenOnly() => RunChecks(false, true);
     public static Task<string> RunGD04Only() => RunChecks(false, gd04Only: true);
     public static Task<string> RunGD05Only() => RunChecks(false, gd05Only: true);
-    static async Task<string> RunChecks(bool gd03Only, bool moltenOnly = false, bool gd04Only = false, bool gd05Only = false, bool gd04PreviewOnly = false, bool feedbackOnly = false, bool trialOnly = false)
+    static async Task<string> RunChecks(bool gd03Only, bool moltenOnly = false, bool gd04Only = false, bool gd05Only = false, bool gd04PreviewOnly = false, bool feedbackOnly = false, bool trialOnly = false, bool shieldDisplayOnly = false)
     {
         Check(Application.isPlaying, "Play Mode required");
         game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
@@ -150,6 +159,16 @@ public static partial class KarmaGuardPlayChecks
             while (Time.frameCount <= frame && EditorApplication.timeSinceStartup < frameDeadline)
             { EditorApplication.QueuePlayerLoopUpdate(); await Task.Delay(50); }
             Check(Time.frameCount > frame, "guard checks run on an advancing player loop");
+            if (shieldDisplayOnly)
+            {
+                await CheckGuardShieldAppearance();
+                await CheckShieldDisplayPriority();
+                Check(runtimeError == null, "Shield display has no runtime errors: " + runtimeError);
+                string shieldDisplayResult = "PASS: " + assertions + " Guard shield priority, facing, state transitions, damage preservation and single-renderer assertions";
+                Directory.CreateDirectory("output/validation");
+                File.WriteAllText("output/validation/guard-shield-display.txt", shieldDisplayResult + "\n");
+                return shieldDisplayResult;
+            }
             if (trialOnly)
             {
                 await CheckTrialOutcomes();
@@ -333,6 +352,11 @@ public static partial class KarmaGuardPlayChecks
             var molten = KarmaArtwork.Sprite("GuardHeavyMolten" + form, "Windup");
             Check(picture.sprite == normal && !enemy.HeavyParryWindowOpen, "GD02 starts with the original cool weapon: " + form);
             Vector3 scale = picture.transform.localScale, position = picture.transform.localPosition;
+            var heavyMotion = Get<object>(animator, "heavyStrike");
+            var showHeavy = (Func<EnemyAttack, bool>)Delegate.CreateDelegate(typeof(Func<EnemyAttack, bool>), heavyMotion, "Show");
+            Check(KarmaAllocationChecks.Count(() => { for (int i = 0; i < 120; i++) showHeavy(EnemyAttack.GD02); }) == 0,
+                "GD02 repeated calibrated pose display creates no steady managed allocations: " + form);
+
             await Until(() => enemy.HeavyParryWindowOpen, 2);
             var effects = Get<Transform>(enemy, "effectsRoot");
             Check(molten != null && picture.sprite == molten && effects.Find("GD02 parry cue") == null,
@@ -356,8 +380,9 @@ public static partial class KarmaGuardPlayChecks
             Check(animator.CurrentPose == "Idle" || animator.CurrentPose == "Guard",
                 "GD02 missed heavy recovers without a false hurt/recoil pose: " + form);
             Vector3 idleScale = picture.transform.localScale;
-            Check(scale.x < idleScale.x && Mathf.Approximately(scale.x, scale.y),
-                "GD02 larger source artwork is normalized to the standing body without stretching: " + form);
+            Check(Mathf.Approximately(scale.x, idleScale.x * normal.pixelsPerUnit / (picture.sprite.pixelsPerUnit * 1.35f))
+                && Mathf.Approximately(scale.x, scale.y),
+                "GD02 uses the idle pixel density with one uniform authoring scale: " + form);
             animator.Hurt(); await Seconds(0.03f);
             Check(animator.CurrentPose == "Hurt", "GD02 recovery still shows an actual damage reaction");
         }
@@ -543,6 +568,101 @@ public static partial class KarmaGuardPlayChecks
             foreach (var sr in root.GetComponentsInChildren<SpriteRenderer>())
                 if (sr.enabled && sr.name.StartsWith("GD04 지면 상승 ")) return sr;
         return null;
+    }
+    static async Task CheckShieldDisplayPriority()
+    {
+        var invulnerable = KarmaArtwork.Sprite("PlayerVFX", "Barrier");
+        var gd01 = KarmaArtwork.Sprite("GuardBossVFX", "Shield");
+        Check(invulnerable != null && gd01 != null, "GD01 and invulnerability shield sprites load");
+        foreach (var order in new[] { new[] { Essence.Guard, Essence.RisingSlash },
+            new[] { Essence.Guard, Essence.SwordWave, Essence.RisingSlash } })
+        foreach (int facing in new[] { -1, 1 })
+        {
+            Reset(order);
+            Place(new Vector2(20 + facing * 15, KarmaSpace.PlayerHalfHeight));
+            Force(EnemyAttack.GD04, facing);
+            await Seconds(0.04f);
+            var halo = Get<SpriteRenderer>(enemy, "shieldHalo");
+            void State(Sprite expected, string label)
+            {
+                Check(halo.sprite == expected && (expected == null || halo.enabled), label);
+                int visible = 0;
+                foreach (var renderer in enemy.GetComponentsInChildren<SpriteRenderer>())
+                    if (renderer.enabled && (renderer.sprite == gd01 || renderer.sprite == invulnerable)) visible++;
+                Check(visible == (expected == null ? 0 : 1), "Only the expected shield is visible: " + label);
+            }
+            State(gd01, "GD01 remains visible during GD04 in both directions");
+            Check(Get<bool>(enemy, "frontalGuard"), "Actual GD04 still owns frontal damage reduction underneath GD01");
+            if (order.Length == 3 && facing == 1) CaptureShieldFrame("GD04_with_GD01");
+            Call(enemy, "BreakAutoShield"); Set(enemy, "nextShield", float.MaxValue);
+            await Seconds(0.04f);
+            State(null, "Breaking GD01 during GD04 leaves no barrier image");
+            if (order.Length == 3) CaptureShieldFrame(facing < 0 ? "GD04_NoBarrier_Left" : "GD04_NoBarrier_Right");
+            float clock = enemy.FightSeconds;
+            game.TogglePause(); await Task.Delay(80);
+            Check(enemy.FightSeconds == clock && halo.sprite == null, "Pause preserves GD04 without a barrier image");
+            game.TogglePause();
+            Set(enemy, "fullShield", true); Set(enemy, "shieldUntil", float.PositiveInfinity);
+            await Seconds(0.04f);
+            State(invulnerable, "Invulnerability remains visible during GD04");
+            float hp = enemy.Health; enemy.TakeDamage(10, enemy.Position);
+            Check(enemy.Health == hp, "Invulnerability still blocks damage");
+            if (order.Length == 3 && facing == 1) CaptureShieldFrame("Invulnerable_Priority");
+            Set(enemy, "fullShield", false); await Seconds(0.04f);
+            State(gd01, "Leaving invulnerability restores the still-active GD01 shield");
+            hp = enemy.Health; enemy.TakeDamage(10, enemy.Position - Vector2.right * facing * 5);
+            Check(Mathf.Abs(hp - enemy.Health - 10 * game.Config.BossTuning.guard.shieldDamageMultiplier) < 0.02f,
+                "GD01 still reduces rear damage");
+            Call(enemy, "BreakAutoShield"); Set(enemy, "nextShield", float.MaxValue);
+            await Seconds(0.04f);
+            State(null, "Ending GD01 and invulnerability leaves GD04 without a barrier image");
+            hp = enemy.Health;
+            enemy.TakeDamage(10, enemy.Position + Vector2.right * facing * 5);
+            Check(Mathf.Abs(hp - enemy.Health - 10 * game.Config.BossTuning.guard.shieldDamageMultiplier) < 0.02f,
+                "Frontal damage reduction is unchanged");
+            hp = enemy.Health;
+            enemy.TakeDamage(10, enemy.Position - Vector2.right * facing * 5);
+            Check(Mathf.Abs(hp - enemy.Health - 10) < 0.02f, "The rear remains unprotected without GD01");
+            Call(enemy, "InterruptPattern"); await Seconds(0.04f);
+            Check(!halo.enabled && !Get<bool>(enemy, "frontalGuard"), "Interrupting GD04 removes the frontal barrier without a stale ring");
+        }
+        Reset(new[] { Essence.Guard, Essence.SwordWave });
+        Call(enemy, "BreakAutoShield"); Set(enemy, "nextShield", enemy.FightSeconds);
+        await Until(() => Get<float>(enemy, "shieldWarningUntil") > 0, 1);
+        await Seconds(0.04f);
+        Check(Get<SpriteRenderer>(enemy, "shieldHalo").sprite == gd01, "GD01 regeneration warning uses GD01 artwork");
+        await Until(() => enemy.AutoShieldActive, 2);
+        Check(Get<SpriteRenderer>(enemy, "shieldHalo").sprite == gd01, "Sword-inherited GD01 regenerates with its existing image");
+        var behavior = Get<object>(enemy, "behavior");
+        var paint = (Action)Delegate.CreateDelegate(typeof(Action), behavior, behavior.GetType().GetMethod("PaintShield", Private));
+        long events = KarmaAllocationChecks.Count(() => { for (int i = 0; i < 240; i++) paint(); });
+        Check(events == 0, "Steady shield updates allocate no managed objects");
+        long textureBytes = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(invulnerable.texture);
+        Debug.Log("Guard shield display: one existing renderer, zero new GameObjects, steady GC.Alloc events=" + events
+            + ", invulnerability texture runtime bytes=" + textureBytes + ". GPU frame time not measured.");
+        game.PlayerDied(); await Task.Delay(80);
+        Check(!Get<SpriteRenderer>(enemy, "shieldHalo").enabled, "Death cleanup cannot leave a shield behind");
+    }
+    static void CaptureShieldFrame(string name)
+    {
+        var camera = game.GameCamera;
+        var position = camera.transform.position; float size = camera.orthographicSize;
+        var previousTarget = camera.targetTexture; var previousActive = RenderTexture.active;
+        var target = new RenderTexture(1200, 800, 24); var pixels = new Texture2D(1200, 800, TextureFormat.RGBA32, false);
+        try
+        {
+            camera.targetTexture = target; camera.orthographicSize = 7;
+            camera.transform.position = new Vector3(enemy.Position.x, 4.8f, -10);
+            camera.Render(); RenderTexture.active = target;
+            pixels.ReadPixels(new Rect(0, 0, 1200, 800), 0, 0); pixels.Apply();
+            const string directory = "output/validation/guard-shield-display"; Directory.CreateDirectory(directory);
+            File.WriteAllBytes(directory + "/" + name + ".png", pixels.EncodeToPNG());
+        }
+        finally
+        {
+            camera.targetTexture = previousTarget; camera.transform.position = position; camera.orthographicSize = size;
+            RenderTexture.active = previousActive; UnityEngine.Object.Destroy(target); UnityEngine.Object.Destroy(pixels);
+        }
     }
     static async Task CheckGuardShieldAppearance()
     {
@@ -1015,6 +1135,10 @@ public static partial class KarmaGuardPlayChecks
         Check(shield != null && shield.GetComponent<SpriteRenderer>().sprite == KarmaArtwork.Sprite("GuardDomeShield", "Ricochet")
             && dome != null && dome.GetComponent<EdgeCollider2D>().pointCount == 65
             && Get<bool>(player, "confined") && enemy.Invulnerable, "GD05 forms the dome and keeps the boss invulnerable");
+        var bodyBarrier = Get<SpriteRenderer>(enemy, "shieldHalo");
+        Check(bodyBarrier.enabled && bodyBarrier.sprite == KarmaArtwork.Sprite("PlayerVFX", "Barrier"),
+            "Actual GD05 invulnerability uses the sealed personal barrier");
+        CaptureShieldFrame("GD05_Invulnerable_Actual");
         float protectedHp = enemy.Health;
         enemy.TakeDamage(enemy.MaxHealth);
         Check(enemy.Health == protectedHp && !enemy.Stunned, "GD05 room rejects lethal incoming attacks");

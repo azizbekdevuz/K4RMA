@@ -19,6 +19,10 @@ K4RMA/
 │   │   │   │   ├── Effects/
 │   │   │   │   │   ├── Bash.png
 │   │   │   │   │   ├── DomeShield.png
+│   │   │   │   │   ├── GD05_GoldenFoot.png
+│   │   │   │   │   ├── GD05_GoldenSeal.png
+│   │   │   │   │   ├── GD05_InternalBlast.png
+│   │   │   │   │   ├── Guard_InvulnerableBarrier.png
 │   │   │   │   │   ├── ParryRed.png
 │   │   │   │   │   ├── Pillar.png
 │   │   │   │   │   ├── Seal.png
@@ -464,6 +468,7 @@ K4RMA/
 │       ├── Guard/
 │       │   ├── Editor/
 │       │   │   ├── KarmaGuardAirborneAssets.cs
+│       │   │   ├── KarmaGuardDomeAssets.cs
 │       │   │   └── KarmaGuardPracticeMenu.cs
 │       │   ├── Patterns/
 │       │   │   ├── GD01.cs
@@ -656,6 +661,7 @@ K4RMA/
 │   │   ├── Ending/
 │   │   │   └── KarmaEndingMoonChecks.cs
 │   │   ├── Guard/
+│   │   │   ├── KarmaGuardAppearanceChecks.cs
 │   │   │   ├── KarmaGuardBasicDodgeChecks.cs
 │   │   │   ├── KarmaGuardCameraChecks.cs
 │   │   │   ├── KarmaGuardGD03PresentationChecks.cs

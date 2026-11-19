@@ -7,6 +7,7 @@ namespace KarmaPrototype
     {
         Sprite[] parryFrames, parryEffects;
         SpriteRenderer parryFlash;
+        KarmaPlayerParryFlash parryRadiance;
         public bool ParrySuccessVisible => sheet == "Player" && explicitPose == "Riposte"
             && Time.time < poseUntil && Time.time >= hurtUntil && deathAt < 0;
 
@@ -33,6 +34,10 @@ namespace KarmaPrototype
                 node.transform.SetParent(picture.transform, false);
                 parryFlash = node.AddComponent<SpriteRenderer>();
                 KarmaVisuals.ApplyMaterial(parryFlash);
+                parryRadiance = node.AddComponent<KarmaPlayerParryFlash>();
+                parryFlash.sortingLayerID = picture.sortingLayerID;
+                parryFlash.sortingOrder = picture.sortingOrder + 1;
+                parryRadiance.Initialize(parryFlash);
             }
             // Same relative position and scale as the approved composite preview.
             parryFlash.transform.localPosition = new Vector3(189f / 145, 50f / 145, 0);
@@ -40,18 +45,23 @@ namespace KarmaPrototype
             parryFlash.sortingOrder = picture.sortingOrder + 1;
             parryFlash.sprite = parryEffects[index];
             parryFlash.enabled = true;
+            parryRadiance.Sample(Mathf.Max(0, Time.time - playerClipAt));
             return true;
         }
 
         void LateUpdate()
         {
             if (parryFlash != null && (!ParrySuccessVisible || CurrentPose != "Riposte"))
+            {
                 parryFlash.enabled = false;
+                parryRadiance.Hide();
+            }
         }
 
         void OnDisable()
         {
             if (parryFlash != null) parryFlash.enabled = false;
+            if (parryRadiance != null) parryRadiance.Hide();
         }
     }
 }

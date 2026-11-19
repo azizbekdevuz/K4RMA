@@ -1,7 +1,56 @@
 ```text
 K4RMA/
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml
+│   │   ├── config.yml
+│   │   └── feature_request.yml
+│   └── PULL_REQUEST_TEMPLATE.md
 ├── Assets/
 │   ├── Arts/
+│   │   ├── Reference/
+│   │   │   ├── Guard/
+│   │   │   │   ├── Effects/
+│   │   │   │   ├── Forms/
+│   │   │   │   ├── GD04/
+│   │   │   │   ├── Growth/
+│   │   │   │   ├── HeavyStrike/
+│   │   │   │   ├── IdleSources/
+│   │   │   │   ├── MoltenStrike/
+│   │   │   │   ├── Revival/
+│   │   │   │   ├── ShieldAway/
+│   │   │   │   └── Stagger/
+│   │   │   ├── Master/
+│   │   │   │   ├── IdleSources/
+│   │   │   │   └── Poses.png
+│   │   │   ├── Neutral/
+│   │   │   │   ├── Forms/
+│   │   │   │   ├── Growth/
+│   │   │   │   ├── IdleSources/
+│   │   │   │   └── Revival/
+│   │   │   ├── Player/
+│   │   │   │   ├── IdleSources/
+│   │   │   │   ├── Native24/
+│   │   │   │   ├── Actions.png
+│   │   │   │   ├── Additional.png
+│   │   │   │   ├── Locomotion.png
+│   │   │   │   ├── ParrySuccess.png
+│   │   │   │   └── Poses.png
+│   │   │   ├── RisingSlash/
+│   │   │   │   ├── Effects/
+│   │   │   │   ├── Forms/
+│   │   │   │   ├── Growth/
+│   │   │   │   ├── IdleSources/
+│   │   │   │   └── Revival/
+│   │   │   ├── Shared/
+│   │   │   │   ├── Effects/
+│   │   │   │   └── ReferencePoses.png
+│   │   │   └── SwordWave/
+│   │   │       ├── Forms/
+│   │   │       ├── Growth/
+│   │   │       ├── IdleSources/
+│   │   │       ├── Revival/
+│   │   │       └── SW02/
 │   │   ├── Resources/
 │   │   │   ├── Backgrounds/
 │   │   │   │   ├── MountainDojo/
@@ -14,15 +63,13 @@ K4RMA/
 │   │   │   │       ├── Moon.png
 │   │   │   │       └── Panorama.png
 │   │   │   ├── Guard/
-│   │   │   │   ├── Growth/
-│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Effects/
 │   │   │   │   │   ├── Bash.png
 │   │   │   │   │   ├── DomeShield.png
 │   │   │   │   │   ├── GD05_GoldenFoot.png
 │   │   │   │   │   ├── GD05_GoldenSeal.png
 │   │   │   │   │   ├── GD05_InternalBlast.png
-│   │   │   │   │   ├── Guard_InvulnerableBarrier.png
+│   │   │   │   │   ├── KarmaGuardHeavyGlow.shader
 │   │   │   │   │   ├── ParryRed.png
 │   │   │   │   │   ├── Pillar.png
 │   │   │   │   │   ├── Seal.png
@@ -47,6 +94,8 @@ K4RMA/
 │   │   │   │   │   ├── WardFinal.png
 │   │   │   │   │   ├── WardRise.png
 │   │   │   │   │   └── WardWave.png
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── HeavyStrike/
 │   │   │   │   │   ├── Ward.png
 │   │   │   │   │   ├── WardFinal.png
@@ -69,6 +118,26 @@ K4RMA/
 │   │   │   │       ├── WardFinal.png
 │   │   │   │       ├── WardRise.png
 │   │   │   │       └── WardWave.png
+│   │   │   ├── Motions12/
+│   │   │   │   ├── Master/
+│   │   │   │   ├── Neutral/
+│   │   │   │   ├── Player/
+│   │   │   │   ├── Rise/
+│   │   │   │   ├── RiseFinal/
+│   │   │   │   ├── RiseWard/
+│   │   │   │   ├── RiseWave/
+│   │   │   │   ├── Ward/
+│   │   │   │   ├── WardFinal/
+│   │   │   │   ├── WardFinal_NoShield/
+│   │   │   │   ├── WardRise/
+│   │   │   │   ├── WardWave/
+│   │   │   │   ├── Wave/
+│   │   │   │   ├── WaveFinal/
+│   │   │   │   ├── WaveRise/
+│   │   │   │   ├── WaveWard/
+│   │   │   │   ├── BladeSockets.txt
+│   │   │   │   ├── BodyPoses.txt
+│   │   │   │   └── Catalog.txt
 │   │   │   ├── Neutral/
 │   │   │   │   ├── Forms/
 │   │   │   │   │   └── Neutral.png
@@ -76,7 +145,6 @@ K4RMA/
 │   │   │   │   │   └── Hesitate.png
 │   │   │   │   └── Revival/
 │   │   │   │       └── Neutral.png
-│   │   │   ├── Motions12/  (플레이어·스승·수호자 외형별 동작 시트, Catalog.txt, BodyPoses.txt, BladeSockets.txt)
 │   │   │   ├── Player/
 │   │   │   │   ├── Animation/
 │   │   │   │   │   ├── AirSlash.anim
@@ -158,11 +226,28 @@ K4RMA/
 │   │   │   │   ├── Actions.png
 │   │   │   │   ├── Additional.png
 │   │   │   │   ├── Locomotion.png
+│   │   │   │   ├── ParryFlash.shader
 │   │   │   │   ├── ParrySuccess.png
 │   │   │   │   └── Poses.png
+│   │   │   ├── Reference/
+│   │   │   │   └── GameScale_HD_StageStyle/
+│   │   │   │       ├── Master_Idle.png
+│   │   │   │       ├── Neutral_Idle.png
+│   │   │   │       ├── Player_Idle.png
+│   │   │   │       ├── Rise_Idle.png
+│   │   │   │       ├── RiseFinal_Idle.png
+│   │   │   │       ├── RiseWard_Idle.png
+│   │   │   │       ├── RiseWave_Idle.png
+│   │   │   │       ├── Ward_Idle.png
+│   │   │   │       ├── WardFinal_Idle.png
+│   │   │   │       ├── WardFinal_NoShield_Idle.png
+│   │   │   │       ├── WardRise_Idle.png
+│   │   │   │       ├── WardWave_Idle.png
+│   │   │   │       ├── Wave_Idle.png
+│   │   │   │       ├── WaveFinal_Idle.png
+│   │   │   │       ├── WaveRise_Idle.png
+│   │   │   │       └── WaveWard_Idle.png
 │   │   │   ├── RisingSlash/
-│   │   │   │   ├── Growth/
-│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Effects/
 │   │   │   │   │   ├── Fragment0.png
 │   │   │   │   │   ├── Fragment1.png
@@ -195,6 +280,8 @@ K4RMA/
 │   │   │   │   │   ├── RiseWavePursuit.png
 │   │   │   │   │   ├── RiseWaveRelease.png
 │   │   │   │   │   └── RiseWaveStrike.png
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Reflection.png
 │   │   │   │   └── Revival/
 │   │   │   │       └── Rise.png
 │   │   │   ├── Shared/
@@ -220,13 +307,13 @@ K4RMA/
 │   │   │   │   ├── Props.png
 │   │   │   │   └── ReferencePoses.png
 │   │   │   ├── SwordWave/
-│   │   │   │   ├── Growth/
-│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Forms/
 │   │   │   │   │   ├── Wave.png
 │   │   │   │   │   ├── WaveFinal.png
 │   │   │   │   │   ├── WaveRise.png
 │   │   │   │   │   └── WaveWard.png
+│   │   │   │   ├── Growth/
+│   │   │   │   │   └── Reflection.png
 │   │   │   │   ├── Revival/
 │   │   │   │   │   └── Wave.png
 │   │   │   │   ├── Shared/
@@ -235,11 +322,15 @@ K4RMA/
 │   │   │   │   │   ├── KarmaSwordSkillPolish.mat
 │   │   │   │   │   ├── KarmaSwordSkillPolish.shader
 │   │   │   │   │   ├── SW01_SW02_EnergyFrames.png
+│   │   │   │   │   ├── SWBasicCrescent.mat
+│   │   │   │   │   ├── SWBasicCrescent.shader
 │   │   │   │   │   ├── Sword_Crescent_v6.png
 │   │   │   │   │   ├── Sword_GuardRing_v6.png
 │   │   │   │   │   ├── Sword_Impact_v6.png
 │   │   │   │   │   ├── Sword_Release_v6.png
-│   │   │   │   │   └── Sword_Shard_v6.png
+│   │   │   │   │   ├── Sword_Shard_v6.png
+│   │   │   │   │   ├── SwordBodyConsistent.mat
+│   │   │   │   │   └── SwordBodyConsistent.shader
 │   │   │   │   ├── SW01/
 │   │   │   │   │   └── SW01_StaggeredWave.png
 │   │   │   │   ├── SW02/
@@ -305,19 +396,12 @@ K4RMA/
 │   │       ├── RisingSlash_상승베기보스/
 │   │       ├── Shared_공통효과/
 │   │       ├── SwordWave_검기보스/
-│   │       ├── Guard_방어보스_Overview 2.png
 │   │       ├── Guard_방어보스_Overview.png
-│   │       ├── Neutral_기본수호자_Overview 2.png
 │   │       ├── Neutral_기본수호자_Overview.png
-│   │       ├── Player_플레이어_Overview 2.png
 │   │       ├── Player_플레이어_Overview.png
-│   │       ├── RisingSlash_상승베기보스_Overview 2.png
 │   │       ├── RisingSlash_상승베기보스_Overview.png
-│   │       ├── Shared_공통효과_Overview 2.png
 │   │       ├── Shared_공통효과_Overview.png
-│   │       ├── SpriteIndex 2.csv
 │   │       ├── SpriteIndex.csv
-│   │       ├── SwordWave_검기보스_Overview 2.png
 │   │       └── SwordWave_검기보스_Overview.png
 │   ├── Audio/
 │   │   ├── Ambience/
@@ -420,6 +504,8 @@ K4RMA/
 │   │   │   ├── KarmaSwordBossProfile.asset
 │   │   │   └── KarmaSwordPatternWeights.asset
 │   │   └── KarmaConfig.asset
+│   ├── Editor/
+│   │   └── KarmaMotionRouteChecks.cs
 │   ├── Scenes/
 │   │   └── KarmaPrototype.unity
 │   └── Scripts/
@@ -439,6 +525,7 @@ K4RMA/
 │       │   ├── KarmaEnemy.StateMachine.cs
 │       │   ├── KarmaEssences.cs
 │       │   ├── KarmaGroundStrikePattern.cs
+│       │   ├── KarmaHostileFlight.cs
 │       │   └── KarmaProjectile.cs
 │       ├── Core/
 │       │   ├── K4RMA.Core.asmdef
@@ -482,7 +569,9 @@ K4RMA/
 │       │   ├── Visuals/
 │       │   │   ├── KarmaCharacterAnimator.Guard.cs
 │       │   │   ├── KarmaGuardAirborneHit.cs
+│       │   │   ├── KarmaGuardBarrierBreak.cs
 │       │   │   ├── KarmaGuardDome.cs
+│       │   │   ├── KarmaGuardHeavyGlow.cs
 │       │   │   ├── KarmaGuardStunStars.cs
 │       │   │   └── KarmaHeavyStrikeMotion.cs
 │       │   ├── KarmaBossTuning.Guard.cs
@@ -505,28 +594,37 @@ K4RMA/
 │       │   ├── KarmaPlayer.Ending.cs
 │       │   ├── KarmaPlayer.Movement.cs
 │       │   ├── KarmaPlayer.Status.cs
-│       │   └── KarmaPlayer.StatusPresentation.cs
+│       │   ├── KarmaPlayer.StatusPresentation.cs
+│       │   └── KarmaPlayerParryFlash.cs
 │       ├── Presentation/
+│       │   ├── Editor/
+│       │   │   ├── KarmaMotionBindings.cs
+│       │   │   ├── KarmaMotionSheetChecks.cs
+│       │   │   └── KarmaMotionSheetImport.cs
 │       │   ├── KarmaArtwork.cs
 │       │   ├── KarmaArtworkSettings.cs
 │       │   ├── KarmaAttackWarning.cs
+│       │   ├── KarmaBodyPoses.cs
 │       │   ├── KarmaCharacterAnimator.cs
 │       │   ├── KarmaCharacterAnimator.Empowerment.cs
 │       │   ├── KarmaCharacterAnimator.Ending.cs
 │       │   ├── KarmaCharacterAnimator.Growth.cs
 │       │   ├── KarmaCharacterAnimator.Guardian.cs
+│       │   ├── KarmaCharacterAnimator.MotionArt.cs
 │       │   ├── KarmaCharacterAnimator.Parry.cs
 │       │   ├── KarmaCharacterAnimator.Player.cs
 │       │   ├── KarmaCharacterAnimator.PlayerStatus.cs
 │       │   ├── KarmaCombatVFX.cs
 │       │   ├── KarmaEffect.cs
 │       │   ├── KarmaEndingPresentation.cs
+│       │   ├── KarmaGrowthFocus.cs
+│       │   ├── KarmaGuardianGrowth.cs
 │       │   ├── KarmaMoonArtwork.cs
 │       │   ├── KarmaMoonProjection.cs
-│       │   ├── KarmaGuardianGrowth.cs
-│       │   ├── KarmaGrowthFocus.cs
+│       │   ├── KarmaMotionArt.cs
 │       │   ├── KarmaPersonalizationVFX.cs
 │       │   ├── KarmaPersonalizationVFX.Player.cs
+│       │   ├── KarmaPlayerTimeline.cs
 │       │   ├── KarmaRemnantVFX.cs
 │       │   ├── KarmaSpriteLibrary.cs
 │       │   └── KarmaVisuals.cs
@@ -574,7 +672,9 @@ K4RMA/
 │       │   │   └── SwordWaveVolley.cs
 │       │   ├── Visuals/
 │       │   │   ├── KarmaCharacterAnimator.Sword.cs
+│       │   │   ├── KarmaCharacterAnimator.SwordLocomotion.cs
 │       │   │   ├── KarmaCharacterAnimator.SwordRetreat.cs
+│       │   │   ├── KarmaCharacterAnimator.SwordSkills.cs
 │       │   │   ├── KarmaCharacterAnimator.SwordSW02.cs
 │       │   │   ├── KarmaSW05Energy.cs
 │       │   │   ├── KarmaSW05VFX.cs
@@ -588,6 +688,7 @@ K4RMA/
 │       │   │   ├── KarmaSwordWaveAnimation.cs
 │       │   │   ├── KarmaWaveArtwork.cs
 │       │   │   └── KarmaWaveMotion.cs
+│       │   ├── AGENTS.md
 │       │   ├── KarmaBossTuning.Sword.cs
 │       │   ├── KarmaSwordBossBehavior.cs
 │       │   ├── KarmaSwordBossMovement.cs
@@ -617,6 +718,16 @@ K4RMA/
 │           ├── KarmaStage.cs
 │           └── KarmaSurface.cs
 ├── docs/
+│   ├── planning/
+│   │   └── assets/
+│   │       ├── concept-arena.png
+│   │       ├── game-loop.svg
+│   │       └── wordmark.png
+│   ├── CONTRIBUTING.en.md
+│   ├── CONTRIBUTING.md
+│   ├── DECISIONS.md
+│   ├── PROJECT_CONTEXT.md
+│   ├── PROTOTYPE.md
 │   ├── RULES.MD
 │   └── STRUCTURE.MD
 ├── Packages/
@@ -650,6 +761,8 @@ K4RMA/
 │   ├── VersionControlSettings.asset
 │   └── VFXManager.asset
 ├── tests/
+│   ├── Standalone/
+│   │   └── KarmaFramePacingProbe.cs
 │   ├── SwordWavePlanner/
 │   │   ├── NuGet.Config
 │   │   ├── Program.cs
@@ -666,16 +779,17 @@ K4RMA/
 │   │   │   ├── KarmaGuardCameraChecks.cs
 │   │   │   ├── KarmaGuardGD03PresentationChecks.cs
 │   │   │   ├── KarmaGuardGD04FeedbackChecks.cs
+│   │   │   ├── KarmaGuardHeavyGlowChecks.cs
 │   │   │   ├── KarmaGuardIntegrationChecks.cs
 │   │   │   ├── KarmaGuardOwnershipChecks.cs
+│   │   │   ├── KarmaGuardParryFeedbackChecks.cs
+│   │   │   ├── KarmaGuardParryVisibilityChecks.cs
 │   │   │   ├── KarmaGuardPlayChecks.cs
 │   │   │   └── KarmaGuardSelectionChecks.cs
 │   │   ├── Player/
 │   │   │   ├── KarmaPlayer12Checks.cs
 │   │   │   ├── KarmaPlayerCrowdControlChecks.cs
-│   │   │   ├── KarmaPlayerIdleChecks 2.cs
 │   │   │   ├── KarmaPlayerIdleChecks.cs
-│   │   │   ├── KarmaPlayerLocomotionChecks 2.cs
 │   │   │   ├── KarmaPlayerLocomotionChecks.cs
 │   │   │   └── KarmaPlayerPierceChecks.cs
 │   │   ├── RisingSlash/
@@ -704,7 +818,14 @@ K4RMA/
 │   │   │   ├── KarmaSwordSkillVfxChecks.cs
 │   │   │   ├── KarmaSwordSlideDistanceChecks.cs
 │   │   │   ├── KarmaSwordTempoRangeChecks.cs
-│   │   │   └── KarmaSwordWallCounterChecks.cs
+│   │   │   ├── KarmaSwordWallCounterChecks.cs
+│   │   │   ├── test_basic_torso_launch.py
+│   │   │   ├── test_sw02_energy.py
+│   │   │   ├── test_sw03_polish.py
+│   │   │   ├── test_sw04_dome.py
+│   │   │   ├── test_sw05_eruption_mesh.py
+│   │   │   ├── test_sw05_fall_warning.py
+│   │   │   └── test_sword_presentation.py
 │   │   ├── Tutorial/
 │   │   │   ├── KarmaCinematicSkipChecks.cs
 │   │   │   └── KarmaTutorialChecks.cs
@@ -728,6 +849,23 @@ K4RMA/
 ├── tools/
 │   ├── optimize-images.py
 │   └── run-boss-playchecks.py
+├── .gitignore
 ├── AGENTS.md
-└── README.md
+├── CODE_OF_CONDUCT.en.md
+├── CODE_OF_CONDUCT.md
+├── GOVERNANCE.en.md
+├── GOVERNANCE.md
+├── index.html
+├── LICENSE.en.md
+├── LICENSE.md
+├── README.en.md
+├── README.md
+├── REVIEW_BEFORE_MERGE.en.md
+├── REVIEW_BEFORE_MERGE.md
+├── SECURITY.en.md
+├── SECURITY.md
+├── SUPPORT.en.md
+├── SUPPORT.md
+├── THIRD_PARTY_NOTICES.en.md
+└── THIRD_PARTY_NOTICES.md
 ```

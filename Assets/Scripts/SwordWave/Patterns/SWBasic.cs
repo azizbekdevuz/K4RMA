@@ -7,6 +7,15 @@ namespace KarmaPrototype
         // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
         sealed class SWBasicPattern : SwordBossPattern
         {
+            KarmaAttackContact firstMeleeContact;
+            float firstMeleeResumeAt;
+            public void ContactResolved(KarmaAttackContact contact, bool parried, bool damaged)
+            {
+                if(contact!=firstMeleeContact || !damaged && !parried)return;
+                // Keep a successful parry's brief protection intact even if it
+                // happens on the final active frame of the opening cut.
+                firstMeleeResumeAt=owner.FightSeconds+(damaged?owner.game.Config.hitInvulnerability:3f/24);
+            }
             public SWBasicPattern(KarmaEnemy owner, SwordBossBehavior sword) : base(owner, sword) { }
             public override IEnumerator Execute()
             {
@@ -22,12 +31,16 @@ namespace KarmaPrototype
                 float warning = owner.Warning(0.4f);
                 var mark = owner.PathMark(origin, origin + velocity * flightLife, sword.BasicSwordSize);
                 KarmaSwordAttackPolish.Warning(mark);
+                // Use the same open blue borders as the other sword skills,
+                // following this aimed wave's oriented footprint, including diagonals.
+                KarmaSwordAttackPolish.CounterWarning(owner.game, mark, origin,
+                    origin + velocity * flightLife, sword.BasicSwordSize, true);
                 KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, mark.transform, warning, false, basicRanged: true);
                 owner.animator.PrepareBasicAttack(warning, false);
                 yield return owner.Wait(warning);
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack(aim);
-                owner.animator.BeginBasicRelease(Mathf.Min(2f / 24, sword.BasicSwordLife));
+                owner.animator.BeginBasicRelease(Mathf.Min(2f / 24, sword.BasicReleaseWait));
                 // Recovery clears ordinary pattern objects. Let this released
                 // wave finish at the real boundary under existing sword ownership.
                 var shot = owner.Attack(origin, velocity, sword.BasicSwordSize, flightLife,
@@ -38,25 +51,23 @@ namespace KarmaPrototype
                 KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shot);
                 // Keep the previous casting/recovery/selection cadence. The old
                 // ten-unit lifetime remains only the existing release wait here.
-                yield return owner.Wait(sword.BasicSwordLife);
+                yield return owner.Wait(sword.BasicReleaseWait);
                 yield return owner.Recovery(0.5f);
             }
             IEnumerator Melee()
             {
                 const float contactSeconds = 3f / 24;
-                // Measure from the first window's explicit retirement, so even
-                // its last possible hit finishes normal player i-frames before
-                // the return cut. Round up to authored frames with one-frame slack.
-                float linkSeconds = Mathf.Ceil(Mathf.Max(6f / 24,
-                    owner.game.Config.hitInvulnerability + 1f / 24) * 24) / 24;
-                float strikeInterval = contactSeconds + linkSeconds;
+                const float minimumLink = 2f / 24;
+                float strikeInterval = contactSeconds + minimumLink;
+                firstMeleeContact = null;
+                firstMeleeResumeAt = float.NegativeInfinity;
                 Vector2 size = sword.BasicMeleeSize;
                 Vector2 center = owner.Position + Vector2.right * owner.direction * sword.BasicMeleeOffset;
                 float warning = owner.Warning(0.4f);
                 owner.state = ActionState.Telegraph;
                 var mark = owner.Mark("SWBasic 근거리 칼질", center, size);
                 KarmaSwordAttackPolish.Warning(mark);
-                KarmaSwordBasicPresentation.Charge(owner.game, owner, mark.transform, warning);
+                KarmaSwordBasicPresentation.MeleeWarning(owner.game, owner, mark, size, warning);
                 owner.animator.PrepareBasicAttack(warning, true);
                 yield return owner.Wait(warning);
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
@@ -69,7 +80,9 @@ namespace KarmaPrototype
                     if (!owner.Active) yield break;
                     owner.state = ActionState.Attack; owner.animator.PlayPose("Slash", strike == 0 ? strikeInterval : 8f / 24);
                     owner.animator.BeginBasicRelease(contactSeconds, strike);
-                    var shot = owner.Attack(center, Vector2.zero, size, contactSeconds, strikeDamage, new KarmaAttackContact());
+                    var contact = new KarmaAttackContact();
+                    if (strike == 0) firstMeleeContact = contact;
+                    var shot = owner.Attack(center, Vector2.zero, size, contactSeconds, strikeDamage, contact);
                     KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, Vector2.zero, size);
                     shot.Visual.flipX = owner.direction < 0;
                     yield return owner.Wait(contactSeconds);
@@ -77,7 +90,27 @@ namespace KarmaPrototype
                     // Retire explicitly before starting the non-damaging link.
                     if (shot != null) { shot.gameObject.SetActive(false); Destroy(shot.gameObject); }
                     if (!owner.Active) yield break;
-                    yield return owner.Wait(strike == 0 ? linkSeconds : 5f / 24);
+                    if (strike == 0)
+                    {
+                        // A landed first cut waits only for its actual i-frame
+                        // deadline. Misses and guards link immediately;
+                        // neither cut bypasses shared damage or contact rules.
+                        // The contact deadline is a gameplay clock, not a
+                        // sprite frame: avoid padding it by an extra artwork
+                        // frame and then rounding it up a second time.
+                        float linkSeconds = Mathf.Max(minimumLink,
+                            firstMeleeResumeAt + 0.001f - owner.FightSeconds);
+                        firstMeleeContact = null;
+                        // The return cut owns a separate contact window. Keep
+                        // its same fixed footprint visible throughout the link.
+                        var returnMark = owner.Mark("SWBasic return cut warning", center, size);
+                        KarmaSwordAttackPolish.Warning(returnMark);
+                        KarmaSwordBasicPresentation.MeleeWarning(owner.game, owner, returnMark, size, linkSeconds, 1);
+                        owner.animator.BeginBasicLink(linkSeconds);
+                        yield return owner.Wait(linkSeconds);
+                        if (returnMark != null) { returnMark.gameObject.SetActive(false); Destroy(returnMark.gameObject); }
+                    }
+                    else yield return owner.Wait(5f / 24);
                 }
                 yield return owner.Recovery(0.5f);
             }

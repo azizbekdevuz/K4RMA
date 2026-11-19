@@ -23,6 +23,8 @@ namespace KarmaPrototype
         {
             if (!scar) return;
             transform.position = center; size = footprint;
+            // A not-yet-emerged tip must not produce a zero-height floor hit.
+            enabled = footprint.y > 0.001f;
         }
         protected override Color AttackColor(Color color, bool restrained)
         { return aerialSword ? Color.white : base.AttackColor(color, restrained); }

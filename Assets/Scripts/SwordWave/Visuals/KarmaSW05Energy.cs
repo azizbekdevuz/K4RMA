@@ -2,17 +2,19 @@ using UnityEngine;
 
 namespace KarmaPrototype
 {
-    // SW05-only, one draw per layer. Fixed buffers and recycled meshes replace
+    // SwordWave-only, one draw per layer. Fixed buffers and recycled meshes replace
     // hundreds of particle/line objects; motion never touches gameplay geometry.
     public sealed class KarmaSW05Energy : MonoBehaviour
     {
-        enum Kind { Summon, Form, Fall, Landing, Charge, Detonation, Eruption, Scar, ScarWarning, ScarFade, WardRelease, WardImpact, WardCollapse, WardFlight, Planted, FallWarning }
+        enum Kind { Form = 1, Fall, Landing, Charge, Detonation, Eruption, Scar, ScarWarning, ScarFade, WardRelease, WardImpact, WardCollapse, Planted, FallWarning, Splinters, GroundStrike }
         sealed class Buffer
         {
             public readonly Mesh mesh;
             public readonly Vector3[] vertices;
             public readonly Color[] colors;
             public readonly int capacity;
+            public Splinter[] splinters;
+            public LandingSite[] landings;
             public Buffer(int segments)
             {
                 capacity = segments; vertices = new Vector3[segments * 4]; colors = new Color[vertices.Length];
@@ -26,6 +28,18 @@ namespace KarmaPrototype
             }
         }
         static readonly System.Collections.Generic.List<Buffer> spare = new System.Collections.Generic.List<Buffer>(72);
+        const int SplinterLimit = 384;
+        const string SplinterName = "Sword pooled impact splinters / no damage";
+        struct Splinter
+        {
+            public Vector2 origin, velocity;
+            public float born, life, length, left, right, floor, ceiling;
+        }
+        int splinterCount, splinterFrame = -1;
+        const string LandingName = "SW05 batched grounded landings / no damage";
+        const float LandingSeconds = 0.34f;
+        struct LandingSite { public Vector2 at, axis; public float width, born; public int seed; }
+        int landingCount, sampledFrame = -1;
         static int nextSeed;
         static readonly Color Blue = new Color(0.08f, 0.55f, 1.1f), White = new Color(0.75f, 1.15f, 1.4f);
         KarmaGame game; Transform follow; KarmaSW05RainBlade rain;
@@ -42,8 +56,9 @@ namespace KarmaPrototype
         KarmaAerialSwordPlanner.Shot[] fallShots;
         KarmaSW05RainBlade[] fallBlades;
         float formationWarning;
-        KarmaSwordPackedVfx[] chargedLayers;
-        Vector2[] chargedSizes;
+        int[] fallGroup, fallUrgent;
+        Vector2[] chargeFeet, chargeHilts;
+        KarmaSW05RainBlade[] chargeSwords;
         const float DetonationVisualSeconds = 0.48f;
         SpriteRenderer[] plantedPictures;
         int plantedCount;
@@ -75,15 +90,55 @@ namespace KarmaPrototype
             fx.display.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; fx.display.receiveShadows = false;
             fx.Upload(); return fx;
         }
-        public static void Summon(Transform root, KarmaGame game, Transform boss)
-        { var fx = Create(root, game, Kind.Summon, float.PositiveInfinity, 512); fx.follow = boss; }
+        public static void GroundStrike(Transform root, KarmaGame game, Vector2 ground, float bodyHeight)
+        {
+            var fx = Create(root, game, Kind.GroundStrike, 0.38f);
+            fx.name = "SW03 first ground strike / no damage";
+            fx.at = ground; fx.size = new Vector2(bodyHeight * 0.60f, bodyHeight * 0.12f);
+            fx.count = 0; fx.GroundStrikeEnergy(); fx.Upload();
+        }
+        void GroundStrikeEnergy()
+        {
+            float t = Mathf.Clamp01(age / life);
+            float reveal = Mathf.SmoothStep(0, 1, age / 0.045f);
+            float fade = 1 - Mathf.SmoothStep(0, 1, (t - 0.15f) / 0.85f);
+            // Fixed world-space cracks, shallow enough to read as a floor hit.
+            // No random walk, expanding hazard or new collision geometry.
+            for (int ray = 0; ray < 7; ray++)
+            {
+                float a = ray * Mathf.PI * 2 / 7;
+                Vector2 previous = at;
+                for (int j = 1; j <= 5; j++)
+                {
+                    float u = j / 5f;
+                    Vector2 next = at + new Vector2(Mathf.Cos(a) * size.x * u,
+                        Mathf.Sin(a) * size.y * u + Mathf.Sin(ray * 7 + j * 4) * size.y * 0.18f);
+                    next.x = Mathf.Clamp(next.x, KarmaStage.ArenaLeft + 0.02f, KarmaStage.ArenaRight - 0.02f);
+                    next.y = Mathf.Max(0.025f, next.y);
+                    Vector2 tip = Vector2.Lerp(previous, next, Mathf.Clamp01(reveal * 5 - j + 1));
+                    Line(previous, tip, 0.028f * (1 - u * 0.65f), fade * (1 - u * 0.55f));
+                    if (j == 3) Line(tip, tip + new Vector2(Mathf.Cos(a + 0.65f) * size.x * 0.13f, 0.045f), 0.012f, fade * 0.45f);
+                    previous = next;
+                }
+            }
+            float flash = 1 - Mathf.SmoothStep(0, 1, age / 0.14f);
+            Line(at - Vector2.right * size.x * 0.12f, at + Vector2.right * size.x * 0.12f, 0.075f, flash);
+            for (int i = 0; i < 6; i++)
+            {
+                float side = i % 2 == 0 ? -1 : 1;
+                Vector2 p = at + new Vector2(side * size.x * (0.05f + t * (0.18f + i * 0.025f)),
+                    Mathf.Max(0, size.y * (t * 4 - t * t * 5)));
+                Shard(p, new Vector2(side * 0.7f, 1).normalized, size.y * 0.30f * (1 - t), fade * 0.45f);
+            }
+        }
         public static KarmaSW05Energy FallWarnings(Transform root,KarmaGame game,KarmaEnemy owner,
             SpriteRenderer[] marks,KarmaAerialSwordPlanner.Shot[] shots,float formationSeconds)
         {
             var fx=Create(root,game,Kind.FallWarning,float.PositiveInfinity,4096);
             fx.warningOwner=owner;fx.fallMarks=marks;fx.fallShots=shots;
             fx.fallBlades=new KarmaSW05RainBlade[marks.Length];fx.formationWarning=formationSeconds;
-            fx.name="SW05 batched falling sword warnings / no damage";fx.display.sortingOrder=10;
+            fx.fallGroup=new int[marks.Length];fx.fallUrgent=new int[marks.Length];
+            fx.name="SW05 batched falling sword warnings / no damage";fx.display.sortingOrder=31;
             fx.count=0;fx.FallingWarnings();fx.Upload();return fx;
         }
         public void BindFallWarning(int index,KarmaSW05RainBlade blade) {fallBlades[index]=blade;}
@@ -102,73 +157,90 @@ namespace KarmaPrototype
         }
         float FallWarningWidth(int index)
         {return fallShots[index].size.y/Mathf.Max(0.001f,Mathf.Abs(fallShots[index].velocity.normalized.y));}
+        float FallWarningRemaining(int index)
+        {
+            var shot=fallShots[index];
+            float elapsed=fallBlades[index]!=null?formationWarning+fallBlades[index].FallWarningAge:Mathf.Min(age,formationWarning);
+            return Mathf.Max(0,formationWarning+shot.delay+shot.life-elapsed);
+        }
         void FallingWarnings()
         {
-            float clock=Mathf.Floor(age*24)/24;
+            float clock=age;int groups=0;
+            // Merge only coincident footprints, against a fixed group anchor.
+            // A later array entry may land FIRST: never discard its urgency.
             for(int i=0;i<fallMarks.Length;i++)
             {
                 var mark=fallMarks[i];if(mark==null||!mark.gameObject.activeInHierarchy)continue;
-                float width=FallWarningWidth(i),x=mark.transform.position.x;
-                int neighbors=0;bool duplicate=false;
-                for(int j=0;j<fallMarks.Length;j++)
+                int group=-1;float x=mark.transform.position.x,width=FallWarningWidth(i);
+                for(int g=0;g<groups;g++)
                 {
-                    if(j==i||fallMarks[j]==null||!fallMarks[j].gameObject.activeInHierarchy)continue;
-                    float separation=Mathf.Abs(x-fallMarks[j].transform.position.x);
-                    float otherWidth=FallWarningWidth(j);
-                    if(separation<(width+otherWidth)*0.65f)neighbors++;
-                    if(j<i&&separation<0.025f&&Mathf.Abs(width-otherWidth)<0.025f)duplicate=true;
+                    int anchor=fallGroup[g];
+                    if(Mathf.Abs(x-fallMarks[anchor].transform.position.x)<0.025f
+                        &&Mathf.Abs(width-FallWarningWidth(anchor))<0.025f){group=g;break;}
                 }
-                if(duplicate)continue;
-                DrawFallWarning(new Vector2(x,0.04f),width,FallWarningProgress(i),clock,
-                    1/(1+neighbors*0.45f),i);
+                if(group<0){fallGroup[groups]=fallUrgent[groups]=i;groups++;}
+                else if(FallWarningRemaining(i)<FallWarningRemaining(fallUrgent[group]))fallUrgent[group]=i;
+            }
+            for(int g=0;g<groups;g++)
+            {
+                int anchor=fallGroup[g];float x=fallMarks[anchor].transform.position.x,width=FallWarningWidth(anchor);
+                int neighbors=0;
+                for(int other=0;other<groups;other++)
+                {
+                    if(other==g)continue;int j=fallGroup[other];
+                    if(Mathf.Abs(x-fallMarks[j].transform.position.x)<(width+FallWarningWidth(j))*0.65f)neighbors++;
+                }
+                DrawFallWarning(new Vector2(x,0.04f),width,FallWarningProgress(fallUrgent[g]),clock,
+                    Mathf.Max(0.55f,1/(1+neighbors*0.16f)),anchor);
             }
         }
         void DrawFallWarning(Vector2 foot,float width,float progress,float clock,float crowd,int index)
         {
             int first=count;
-            float h=Mathf.Clamp(width*2.4f,1.1f,2.2f),half=width*0.5f;
-            float power=(0.15f+0.65f*Mathf.SmoothStep(0,1,progress))*crowd;
-            float pulse=0.94f+0.06f*Mathf.Sin(clock*9+index*0.7f);
-            Vector2 tip=foot+Vector2.up*h,guard=foot+Vector2.up*(h*0.72f);
-            // Narrow blade silhouette: decoration above the ground footprint,
-            // never a filled vertical damage column.
-            Line(foot,tip,width*0.010f,power*pulse);
-            Line(foot,foot+new Vector2(-width*0.045f,h*0.78f),width*0.007f,power*0.65f);
-            Line(foot,foot+new Vector2(width*0.045f,h*0.78f),width*0.007f,power*0.65f);
-            Line(guard-new Vector2(width*0.11f,0),guard+new Vector2(width*0.11f,0),width*0.008f,power);
-            float diamond=half*Mathf.Lerp(0.83f,0.68f,Mathf.SmoothStep(0.80f,1,progress));
-            Vector2 left=foot+new Vector2(-diamond,h*0.47f),right=foot+new Vector2(diamond,h*0.47f);
-            Line(foot,left,width*0.008f,power*0.62f);Line(left,tip,width*0.008f,power*0.62f);
-            Line(tip,right,width*0.008f,power*0.62f);Line(right,foot,width*0.008f,power*0.62f);
-            // The ground ring, not the tall symbol, states the real danger width.
-            for(int step=0;step<24;step++)
-            {
-                float a=step*Mathf.PI*2/24,b=(step+1)*Mathf.PI*2/24;
-                Vector2 from=foot+new Vector2(Mathf.Cos(a)*half,Mathf.Sin(a)*0.055f);
-                Vector2 to=foot+new Vector2(Mathf.Cos(b)*half,Mathf.Sin(b)*0.055f);
-                Line(from,to,width*0.008f,0.28f+progress*0.30f);
-            }
-            if(progress>0.25f)
-                for(int branch=0;branch<3;branch++)
-                {
-                    float y=h*(0.25f+branch*0.20f),side=(branch+index)%2==0?-1:1;
-                    Vector2 from=foot+new Vector2(0,y),to=foot+new Vector2(side*diamond*0.85f,y+h*0.12f);
-                    Vector2 mid=Vector2.Lerp(from,to,0.48f)+new Vector2(width*0.06f*Mathf.Sin(clock*19+branch*4),-h*0.04f);
-                    Line(from,mid,width*0.009f,power*progress);Line(mid,to,width*0.007f,power*progress);
-                }
-            for(int arc=0;arc<2;arc++)
-            {
-                float side=arc==0?-1:1,u=Mathf.Repeat(clock*0.65f+arc*0.45f+index*0.13f,1);
-                Vector2 from=foot+new Vector2(side*diamond*(0.5f+0.3f*Mathf.Sin(u*Mathf.PI)),h*(0.20f+u*0.50f));
-                Vector2 bend=from+new Vector2(-side*width*0.05f,h*0.05f);
-                Line(from,bend,width*0.009f,power*(0.4f+progress*0.5f));
-                Line(bend,bend+new Vector2(side*width*0.025f,h*0.035f),width*0.006f,power*(0.4f+progress*0.5f));
-            }
-            // Clip every glow vertex to the true horizontal warning footprint,
-            // including arena edges. Ornaments cannot imply a wider safe gap.
+            float half=width*0.5f;
+            float ready=Mathf.SmoothStep(0,1,progress);
+            float power=(0.72f+0.28f*ready)*crowd;
+            // Dense decorations fade, but exact danger brackets stay legible.
+            float boundaryPower=(0.72f+0.28f*ready)*Mathf.Max(0.85f,crowd);
             float lo=Mathf.Max(KarmaStage.ArenaLeft,foot.x-half),hi=Mathf.Min(KarmaStage.ArenaRight,foot.x+half);
+            if(hi<=lo)return;
+            float center=(lo+hi)*0.5f,span=(hi-lo)*0.5f;
+            // All anticipation stays on the floor. The outer edges are fixed;
+            // only the inner engraving converges as the actual landing approaches.
+            WarningGround(lo,hi,progress,power);
+            Quad(new Vector2(lo,0.15f),new Vector2(hi,0.15f),0.065f,
+                new Color(0.04f,0.38f,0.86f,power*(0.16f+0.18f*ready)));
+            for(int side=-1;side<=1;side+=2)
+            {
+                float edge=side<0?lo:hi;
+                Line(new Vector2(edge,0.045f),new Vector2(edge,0.30f),0.032f+ready*0.012f,boundaryPower);
+                float inset=Mathf.Min(span*0.28f,0.18f);
+                Line(new Vector2(edge,0.30f),new Vector2(edge-side*inset,0.34f),0.025f,boundaryPower*0.82f);
+                Vector2 tip=new Vector2(center+side*span*(0.12f+0.52f*(1-ready)),0.15f);
+                Line(tip+new Vector2(side*Mathf.Min(span*0.22f,0.20f),0.07f),tip,0.025f,power*0.8f);
+                Line(tip+new Vector2(side*Mathf.Min(span*0.22f,0.20f),-0.07f),tip,0.025f,power*0.8f);
+            }
+            Line(new Vector2(center,0.08f),new Vector2(center,0.23f),0.025f,power*(0.4f+0.6f*ready));
             for(int v=first*4;v<count*4;v++)
             {buffer.vertices[v].x=Mathf.Clamp(buffer.vertices[v].x,lo,hi);buffer.vertices[v].y=Mathf.Max(0.01f,buffer.vertices[v].y);}
+        }
+        void WarningGround(float left,float right,float progress,float power)
+        {
+            float center=(left+right)*0.5f,half=(right-left)*0.5f;
+            Vector2 a=new Vector2(left,0.15f),b=new Vector2(right,0.15f);
+            // Low navy contrast, a curved cyan seal, and converging blue-white
+            // strokes remain readable without an opaque rectangular floor bar.
+            Quad(a,b,0.12f,new Color(0.008f,0.025f,0.07f,power*0.8f));
+            for(int i=0;i<32;i++)
+            {
+                float u=i*Mathf.PI*2/32,v=(i+1)*Mathf.PI*2/32;
+                Vector2 p=new Vector2(center+Mathf.Cos(u)*half,0.15f+Mathf.Sin(u)*0.11f);
+                Vector2 q=new Vector2(center+Mathf.Cos(v)*half,0.15f+Mathf.Sin(v)*0.11f);
+                Line(p,q,0.020f,power*0.65f);
+            }
+            float gap=half*(1-Mathf.SmoothStep(0,1,progress));
+            Line(a,new Vector2(center-gap,a.y),0.04f,power);
+            Line(new Vector2(center+gap,b.y),b,0.04f,power);
         }
         public static void Blade(Transform root, KarmaGame game, Transform blade, Vector2 size, bool falling)
         {
@@ -194,9 +266,17 @@ namespace KarmaPrototype
             return new ElectricSite { foot = GroundAnchor(sword), hilt = GuardAnchor(sword),
                 width = Mathf.Abs(sword.transform.lossyScale.x) * 3.96f };
         }
+        static Transform FindEnergy(Transform root,string name)
+        {
+            // Effect labels contain '/', which Transform.Find treats as a
+            // hierarchy separator. Compare direct children to reuse the batch.
+            for(int i=0;i<root.childCount;i++)
+            {var child=root.GetChild(i);if(child.gameObject.activeSelf&&child.name==name)return child;}
+            return null;
+        }
         public static void Planted(Transform root, KarmaGame game, SpriteRenderer sword, Vector2 size)
         {
-            var node = root.Find(PlantedName);
+            var node = FindEnergy(root,PlantedName);
             var fx = node == null ? null : node.GetComponent<KarmaSW05Energy>();
             if (fx == null)
             {
@@ -211,8 +291,69 @@ namespace KarmaPrototype
                 throw new System.InvalidOperationException("SW05 planted energy exceeds the 54-sword plan.");
             fx.plantedPictures[fx.plantedCount++] = sword;
         }
-        public static void Landing(Transform root, KarmaGame game, Vector2 at, float width)
-        { var fx = Create(root, game, Kind.Landing, 0.32f); fx.at = at; fx.size = new Vector2(width, 1); }
+        public static void Landing(Transform root, KarmaGame game, Vector2 at, float width, Vector2 axis)
+        {
+            var node=FindEnergy(root,LandingName);
+            var fx=node==null?null:node.GetComponent<KarmaSW05Energy>();
+            if(fx==null)
+            {
+                int savedSeed=nextSeed;
+                fx=Create(root,game,Kind.Landing,float.PositiveInfinity,4096);nextSeed=savedSeed;
+                fx.name=LandingName;fx.display.sortingOrder=32;
+                if(fx.buffer.landings==null)fx.buffer.landings=new LandingSite[54];
+            }
+            if(fx.landingCount>=fx.buffer.landings.Length)
+                throw new System.InvalidOperationException("SW05 landing batch exceeds the 54-sword plan.");
+            // Predict this frame's sampling time for new sites only. Existing
+            // impacts keep advancing when another sword lands in the same batch.
+            float born=fx.age+(fx.sampledFrame==Time.frameCount?0:Time.deltaTime);
+            fx.buffer.landings[fx.landingCount++]=new LandingSite {
+                at=at,axis=axis,width=width,born=born,seed=KarmaSwordScarRise.EnergySeed(at.x) };
+        }
+        void LandingEnergy()
+        {
+            for(int i=0;i<landingCount;)
+            {
+                var site=buffer.landings[i];float elapsed=Mathf.Max(0,age-site.born);
+                if(elapsed>=LandingSeconds)
+                {buffer.landings[i]=buffer.landings[--landingCount];continue;}
+                float t=elapsed/LandingSeconds,fade=(1-t)*(1-t),spread=1-(1-t)*(1-t)*(1-t);
+                float lo=Mathf.Max(KarmaStage.ArenaLeft,site.at.x-site.width*0.5f);
+                float hi=Mathf.Min(KarmaStage.ArenaRight,site.at.x+site.width*0.5f);
+                if(hi<=lo){i++;continue;}
+                int first=count*4;seed=site.seed;
+                Vector2 socket=new Vector2(site.at.x,0.08f);
+                // One brief ignition and a shallow pressure ripple, with no
+                // tall spokes or duplicate sprite bursts obscuring the sword.
+                float flash=1-Mathf.SmoothStep(0,1,elapsed/0.09f);
+                ScarLine(socket-Vector2.right*site.width*0.12f,socket+Vector2.right*site.width*0.12f,
+                    0.07f*flash,flash*0.9f);
+                for(int segment=0;segment<12;segment++)
+                {
+                    float a=segment*Mathf.PI*2/12,b=(segment+0.82f)*Mathf.PI*2/12;
+                    Vector2 radius=new Vector2(site.width*(0.10f+spread*0.37f),0.035f+spread*0.055f);
+                    Vector2 center=socket+Vector2.up*0.04f;
+                    ScarLine(center+Vector2.Scale(Direction(a),radius),center+Vector2.Scale(Direction(b),radius),
+                        0.024f*(1-t),fade*0.7f);
+                }
+                // Small, fast chips retain momentum and fall back to the floor.
+                // The launch leans with the incoming blade; all vertices stay
+                // inside the committed landing footprint, including at walls.
+                for(int chip=0;chip<6;chip++)
+                {
+                    float side=chip%2==0?-1:1,n=ScarNoise(chip+811);
+                    Vector2 velocity=new Vector2((side*(0.65f+n*1.1f)+site.axis.x*0.35f)*site.width,1.25f+n*1.45f);
+                    Vector2 point=socket+velocity*elapsed+Vector2.down*(11*elapsed*elapsed);
+                    if(point.y<0.025f || point.x<lo || point.x>hi)continue;
+                    float settle=Mathf.SmoothStep(0,1,(point.y-0.025f)/0.055f);
+                    Vector2 tangent=(velocity+Vector2.down*(22*elapsed)).normalized;
+                    Shard(point,tangent,(0.055f+n*0.075f)*(1-t*0.65f),fade*settle*0.74f);
+                }
+                for(int v=first;v<count*4;v++)
+                {buffer.vertices[v].x=Mathf.Clamp(buffer.vertices[v].x,lo,hi);buffer.vertices[v].y=Mathf.Max(0.015f,buffer.vertices[v].y);}
+                i++;
+            }
+        }
         public static void Eruption(Transform root, KarmaGame game, Vector2 at, float width)
         {
             var fx = Create(root,game,Kind.Eruption,0.2f);
@@ -249,82 +390,78 @@ namespace KarmaPrototype
             fx.at=at;fx.size=axis.normalized*radius;fx.display.sortingOrder=37;
             fx.name="SW04 "+(style==2?"barrier disruption":style==1?"defensive contact shock":"directional counter release")+" / no damage";
         }
-        public static void CounterFlight(Transform root,KarmaGame game,Transform shot,Vector2 axis,Vector2 size)
-        {var fx=Create(root,game,Kind.WardFlight,float.PositiveInfinity);fx.follow=shot;fx.at=axis;fx.size=size;fx.display.sortingOrder=31;}
         public static KarmaSW05Energy Prepare(Transform root, KarmaGame game,
             System.Collections.Generic.List<KarmaSW05RainBlade> swords, float seconds)
         {
-            // Restore the 036c22b warning/packed explosion composition while
-            // keeping the current pooled buffer and current damage geometry.
-            var idle = root.Find(PlantedName);
+            // Build the approved sigil / helix / blade-fan composition from the
+            // actual planted renderers. Presentation never changes damage bounds.
+            var idle = FindEnergy(root,PlantedName);
             if (idle != null) { idle.gameObject.SetActive(false); Destroy(idle.gameObject); }
-            var fx = Create(root, game, Kind.Charge, seconds, 8192);
-            fx.sites = new Vector3[swords.Count];
-            for (int i = 0; i < swords.Count; i++)
+            // The detailed fan/sigil mesh needs 11,772 quads for 54 isolated sites.
+            // Reserve once and reuse; never truncate later swords or change their shape.
+            var fx = Create(root, game, Kind.Charge, seconds, 16384);
+            var sorted = swords.ToArray();
+            System.Array.Sort(sorted, (a, b) => a.ExplosionCenter.x.CompareTo(b.ExplosionCenter.x));
+            fx.chargeSwords = sorted;
+            fx.sites = new Vector3[sorted.Length];
+            fx.chargeFeet = new Vector2[sorted.Length]; fx.chargeHilts = new Vector2[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
             {
-                var blade = swords[i]; var p = blade.ExplosionCenter;
-                fx.sites[i] = new Vector3(p.x, p.y, blade.ExplosionSize.x);
+                var blade = sorted[i]; var p = blade.ExplosionCenter;
+                fx.sites[i] = new Vector3(blade.ElectricFoot.x, p.y, blade.PlantedBlastSize.x);
+                fx.chargeFeet[i] = blade.ElectricFoot; fx.chargeHilts[i] = blade.ElectricHilt;
             }
-            System.Array.Sort(fx.sites, (a, b) => a.x.CompareTo(b.x));
-            // Show the exact union of the colliders once, avoiding dozens of
-            // translucent overlapping fills. Genuine horizontal gaps stay open.
-            var merged = new System.Collections.Generic.List<Vector3>();
-            var intervals = (Vector3[])fx.sites.Clone();
-            System.Array.Sort(intervals, (a, b) => (a.x-a.z/2).CompareTo(b.x-b.z/2));
-            foreach (var site in intervals)
+            // Consume the committed gameplay bounds; cosmetic anchors never
+            // determine damage. The normal final volley merges into one zone.
+            var intervals = new Vector3[sorted.Length];
+            for (int i = 0; i < sorted.Length; i++)
             {
-                float left = site.x - site.z / 2, right = site.x + site.z / 2;
-                if (merged.Count > 0 && left <= merged[merged.Count - 1].y)
+                var blade = sorted[i]; var p = blade.ExplosionCenter; var extent = blade.ExplosionSize;
+                intervals[i] = new Vector3(p.x - extent.x / 2, p.x + extent.x / 2, extent.y);
+            }
+            System.Array.Sort(intervals, (a, b) => a.x.CompareTo(b.x));
+            var merged = new System.Collections.Generic.List<Vector3>();
+            foreach (var interval in intervals)
+            {
+                if (merged.Count > 0 && interval.x <= merged[merged.Count - 1].y)
                 {
-                    var zone = merged[merged.Count - 1]; zone.y = Mathf.Max(zone.y, right);
+                    var zone = merged[merged.Count - 1]; zone.y = Mathf.Max(zone.y, interval.y);
                     merged[merged.Count - 1] = zone;
                 }
-                else merged.Add(new Vector3(left, right, site.y * 2));
+                else merged.Add(interval);
             }
             fx.zones = merged.ToArray();
-            var layers = new System.Collections.Generic.List<KarmaSwordPackedVfx>();
-            var sizes = new System.Collections.Generic.List<Vector2>();
-            foreach (var zone in fx.zones)
-            {
-                int tiles = Mathf.Max(1,Mathf.CeilToInt((zone.y-zone.x)/13));
-                float width = (zone.y-zone.x)/tiles;
-                for (int i = 0; i < tiles; i++)
-                {
-                    float left = zone.x+i*width;
-                    var layer = KarmaSwordPackedVfx.Spawn(fx.transform,game,KarmaSwordPackedVfx.Clip.Overcharge,
-                        new Vector2(left+width/2,0),new Vector2(width,Mathf.Min(zone.z*0.40f,2.8f)),seconds,29,0.95f,true);
-                    layer.SetBounds(new Rect(left,0,width,zone.z));
-                    layers.Add(layer); sizes.Add(new Vector2(width,zone.z));
-                }
-            }
-            fx.chargedLayers = layers.ToArray(); fx.chargedSizes = sizes.ToArray();
             fx.FinalEnergy(); fx.Upload();
             return fx;
+        }
+        void RefreshChargeAnchors()
+        {
+            // The last swords still finish their brief planting settle during
+            // charge. Follow those renderers without moving any damage bounds.
+            if(chargeSwords==null)return;
+            for(int i=0;i<chargeSwords.Length;i++)if(chargeSwords[i]!=null)
+            {chargeFeet[i]=chargeSwords[i].ElectricFoot;chargeHilts[i]=chargeSwords[i].ElectricHilt;}
         }
         public void Ignite()
         {
             if (kind != Kind.Charge) return;
-            // Keep the current summoning cleanup at release; the recovered
-            // final composition runs only once, without an extra aerial layer.
-            for (int i = transform.parent.childCount-1; i >= 0; i--)
-            {
-                var previous = transform.parent.GetChild(i).GetComponent<KarmaSW05Energy>();
-                if (previous != null && previous != this && previous.kind == Kind.Summon)
-                { previous.gameObject.SetActive(false); Destroy(previous.gameObject); }
-            }
             kind = Kind.Detonation; age = 0; life = DetonationVisualSeconds; display.sortingOrder = 4; // Below character bodies (order 5).
             display.enabled = true;
             detonationFrame = Time.frameCount;
             // Replace the charge draw immediately on the real shared release.
             // The first render must see the peak, even on a long release frame.
             count = 0; CapacityExceeded = false;
-            for (int i = 0; i < chargedLayers.Length; i++)
-                if (chargedLayers[i] != null)
-                {
-                    chargedLayers[i].Play(KarmaSwordPackedVfx.Clip.Detonation,chargedSizes[i],8f/24,0.65f);
-                    chargedLayers[i].GetComponent<SpriteRenderer>().sortingOrder = 4;
-                }
             FinalEnergy(); Upload();
+            foreach(var zone in zones)
+            {
+                int clusters=Mathf.Clamp(Mathf.CeilToInt((zone.y-zone.x)/1.4f),1,48);
+                for(int cluster=0;cluster<clusters;cluster++)
+                {
+                    float x=Mathf.Lerp(zone.x,zone.y,(cluster+0.3f+Noise(cluster+500)*0.4f)/clusters);
+                    EmitSplinters(transform.parent,game,new Vector2(x,0.16f),
+                        zone.x,zone.y,zone.z,7,seed+cluster);
+                }
+            }
             // Historical fade belongs to the encounter, not a 120ms damage
             // owner. There is no delayed residual-electricity phase.
         }
@@ -375,19 +512,73 @@ namespace KarmaPrototype
         static void ScarGroundImpact(Transform root,KarmaGame game,Vector2 ground,float width)
         {
             const string name="SW03 grouped ground discharge / no damage";
-            var node=root.Find(name);
+            var node=FindEnergy(root,name);
             KarmaSW05Energy fx;
             if(node==null)
             {
                 // One pooled mesh/draw for all 26 simultaneous floor impacts.
                 // Do not advance the visual sequence of any other skill.
                 int savedSeed=nextSeed;
-                fx=Create(root,game,Kind.Eruption,0.17f,2048);nextSeed=savedSeed;
+                fx=Create(root,game,Kind.Eruption,0.17f,4096);nextSeed=savedSeed;
                 fx.name=name;fx.sites=new Vector3[32];fx.display.sortingOrder=31;
             }
             else fx=node.GetComponent<KarmaSW05Energy>();
             if(fx.scarSiteCount<fx.sites.Length)
                 fx.sites[fx.scarSiteCount++]=new Vector3(ground.x,ground.y,width);
+            EmitSplinters(root,game,ground+Vector2.up*0.12f,
+                ground.x-width*0.46f,ground.x+width*0.46f,2.4f,7,KarmaSwordScarRise.EnergySeed(ground.x));
+        }
+        // Reuse the existing two-facet shard mesh, material and mesh pool.
+        // One draw and at most 384 live fragments per pattern, no physics or
+        // per-fragment GameObjects. Full batches drop excess decoration only.
+        static void EmitSplinters(Transform root,KarmaGame game,Vector2 at,
+            float left,float right,float height,int amount,int seed)
+        {
+            var node=FindEnergy(root,SplinterName);
+            var fx=node==null?null:node.GetComponent<KarmaSW05Energy>();
+            if(fx==null)
+            {
+                int savedSeed=nextSeed;
+                fx=Create(root,game,Kind.Splinters,float.PositiveInfinity,SplinterLimit*2);
+                nextSeed=savedSeed;fx.name=SplinterName;fx.display.sortingOrder=4;
+                if(fx.buffer.splinters==null)fx.buffer.splinters=new Splinter[SplinterLimit];
+            }
+            fx.splinterFrame=Time.frameCount;fx.display.enabled=true;
+            float margin=Mathf.Min(0.12f,(right-left)*0.2f);
+            at.x=Mathf.Clamp(at.x,left+margin,right-margin);
+            for(int i=0;i<amount&&fx.splinterCount<SplinterLimit;i++)
+            {
+                float n=Mathf.Repeat(Mathf.Sin((seed%4096+i*31)*12.9898f)*43758.5453f,1);
+                float duration=0.24f+n*0.24f;
+                float vx=(i%2==0?-1:1)*(2+n*7);
+                vx=Mathf.Clamp(vx,(left+margin-at.x)/duration,(right-margin-at.x)/duration);
+                fx.buffer.splinters[fx.splinterCount++]=new Splinter {
+                    origin=at,velocity=new Vector2(vx,Mathf.Min(height*0.82f/duration,3+n*10)),
+                    born=fx.age,life=duration,length=0.12f+n*0.28f,
+                    left=left,right=right,floor=at.y-0.12f,ceiling=at.y+height };
+            }
+            // LateUpdate builds and uploads once after all sites have emitted.
+        }
+        void SplinterEnergy()
+        {
+            for(int i=0;i<splinterCount;)
+            {
+                var s=buffer.splinters[i];float elapsed=age-s.born;
+                if(elapsed>=s.life)
+                {buffer.splinters[i]=buffer.splinters[--splinterCount];continue;}
+                float t=Mathf.Clamp01(elapsed/s.life),fade=(1-t)*(1-t);
+                Vector2 p=s.origin+s.velocity*elapsed+Vector2.down*(3*elapsed*elapsed);
+                Vector2 axis=(s.velocity+Vector2.down*(6*elapsed)).normalized;
+                int first=count*4;
+                Shard(p,axis,s.length*(1-t*0.65f),fade*0.9f);
+                // Clip the entire facet, including its bright tip, at safe gaps.
+                for(int v=first;v<count*4;v++)
+                {
+                    buffer.vertices[v].x=Mathf.Clamp(buffer.vertices[v].x,s.left,s.right);
+                    buffer.vertices[v].y=Mathf.Clamp(buffer.vertices[v].y,s.floor,s.ceiling);
+                }
+                i++;
+            }
         }
         void ScarGroundEnergy()
         {
@@ -407,7 +598,7 @@ namespace KarmaPrototype
                 }
                 ScarLine(ground-Vector2.right*w*0.12f,ground+Vector2.right*w*0.12f,0.085f,fade*gain);
                 // A shallow, expanding pressure front stays inside this sword's
-                // footprint. 20 quads/site; even 32 sites fit the 2048 budget.
+                // footprint; all 32 sites share the bounded 4096-quad mesh.
                 float spread=1-(1-t)*(1-t)*(1-t);
                 for(int step=0;step<10;step++)
                 {
@@ -420,7 +611,16 @@ namespace KarmaPrototype
                 // A short grounded jet gives the eruption a distinct attack
                 // frame. It vanishes before the quieter sustained electricity.
                 float punch=1-Mathf.SmoothStep(0,1,t/0.55f);
-                ScarLine(ground,ground+Vector2.up*w*(0.35f+0.45f*spread),0.055f*punch,punch*gain);
+                // Three asymmetric glass-like splinters open from the socket,
+                // then burn away before the steel blade's sustained electricity.
+                for(int blade=-1;blade<=1;blade++)
+                {
+                    float reach=w*(blade==0?1.05f:0.65f)*(0.45f+spread*0.55f);
+                    Vector2 tip=ground+new Vector2(blade*w*0.32f,reach);
+                    JudgementBlade(ground,tip,w*0.075f,punch*gain,site*11+blade+20);
+                }
+                ScarLine(ground-Vector2.right*w*0.15f,ground+Vector2.right*w*0.15f,
+                    0.14f*punch,punch);
                 for(int i=0;i<4;i++)
                 {
                     float side=i%2==0?-1:1,launch=0.65f+ScarNoise(i+621)*0.60f;
@@ -443,7 +643,8 @@ namespace KarmaPrototype
             if(kind==Kind.ScarWarning)
             {
                 float buildup=charge*charge*(3-2*charge);
-                float pulse=0.32f+buildup*0.68f;
+                float imminent=Mathf.SmoothStep(0,1,Mathf.InverseLerp(0.78f,1,charge));
+                float pulse=0.32f+buildup*0.38f+imminent*0.30f;
                 // A fixed, low fissure shows the committed footprint throughout
                 // the countdown. Its luminous center fills as the cast charges.
                 Vector2 previous=at+new Vector2(-w*0.43f,0.075f);
@@ -471,6 +672,17 @@ namespace KarmaPrototype
                 float convergence=1-buildup;
                 Ring(at+Vector2.up*0.09f,new Vector2(w*(0.16f+convergence*0.25f),0.06f+convergence*0.10f),
                     0,pulse*0.45f,16);
+                // The same four-point star as the judgement blade, kept low
+                // inside the committed floor mark rather than a false hit column.
+                Vector2 seal=at+Vector2.up*(0.10f+buildup*0.12f);
+                float sealWidth=w*(0.05f+buildup*0.06f),sealHeight=0.12f+buildup*0.24f;
+                for(int side=-1;side<=1;side+=2)
+                {
+                    ScarLine(seal+Vector2.up*sealHeight,seal+Vector2.right*side*sealWidth,
+                        0.012f,pulse*0.55f);
+                    ScarLine(seal+Vector2.right*side*sealWidth,seal-Vector2.up*0.08f,
+                        0.012f,pulse*0.45f);
+                }
                 if(charge>0.75f)
                 {
                     // One closing cue, driven by the real charge progress;
@@ -485,15 +697,19 @@ namespace KarmaPrototype
             if(kind==Kind.ScarFade)
             {
                 float t=Mathf.Clamp01(age/life),fade=(1-t)*(1-t);
+                Vector2 retreat=-Vector2.up*KarmaSwordScarRise.RetractionDistance(age,size.y);
+                int first=count*4;
                 for(int i=0;i<4;i++)
                 {
                     float y=0.12f+ScarNoise(i+31)*0.74f;
                     float side=i%2==0?-1:1;
-                    Vector2 p=ScarEdge(y,side)+new Vector2(side*t*0.12f,t*0.42f);
+                    Vector2 p=ScarEdge(y,side)+retreat+new Vector2(side*t*0.12f,0);
+                    if(p.y<=scarFloor+0.04f)continue;
                     Shard(p,new Vector2(side*0.25f,1).normalized,(0.09f+ScarNoise(i+61)*0.14f)*fade,fade*0.5f);
                 }
                 if(t<0.38f && ScarNoise(81)>0.45f)
-                    ScarArc(ScarEdge(0.35f,1),ScarEdge(0.41f,1),0.014f,fade*0.35f,81);
+                    ScarArc(ScarEdge(0.35f,1)+retreat,ScarEdge(0.41f,1)+retreat,0.014f,fade*0.35f,81);
+                for(int v=first;v<count*4;v++)buffer.vertices[v].y=Mathf.Max(scarFloor,buffer.vertices[v].y);
                 return;
             }
             float energyAge=age-KarmaSwordScarRise.AuraDelay;
@@ -503,14 +719,56 @@ namespace KarmaPrototype
             // Two brief streams race up the corrected blade profile, then hand
             // over to intermittent arcs. Reuse the existing mesh and local clock.
             float surge=Mathf.Clamp01(energyAge/0.16f);
+            // Small white-cyan star glints connect this rising blade to SW05's
+            // fuller ornaments. One travelling crest, then quiet staggered sparks.
+            for(int star=0;star<3;star++)
+            {
+                float y=0.32f+star*0.22f;
+                Vector2 center=ScarEdge(y,0);
+                if(center.y<=scarFloor+0.04f)continue;
+                float crest=1-Mathf.Clamp01(Mathf.Abs(surge-y)*5);
+                float gain=ignition*(0.10f+crest*0.65f)*(0.8f+ScarNoise(star+701)*0.2f);
+                float span=Mathf.Min(size.x*0.065f,0.10f)*(0.65f+crest*0.35f);
+                ScarLine(center-Vector2.up*span*2.8f,center+Vector2.up*span*2.8f,
+                    0.018f,gain);
+                ScarLine(center-Vector2.right*span,center+Vector2.right*span,
+                    0.012f,gain*0.75f);
+            }
             if(surge<1)
             {
                 float crest=Mathf.Sin(surge*Mathf.PI)*0.75f;
                 for(int side=-1;side<=1;side+=2)
                 {
                     float head=Mathf.Lerp(0.16f,0.94f,surge);
-                    ScarLine(ScarEdge(Mathf.Max(0.08f,head-0.22f),side),ScarEdge(head,side),0.028f,crest);
+                    // The crest traces the actual bevel instead of cutting a
+                    // straight chord across the sword's changing silhouette.
+                    float tail=Mathf.Max(0.08f,head-0.28f);
+                    Vector2 previous=ScarEdge(tail,side);
+                    for(int segment=1;segment<=6;segment++)
+                    {
+                        float u=segment/6f;
+                        Vector2 next=ScarEdge(Mathf.Lerp(tail,head,u),side);
+                        ScarLine(previous,next,Mathf.Lerp(0.014f,0.047f,u),crest*u*ignition);
+                        previous=next;
+                    }
+                    // A single small spark leaves the moving front; the body
+                    // of the blade remains opaque and adjacent gaps stay clear.
+                    Shard(previous,new Vector2(side*0.22f,1).normalized,
+                        0.16f+crest*0.12f,crest*ignition*0.8f);
                 }
+            }
+            // The ascending crest releases one restrained tip flash. Its short
+            // diagonal rays follow the sword's narrow silhouette, then disappear.
+            float tipAge=energyAge-0.14f;
+            if(tipAge>=0 && tipAge<0.10f)
+            {
+                float tipT=tipAge/0.10f,gain=Mathf.Sin(tipT*Mathf.PI)*(1-tipT);
+                Vector2 tip=ScarEdge(0.98f,0);
+                float ray=0.10f+gain*0.13f;
+                ScarLine(tip-Vector2.up*ray,tip+Vector2.up*ray,0.022f,gain*0.8f);
+                for(int side=-1;side<=1;side+=2)
+                    ScarLine(tip-new Vector2(side*ray*0.45f,ray*0.22f),
+                        tip+new Vector2(side*ray*0.45f,ray*0.22f),0.012f,gain*0.65f);
             }
             // Two event slots share the existing mesh. Each short discharge has
             // a stable jagged shape, a dark interval and a per-sword schedule.
@@ -527,14 +785,15 @@ namespace KarmaPrototype
                 float y=0.13f+ScarNoise(id+3)*0.67f;
                 float reach=0.08f+ScarNoise(id+4)*0.065f;
                 Vector2 from=ScarEdge(y,side),to=ScarEdge(y+reach,side);
-                float flash=ignition*Mathf.Sqrt(1-phase/duration)*(emerging?0.85f:0.70f);
-                ScarArc(from,to,0.055f+ScarNoise(id+5)*0.020f,flash,id);
+                float flash=ignition*Mathf.Sqrt(1-phase/duration)*(emerging?0.95f:0.78f);
+                float extension=Mathf.SmoothStep(0,1,phase/(duration*0.28f));
+                ScarArc(from,to,0.044f+ScarNoise(id+5)*0.016f,flash,id,extension);
                 if(ScarNoise(id+6)>0.63f)
                     Shard(to,new Vector2(side*0.4f,1).normalized,0.15f+ScarNoise(id+7)*0.18f,flash*0.65f);
             }
-            // Actual full-height event stays at 80 ms. Only the secondary
-            // electrical accents get a tiny per-site delay and distinct shape.
-            float burstAge=age-KarmaSwordScarRise.RiseSeconds*0.8f-ScarNoise(501)*0.018f;
+            // Seat the electrical accent after the visible rise completes; only
+            // its secondary sparks receive a tiny per-site delay.
+            float burstAge=age-KarmaSwordScarRise.RiseSeconds-ScarNoise(501)*0.018f;
             if(burstAge>=0 && burstAge<0.13f)
             {
                 float t=burstAge/0.13f,fade=(1-t)*(1-t);
@@ -559,15 +818,17 @@ namespace KarmaPrototype
             point.y=Mathf.Max(scarFloor+0.035f,point.y);
             return point;
         }
-        void ScarArc(Vector2 a,Vector2 b,float width,float alpha,int id)
+        void ScarArc(Vector2 a,Vector2 b,float width,float alpha,int id,float progress=1)
         {
             Vector2 axis=(b-a).normalized,n=new Vector2(-axis.y,axis.x),p=a;
             float jitter=Mathf.Min(0.20f,Vector2.Distance(a,b)*0.22f);
             for(int i=1;i<=5;i++)
             {
                 Vector2 q=Vector2.Lerp(a,b,i/5f)+n*(i==5?0:(ScarNoise(id*17+i)-0.5f)*jitter*2);
-                ScarLine(p,q,width,alpha);
-                if(i==3)
+                float extension=Mathf.Clamp01(progress*5-(i-1));
+                if(extension<=0)break;
+                ScarLine(p,Vector2.Lerp(p,q,extension),width,alpha);
+                if(i==3 && extension>=1)
                 {
                     Vector2 elbow=q+n*(ScarNoise(id+19)>0.5f?jitter:-jitter)+axis*0.05f;
                     Vector2 tip=elbow+(elbow-q)*0.45f+axis*0.10f;
@@ -586,18 +847,6 @@ namespace KarmaPrototype
 
         void WardEnergy()
         {
-            if(kind==Kind.WardFlight)
-            {
-                Vector2 p=follow.position,flightAxis=at,flightNormal=new Vector2(-flightAxis.y,flightAxis.x);
-                Line(p-flightAxis*size.x*0.35f,p+flightAxis*size.x*0.48f,size.y*0.05f,1);
-                for(int side=-1;side<=1;side+=2)
-                {
-                    Vector2 edge=p+flightNormal*size.y*0.34f*side;
-                    Bolt(edge-flightAxis*size.x*0.25f,edge+flightAxis*size.x*0.38f,0.065f,0.85f,side+7);
-                    Line(edge-flightAxis*size.x*0.6f,edge-flightAxis*size.x*0.1f,0.035f,0.7f);
-                }
-                return;
-            }
             float t=Mathf.Clamp01(age/life),fade=(1-t)*(1-t),radius=size.magnitude;
             Vector2 axis=size.normalized,n=new Vector2(-axis.y,axis.x);
             if(kind==Kind.WardRelease)
@@ -637,28 +886,6 @@ namespace KarmaPrototype
             {
                 float a = i * Mathf.PI * 2 / steps + turn, b = (i+0.82f) * Mathf.PI * 2 / steps + turn;
                 Line(center+Vector2.Scale(Direction(a),radius),center+Vector2.Scale(Direction(b),radius),0.025f,alpha);
-            }
-        }
-        void Summoning()
-        {
-            Vector2 p = follow.position;
-            float pulse = 0.65f + 0.35f * Mathf.Sin(age * 12);
-            Ring(p, new Vector2(7.2f,4.4f),age*0.65f,0.85f,64);
-            Ring(p, new Vector2(5.5f,5.5f),-age*0.8f,0.55f,48);
-            Ring(p, new Vector2(3.3f,3.3f),age*1.4f,0.7f,32);
-            for (int i = 0; i < 12; i++)
-            {
-                Vector2 axis = Direction(i*Mathf.PI/6 + age*0.65f), mark = p+Vector2.Scale(axis,new Vector2(7.2f,4.4f));
-                SwordShard(mark,axis,0.65f+0.2f*pulse,0.85f);
-                Line(mark-axis*0.45f,mark+axis*0.45f,0.055f,0.8f);
-                Line(mark+axis*0.45f,mark+new Vector2(-axis.y,axis.x)*0.22f,0.025f,0.75f);
-                if(i%2==0)Bolt(p+axis*(4.5f+Noise(i)*1.4f),p+axis*1.4f,0.075f,pulse,i);
-            }
-            for (int i = 0; i < 18; i++)
-            {
-                float t = Mathf.Repeat(age*1.8f+Noise(i),1); Vector2 axis = Direction(Noise(i+31)*Mathf.PI*2);
-                Vector2 q = p+axis*Mathf.Lerp(5.7f,0.8f,t);
-                Line(q,q-axis*0.35f,0.025f,t*0.7f);
             }
         }
         void BladeEnergy()
@@ -832,90 +1059,228 @@ namespace KarmaPrototype
                 ClipFinalRegion(first,zone);
             }
         }
+        // A tapered strip with a transparent edge. Unlike a widened line this
+        // keeps the open ends of the approved ribbons thin and pointed.
+        void RibbonSegment(Vector2 a, Vector2 b, float wa, float wb, float alpha)
+        {
+            Vector2 d = (b-a).normalized, n = new Vector2(-d.y,d.x);
+            for (int layer=0;layer<2;layer++)
+            {
+                if (count >= buffer.capacity) { CapacityExceeded=true; return; }
+                float scale=layer==0?2.6f:1;
+                int v=count++*4;
+                buffer.vertices[v]=a-n*wa*scale; buffer.vertices[v+1]=a+n*wa*scale;
+                buffer.vertices[v+2]=b-n*wb*scale; buffer.vertices[v+3]=b+n*wb*scale;
+                Color c=layer==0?Blue:White; c.a=alpha*(layer==0?0.18f:1);
+                for(int k=0;k<4;k++)buffer.colors[v+k]=c;
+            }
+        }
+        void Facet(Vector2 a,Vector2 b,Vector2 c,Color tint,float rootAlpha,float tipAlpha)
+        {
+            if(count>=buffer.capacity){CapacityExceeded=true;return;}
+            int v=count++*4;
+            buffer.vertices[v]=a;buffer.vertices[v+1]=b;
+            buffer.vertices[v+2]=buffer.vertices[v+3]=c;
+            tint.a=rootAlpha;buffer.colors[v]=buffer.colors[v+1]=tint;
+            tint.a=tipAlpha;buffer.colors[v+2]=buffer.colors[v+3]=tint;
+        }
+        // Angular, asymmetric sword-energy planes: blue outer glass, cyan bevel,
+        // white split core and a hooked shoulder. No identical triangular rays.
+        void JudgementBlade(Vector2 root,Vector2 tip,float breadth,float power,int id)
+        {
+            Vector2 d=tip-root,n=new Vector2(-d.y,d.x).normalized;
+            Vector2 shoulder=root+d*(0.42f+Noise(id)*0.13f);
+            Vector2 left=shoulder-n*breadth,right=shoulder+n*breadth*0.58f;
+            Vector2 notch=root+d*0.67f-n*breadth*0.13f;
+            Facet(root,left,tip,Blue,power*0.13f,power*0.06f);
+            Facet(root,right,tip,Blue,power*0.27f,power*0.08f);
+            Facet(root,left,notch,new Color(0.12f,0.83f,1.3f),power*0.40f,power*0.24f);
+            Facet(root,shoulder+n*breadth*0.16f,tip,White,power*0.83f,power*0.18f);
+            Facet(root,shoulder-n*breadth*0.12f,notch,White,power*0.95f,power*0.75f);
+            Vector2 hook=left+d*0.15f-n*breadth*0.23f;
+            Facet(left,notch,hook,White,power*0.65f,power*0.12f);
+            RibbonSegment(left,notch,breadth*0.032f,0,power*0.8f);
+            RibbonSegment(right,tip,breadth*0.02f,0,power*0.7f);
+        }
+        int FinalSite(Vector3 zone,int cluster,int clusters)
+        {
+            float target=zone.x+(zone.y-zone.x)*(cluster+0.5f)/clusters;
+            int nearest=-1;float distance=float.PositiveInfinity;
+            for(int i=0;i<sites.Length;i++)
+            {
+                if(sites[i].x<zone.x || sites[i].x>zone.y)continue;
+                float d=Mathf.Abs(sites[i].x-target);
+                if(d<distance){distance=d;nearest=i;}
+            }
+            return nearest;
+        }
+        void GroundSigil(Vector2 foot,float radius,float power,float contraction,int steps)
+        {
+            for(int ring=0;ring<2;ring++)
+            {
+                float r=radius*(ring==0?1:0.66f)*(1-contraction*0.28f);
+                for(int j=0;j<steps;j++)
+                {
+                    if((j+ring*2)%7==0)continue;
+                    float a=j*Mathf.PI*2/steps,b=(j+0.88f)*Mathf.PI*2/steps;
+                    Vector2 p=foot+new Vector2(Mathf.Cos(a)*r,Mathf.Sin(a)*r*0.16f);
+                    Vector2 q=foot+new Vector2(Mathf.Cos(b)*r,Mathf.Sin(b)*r*0.16f);
+                    Line(p,q,0.014f,power*(ring==0?0.55f:0.8f));
+                }
+            }
+            for(int i=0;i<4;i++)
+            {
+                float a=i*Mathf.PI*0.5f;
+                Vector2 p=foot+new Vector2(Mathf.Cos(a)*radius,Mathf.Sin(a)*radius*0.16f);
+                Vector2 h=new Vector2(radius*0.07f,0),v=new Vector2(0,0.065f);
+                Line(p-h,p+v,0.012f,power);Line(p+v,p+h,0.012f,power);
+                Line(p+h,p-v,0.012f,power);Line(p-v,p-h,0.012f,power);
+            }
+        }
         void FinalEnergy()
         {
             if (kind == Kind.Detonation && age >= life) return;
-            float t = Mathf.Clamp01(age/life);
-            // No final range overlay. A single shared release clock drives all
-            // grounded eruptions; charge/formation/landing stay separate.
-            if (kind == Kind.Detonation) { FinalEruption(t); return; }
-            foreach (var layer in chargedLayers) if (layer != null) layer.SetProgress(t);
-            for (int i = 0; i < sites.Length; i++)
+            float t=Mathf.Clamp01(age/life);
+            if(kind==Kind.Detonation){FinalEruption(t);return;}
+            float compression=Mathf.SmoothStep(0,1,Mathf.InverseLerp(0.65f,1,t));
+            // Ground countdown and the existing winding aura only. Eruption
+            // geometry starts exclusively on the shared damage/release frame.
+            float winding=Mathf.SmoothStep(0,1,Mathf.InverseLerp(0.12f,0.48f,t));
+            foreach(var zone in zones)
             {
-                Vector2 p = new Vector2(sites[i].x,0.12f); float width = sites[i].z;
-                int chargeFirst=count*4;
-                float pulse = 0.5f + 0.5f * Mathf.Pow(0.5f+0.5f*Mathf.Sin(t*12+t*t*35),3);
-                if (i > 0 && p.x-sites[i-1].x <= (width+sites[i-1].z)/2)
-                    Bolt(new Vector2(sites[i-1].x,2.4f+t*1.5f),new Vector2(p.x,2.4f+t*1.5f),0.08f+t*0.06f,pulse,i);
-                Bolt(p+new Vector2(-width*0.3f,0.3f+t*0.6f),p+new Vector2(width*0.3f,0.2f),0.035f,pulse,i+100);
-                float u = Mathf.Repeat(age*(2+t*4)+Noise(i),1);
-                Line(p+Vector2.up*(1-u)*1.8f,p+Vector2.up*((1-u)*1.8f+0.18f),0.025f,t*0.6f);
-                foreach (var zone in zones)
-                    if (p.x >= zone.x && p.x <= zone.y) { ClipFinalRegion(chargeFirst,zone); break; }
+                int first=count*4,clusters=Mathf.Clamp(Mathf.CeilToInt((zone.y-zone.x)/3.8f),1,18);
+                WarningGround(zone.x,zone.y,t,0.68f+0.32f*t);
+                // Light boundary strokes announce the actual jump-clearance ceiling.
+                for (int k = 0; k < clusters * 4; k++)
+                {
+                    float x0 = Mathf.Lerp(zone.x, zone.y, k / (float)(clusters * 4));
+                    float x1 = Mathf.Lerp(zone.x, zone.y, (k + 1f) / (clusters * 4));
+                    Line(new Vector2(x0, zone.z - 0.025f), new Vector2(x1, zone.z - 0.025f), 0.014f,
+                        (0.25f + 0.18f * t) * (0.7f + 0.3f * Mathf.Sin(age * 8 + k)));
+                }
+                for (int side = 0; side < 2; side++)
+                {
+                    float x = side == 0 ? zone.x : zone.y;
+                    Line(new Vector2(x, 0.04f), new Vector2(x, zone.z - 0.025f), 0.014f, 0.28f + 0.2f * t);
+                }
+                int previous=-1,steps=zones.Length>20?10:24;
+                for(int cluster=0;cluster<clusters;cluster++)
+                {
+                    int i=FinalSite(zone,cluster,clusters);if(i<0||i==previous)continue;previous=i;
+                    Vector2 foot=chargeFeet[i],hilt=chargeHilts[i];
+                    float span=Mathf.Min(Vector2.Distance(foot,hilt),zone.z*0.6f);
+                    Vector2 axis=(hilt-foot).normalized,n=new Vector2(-axis.y,axis.x);
+                    float width=Mathf.Min(sites[i].z*0.46f,(zone.y-zone.x)/clusters*0.46f);
+                    float power=0.4f+t*0.6f;
+                    GroundSigil(foot,width,power*(1-compression*0.8f),compression,steps);
+                    // Two counter-wound open coils follow the planted sword, then
+                    // collapse into its fuller rather than expanding before impact.
+                    for(int coil=0;coil<2;coil++)
+                        for(int k=0;k<steps;k++)
+                        {
+                            float u=k/(float)steps,v=(k+1f)/steps;
+                            float a=u*7.8f-age*5+coil*Mathf.PI,b=v*7.8f-age*5+coil*Mathf.PI;
+                            float r=width*0.34f*(1-compression*0.94f);
+                            Vector2 p=foot+axis*(u*span)+n*(Mathf.Sin(a)*r*(0.5f+u*0.5f));
+                            Vector2 q=foot+axis*(v*span)+n*(Mathf.Sin(b)*r*(0.5f+v*0.5f));
+                            float alpha=power*winding*(1-compression*0.78f)*Mathf.Sin(u*Mathf.PI)*(0.3f+0.7f*(Mathf.Cos(a)*0.5f+0.5f));
+                            RibbonSegment(p,q,0.019f*Mathf.Sin(u*Mathf.PI),0.019f*Mathf.Sin(v*Mathf.PI),alpha);
+                        }
+                    Line(foot,foot+axis*span,0.018f,power*(0.25f+compression*0.5f));
+                    for(int side=-1;side<=1;side+=2)
+                    {
+                        Vector2 elbow=foot+new Vector2(side*width*0.5f,0.16f);
+                        Line(foot,elbow,0.022f,power*(1-compression));
+                        Line(elbow,foot+new Vector2(side*width,0),0.012f,power*(1-compression));
+                        RibbonSegment(foot,foot+axis*span*0.75f+n*side*width*0.42f,
+                            0.03f,0,compression*0.3f);
+                    }
+                }
+                ClipFinalRegion(first,zone);
             }
         }
         void FinalEruption(float t)
         {
-            float travel = 1 - Mathf.Pow(1-t,3);
-            float tail = (1-t)*(1-t), peak = tail*(1-t);
-            foreach (var zone in zones)
+            float travel=1-Mathf.Pow(1-t,3),tail=(1-t)*(1-t);
+            float peak=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(0.18f,0.72f,t));
+            float opening=1-Mathf.Pow(1-Mathf.Clamp01(t/0.23f),3);
+            float flash=1-Mathf.SmoothStep(0,1,t/0.24f);
+            foreach(var zone in zones)
             {
-                int first = count*4;
-                float width = zone.y-zone.x, height = zone.z;
-                // Spatially budget a connected field instead of stacking 54
-                // full-opacity explosions. Each fan starts at a real blade.
-                int clusters = Mathf.Clamp(Mathf.CeilToInt(width/4),1,18);
-                float previous = float.NegativeInfinity;
-                for (int cluster = 0; cluster < clusters; cluster++)
+                int first=count*4;
+                float width=zone.y-zone.x,height=zone.z;
+                int cells=Mathf.Clamp(Mathf.CeilToInt(width/1.1f),2,72);
+                float step=width/cells;
+                // Restore the broad, simultaneous burst and its original tail.
+                // All ridges share one ceiling; overlapping roots fill the zone.
+                for(int cell=0;cell<cells;cell++)
                 {
-                    float target = zone.x+width*(cluster+0.5f)/clusters;
-                    int nearest = -1; float distance = float.PositiveInfinity;
-                    for (int i=0;i<sites.Length;i++)
+                    int key=cell*31+Mathf.FloorToInt(zone.x*13)+1700;
+                    float x=zone.x+(cell+0.5f)*step;
+                    float h=height-0.04f;
+                    float lean=(Noise(key+1)-0.5f)*step*0.65f;
+                    Vector2 left=new Vector2(x-step*0.61f,0.04f);
+                    Vector2 right=new Vector2(x+step*0.61f,0.04f);
+                    Vector2 crest=new Vector2(x+lean,h);
+                    if(peak>0.001f)
                     {
-                        if (sites[i].x<zone.x || sites[i].x>zone.y) continue;
-                        float d = Mathf.Abs(sites[i].x-target);
-                        if (d<distance) { distance=d; nearest=i; }
+                        EruptionPlume(new Vector2(x,0.04f),step*0.85f,h,travel,peak,key);
+                        if(cell%2==1)
+                        {
+                            // Slightly firmer electrical cores preserve the old
+                            // silhouette without raising the broad plume glow.
+                            Bolt(new Vector2(x,0.22f),crest,0.062f,peak,key+3);
+                            Vector2 fork=Vector2.Lerp(new Vector2(x,0.22f),crest,0.55f);
+                            Bolt(fork,fork+new Vector2(step*0.55f,height*0.17f),0.032f,peak*0.75f,key+4);
+                        }
+                        if(flash>0.001f)
+                            EruptionPlume(new Vector2(x,0.04f),step*1.12f,h*0.48f,travel,flash,key+37);
+                        Vector2 front=new Vector2(x+lean*0.4f,h*(0.10f+opening*0.44f));
+                        RibbonSegment(front-Vector2.right*step*0.42f,front+Vector2.right*step*0.42f,
+                            0.035f,0.012f,flash*0.8f);
                     }
-                    if (nearest<0 || Mathf.Abs(sites[nearest].x-previous)<0.05f) continue;
-                    float x = previous = sites[nearest].x;
-                    Vector2 foot = new Vector2(x,0.08f);
-                    float spread = Mathf.Min(width/clusters*0.8f,3.2f);
-                    float prominence = 0.74f+0.24f*(1-Mathf.Abs((cluster+0.5f)/clusters*2-1));
-                    for (int ray=-3;ray<=3;ray++)
+                    Line(left,right,0.14f+opening*0.10f,flash*0.9f);
+                    for(int j=0;j<5;j++)
                     {
-                        float variation = ray==0 ? 1 : 0.72f+Noise(nearest*43+ray+400)*0.28f;
-                        float h = height*prominence*(1-Mathf.Abs(ray)*0.13f)*variation*(0.82f+travel*0.18f);
-                        float skew = ray==0 ? 0 : (Noise(nearest*37+ray+500)-0.5f)*0.35f;
-                        Vector2 end = foot+new Vector2((ray/3f+skew)*spread,h);
-                        Vector2 axis = (end-foot).normalized;
-                        // Broad blue silhouette, narrow white-hot tip/core.
-                        // The shared cubic fade leaves only a short electric tail.
-                        Shard(foot,axis,(end-foot).magnitude,peak*(ray==0?0.95f:0.65f));
-                        if (ray%2==0) Bolt(foot,end,0.065f,peak*0.75f,nearest*31+ray+900);
-                    }
-                    // Short outward ground cracks do not bridge safe gaps.
-                    for (int side=-1;side<=1;side+=2)
-                    {
-                        Vector2 elbow=foot+new Vector2(side*spread*0.45f,0.16f);
-                        Vector2 end=foot+new Vector2(side*spread*(0.45f+travel*0.55f),0.02f);
-                        Line(foot,elbow,0.055f,tail*0.8f); Line(elbow,end,0.035f,tail*0.7f);
-                        Line(elbow,elbow+new Vector2(side*spread*0.2f,0.26f),0.025f,tail*0.5f);
-                    }
-                    for (int j=0;j<4;j++)
-                    {
-                        float u=Noise(nearest*19+j+70);
-                        Vector2 axis=new Vector2((u-0.5f)*1.4f,0.7f).normalized;
-                        Vector2 p=foot+new Vector2(axis.x*spread, height*(0.18f+u*0.65f))*(0.2f+travel*0.8f);
-                        Shard(p,axis,(0.35f+u*0.5f)*(1-t),tail*0.6f);
-                        Line(p-axis*0.35f*travel,p,0.022f,tail*0.35f);
+                        float u=Noise(key+j+9);
+                        Vector2 p=new Vector2(x+(u-0.5f)*step,
+                            height*(0.08f+u*0.65f)*(0.55f+travel*0.45f));
+                        Vector2 axis=new Vector2((Noise(key+j+15)-0.5f)*1.2f,1).normalized;
+                        RibbonSegment(p-axis*(0.10f+travel*0.38f),p,
+                            0.022f*(1-t),0,tail*0.8f);
+                        Shard(p,axis,(0.16f+u*0.18f)*(1-t),tail*0.9f);
                     }
                 }
-                // A low shared shockwave makes the simultaneous blades read as
-                // one ultimate. No airborne circles or full-height filled box.
-                int steps=Mathf.Clamp(384/zones.Length,8,48);
-                Ring(new Vector2((zone.x+zone.y)/2,0.10f),
-                    new Vector2(width*0.49f*(0.25f+travel*0.75f),0.08f+travel*0.32f),0,tail*0.75f,steps);
                 ClipFinalRegion(first,zone);
+            }
+        }
+        void EruptionPlume(Vector2 origin,float breadth,float height,float travel,float power,int key)
+        {
+            // Vertex-alpha feathering gives a continuous area burst without
+            // new textures, particles, materials or a rectangular light panel.
+            // Four transverse lanes soften the sides; eight bands bend upward.
+            const int bands=8,lanes=4;
+            for(int band=0;band<bands;band++)for(int lane=0;lane<lanes;lane++)
+            {
+                if(count>=buffer.capacity){CapacityExceeded=true;return;}
+                int v=count++*4;
+                for(int corner=0;corner<4;corner++)
+                {
+                    float u=(band+corner/2)/(float)bands;
+                    float side=(lane+corner%2)/(float)lanes*2-1;
+                    float bend=Mathf.Sin(u*5+Noise(key+5)*6+travel*1.2f)*breadth*u*0.34f;
+                    float spread=breadth*(1-u*0.66f)*(0.9f+Mathf.Sin(u*8+key)*0.1f);
+                    buffer.vertices[v+corner]=origin+new Vector2(bend+side*spread,u*height);
+                    float feather=1-side*side;
+                    float fade=Mathf.Pow(1-u,0.48f);
+                    float crestBlend=Mathf.SmoothStep(0,1,Mathf.InverseLerp(0.65f,0.90f,u));
+                    float ripple=0.84f+0.16f*Mathf.Lerp(Mathf.Sin(u*13-travel*4+key),
+                        Mathf.Sin(u*13-travel*4),crestBlend);
+                    float white=Mathf.Clamp01(1.02f-u*0.64f-travel*0.28f);
+                    buffer.colors[v+corner]=new Color(
+                        Mathf.Lerp(Blue.r,White.r,white),Mathf.Lerp(Blue.g,White.g,white),
+                        Mathf.Lerp(Blue.b,White.b,white),power*feather*fade*ripple*0.92f);
+                }
             }
         }
         void ClipFinalRegion(int first, Vector3 zone)
@@ -928,6 +1293,9 @@ namespace KarmaPrototype
         }
         void Upload()
         {
+            // Disabling an owner returns its buffer immediately, including when
+            // teardown happens inside the current update. Never upload a released mesh.
+            if (buffer == null || buffer.mesh == null) return;
             buffer.mesh.SetVertices(buffer.vertices); buffer.mesh.SetColors(buffer.colors);
             var bounds = new Bounds(new Vector3(KarmaStage.ArenaCenter,12,0),new Vector3(100,60,4));
             buffer.mesh.SetSubMesh(0,new UnityEngine.Rendering.SubMeshDescriptor(0,count*6) { bounds = bounds, vertexCount = count*4 },
@@ -940,22 +1308,36 @@ namespace KarmaPrototype
             { Destroy(gameObject); return; }
             if(kind==Kind.FallWarning&&!HasFallWarnings()){gameObject.SetActive(false);Destroy(gameObject);return;}
             if (game.Paused) return;
-            if (kind != Kind.Detonation || Time.frameCount != detonationFrame) age += Time.deltaTime;
-            if (kind == Kind.Summon || kind == Kind.Form || kind == Kind.Fall || kind == Kind.Scar || kind == Kind.WardFlight)
+            if ((kind != Kind.Detonation || Time.frameCount != detonationFrame)
+                && (kind != Kind.Splinters || Time.frameCount != splinterFrame)) age += Time.deltaTime;
+            sampledFrame=Time.frameCount;
+            if (kind == Kind.Form || kind == Kind.Fall || kind == Kind.Scar)
             {
                 if (follow == null || !follow.gameObject.activeInHierarchy || rain != null && rain.Landed)
                 { Destroy(gameObject); return; }
             }
             else if (age >= life && kind != Kind.Charge) { Destroy(gameObject); return; }
             count = 0;CapacityExceeded=false;
-            if(kind==Kind.FallWarning)FallingWarnings();
-            else if (kind == Kind.Summon) Summoning();
+            if(kind==Kind.Splinters)
+            {
+                SplinterEnergy();
+                if(splinterCount==0){gameObject.SetActive(false);Destroy(gameObject);return;}
+                // Expiry or pattern interruption returns the mesh and fragment
+                // storage together; no empty effect remains after recovery.
+            }
+            else if(kind==Kind.Landing)
+            {
+                LandingEnergy();
+                if(landingCount==0){gameObject.SetActive(false);Destroy(gameObject);return;}
+            }
+            else if(kind==Kind.GroundStrike)GroundStrikeEnergy();
+            else if(kind==Kind.FallWarning)FallingWarnings();
             else if (kind == Kind.Form || kind == Kind.Fall) BladeEnergy();
             else if (kind == Kind.Planted) PlantedEnergy();
             else if(kind==Kind.Scar||kind==Kind.ScarWarning||kind==Kind.ScarFade)ScarEnergy();
-            else if(kind==Kind.WardRelease||kind==Kind.WardImpact||kind==Kind.WardCollapse||kind==Kind.WardFlight)WardEnergy();
+            else if(kind==Kind.WardRelease||kind==Kind.WardImpact||kind==Kind.WardCollapse)WardEnergy();
             else if(kind==Kind.Eruption && scarSiteCount>0)ScarGroundEnergy();
-            else if (kind == Kind.Landing || kind == Kind.Eruption)
+            else if (kind == Kind.Eruption)
             {
                 float t = Mathf.Clamp01(age/life);
                 Burst(at,size.x,t,false,seed);
@@ -964,7 +1346,7 @@ namespace KarmaPrototype
                         Shard(at+new Vector2(side*size.x*0.25f,0.1f),new Vector2(side*0.3f,1).normalized,
                             2.8f*(1-t)*(1-t),1-t);
             }
-            else FinalEnergy();
+            else {if(kind==Kind.Charge)RefreshChargeAnchors();FinalEnergy();}
             Upload();
         }
         void OnDisable()
@@ -977,4 +1359,5 @@ namespace KarmaPrototype
         }
         void OnDestroy() { OnDisable(); }
     }
+
 }

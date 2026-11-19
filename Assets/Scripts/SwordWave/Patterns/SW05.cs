@@ -115,7 +115,6 @@ namespace KarmaPrototype
                 owner.fullShield = true;
                 owner.animator.PlayWavePhase("Guard");
                 owner.animator.PrepareSwordBody("UltimateHold", 0);
-                KarmaSW05VFX.Corona(owner.effectsRoot, owner.game, owner.transform);
                 KarmaAudio.Play(KarmaSfxId.SwSummoningEnergy, lifetimeOwner: owner);
                 int seed = KarmaAerialSwordPlanner.ResolveSeed(Settings.aerialSwordSeed);
                 var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed);
@@ -127,7 +126,6 @@ namespace KarmaPrototype
                 {
                     // Dense randomized lanes and a fresh physical escape reservation for every
                     // slam. Finish the previous damage before planning the next one.
-                    KarmaSW05VFX.CastPillar(owner.effectsRoot, owner.game, owner.Position, warning);
                     KarmaAerialSwordPlanner.Group plan = null;
                     while (owner.Active && plan == null)
                     {
@@ -170,7 +168,6 @@ namespace KarmaPrototype
                     var fallWarnings = KarmaSW05Energy.FallWarnings(owner.effectsRoot, owner.game, owner, marks, plan.shots, warning);
                     yield return FormAerialSword(blades, reveals, plan, warning);
                     if (!owner.Active) yield break;
-                    KarmaSW05VFX.RainRelease(owner.effectsRoot, owner.game, owner.Position);
                     for (int member = 0; member < plan.shots.Length; member++)
                     {
                         var shot = plan.shots[member];
@@ -192,6 +189,7 @@ namespace KarmaPrototype
                     // warnings never compete with an earlier explosion warning.
                     if (group == groups - 1)
                     {
+                        KarmaSW05RainBlade.CommitFinalRange(planted);
                         foreach (var blade in planted) if (blade != null) blade.ArmExplosion(DetonationWarning);
                         var ignition = KarmaSW05Energy.Prepare(owner.effectsRoot, owner.game, planted, DetonationWarning);
                         owner.animator.PrepareSwordBody("UltimateCharge", DetonationWarning);

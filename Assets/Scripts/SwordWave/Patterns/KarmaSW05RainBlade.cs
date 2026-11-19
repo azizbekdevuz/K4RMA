@@ -15,6 +15,7 @@ namespace KarmaPrototype
         KarmaSW05VFX planted;
         Vector2 landing;
         float explosionHeight;
+        Rect? finalExplosion;
         bool explosionArmed, detonating;
         float explosionAge, explosionWarning;
         KarmaAttackContact explosionContact;
@@ -31,8 +32,26 @@ namespace KarmaPrototype
             float gravity = Mathf.Max(0.01f, Mathf.Abs(Physics2D.gravity.y * config.gravityScale));
             return config.jumpSpeed * config.jumpSpeed / (2 * gravity) + config.Techniques.airSlashDistance * 0.5f;
         }
-        public Vector2 ExplosionSize => new Vector2(Mathf.Max(1.6f, shot.size.y * 1.8f), explosionHeight);
-        public Vector2 ExplosionCenter => new Vector2(landing.x, ExplosionSize.y / 2);
+        public Vector2 PlantedBlastSize => new Vector2(Mathf.Max(1.6f, shot.size.y * 1.8f), explosionHeight);
+        public Vector2 ExplosionSize => finalExplosion.HasValue ? finalExplosion.Value.size : PlantedBlastSize;
+        public Vector2 ExplosionCenter => finalExplosion.HasValue ? finalExplosion.Value.center : new Vector2(landing.x, explosionHeight / 2);
+        public static void CommitFinalRange(System.Collections.Generic.List<KarmaSW05RainBlade> swords)
+        {
+            // Commit before the countdown. Every gap between the outermost
+            // planted blasts belongs to this same advertised, continuous blast.
+            float left = float.PositiveInfinity, right = float.NegativeInfinity, height = 0;
+            foreach (var blade in swords)
+            {
+                if (blade == null || !blade.Landed) continue;
+                left = Mathf.Min(left, blade.landing.x - blade.PlantedBlastSize.x / 2);
+                right = Mathf.Max(right, blade.landing.x + blade.PlantedBlastSize.x / 2);
+                height = Mathf.Max(height, blade.explosionHeight);
+            }
+            left = Mathf.Max(left, KarmaStage.ArenaLeft); right = Mathf.Min(right, KarmaStage.ArenaRight);
+            if (right <= left || height <= 0) return;
+            var region = new Rect(left, 0, right - left, height);
+            foreach (var blade in swords) if (blade != null && blade.Landed) blade.finalExplosion = region;
+        }
         // Presentation anchors follow the actual embedded blade, not blast bounds.
         public Vector2 ElectricFoot => planted != null ? KarmaSW05Energy.GroundAnchor(planted.Sword) : new Vector2(landing.x, 0.12f);
         public Vector2 ElectricHilt => planted != null ? KarmaSW05Energy.GuardAnchor(planted.Sword)
@@ -56,7 +75,8 @@ namespace KarmaPrototype
             // One shared ledger prevents overlapping planted swords multiplying damage.
             owner.TryAttackHit(at, at, size, damage / game.Config.BossTuning.sword.aerialSwordDamageMultiplier,
                 sharedContact, 0, sourcePattern: EnemyAttack.SW05);
-            KarmaSW05VFX.Explosion(transform.parent, game, owner, at, size);
+            // The shared eruption mesh supplies the flash; do not stack
+            // full-height rectangular light panels over the sword fan.
             if (planted != null) planted.DissolvePlanted();
         }
         public SpriteRenderer Visual { get; private set; }
@@ -100,7 +120,7 @@ namespace KarmaPrototype
             float toTime = Mathf.Clamp(age - shot.delay, 0, shot.life);
             Vector2 from = shot.PositionAt(fromTime), to = shot.PositionAt(toTime);
             transform.position = to;
-            owner.TryAttackHit(from, to, shot.size, damage, contact, 0, shot.velocity.normalized);
+            owner.TryAttackHit(from, to, shot.size, damage, contact, 0, shot.velocity.normalized, sourcePattern: EnemyAttack.SW05);
             if (toTime < shot.life) return;
             if (warning != null) { warning.gameObject.SetActive(false); Destroy(warning.gameObject); warning = null; }
             landing = to + shot.velocity.normalized * (shot.size.x / 2);

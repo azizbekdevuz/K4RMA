@@ -247,60 +247,97 @@ namespace KarmaPrototype
                 float release = animator.SwordReleaseAge;
                 float load = Mathf.SmoothStep(0, 1, age / Mathf.Max(1f / 24, animator.SwordBodyDuration));
                 bool released = animator.SwordBodyReleased;
-                float force = bodyAction == "Heavy" ? 1.15f : bodyAction == "BasicRanged" ? 0.45f : 0.8f;
-                float alternating = animator.SwordMotionStrike % 2 == 0 ? 1 : -0.55f;
                 if (animator.BasicBodyActive)
                 {
-                    // Authored arm/shoulder/waist poses own the cuts. Do not
-                    // rotate the flattened body to invent a swing.
-                    delta = Vector3.zero; angle = 0;
-                    motionOffset = motionVelocity = Vector3.zero;
-                    motionAngle = angularVelocity = 0;
+                    // Arms/waist still come from the authored drawings. A
+                    // single weight transfer supports each cut; never reset
+                    // momentum merely because the next drawing was selected.
+                    bool melee = bodyAction == "BasicMelee";
+                    if (!released)
+                    { delta.x = -0.018f * load; angle = 2.4f * load; }
+                    else if (melee && animator.BasicLinkActive)
+                    {
+                        float t = animator.BasicLinkAge, duration = animator.BasicLinkDuration;
+                        float linkBlend = Mathf.SmoothStep(0, 1, t / duration);
+                        if (duration < 5f / 24)
+                        { delta.x = Mathf.Lerp(0.02178f, 0.035f, linkBlend); angle = Mathf.Lerp(-2.033f, 2.08f, linkBlend); }
+                        else
+                        {
+                            float settle = Mathf.SmoothStep(0, 1, t / (3f / 24));
+                            float loadBack = Mathf.SmoothStep(0, 1, (t - duration + 2f / 24) / (2f / 24));
+                            delta.x = Mathf.Lerp(Mathf.Lerp(0.02178f, -0.016f, settle), 0.035f, loadBack);
+                            angle = Mathf.Lerp(Mathf.Lerp(-2.033f, 1.3f, settle), 2.08f, loadBack);
+                        }
+                    }
+                    else
+                    {
+                        float strike = 1 - Mathf.SmoothStep(0, 1, (release - 1f / 24) / (6f / 24));
+                        float backhand = animator.BasicStrikeIndex == 0 ? -1 : 0.65f;
+                        delta.x = (melee ? 0.035f : 0.025f) * strike;
+                        angle = (melee ? 3.2f * backhand : -2.8f) * strike;
+                        // Between the two contacts, transfer back into the low
+                        // loaded pose instead of freezing in the first hit.
+                        if (melee && animator.BasicStrikeIndex == 0)
+                        { delta.x -= 0.016f * (1 - strike); angle += 1.3f * (1 - strike); }
+                    }
                 }
                 else if (bodyAction == "UltimateAscent")
                 {
                     // Sample the existing FlyBoss schedule, not a second rise.
                     float settle = 1 - Mathf.SmoothStep(0, 1, animator.SwordAscentProgress);
                     delta = ascentEntryOffset * settle;
-                    angle = ascentEntryAngle * settle + 1.1f * Mathf.Sin(visualClock * 4f) * (1 - settle);
+                    angle = ascentEntryAngle * settle + 2.4f * Mathf.Sin(animator.SwordAscentProgress * Mathf.PI);
                 }
                 else if (bodyAction == "UltimateStart")
                 {
-                    // Restore the original Windup anticipation on the corrected body.
-                    float anticipation = Mathf.SmoothStep(0, 1, animator.SwordBodySmoothAge / 0.12f);
-                    delta.x = -0.025f * anticipation; angle = -4.2f * anticipation;
+                    // A slow gather, then upward opening before the root lifts.
+                    float gather = Mathf.Sin(load * Mathf.PI);
+                    delta.x = -0.04f * gather; angle = 4.8f * gather;
                 }
                 else if (bodyAction == "Summon")
                 {
-                    float command = age < 3f / 24 ? -Mathf.Sin(age * Mathf.PI * 4) : Mathf.Exp(-12 * (age - 3f / 24));
-                    if (age < 9f / 24) { delta.x = 0.016f * command; angle = 2.2f * command; }
+                    float drop = Mathf.SmoothStep(0, 1, (animator.SwordGroundProgress - 0.80f) / 0.20f);
+                    float settle = released ? 1 - Mathf.SmoothStep(0, 1, release / (5f / 24)) : 1;
+                    delta.x = Mathf.Lerp(-0.025f, 0.040f, drop) * settle;
+                    angle = Mathf.Lerp(2.5f, -3.5f, drop) * settle;
                 }
                 else if (bodyAction == "UltimateHold")
-                { delta.x = 0; angle = -0.5f + 0.18f * Mathf.Sin(visualClock * 2.5f); }
+                { delta.x = 0; angle = 0.5f * Mathf.Sin(KarmaCharacterAnimator.SwordFrameTime(visualClock) * 2f); }
                 else if (bodyAction == "UltimateCharge")
-                { delta.x = -0.025f * load; angle = -4.2f * load; }
+                { delta.x = -0.05f * load; angle = 6f * load; }
                 else if (bodyAction == "UltimateCommand" || bodyAction == "UltimateFinish")
                 {
-                    // Original Wave release recoil; keep the final detonation's longer accent.
-                    float impulse = Mathf.Exp(-(bodyAction == "UltimateFinish" ? 7 : 8) * release);
-                    delta.x = (bodyAction == "UltimateFinish" ? 0.06f : attackReach) * impulse;
-                    angle = (bodyAction == "UltimateFinish" ? 5f : attackTilt) * impulse;
+                    bool finish = bodyAction == "UltimateFinish";
+                    float impulse = 1 - Mathf.SmoothStep(0, 1, (release - 2f / 24) / (finish ? .42f : .3f));
+                    delta.x = attackReach * (finish ? 1.3f : .7f) * impulse;
+                    angle = -attackTilt * (finish ? 1.5f : .9f) * impulse;
                 }
                 else if (bodyAction == "UltimateRecover")
-                { delta.x = 0; angle = 1.4f * Mathf.Exp(-6 * age); }
+                { delta.x = 0; angle = -2f * (1 - Mathf.SmoothStep(0, 1, age / Mathf.Max(1f / 24, animator.SwordBodyDuration))); }
                 else if (bodyAction == "Counter")
                 {
-                    float counterRelease = released ? Mathf.Exp(-14 * release) : 0;
-                    delta.x = 0.028f * counterRelease;
-                    angle = -1.1f + 3.4f * counterRelease * alternating;
+                    float counterRelease = released ? 1 - Mathf.SmoothStep(0, 1, release / (6f / 24)) : 0;
+                    // Brace into the shield, deliver a compact response, settle
+                    // before the next aim. No alternating full-body wobble.
+                    delta.x = released ? 0.04f * counterRelease : -0.018f * load;
+                    angle = released ? -4.2f * counterRelease : 2.2f * load;
                 }
                 else if (released)
                 {
-                    float impulse = Mathf.Exp(-12 * release);
-                    delta.x = attackReach * force * impulse;
-                    angle = attackTilt * force * alternating * impulse;
+                    bool heavy = bodyAction == "Heavy";
+                    float impulse = 1 - Mathf.SmoothStep(0, 1, (release - 1f / 24) / (heavy ? .32f : .22f));
+                    delta.x = attackReach * (heavy ? 1.4f : .85f) * impulse;
+                    angle = attackTilt * (heavy ? -1.4f : bodyAction == "Volley" || animator.SwordMotionStrike % 2 == 0 ? -.9f : .55f) * impulse;
                 }
-                else { delta.x = -0.02f * force * load; angle = -2.5f * force * load; }
+                else
+                {
+                    bool heavy = bodyAction == "Heavy";
+                    // Locking SW02 starts a fresh warning clock but must not
+                    // unload the torso and restart anticipation a second time.
+                    float tension = heavy && animator.SwordHeavyLocked ? 1 : load;
+                    delta.x = -(heavy ? .045f : .03f) * tension;
+                    angle = (heavy ? 5.5f : 3.4f) * tension;
+                }
             }
 
             // Hover belongs only to the existing airborne full-shield phase.

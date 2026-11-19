@@ -29,7 +29,7 @@ namespace KarmaPrototype
             ConfigureBasicReturnFrames();
             PrepareWaveAttack(warningSeconds, false);
             basicPresentationActive = true; basicReleaseStarted = false;
-            BasicStrikeIndex = 0;
+            BasicStrikeIndex = 0; basicLinkAt = float.NegativeInfinity;
             PrepareSwordBody(melee ? "BasicMelee" : "BasicRanged", warningSeconds);
         }
         public void BeginBasicRelease(float strikeSeconds = BasicSwingSeconds, int strike = 0)
@@ -59,6 +59,7 @@ namespace KarmaPrototype
             foreach (var sprite in KarmaArtwork.Sprites("Wave"))
                 if (sprite != null && !poses.ContainsKey(sprite.name)) poses.Add(sprite.name, sprite);
             ConfigureSW02Frames();
+            ConfigureSwordSkillFrames();
             ConfigureSwordBodyCoordinates();
             ConfigureSwordAppearance();
             ConfigureSwordLocomotion();
@@ -235,17 +236,19 @@ namespace KarmaPrototype
             {
                 float remaining = SwordBodyDuration - SwordBodyAge;
                 if (SwordBodyAction == "BasicRanged" && remaining <= 2f / 24) return 2;
-                return remaining <= 3f / 24 ? 1 : 0;
+                // Establish the loaded shoulders early enough to read, then
+                // hold tension until the unchanged contact/release event.
+                return SwordBodyAge >= Mathf.Min(2f / 24, SwordBodyDuration * .3f) ? 1 : 0;
             }
             float age = SwordFrameTime(BasicReleaseAge);
             if (SwordBodyAction == "BasicMelee")
             {
                 if (BasicStrikeIndex == 0)
-                    return age < 1f / 24 ? 2 : age < 2f / 24 ? 3 : age < 3f / 24 ? 4 : 6;
+                    return age < 1f / 24 ? 2 : age < 2f / 24 ? 3 : age < 3f / 24 ? 4 : BasicLinkAge < Mathf.Min(1f / 24, basicLinkSeconds * 0.35f) ? swordLinkLowFrame : 11;
                 // A complete authored backhand: low load -> cross-body -> high
                 // finish. These are distinct arm/waist drawings, not reversed
                 // Combat frames or a rotation of the whole character.
-                return age < 1f / 24 ? 6 : age < 2f / 24 ? 7 : age < 5f / 24 ? 8 : age < 8f / 24 ? 5 : 9;
+                return age < 1f / 24 ? 11 : age < 2f / 24 ? 7 : age < 5f / 24 ? 8 : age < 7f / 24 ? 16 : age < 9f / 24 ? 0 : 9;
             }
             // Hold the authored cross-body release long enough to read at 24fps.
             // Cosmetic follow-through only; projectile release/waits are unchanged.
@@ -256,6 +259,7 @@ namespace KarmaPrototype
         }
         void ApplyBasicBodyFrame(int frame)
         {
+            if (frame >= 10) { ApplySwordSkillFrame(frame - 10); return; }
             if (frame < 6) { ApplySwordBodyFrame(frame); return; }
             picture.sprite = frame == 9 ? poses["Idle"] : basicReturnFrames[frame - 6];
             RegisterSwordBodySprite();

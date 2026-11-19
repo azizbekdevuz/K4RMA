@@ -14,6 +14,7 @@ namespace KarmaPrototype
             float retreatSpeed, approachSpeed;
             float swordRetreatMoveAt;
             bool swordWallEscaping;
+            bool chargeDashing;
             enum SlideKind { LongRetreat, Reposition, WallEscape }
             SlideKind slideKind;
             float nextWallEscape, wallReturnUntil, wallReturnDirection;
@@ -161,28 +162,28 @@ namespace KarmaPrototype
                 // not erase a real hit or shrink its requested separation.
                 swordPressureTarget = Mathf.Max(swordPressureTarget, SwordSpacingDistance());
             }
-            bool RetreatSword(float dt, float dx)
+            bool RetreatSword(float dt, float dx, float chargeRemaining = -1)
             {
                 if (swordRetreatRemaining <= 0)
                 {
                     float safeGap = Mathf.Max(swordPressureTarget, SwordSpacingDistance());
                     bool pressure = swordPressurePending && Mathf.Abs(dx) < safeGap;
-                    if (!pressure && behavior.CloseBasicReady
+                    if (chargeRemaining < 0 && !behavior.EvasionOnly && !pressure && behavior.CloseBasicReady
                         && SwordRetreatClearance(-1, 6) >= 6 && SwordRetreatClearance(1, 6) >= 6) return false;
                     float distance = Mathf.Abs(dx);
                     bool tooClose = distance < behavior.BasicMeleeRange * 0.55f;
                     bool nearMelee = tooClose || distance < Settings.pressureRetreatStartDistance
                         && !behavior.BasicMeleeCanReach(owner.Position, owner.game.Player.Position);
                     bool repositionOpportunity = !pressure && !nearMelee && distance <= behavior.BasicWaveRange + 3;
-                    // Ordinary combat still requires a completed action. The live
-                    // SW03 timeline permits evasion-only steps on the same cooldown.
-                    if ((!pressure && !nearMelee && !repositionOpportunity)
-                    || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat && !behavior.EvasionOnly)
+                    // The live SW03 timeline allows more frequent spacing, while
+                    // retaining the same route checks and a planted recovery beat.
+                    if ((chargeRemaining < 0 && !pressure && !nearMelee && !repositionOpportunity)
+                    || owner.FightSeconds < nextSwordRetreat || !swordAttackedSinceRetreat && !behavior.EvasionOnly && chargeRemaining < 0)
                     return false;
                     // Slightly favor another spacing step after an attack. This roll
                     // only offers an action; ChooseRetreat always picks away.
-                    if (repositionOpportunity && Random.value > 0.45f)
-                    { nextSwordRetreat = owner.FightSeconds + 0.6f; return false; }
+                    if (chargeRemaining < 0 && repositionOpportunity && Random.value > (behavior.EvasionOnly ? 0.8f : 0.45f))
+                    { nextSwordRetreat = owner.FightSeconds + (behavior.EvasionOnly ? 0.35f : 0.6f); return false; }
                     if (!ChooseRetreat(dx, out var chosenDirection, out var chosenTravel)) return false;
                     swordApproaching = false; approachSpeed = 0; retreatSpeed = 0;
                     swordPressurePending = false;
@@ -205,8 +206,9 @@ namespace KarmaPrototype
                         + topSpeed / (2 * Mathf.Max(1, Settings.swordBackstepDeceleration)) + 0.12f;
                     swordRetreatUntil = owner.FightSeconds + Mathf.Max(Settings.pressureRetreatDuration, requiredTime);
                     swordRetreatMoveAt = owner.FightSeconds + Mathf.Clamp(Settings.swordBackstepPreparation, 0, 0.08f);
-                    nextSwordRetreat = owner.FightSeconds + Mathf.Clamp(
-                        Mathf.Min(Settings.swordRetreatCooldown, Settings.pressureRetreatCooldown), 2.1f, 3.5f);
+                    float cooldown = Mathf.Min(Settings.swordRetreatCooldown, Settings.pressureRetreatCooldown);
+                    nextSwordRetreat = owner.FightSeconds + (behavior.EvasionOnly
+                        ? Mathf.Clamp(cooldown * 0.55f, 1.2f, 1.8f) : Mathf.Clamp(cooldown, 2.1f, 3.5f));
                     // Even a blocked attempt yields to an attack before retrying.
                     swordAttackedSinceRetreat = false;
                     if (swordRetreatRemaining < 0.12f)
@@ -215,6 +217,7 @@ namespace KarmaPrototype
                     // slide; sample real travel in either direction throughout.
                     afterimages.BeginRetreat(true);
                 }
+                if(chargeRemaining>=0) swordRetreatUntil=Mathf.Min(swordRetreatUntil,owner.FightSeconds+chargeRemaining);
                 float toEndpoint = (swordRetreatTarget - owner.Position.x) * swordRetreatDirection;
                 // A change in player side is not a physical obstruction. The
                 // swept collision/floor checks still guard every movement step.
@@ -256,7 +259,7 @@ namespace KarmaPrototype
                 }
                 // A new hit during this move remains queued behind the cooldown;
                 // starting the move already consumed the previous request.
-                behavior.RequestSkillAfterRetreat();
+                if(!chargeDashing) behavior.RequestSkillAfterRetreat();
                 owner.timer = 0;
                 float attackWindow = Mathf.Clamp(Settings.swordRetreatAttackWindow, 0.5f, 0.8f);
                 nextSwordRetreat = Mathf.Max(nextSwordRetreat, owner.FightSeconds + attackWindow);
@@ -287,15 +290,28 @@ namespace KarmaPrototype
                     swordApproaching = true;
                     swordApproachUntil = owner.FightSeconds + 1.2f;
                 }
+                bool canAttack = behavior.HasSwordCandidate(owner.Position);
                 // A faster fleeing player must not postpone attacks indefinitely.
                 // A reachable ranged attack gets a turn after this short approach.
-                if (owner.FightSeconds >= swordApproachUntil && behavior.HasSwordCandidate(owner.Position))
+                if (owner.FightSeconds >= swordApproachUntil && canAttack)
                 { FinishSwordApproach(); return false; }
                 float speed = Mathf.Min(owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale, owner.game.Config.moveSpeed * 0.8f);
-                speed = Mathf.Min(speed, Mathf.Sqrt(2 * Mathf.Max(1, Settings.swordRetreatDeceleration) * (distance - preferred)));
-                approachSpeed = Mathf.MoveTowards(approachSpeed, speed, Mathf.Max(1, Settings.swordRetreatAcceleration) * dt);
-                float step = Mathf.Sign(dx) * Mathf.Min(distance - preferred, approachSpeed * dt);
-                if (MoveSwordOnGround(step) <= 0.0001f)
+                float deceleration = Mathf.Max(1, Settings.swordRetreatDeceleration);
+                float brakingStep = deceleration * dt;
+                // Budget this frame's displacement as well as stopping distance.
+                // Start braking before the attack handoff, rather than cutting
+                // a full-speed walk to zero on its final frame.
+                speed = Mathf.Min(speed, Mathf.Sqrt(brakingStep * brakingStep + 2 * deceleration * (distance - preferred)) - brakingStep);
+                if (canAttack) speed = Mathf.Min(speed, deceleration * Mathf.Max(0, swordApproachUntil - owner.FightSeconds));
+                // Signed velocity brakes through zero when the player crosses
+                // behind, instead of instantly reversing the current walk speed.
+                float targetSpeed = Mathf.Sign(dx) * speed;
+                bool braking = approachSpeed * targetSpeed < 0 || Mathf.Abs(targetSpeed) < Mathf.Abs(approachSpeed);
+                approachSpeed = Mathf.MoveTowards(approachSpeed, targetSpeed,
+                    Mathf.Max(1, braking ? Settings.swordRetreatDeceleration : Settings.swordRetreatAcceleration) * dt);
+                float step = approachSpeed * dt;
+                if (step * dx > 0) step = Mathf.Sign(step) * Mathf.Min(distance - preferred, Mathf.Abs(step));
+                if (Mathf.Abs(step) > 0.0001f && MoveSwordOnGround(step) <= 0.0001f)
                 {
                     FinishSwordApproach();
                     return false;
@@ -355,6 +371,20 @@ namespace KarmaPrototype
                 if (owner.game.Player.SwordPressureActive && owner.game.Player.SwordAreaOverlaps(owner)) RememberSwordPressure();
                 else if (Mathf.Abs(owner.game.Player.Position.x - owner.Position.x) > Mathf.Max(swordPressureTarget, SwordSpacingDistance()) + 0.25f)
                 { swordPressurePending = false; swordPressureTarget = 0; }
+            }
+            public void ChargeDash(float remaining)
+            {
+                if(owner.game.Paused || !owner.Active || remaining<=0) return;
+                // Reuse swept ground movement and dash cooldown; retain the charge pose.
+                chargeDashing=true;
+                RetreatSword(Time.deltaTime,owner.game.Player.Position.x-owner.Position.x,remaining);
+                chargeDashing=false;
+            }
+            public void EndChargeDash()
+            {
+                if(swordRetreatRemaining>0)
+                { chargeDashing=true;FinishSwordRetreat();chargeDashing=false; }
+                afterimages.EndRetreat();
             }
             public void OnSelected() { swordRetreatRemaining = 0; swordWallEscaping = false; swordApproaching = false; retreatSpeed = approachSpeed = 0; afterimages.EndRetreat(); }
             public void OnCompleted() { swordAttackedSinceRetreat = true; }

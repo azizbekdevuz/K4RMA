@@ -6,6 +6,11 @@ namespace KarmaPrototype
     {
         static class SwordWaveVolley
         {
+            sealed class AdvertisedShot
+            {
+                public Vector2 origin, velocity;
+                public float life;
+            }
             static void AimSW01(KarmaEnemy owner, bool high, SpriteRenderer mark,
                 out Vector2 origin, out Vector2 velocity, out float life, Vector2 size)
             {
@@ -17,16 +22,24 @@ namespace KarmaPrototype
                     KarmaSpace.Units(high ? 3.3f : 1.05f));
                 velocity = Vector2.right * owner.direction * Mathf.Max(KarmaSpace.Scale, owner.Tuning.sword.swordSpeed * 1.3f);
                 life = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
-                if (mark != null) mark.GetComponent<KarmaAttackWarning>().SetPath(mark, origin, origin + velocity * life, size, false, true);
+                if (mark != null)
+                {
+                    mark.GetComponent<KarmaAttackWarning>().SetPath(mark, origin, origin + velocity * life, size, false, true);
+                    KarmaSwordAttackPolish.FlowWarning(owner.game, mark, origin, origin + velocity * life);
+                }
             }
-            static IEnumerator TrackSW01(KarmaEnemy owner, bool high, SpriteRenderer mark, Vector2 size, float seconds)
+            static IEnumerator TrackSW01(KarmaEnemy owner, SwordBossBehavior sword, bool high, SpriteRenderer mark, Vector2 size, float seconds, AdvertisedShot aim)
             {
                 // Match Wait's yield/increment order exactly. Turning only flips
                 // the existing pose; it never starts another animation or shot.
                 float elapsed = 0;
                 while (elapsed < seconds && owner.Active)
                 {
-                    if (!owner.game.Paused) AimSW01(owner, high, mark, out _, out _, out _, size);
+                    if (!owner.game.Paused)
+                    {
+                        sword.ChargeDash(seconds-elapsed);
+                        AimSW01(owner, high, mark, out aim.origin, out aim.velocity, out aim.life, size);
+                    }
                     yield return null;
                     if (!owner.game.Paused) elapsed += Time.deltaTime;
                 }
@@ -50,7 +63,11 @@ namespace KarmaPrototype
                         : KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
                     if (!scars) AimSW01(owner, high, null, out origin, out velocity, out life, waveSize);
                     var mark = owner.PathMark(origin, origin + velocity * life, waveSize);
-                    if (!scars) KarmaSwordAttackPolish.Warning(mark);
+                    if (!scars)
+                    {
+                        KarmaSwordAttackPolish.Warning(mark);
+                        KarmaSwordAttackPolish.FlowWarning(owner.game, mark, origin, origin + velocity * life);
+                    }
 
                     float warning = i == 0 ? owner.Warning(0.65f) : Mathf.Max(0.42f, 0.54f * owner.Tempo);
                     if (!scars) KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, mark.transform, warning, false);
@@ -61,13 +78,16 @@ namespace KarmaPrototype
                         owner.animator.PrepareSwordBody("Volley", warning, i);
                     }
                     else owner.animator.PlayWavePhase("Windup", warning);
+                    var advertised = new AdvertisedShot { origin = origin, velocity = velocity, life = life };
                     if (scars) yield return owner.Wait(warning);
-                    else yield return TrackSW01(owner, high, mark, waveSize, warning);
+                    else yield return TrackSW01(owner, sword, high, mark, waveSize, warning, advertised);
+                    if (!scars) sword.EndChargeDash();
                     if (!scars && !owner.Active) yield break;
-                    // Sample again on the release event itself, after the final
-                    // wait resumes. Each released shot owns this immutable vector.
-                    if (!scars) AimSW01(owner, high, mark, out origin, out velocity, out life, waveSize);
-                    owner.state = ActionState.Attack; owner.animator.Attack(); Destroy(mark.gameObject);
+                    // Fire exactly the last path the player actually saw.
+                    // A turn/dash after the final yield must not move that path.
+                    if (!scars) { origin = advertised.origin; velocity = advertised.velocity; life = advertised.life; }
+                    owner.state = ActionState.Attack; owner.animator.Attack();
+                    mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                     if (!scars)
                     {
                         sword.ReleaseSW01(origin, velocity, waveSize, life, high);

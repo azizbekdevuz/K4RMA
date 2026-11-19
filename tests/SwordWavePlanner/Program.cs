@@ -196,7 +196,8 @@ static class Program
         Require(behavior.Contains("if (ground.Running) return false;")
             && behavior.Contains("ultimate.ThresholdPending && !counter.Formed")
             && behavior.IndexOf("next = EnemyAttack.SW05; return true;")<behavior.IndexOf("float total = !skillAfterRetreat"),"SW03 exclusion and SW05 priority precede weighted selection");
-        Require(behavior.Contains("consecutiveBasics < 2 && (swordBasicDue || basicAfterRetreat)")
+        Require(behavior.Contains("consecutiveBasics < 2 && (swordBasicDue || basicAfterRetreat")
+            && behavior.Contains("|| !counter.Formed && BasicMeleeCanReach(owner.Position, owner.game.Player.Position)")
             && behavior.Contains("candidate == owner.previous") && behavior.Contains("Settings.Weights.allowRepeatFallback")
             && behavior.Contains("counter.Formed || owner.FightSeconds < counter.NextReadyAt")
             && behavior.Contains("counter.Formed && candidate != EnemyAttack.SW01 && candidate != EnemyAttack.SW02")

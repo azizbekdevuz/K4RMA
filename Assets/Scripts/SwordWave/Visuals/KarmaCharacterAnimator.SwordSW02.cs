@@ -79,21 +79,23 @@ namespace KarmaPrototype
             switch (sw02VisualPhase)
             {
                 case SW02VisualPhase.Tracking:
-                    frame = elapsed < sw02PhaseSeconds * 0.5f ? 0 : 1; break;
+                    frame = elapsed < sw02PhaseSeconds * 0.35f ? 0 : 12; break;
                 case SW02VisualPhase.Locked:
                     // Two authored 24fps samples lead into the real release.
                     // The full strike cannot appear before the projectile event.
                     float swing = sw02PhaseSeconds - elapsed;
-                    frame = swing > 2f / 24 ? 1 : 2; break;
+                    frame = swing > 2f / 24 ? 12 : 2; break;
                 case SW02VisualPhase.Released:
-                    frame = 3; break;
+                    // The blade keeps travelling after launch. Do not freeze
+                    // the shoulders at the release pose for the whole wait.
+                    frame = elapsed < 3f / 24 ? 3 : elapsed < 6f / 24 ? 4 : 5; break;
                 default:
                     // Both recovery frames finish inside the existing minimum
                     // 0.38-second recovery, then retain the base ready picture.
                     if (elapsed >= 8f / 24) { picture.sprite = poses["Idle"]; return; }
                     frame = elapsed < 3f / 24 ? 4 : 5; break;
             }
-            picture.sprite = sw02Frames[frame];
+            if (frame >= 10) ApplySwordSkillFrame(frame - 10); else picture.sprite = sw02Frames[frame];
             SW02UsesIntermediateFrame = true;
         }
 
@@ -119,6 +121,7 @@ namespace KarmaPrototype
         internal float SwordReleaseAge => SwordFrameTime(Time.time - (SwordPreviousReleaseVisible ? swordPreviousRelease : swordBodyReleasedAt));
         internal float SwordBodyDuration { get; private set; }
         internal bool SwordBodyVisible { get; private set; }
+        internal bool SwordHeavyLocked => sw02VisualPhase == SW02VisualPhase.Locked;
         float swordBodyAt, swordBodyReleasedAt = float.NegativeInfinity;
         float swordRecoveryAt = float.NegativeInfinity;
         float swordPreviousRelease = float.NegativeInfinity;
@@ -139,7 +142,8 @@ namespace KarmaPrototype
         internal void PrepareSwordBody(string action, float seconds, int strike = 0)
         {
             if (sheet != "Wave" || deathAt >= 0) return;
-            if (action != "Summon" && action != "Counter") swordWalkAllowed = false;
+            if (action == "Volley") ConfigureBasicReturnFrames();
+            if (action != "Counter") swordWalkAllowed = false;
             swordPreviousRelease = action == "Volley" && SwordBodyAction == "Volley" ? swordBodyReleasedAt : float.NegativeInfinity;
             swordPreviousStrike = SwordStrikeIndex;
             SwordBodyAction = action; SwordBodyDuration = seconds; SwordStrikeIndex = strike;
@@ -157,7 +161,11 @@ namespace KarmaPrototype
             // LateUpdate. A 24fps sample may never move this event to a later tick.
             if (SwordBodyCanOverride(action == "Counter" ? "Approach" : "Attack",
                 sw02Owner != null ? (EnemyAttack)sw02Owner.CurrentPattern : EnemyAttack.SWBasic))
-            { if (BasicBodyActive) ApplyBasicBodyFrame(BasicBodyFrame()); else ApplySwordBodyFrame(strike % 2 == 0 ? 3 : 2); SwordBodyVisible = true; GuardianPhaseOverridesPose = true; }
+            {
+                if (BasicBodyActive) ApplyBasicBodyFrame(BasicBodyFrame());
+                else ApplySwordBodyFrame(3);
+                SwordBodyVisible = true; GuardianPhaseOverridesPose = true;
+            }
         }
         void EndSwordBodyAction()
         {
@@ -189,7 +197,8 @@ namespace KarmaPrototype
             // Persistent SW03/SW04 effects cannot take over another cast. Mobile
             // spacing and evasion always win over the short summoning gesture.
             if (SwordBodyAction == "Summon")
-                return action == "Approach" && CurrentPose != "Move" && CurrentPose != "Backstep" && SwordBodyAge < 9f / 24;
+                return attack == EnemyAttack.SW03 && (action == "Telegraph" || action == "Attack"
+                    || action == "Approach" && CurrentPose != "Move" && CurrentPose != "Backstep" && SwordReleaseAge < 5f / 24);
             if (SwordBodyAction == "Counter")
                 return CurrentPose != "Backstep" && (action == "Approach" || action == "Recover" || attack == EnemyAttack.SW04);
             return action == "Telegraph" || action == "Attack" || action == "Recover";
@@ -216,20 +225,47 @@ namespace KarmaPrototype
                 if (action == "Recover" && SwordBodyAction != "Counter")
                 {
                     float recovery = SwordFrameTime(Time.time - swordRecoveryAt);
+                    // Both lanes use the same authored forward cut and its recovery.
                     frame = recovery < 3f / 24 && SwordBodyAction != "UltimateRecover" ? 4 : recovery < 8f / 24 ? 5 : -1;
                     if (frame < 0) picture.sprite = poses["Idle"];
                 }
                 else if (SwordBodyAction == "Volley" && Time.time - swordPreviousRelease < 3f / 24)
-                    frame = swordPreviousStrike % 2 == 0 ? 3 : 2;
-                else if (SwordBodyAction == "Summon") frame = age < 3f / 24 ? 1 : age < 5f / 24 ? 3 : 4;
+                    frame = 3;
+                else if (SwordBodyAction == "Volley")
+                {
+                    // Finish the preceding cut before loading the next lane.
+                    // Stay on one calibrated Combat sheet; cross-sheet return poses
+                    // made the shoulders and sword jump during this rapid volley.
+                    if (SwordBodyReleased) frame = release < 3f / 24 ? 3 : release < 6f / 24 ? 4 : 5;
+                    else if (SwordStrikeIndex > 0 && age < 5f / 24) frame = 4;
+                    else if (SwordStrikeIndex > 0 && age < 7f / 24) frame = 5;
+                    else frame = SwordBodyDuration - age <= 2f / 24 ? 2
+                        : age < 2f / 24 ? 0 : 1;
+                }
+                // Only the first round owns this raise/drop/ground-contact sequence.
+                // The warning clock, not pose age, drives the initial strike.
+                else if (SwordBodyAction == "Summon") frame = GroundStrikeFrame();
                 // Keep SW05's windup -> raised ascent -> aerial guard distinct.
                 // Use the registered, own-form frames so the old phase poses
                 // cannot undo the Idle size/palette correction.
-                else if (SwordBodyAction == "UltimateStart") frame = age < 3f / 24 ? 0 : 1;
-                else if (SwordBodyAction == "UltimateAscent") frame = 1;
-                else if (SwordBodyAction == "UltimateHold") frame = 0;
+                else if (SwordBodyAction == "UltimateStart") frame = age < 3f / 24 ? 0 : age < 7f / 24 ? 16 : 12;
+                else if (SwordBodyAction == "UltimateAscent") frame = 12;
+                else if (SwordBodyAction == "UltimateHold") frame = 12;
                 // Finish has already passed Recover01 before descent starts.
-                else if (SwordBodyAction == "UltimateRecover") frame = 5;
+                else if (SwordBodyAction == "UltimateRecover") frame = age < SwordBodyDuration - 2f / 24 ? 5 : 0;
+                else if (SwordBodyAction == "UltimateCommand")
+                    frame = release < 5f / 24 ? 17 : release < 8f / 24 ? 16 : 12;
+                else if (SwordBodyAction == "UltimateCharge")
+                    frame = age < 3f / 24 ? 16 : 12;
+                else if (SwordBodyAction == "Counter")
+                {
+                    // Form the dome with a raised sword, then brace. Each
+                    // response re-cocks and returns to guard between releases.
+                    if (action == "Telegraph" && attack == EnemyAttack.SW04)
+                        frame = age < 3f / 24 ? 0 : age < SwordBodyDuration - 3f / 24 ? 12 : 16;
+                    else if (SwordBodyReleased) frame = release < 2f / 24 ? 3 : release < 4f / 24 ? 4 : 16;
+                    else frame = SwordBodyDuration - age > 3f / 24 || age > SwordBodyDuration ? 16 : 1;
+                }
                 else if (SwordBodyReleased)
                 {
                     float strike = SwordBodyAction == "BasicRanged" ? 2f / 24 : 3f / 24;
@@ -241,7 +277,8 @@ namespace KarmaPrototype
             }
             else if (CurrentPose == "Guard" || CurrentPose == "Backstep") frame = 0;
             else if (CurrentPose == "FollowThrough") picture.sprite = poses["Idle"];
-            if (frame >= 0) ApplySwordBodyFrame(frame); else RegisterSwordBodySprite();
+            if (frame >= 6) ApplyBasicBodyFrame(frame);
+            else if (frame >= 0) ApplySwordBodyFrame(frame); else RegisterSwordBodySprite();
         }
         void ApplySwordBodyFrame(int frame)
         {
@@ -295,6 +332,7 @@ namespace KarmaPrototype
             {
                 switch (idle.texture.name)
                 { case "Wave": form=0; break; case "WaveRise": form=1; break; case "WaveWard": form=2; break; case "WaveFinal": form=3; break; }
+                if (RegisterSwordSkillAppearance(idle, form)) return;
                 if (sw02Frames != null) frame = System.Array.IndexOf(sw02Frames, picture.sprite);
                 if (frame < 0 && basicReturnFrames != null)
                 { int index = System.Array.IndexOf(basicReturnFrames, picture.sprite); if (index >= 0) frame = index + 6; }
@@ -323,6 +361,9 @@ namespace KarmaPrototype
         void ApplySwordBodyColor(Color color)
         {
             picture.color = color;
+            // LateUpdate may resample the body after GuardianPose applied the
+            // shared hit flash. Keep that flash on the final displayed sprite.
+            ApplyDamageFlash();
         }
         void RegisterSwordBodySprite()
         {
@@ -330,7 +371,7 @@ namespace KarmaPrototype
             SwordFoot = Vector3.up * swordReferenceSole;
             if (picture == null || picture.sprite == null) return;
             int frame = sw02Frames == null ? -1 : System.Array.IndexOf(sw02Frames, picture.sprite);
-            if (frame >= 0)
+            if (frame >= 0 || swordSkillFrames != null && System.Array.IndexOf(swordSkillFrames, picture.sprite) >= 0)
             {
                 SwordFoot = Vector3.zero;
                 SwordVisualHome += Vector3.up * swordReferenceSole;

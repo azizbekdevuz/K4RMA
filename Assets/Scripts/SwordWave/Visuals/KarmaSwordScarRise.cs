@@ -2,44 +2,41 @@ using UnityEngine;
 
 namespace KarmaPrototype
 {
-    // Static SW03 sword uses a narrower visual fit and the original vertical rise.
+    // Static SW03 sword uses a narrower visual fit and the continuous floor emergence.
     // Frame geometry is installed before the shared attack's damage Update.
     [DefaultExecutionOrder(-50)]
     public sealed class KarmaSwordScarRise : MonoBehaviour
     {
         enum ScarSequence { Warning, Blade, Impact }
-        public const float RiseSeconds = 0.10f, DissipationSeconds = 0.22f;
-        public const float AuraDelay = 0.045f, BladeFadeSeconds = 0.12f, AuraFadeSeconds = 0.30f;
+        public const float RiseSeconds = 0.14f, DissipationSeconds = 0.22f;
+        public const float AuraDelay = 0.045f, BladeFadeSeconds = 0.22f, AuraFadeSeconds = 0.30f;
         public const float VisualWidthScale = 0.76f;
-        // Selected 1024x1536 artwork, Unity bottom-left pixels: y=160 is
-        // the central lower point, not the crossbar. The opaque crossbar spans
-        // y=247..277 at x=256/768; y=256 embeds its underside in the floor.
-        // Keep the original fit/profile rectangle so this is translation only.
-        public static readonly Rect BladePixels = new Rect(160,160,704,1354);
+        // SW05-family silver blade, measured alpha>=128 bounds at 1024x1536.
+        // Keep the crossguard at the old ground socket and preserve display width.
+        public static readonly Rect BladePixels = new Rect(156,155,713,1362);
         public static readonly Vector2 FloorPixel = new Vector2(512,256);
         public static float VisualEmbedDepth(float height)
         { return (FloorPixel.y - BladePixels.yMin) * height / BladePixels.height; }
         public static Vector2 VisualSize(Vector2 contactSize)
-        { return new Vector2(contactSize.y*BladePixels.width/BladePixels.height*VisualWidthScale,contactSize.y); }
+        { return new Vector2(contactSize.y*(704f/1354)*VisualWidthScale,contactSize.y); }
         public static float BladeHalfWidth(float y)
         {
             // Half-widths measured from the clean sword alpha, in BladePixels.
             // This profile drives only the separate aura/mesh, never contacts.
             y=Mathf.Clamp01(y);
-            return y<0.05f?Mathf.Lerp(0.002f,0.070f,y/0.05f)
-                :y<0.07f?Mathf.Lerp(0.070f,0.411f,(y-0.05f)/0.02f)
-                :y<0.0887f?Mathf.Lerp(0.411f,0.496f,(y-0.07f)/0.0187f)
-                :y<0.0894f?Mathf.Lerp(0.496f,0.338f,(y-0.0887f)/0.0007f)
-                :y<0.10f?Mathf.Lerp(0.338f,0.269f,(y-0.0894f)/0.0106f)
-                :y<0.12f?Mathf.Lerp(0.269f,0.152f,(y-0.10f)/0.02f)
-                :y<0.16f?Mathf.Lerp(0.152f,0.145f,(y-0.12f)/0.04f)
-                :y<0.20f?Mathf.Lerp(0.145f,0.186f,(y-0.16f)/0.04f)
-                :y<0.35f?Mathf.Lerp(0.186f,0.136f,(y-0.20f)/0.15f)
-                :y<0.50f?Mathf.Lerp(0.136f,0.134f,(y-0.35f)/0.15f)
-                :y<0.56f?Mathf.Lerp(0.134f,0.145f,(y-0.50f)/0.06f)
-                :y<0.65f?Mathf.Lerp(0.145f,0.125f,(y-0.56f)/0.09f)
-                :y<0.82f?Mathf.Lerp(0.125f,0.115f,(y-0.65f)/0.17f)
-                :Mathf.Lerp(0.115f,0,(y-0.82f)/0.18f);
+            return y<0.05f?Mathf.Lerp(0,0.066f,y/0.05f)
+                :y<0.065f?Mathf.Lerp(0.066f,0.366f,(y-0.05f)/0.015f)
+                :y<0.092f?Mathf.Lerp(0.366f,0.497f,(y-0.065f)/0.027f)
+                :y<0.10f?Mathf.Lerp(0.497f,0.289f,(y-0.092f)/0.008f)
+                :y<0.12f?Mathf.Lerp(0.289f,0.217f,(y-0.10f)/0.02f)
+                :y<0.16f?Mathf.Lerp(0.217f,0.149f,(y-0.12f)/0.04f)
+                :y<0.20f?Mathf.Lerp(0.149f,0.196f,(y-0.16f)/0.04f)
+                :y<0.35f?Mathf.Lerp(0.196f,0.142f,(y-0.20f)/0.15f)
+                :y<0.50f?Mathf.Lerp(0.142f,0.139f,(y-0.35f)/0.15f)
+                :y<0.56f?Mathf.Lerp(0.139f,0.154f,(y-0.50f)/0.06f)
+                :y<0.65f?Mathf.Lerp(0.154f,0.135f,(y-0.56f)/0.09f)
+                :y<0.82f?Mathf.Lerp(0.135f,0.121f,(y-0.65f)/0.17f)
+                :Mathf.Lerp(0.121f,0,(y-0.82f)/0.18f);
         }
         static readonly string[] Sheets = { "SW03_GroundScar_5f", "SW03_RisingBlade_Tall_5f", "SW03_HitCut_5f" };
         static readonly Sprite[,] frames = new Sprite[3, 5];
@@ -53,13 +50,14 @@ namespace KarmaPrototype
         SpriteRenderer picture;
         KarmaSwordBossAttack attack;
         ScarSequence sequence;
-        Vector2 footprint, ground;
+        Vector2 footprint, ground, bladeFoot, bladeVisualSize;
         Transform scope;
         float age, life;
         KarmaSwordScarClock roundClock;
         bool flipped, ended;
 
         KarmaSW05Energy electricalBlade, electricalWarning;
+        KarmaSwordScarAura aura;
         MaterialPropertyBlock bladeProperties;
         public int FrameIndex { get; private set; }
         // A visual seed is tied to the fixed sword origin, never spawn order
@@ -89,6 +87,19 @@ namespace KarmaPrototype
             {
                 picture.sharedMaterial = Resources.Load<Material>("SwordWave/SW03/KarmaSwordRisePolish");
                 bladeProperties = new MaterialPropertyBlock();
+                picture.sprite=KarmaArtwork.Sprite("SwordBossVFX","SW03_RisingBlade_v7");
+                picture.flipX=false;picture.flipY=false;
+                float ppu=picture.sprite.pixelsPerUnit;
+                bladeVisualSize=VisualSize(footprint);
+                float fit=footprint.y*ppu/BladePixels.height,fitX=bladeVisualSize.x*ppu/BladePixels.width;
+                transform.localScale=new Vector3(fitX, fit, 1);transform.rotation=Quaternion.identity;
+                bladeFoot=Vector2.Scale((FloorPixel-picture.sprite.pivot)/ppu,new Vector2(fitX, fit));
+                var uv=picture.sprite.textureRect;var tex=picture.sprite.texture;
+                bladeProperties.SetVector("_FrameUV",new Vector4(uv.x/tex.width,uv.y/tex.height,uv.width/tex.width,uv.height/tex.height));
+                bladeProperties.SetVector("_BladeRect",new Vector4(BladePixels.x/picture.sprite.rect.width,BladePixels.y/picture.sprite.rect.height,BladePixels.width/picture.sprite.rect.width,BladePixels.height/picture.sprite.rect.height));
+                bladeProperties.SetFloat("_AuraSeed",(EnergySeed(ground.x)&65535)*(83.1f/65536));
+                bladeProperties.SetFloat("_Fade",1);bladeProperties.SetFloat("_FloorY",ground.y);
+                bladeProperties.SetFloat("_EnergyLayer",0);
             }
             if (clip != ScarSequence.Blade)
                 for (int f = 0; f < 5; f++) Frame((int)clip, f);
@@ -109,8 +120,9 @@ namespace KarmaPrototype
             float sample = Mathf.Floor(progress * life * 24) / 24;
             FrameIndex = Mathf.Min(4, (int)(sample / life * 5)); Paint(FrameIndex);
             float charge = Mathf.SmoothStep(0, 1, progress);
+            float imminent = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.78f, 1, progress));
             picture.color = new Color(0.72f + charge * 0.28f, 0.88f + charge * 0.12f, 1,
-                Mathf.Lerp(0.42f, 1, charge));
+                0.42f + charge * 0.30f + imminent * 0.28f);
             if (electricalWarning != null) electricalWarning.SetCharge(progress);
         }
         public void Initialize(KarmaGame director, KarmaEnemy enemy, KarmaBossAttack shot, Vector2 size, float seconds, bool mirror = false, KarmaSwordScarClock clock = null)
@@ -122,7 +134,7 @@ namespace KarmaPrototype
             var energySize = new Vector2(size.x * VisualWidthScale, size.y);
             electricalBlade = KarmaSW05Energy.Scar(scope,game,shot.transform,new Vector2(shot.transform.position.x,0),energySize,seconds);
             flipped = mirror; Paint(0);
-            KarmaSwordScarAura.Spawn(scope, director, enemy, picture, EnergySeed(shot.transform.position.x), roundClock);
+            aura=KarmaSwordScarAura.Spawn(scope, director, enemy, picture, EnergySeed(shot.transform.position.x), footprint.y, roundClock);
 
         }
         static void Impact(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at, Vector2 size, string name)
@@ -144,66 +156,56 @@ namespace KarmaPrototype
             if (game.Paused || sequence == ScarSequence.Warning) return;
             age = roundClock != null ? roundClock.Sample(Time.frameCount, Time.deltaTime, game.Paused) : age + Time.deltaTime;
             if (sequence == ScarSequence.Impact && age >= life) { Destroy(gameObject); return; }
-            // Contact stages retain their original clock. Only sprite clips run at 24 FPS.
+            // Rise and contact stages share the same short emergence clock.
             FrameIndex = sequence == ScarSequence.Blade
-                ? Mathf.Min(4, (int)(age / RiseSeconds * 5)) : Mathf.Min(4, (int)(age * 24));
+                ? Mathf.Min(4, (int)(age / RiseSeconds * 4)) : Mathf.Min(4, (int)(age * 24));
             Paint(FrameIndex);
             if (sequence == ScarSequence.Impact)
                 picture.color = new Color(1, 1, 1, 1 - Mathf.SmoothStep(0, 1, (age - 0.12f) / (life - 0.12f)));
         }
         public static float VisualRiseHeight(float seconds,float height)
         {
-            // Interpolate only the display between the original five contact
-            // stages. Contacts still use FrameIndex and the original rectangles.
-            float phase=Mathf.Clamp(seconds/RiseSeconds*5,0,4);
-            int lower=(int)phase,upper=Mathf.Min(lower+1,4);
-            return height*Mathf.Lerp(BladeCore[lower].height,BladeCore[upper].height,phase-lower)/BladeCore[4].height;
+            // The tip starts at the floor, accelerates, then seats quickly.
+            // Retain the final static fit/socket instead of scaling the sword.
+            return Mathf.Lerp(VisualEmbedDepth(height),height,Mathf.SmoothStep(0,1,seconds/RiseSeconds));
         }
+        public static float VisibleTipHeight(float seconds,float height)
+        { return Mathf.Max(0,VisualRiseHeight(seconds,height)-VisualEmbedDepth(height)); }
+        public static float RetractionDistance(float seconds,float height)
+        { return height*Mathf.SmoothStep(0,1,seconds/BladeFadeSeconds); }
         void Paint(int frame)
         {
-            picture.sprite = sequence == ScarSequence.Blade ? KarmaArtwork.Sprite("SwordBossVFX", "SW03_RisingBlade_v7") : Frame((int)sequence, frame); picture.flipX = sequence != ScarSequence.Blade && flipped; picture.flipY = false;
-            float ppu = picture.sprite.pixelsPerUnit;
-            // Ignore transparent canvas padding when fitting the visible art.
-            Vector2 pixels = sequence == ScarSequence.Blade ? BladeCore[4].size
-                : sequence == ScarSequence.Warning ? new Vector2(262, 106) : new Vector2(276, 159);
-            var scale = new Vector3(footprint.x * ppu / pixels.x, footprint.y * ppu / pixels.y, 1);
-            transform.localScale = scale; transform.rotation = Quaternion.identity;
             if (sequence == ScarSequence.Blade)
             {
                 var core = BladeCore[frame];
-                // Preserve the five original contact rectangles and their timing.
+                // Retain the original width stages; damage cannot outrun the visible tip.
                 // One static sprite translates through the floor; its fit never changes during the rise.
                 var damageSize = new Vector2(core.width / BladeCore[4].width * footprint.x,
-                    core.height / BladeCore[4].height * footprint.y);
+                    Mathf.Min(core.height / BladeCore[4].height * footprint.y,VisibleTipHeight(age,footprint.y)));
                 attack.SetSW03Frame(ground + Vector2.up * damageSize.y / 2, damageSize);
                 float visibleHeight=VisualRiseHeight(age,footprint.y);
-                if (electricalBlade != null) electricalBlade.SetScarBounds(ground,VisualSize(footprint),visibleHeight);
-                float fit = footprint.y * ppu / BladePixels.height;
-                // Fit this renderer only. The attack/root stays unscaled; the
-                // sibling aura copies this fit, and mesh lightning uses VisualSize.
-                transform.localScale = new Vector3(fit * VisualWidthScale, fit, 1);
-                Vector2 foot = Vector2.Scale((FloorPixel - picture.sprite.pivot) / ppu,
-                    new Vector2(fit * VisualWidthScale, fit));
-                transform.position = ground - foot - Vector2.up * (footprint.y - visibleHeight);
-                var uv = picture.sprite.textureRect; var tex = picture.sprite.texture;
-                bladeProperties.SetVector("_FrameUV",new Vector4(uv.x/tex.width,uv.y/tex.height,uv.width/tex.width,uv.height/tex.height));
-                bladeProperties.SetVector("_BladeRect",new Vector4(BladePixels.x/picture.sprite.rect.width,BladePixels.y/picture.sprite.rect.height,BladePixels.width/picture.sprite.rect.width,BladePixels.height/picture.sprite.rect.height));
+                if(electricalBlade!=null)electricalBlade.SetScarBounds(ground,bladeVisualSize,visibleHeight);
+                transform.position=ground-bladeFoot-Vector2.up*(footprint.y-visibleHeight);
                 // A single release highlight, rather than a repeating scan bar.
                 bladeProperties.SetFloat("_RiseProgress",age*4.5f-0.15f);
                 bladeProperties.SetFloat("_AuraTime",age);
-                bladeProperties.SetFloat("_AuraSeed",(EnergySeed(ground.x)&65535)*(83.1f/65536));
-                bladeProperties.SetFloat("_Fade", 1);
-                bladeProperties.SetFloat("_FloorY",ground.y);
-                bladeProperties.SetFloat("_EnergyLayer", 0);
                 picture.SetPropertyBlock(bladeProperties);
             }
-            else transform.position = ground;
+            else
+            {
+                picture.sprite=Frame((int)sequence,frame);picture.flipX=flipped;picture.flipY=false;
+                float ppu=picture.sprite.pixelsPerUnit;
+                Vector2 pixels=sequence==ScarSequence.Warning?new Vector2(262,106):new Vector2(276,159);
+                transform.localScale=new Vector3(footprint.x*ppu/pixels.x,footprint.y*ppu/pixels.y,1);
+                transform.SetPositionAndRotation(ground,Quaternion.identity);
+            }
         }
         void OnDisable()
         {
             if (sequence != ScarSequence.Blade || ended || game == null || owner == null || !owner.PresentationActive || owner.Stunned
                 || scope == null || !scope.gameObject.activeInHierarchy || age < life - Time.deltaTime * 1.5f) return;
             ended = true;
+            if(aura!=null)aura.Release();
             // Transfer the expired blade to a contact-free cosmetic fade.
             var tail = new GameObject("SW03 residual blade / no damage");
             tail.transform.SetParent(scope, false);
@@ -213,7 +215,7 @@ namespace KarmaPrototype
             residual.sprite = picture.sprite; residual.sharedMaterial = picture.sharedMaterial;
             residual.sortingOrder = picture.sortingOrder;
             residual.SetPropertyBlock(bladeProperties);
-            tail.AddComponent<KarmaSwordScarFade>().Initialize(game, owner, residual);
+            tail.AddComponent<KarmaSwordScarFade>().Initialize(game, owner, residual, footprint.y);
             KarmaSW05Energy.ScarDissolve(scope,game,ground,VisualSize(footprint));
         }
     }
@@ -225,14 +227,14 @@ namespace KarmaPrototype
         [Range(0,2)] public float Intensity = 1;
         KarmaGame game; KarmaEnemy owner; SpriteRenderer source, picture;
         MaterialPropertyBlock properties; Vector3 anchor, scale;
-        float age, tailAge, noiseSeed, glowGain; bool released;
+        float age, tailAge, noiseSeed, glowGain, bladeHeight; bool released; int releaseFrame=-1;
         KarmaSwordScarClock roundClock;
-        public static void Spawn(Transform root, KarmaGame game, KarmaEnemy owner, SpriteRenderer source, int seed, KarmaSwordScarClock clock = null)
+        public static KarmaSwordScarAura Spawn(Transform root, KarmaGame game, KarmaEnemy owner, SpriteRenderer source, int seed, float height, KarmaSwordScarClock clock = null)
         {
             var node = new GameObject("SW03 independent aura / no damage");
             node.transform.SetParent(root, false);
             var fx = node.AddComponent<KarmaSwordScarAura>();
-            fx.game=game; fx.owner=owner; fx.source=source;
+            fx.game=game; fx.owner=owner; fx.source=source; fx.bladeHeight=height;
             fx.roundClock=clock;
             fx.picture=node.AddComponent<SpriteRenderer>();
             fx.picture.sprite=source.sprite; fx.picture.sharedMaterial=source.sharedMaterial;
@@ -245,16 +247,23 @@ namespace KarmaPrototype
             fx.properties.SetFloat("_AuraTime",0); fx.properties.SetFloat("_AuraSeed",fx.noiseSeed);
             fx.picture.SetPropertyBlock(fx.properties);
             node.transform.SetPositionAndRotation(fx.anchor,Quaternion.identity); node.transform.localScale=fx.scale;
+            return fx;
+        }
+        public void Release()
+        {
+            if(released)return;
+            if(source!=null){anchor=source.transform.position;scale=source.transform.lossyScale;}
+            released=true;releaseFrame=Time.frameCount;
         }
         void LateUpdate()
         {
             if(game==null || owner==null || !owner.PresentationActive || owner.Stunned) {Destroy(gameObject);return;}
             if(game.Paused)return;
             age=roundClock!=null?roundClock.Sample(Time.frameCount,Time.deltaTime,game.Paused):age+Time.deltaTime;
-            if(source!=null && source.gameObject.activeInHierarchy)
+            if(!released && source!=null && source.gameObject.activeInHierarchy)
             {anchor=source.transform.position;scale=source.transform.lossyScale;}
-            else released=true;
-            if(released)tailAge+=Time.deltaTime;
+            else if(!released)Release();
+            if(released && Time.frameCount!=releaseFrame)tailAge+=Time.deltaTime;
             if(tailAge>=KarmaSwordScarRise.AuraFadeSeconds){Destroy(gameObject);return;}
             float ignition=Mathf.SmoothStep(0,1,(age-KarmaSwordScarRise.AuraDelay)/0.07f);
             float fade=1-tailAge/KarmaSwordScarRise.AuraFadeSeconds;
@@ -264,7 +273,7 @@ namespace KarmaPrototype
             properties.SetFloat("_Fade",ignition*fade*fade*pulse*0.8f*glowGain*Mathf.Max(0,Intensity));
             properties.SetFloat("_AuraTime",Mathf.Max(0,age-KarmaSwordScarRise.AuraDelay));
             picture.SetPropertyBlock(properties);
-            transform.SetPositionAndRotation(anchor,Quaternion.identity);
+            transform.SetPositionAndRotation(anchor-Vector3.up*KarmaSwordScarRise.RetractionDistance(tailAge,bladeHeight),Quaternion.identity);
             transform.localScale=scale;
         }
     }
@@ -273,9 +282,10 @@ namespace KarmaPrototype
     {
         KarmaGame game; KarmaEnemy owner; SpriteRenderer picture;
         MaterialPropertyBlock properties;
-        float age;
-        public void Initialize(KarmaGame director, KarmaEnemy enemy, SpriteRenderer source)
-        { game=director; owner=enemy; picture=source; properties=new MaterialPropertyBlock(); picture.GetPropertyBlock(properties); }
+        float age, bladeHeight; Vector3 anchor;
+        public void Initialize(KarmaGame director, KarmaEnemy enemy, SpriteRenderer source, float height)
+        { game=director; owner=enemy; picture=source; bladeHeight=height; anchor=transform.position;
+            properties=new MaterialPropertyBlock(); picture.GetPropertyBlock(properties); }
         void Update()
         {
             if(game==null || owner==null || !owner.PresentationActive || owner.Stunned)
@@ -283,7 +293,10 @@ namespace KarmaPrototype
             if(game.Paused)return;
             age+=Time.deltaTime;
             if(age>=KarmaSwordScarRise.BladeFadeSeconds){Destroy(gameObject);return;}
-            properties.SetFloat("_Fade",1-Mathf.SmoothStep(0,1,age/KarmaSwordScarRise.BladeFadeSeconds));
+            // The spent blade sinks intact through the shader's fixed floor.
+            // Dissolve only the final tip; the damage owner has already expired.
+            transform.position=anchor-Vector3.up*KarmaSwordScarRise.RetractionDistance(age,bladeHeight);
+            properties.SetFloat("_Fade",1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(0.65f,1,age/KarmaSwordScarRise.BladeFadeSeconds)));
             picture.SetPropertyBlock(properties);
         }
     }

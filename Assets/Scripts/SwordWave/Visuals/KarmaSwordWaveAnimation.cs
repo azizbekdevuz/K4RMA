@@ -9,7 +9,7 @@ namespace KarmaPrototype
     {
         enum Playback { Charge, Flight, Burst, ChargeRelease }
         const int FrameCount = 5;
-        const float FlightFPS = 30;
+        const float FlightFPS = 24;
         static readonly string[] Clips = { "Charge", "SW01Flight", "SW02Flight", "Impact" };
         static readonly Sprite[,] frames = new Sprite[4, FrameCount];
         static Sprite blueCrescent, basicCrescent;
@@ -221,9 +221,13 @@ namespace KarmaPrototype
             else Paint(clip, (int)(age * FlightFPS) % FrameCount,
                 new Vector2(size.x * 1.12f, size.y), new Vector2(0.65f, 0.81f));
             picture.flipX = velocity.x < 0; picture.flipY = false;
-            picture.transform.localRotation = Quaternion.identity;
+            if (pattern == (int)EnemyAttack.SWBasic && velocity.sqrMagnitude > 0.000001f)
+                picture.transform.rotation = Quaternion.Euler(0, 0, BasicFlightAngle(velocity));
+            else picture.transform.localRotation = Quaternion.identity;
             ApplyBasicVisualOrigin();
         }
+        internal static float BasicFlightAngle(Vector2 direction)
+            => Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - (direction.x < 0 ? 180 : 0);
         void ApplyCharge()
         {
             // No floating charge sprite: only the mesh sheath on the actual blade.
@@ -244,7 +248,8 @@ namespace KarmaPrototype
             heel = bend = tip = Vector2.zero;
             if (renderer == null || renderer.sprite == null) return false;
             var sprite = renderer.sprite;
-            if (BasicReturnBladePoints(renderer, out heel, out bend, out tip)) return true;
+            if (BasicReturnBladePoints(renderer, out heel, out bend, out tip)
+                || SkillBladePoints(renderer, out heel, out bend, out tip)) return true;
             int form;
             switch (sprite.texture.name)
             {
@@ -265,6 +270,31 @@ namespace KarmaPrototype
             heel = BladePoint(renderer, BladeSockets[form, frame * 3]);
             bend = BladePoint(renderer, BladeSockets[form, frame * 3 + 1]);
             tip = BladePoint(renderer, BladeSockets[form, frame * 3 + 2]);
+            return true;
+        }
+        // Hilt/midpoint/tip measured on the new 443.5px own-form cells.
+        // These preparation keys must keep the existing charge on the steel.
+        static readonly Vector2[,] SkillBladeSockets = {
+            {new Vector2(230,235),new Vector2(283,298),new Vector2(336,361),new Vector2(180,43),new Vector2(128,28),new Vector2(76,13)},
+            {new Vector2(264,253),new Vector2(323,319),new Vector2(382,385),new Vector2(208,39),new Vector2(143,22),new Vector2(78,4)},
+            {new Vector2(227,245),new Vector2(285,312),new Vector2(344,379),new Vector2(176,47),new Vector2(120,31),new Vector2(65,16)},
+            {new Vector2(248,280),new Vector2(314,323),new Vector2(381,366),new Vector2(198,62),new Vector2(148,44),new Vector2(98,25)}
+        };
+        static bool SkillBladePoints(SpriteRenderer renderer, out Vector2 heel, out Vector2 bend, out Vector2 tip)
+        {
+            heel = bend = tip = Vector2.zero;
+            int form;
+            switch (renderer.sprite.texture.name)
+            {
+                case "Wave_Skills": form=0; break; case "WaveRise_Skills": form=1; break;
+                case "WaveWard_Skills": form=2; break; case "WaveFinal_Skills": form=3; break;
+                default: return false;
+            }
+            int frame = renderer.sprite.name == "ReturnLoad" ? 0 : renderer.sprite.name == "GroundRaise" ? 1 : -1;
+            if (frame < 0) return false;
+            heel = BladePoint(renderer, SkillBladeSockets[form,frame*3]);
+            bend = BladePoint(renderer, SkillBladeSockets[form,frame*3+1]);
+            tip = BladePoint(renderer, SkillBladeSockets[form,frame*3+2]);
             return true;
         }
         // SWBasic-only pixels measured on the final 748px packed cells.
@@ -332,8 +362,9 @@ namespace KarmaPrototype
                 ApplyFlight();
                 if (age >= nextEcho)
                 {
-                    echoes.Echo(owner, picture, pattern == (int)EnemyAttack.SWBasic ? 0.22f : heavy ? 0.64f : 0.50f, heavy ? 0.12f : 0.085f, transform);
-                    nextEcho = age + 0.03f;
+                    echoes.Echo(owner, picture, pattern == (int)EnemyAttack.SWBasic ? 0.22f : heavy ? 0.38f : 0.28f, heavy ? 0.11f : 0.075f, transform);
+                    // Softer echoes leave the leading blade dominant.
+                    nextEcho = age + 1f / 24;
                 }
             }
             else
@@ -555,6 +586,8 @@ namespace KarmaPrototype
                 else if (phase == SwordEnergyPhase.Flight) Flight();
                 else Burst(Mathf.Clamp01(age / duration));
                 DrawMotes(dt);
+                if (phase == SwordEnergyPhase.Charge || phase == SwordEnergyPhase.ChargeRelease)
+                    ClipChargeToArena();
                 mesh.SetVertices(vertices, 0, vertices.Length, UnityEngine.Rendering.MeshUpdateFlags.DontRecalculateBounds);
                 mesh.SetColors(colors);
                 // Charge bounds follow its hand anchor and include outer intake
@@ -569,6 +602,19 @@ namespace KarmaPrototype
                     UnityEngine.Rendering.MeshUpdateFlags.DontRecalculateBounds | UnityEngine.Rendering.MeshUpdateFlags.DontValidateIndices);
                 // Explicit bounds avoid a scan over invisible buffer slots.
                 mesh.bounds = bounds;
+            }
+            void ClipChargeToArena()
+            {
+                // Sword anchors stay attached to the pose. Trim only electricity
+                // at the physical walls, including its intake and release wisps.
+                float left = KarmaStage.ArenaLeft - center.x, right = KarmaStage.ArenaRight - center.x;
+                for (int i = 0; i < stroke * VerticesPerStroke; i++)
+                {
+                    var p = vertices[i];
+                    colors[i].a *= Mathf.Clamp01(Mathf.Min(p.x - left, right - p.x) / 0.18f);
+                    p.x = Mathf.Clamp(p.x, left, right);
+                    vertices[i] = p;
+                }
             }
             void Ribbon(float width, Color color, bool angular = false, float core = 0.16f)
             {
@@ -737,6 +783,59 @@ namespace KarmaPrototype
                     Vector2 end=to+normal*(width*(a%2==0?2.8f:-2.8f));
                     BladeBolt(to,end,width*0.15f,brightness*blink*0.6f,width*0.4f,a+140);
                 }
+                BladeChargeAccents(front,width,brightness);
+            }
+            void BladeChargeAccents(float front, float width, float brightness)
+            {
+                // Two counter-winding filaments make the sheath feel alive.
+                // Their reach stays within a few blade widths of the steel.
+                for (int side=-1;side<=1;side+=2)
+                {
+                    for (int p=0;p<Points;p++)
+                    {
+                        float u=front*p/(Points-1);
+                        Vector2 axis=(OnBlade(Mathf.Min(1,u+0.02f))-OnBlade(Mathf.Max(0,u-0.02f))).normalized;
+                        Vector2 normal=new Vector2(-axis.y,axis.x);
+                        float envelope=Mathf.Sin(p/(float)(Points-1)*Mathf.PI);
+                        float winding=Mathf.Sin(u*16-age*(heavy?9:12)+side*1.5f);
+                        path[p]=OnBlade(u)+normal*(side*width*(1.1f+winding*0.4f)*envelope);
+                    }
+                    Ribbon(width*0.38f,Alpha(Cyan,brightness*0.55f));
+                    Ribbon(width*0.10f,Alpha(White,brightness*0.45f));
+                }
+                // Distinct short packets climb from the guard toward the front.
+                int packets=heavy?4:2;
+                for (int a=0;a<packets;a++)
+                {
+                    float u=Mathf.Repeat(age*(heavy?1.7f:2.2f)+a/(float)packets,1);
+                    float head=front*u,tail=Mathf.Max(0,head-0.16f);
+                    float pulse=Mathf.Sin(u*Mathf.PI)*brightness;
+                    BladeBolt(OnBlade(tail),OnBlade(head),width*0.24f,pulse,width*0.25f,a+180);
+                }
+                // A small blade-aligned star gathers at the lit front just
+                // before release. No floating sphere, ring or whole-body flash.
+                float ready=Mathf.Clamp01((front-0.72f)/0.28f);
+                Vector2 tip=OnBlade(front),direction=(bladeTip-bladeBend).normalized;
+                Vector2 cross=new Vector2(-direction.y,direction.x);
+                float reach=width*(heavy?3.8f:3.0f);
+                Segment(tip-direction*reach,tip+direction*reach,width*0.35f,Alpha(Cyan,brightness*ready*0.55f));
+                Segment(tip-direction*reach*0.6f,tip+direction*reach*0.6f,width*0.10f,Alpha(White,brightness*ready));
+                Segment(tip-cross*reach*0.5f,tip+cross*reach*0.5f,width*0.12f,Alpha(Cyan,brightness*ready*0.70f));
+            }
+            void BladeChargeDischarge(float t)
+            {
+                float fade=(1-t)*(1-t);
+                if (fade<=0) return;
+                Vector2 tip=OnBlade(1),forward=Vector2.right*facing;
+                Vector2 normal=Vector2.up;
+                float width=chargeBodyHeight*(heavy?0.034f:0.025f);
+                int rays=heavy?5:3;
+                for (int a=0;a<rays;a++)
+                {
+                    float side=a/(float)(rays-1)*2-1;
+                    Vector2 end=tip+forward*width*(2+t*5)+normal*(side*width*(1+t*2));
+                    BladeBolt(tip,end,width*0.25f,fade*(heavy?0.95f:0.70f),width*0.35f,a+220);
+                }
             }
             void Charge(float t)
             {
@@ -797,7 +896,7 @@ namespace KarmaPrototype
             }
             void ChargeRelease(float t)
             {
-                if (!smallCharge) { BladeFill(1, 1-t); return; }
+                if (!smallCharge) { BladeFill(1, 1-t); BladeChargeDischarge(t); return; }
                 Vector2 at = ChargeCenter();
                 Vector2 axis = (bladeBend - bladeHeel).normalized;
                 float radius = ChargeRadius(1);

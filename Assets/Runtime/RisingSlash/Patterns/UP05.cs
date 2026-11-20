@@ -12,9 +12,11 @@ namespace KarmaPrototype
             {
                 // Recovery and pattern interruption clear this through the existing host lifecycle.
                 owner.fullShield = true;
-                ((RisingBossBehavior)owner.behavior).BeginBarrier(0.5f);
+                var rising = (RisingBossBehavior)owner.behavior;
+                var animator = owner.animator;
+                rising.ClearBarrier();
                 owner.state = ActionState.Telegraph;
-                owner.animator.StartRisingCrossing();
+                animator.SetRisingCrossingPose(KarmaCharacterAnimator.RisingCrossingPose.Charge);
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
                 float warning = owner.Warning(0.62f);
                 KarmaRisingAudio.Charge(warning);
@@ -31,11 +33,12 @@ namespace KarmaPrototype
                     new Vector2(left, ground), new Vector2(right, high),
                     new Vector2(left, mid)
                 };
+                animator.SetRisingCrossingPose(KarmaCharacterAnimator.RisingCrossingPose.Approach);
                 yield return owner.Motion(points[0], DashSeconds(points[0], ultimate: true), Vector2.zero);
                 Vector2 slash = KarmaSpace.Units(new Vector2(2.2f, 1.8f));
-                var trail = KarmaRisingArt.Get("Slash");
                 for (int i = 0; i < points.Length - 1 && owner.Active; i++)
                 {
+                    animator.SetRisingCrossingPose(KarmaCharacterAnimator.RisingCrossingPose.Brake);
                     Vector2 start = owner.Position;
                     Vector2 endpoint = points[i + 1];
                     Vector2 target = endpoint;
@@ -55,23 +58,30 @@ namespace KarmaPrototype
                         yield return null;
                     }
 
+                    LockRisingPath(mark);
+                    rising.FaceCrossing(target);
+                    animator.SetRisingCrossingPose(KarmaCharacterAnimator.RisingCrossingPose.PushOff);
                     yield return owner.Wait(0.08f);
-                    if (mark != null) Destroy(mark.gameObject);
+                    if (mark != null) { mark.gameObject.SetActive(false); Destroy(mark.gameObject); }
                     float duration = DashSeconds(target, ultimate: true);
                     if (owner.Active)
                     {
-                        owner.animator.StartRisingCrossing();
+                        animator.SetRisingCrossingPose(KarmaCharacterAnimator.RisingCrossingPose.Crossing, duration);
                         KarmaRisingAudio.Crossing();
                     }
                     if (i == points.Length - 2)
-                        yield return ((RisingBossBehavior)owner.behavior).MotionWithImpact(target, duration, slash, trail, KarmaSfxId.RsUp05Final);
+                        yield return rising.MotionWithImpact(target, duration, slash, null, KarmaSfxId.RsUp05Final);
                     else
-                        yield return owner.Motion(target, duration, slash, null, trail);
+                        yield return rising.Cross(target, duration, slash);
                 }
                 var returnPoint = new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground);
-                yield return owner.Motion(returnPoint, DashSeconds(returnPoint, ultimate: true), Vector2.zero);
-                owner.animator.EndRisingMotion();
-                ((RisingBossBehavior)owner.behavior).ClearBarrier();
+                float returnSeconds = DashSeconds(returnPoint, ultimate: true);
+                animator.EndRisingMotion();
+                bool descending = owner.Position.y > ground;
+                if (descending) animator.StartRisingDescent(returnSeconds);
+                yield return owner.Motion(returnPoint, returnSeconds, Vector2.zero);
+                if (descending && owner.Active) animator.LandRisingDescent();
+                rising.ClearBarrier();
                 yield return owner.Recovery(2.5f);
             }
 

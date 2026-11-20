@@ -30,7 +30,8 @@ namespace KarmaPrototype
         }
         public void End()
         {
-            if (this != null) Destroy(gameObject);
+            gameObject.SetActive(false);
+            Destroy(gameObject);
         }
         SpriteRenderer Make(string name, string sheet, string pose, Vector2 size, int order)
         {

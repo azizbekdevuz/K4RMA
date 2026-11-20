@@ -33,6 +33,11 @@ namespace KarmaPrototype
             {
                 return KarmaRisingCharge.Begin(owner.effectsRoot, owner.transform, cue);
             }
+            protected static void LockRisingPath(SpriteRenderer marker)
+            {
+                if (marker != null)
+                    marker.GetComponent<KarmaAttackWarning>().SetTint(new Color(1f, 0.28f, 0.02f, 0.66f));
+            }
             protected static void EndRisingCharge(KarmaRisingCharge charge)
             {
                 if (charge != null) charge.End();

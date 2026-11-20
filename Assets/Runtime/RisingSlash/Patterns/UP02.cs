@@ -33,15 +33,15 @@ namespace KarmaPrototype
                     yield return null;
                 }
                 if (charge != null) charge.Lock();
+                LockRisingPath(path);
                 yield return owner.Wait(0.08f);
                 EndRisingCharge(charge);
-                if (path != null) Destroy(path.gameObject);
+                if (path != null) { path.gameObject.SetActive(false); Destroy(path.gameObject); }
                 float pursuit = DashSeconds(target);
                 KarmaRisingAudio.EndWarning();
                 if (owner.Active) KarmaRisingAudio.Pursuit();
                 owner.animator.StartRisingPursuit();
                 yield return owner.Motion(target, pursuit, bodyAttackSize, null, KarmaRisingArt.Get("Slash"));
-                owner.animator.EndRisingMotion();
                 // The pursuit ends in the air: drop immediately rather than resetting on the floor.
                 yield return new UP01Pattern(owner).Execute();
             }

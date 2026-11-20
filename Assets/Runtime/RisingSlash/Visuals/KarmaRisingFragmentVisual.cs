@@ -17,17 +17,26 @@ namespace KarmaPrototype
             spin = degreesPerSecond; life = seconds;
             initialAngle = transform.localEulerAngles.z;
         }
-        public void Restart(float seconds)
+        bool returning;
+        public void BeginReturn(float seconds)
         {
             age = 0; life = seconds; initialAngle = transform.localEulerAngles.z;
+            returning = true;
+            Draw();
         }
         void Update()
         {
             if (picture == null || Time.deltaTime <= 0) return;
             age += Time.deltaTime;
+            Draw();
+        }
+        void Draw()
+        {
             float sample = Mathf.Floor(age * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
             transform.localRotation = Quaternion.Euler(0, 0, initialAngle + spin * sample);
-            picture.color = new Color(1, 1, 1, 1 - Mathf.InverseLerp(Mathf.Max(0, life - 0.2f), life, sample));
+            var tint = returning ? new Color(0.37f, 0.96f, 1.28f) : Color.white;
+            tint.a = 1 - Mathf.InverseLerp(Mathf.Max(0, life - 0.2f), life, sample);
+            picture.color = tint;
         }
     }
 }

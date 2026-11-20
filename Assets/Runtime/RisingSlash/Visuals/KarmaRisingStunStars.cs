@@ -17,7 +17,7 @@ namespace KarmaPrototype
         SpriteRenderer picture, mark;
         Func<Transform> getCue;
         Transform cue;
-        float elapsed;
+        float elapsed, cueBodyHeight;
         int displayedFrame = -1;
 
         public void Initialize(KarmaGame director, SpriteRenderer body, Func<Transform> cueSource)
@@ -45,6 +45,7 @@ namespace KarmaPrototype
             {
                 cue = current;
                 mark = cue.GetComponent<SpriteRenderer>();
+                cueBodyHeight = picture.bounds.size.y;
                 elapsed = 0; displayedFrame = -1;
                 KarmaAudio.Play(KarmaSfxId.CombatBossSpinningStars, lifetimeOwner: cue);
             }
@@ -59,11 +60,10 @@ namespace KarmaPrototype
                 displayedFrame = frame;
             }
             Bounds body = picture.bounds;
-            float height = body.size.y;
-            cue.position = new Vector3(transform.position.x, body.max.y + height * HeadGapRatio,
+            cue.position = new Vector3(transform.position.x, body.max.y + cueBodyHeight * HeadGapRatio,
                 transform.position.z);
             cue.localRotation = Quaternion.identity;
-            float fit = height * CanvasHeightRatio / Mathf.Max(0.01f, frames[0].bounds.size.y);
+            float fit = cueBodyHeight * CanvasHeightRatio / Mathf.Max(0.01f, frames[0].bounds.size.y);
             // The cue is a direct child of the host, not the mirrored character artwork.
             Vector3 parentScale = transform.lossyScale;
             cue.localScale = new Vector3(fit / Mathf.Max(0.01f, Mathf.Abs(parentScale.x)),

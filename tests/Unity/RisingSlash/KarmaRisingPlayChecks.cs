@@ -84,13 +84,13 @@ public static class KarmaRisingPlayChecks
                 Call(director, "LoadRoom", true);
                 var actor = director.Enemies[0]; var animator = actor.GetComponentInChildren<KarmaCharacterAnimator>();
                 var renderer = (SpriteRenderer)Get(animator, "picture");
+                string form = KarmaArtwork.GuardianFormName(order);
                 var expected = order.Length == 1 ? KarmaArtwork.Sprites("Rise")
-                    : KarmaArtwork.InheritedPoses(KarmaArtwork.GuardianFormName(order));
+                    : KarmaArtwork.InheritedPoses(form);
                 Check(expected.Length >= 12, "Every Rising body has its authored pose library");
                 Action<string, EnemyAttack, bool, string> pose = (state, attack, air, name) =>
                 {
                     animator.GuardianPose(state, attack, air, false);
-                    string form = KarmaArtwork.GuardianFormName(order);
                     string motion = state == "Attack" ? attack.ToString() : state == "Stunned" ? "Stun" : name;
                     var sprite = renderer.sprite;
                     bool connected = motion == "Idle" ? sprite == KarmaArtwork.StageIdle(form)
@@ -104,10 +104,44 @@ public static class KarmaRisingPlayChecks
                 pose("Attack", EnemyAttack.UP02, false, "Slash");
                 pose("Attack", EnemyAttack.UP01, true, "AirSlash");
                 pose("Recover", EnemyAttack.UP01, false, "Landing");
+                Check(renderer.sprite == Frames(form, "Landing")[1], form + " starts ground recovery with planted feet");
                 pose("Stunned", EnemyAttack.UP01, false, "Hurt");
+                Set(animator, "motionStarted", Time.time - 1f);
+                animator.GuardianPose("Stunned", EnemyAttack.UP01, false, false);
+                Check(renderer.sprite == Frames(form, "Stun")[^1], form + " holds the settled stun drawing");
                 animator.transform.position += Vector3.right * 0.2f;
                 pose("Approach", EnemyAttack.UP01, false, "Dash");
                 pose("Approach", EnemyAttack.UP01, false, "Idle");
+                if (order.Contains(Essence.SwordWave))
+                {
+                    var wave = Frames(form, "UP03");
+                    Call(animator, "PrepareRisingWave", 0.72f);
+                    animator.GuardianPose("Telegraph", EnemyAttack.UP03, false, false);
+                    Set(animator, "risingWaveWindupAt", Time.timeAsDouble - 3 * KarmaBootstrap.Step);
+                    animator.GuardianPose("Telegraph", EnemyAttack.UP03, false, false);
+                    Check(renderer.sprite == wave[1], form + " holds the raised blade while the warning is live");
+                    Call(animator, "StartRisingWave");
+                    animator.GuardianPose("Telegraph", EnemyAttack.UP03, false, false);
+                    Check(renderer.sprite == wave[^1], form + " shows the release key when the wave fires");
+                    Call(animator, "EndRisingMotion");
+                }
+                if (order.Length == 3)
+                {
+                    var effects = (Transform)Get(actor, "effectsRoot");
+                    var sorting = effects.GetComponent<UnityEngine.Rendering.SortingGroup>();
+                    var player = director.Player.GetComponentInChildren<SpriteRenderer>();
+                    Check(sorting != null && renderer.sortingOrder < player.sortingOrder &&
+                        sorting.sortingOrder < player.sortingOrder, "Rising body and attack effects keep the player silhouette readable");
+                }
+                Call(animator, "BeginGrowth", renderer.sprite, form);
+                Call(animator, "GrowthRevive", 0f);
+                Check(renderer.sprite == Frames(form, "Death")[^1], form + " revival opens on the fallen drawing");
+                Call(animator, "EndGrowth");
+                actor.TakeDamage(1);
+                animator.GuardianPose("Approach", EnemyAttack.UP01, false, false);
+                Check(renderer.sprite == Frames(form, "Hurt")[0], form + " displays its authored hit reaction");
+                animator.GuardianPose("Attack", EnemyAttack.UP01, true, false);
+                Check(Frames(form, "UP01").Contains(renderer.sprite), form + " hit feedback preserves committed attack pose");
             }
             return "PASS: " + count + " actual Rising base/inherited Sprite connections";
         }
@@ -162,25 +196,49 @@ public static class KarmaRisingPlayChecks
         KarmaArtResource.Frames("Motions12/" + form + "/" + motion)
             .OrderBy(frame => frame.name, StringComparer.Ordinal).ToArray();
 
-    static async Task ObserveClip(SpriteRenderer renderer, string form, string motion, string landing = null)
+    static async Task CheckAirborneDefeat()
+    {
+        Reset(Essence.RisingSlash);
+        var playerBody = game.Player.GetComponent<Rigidbody2D>();
+        playerBody.position = game.Player.transform.position = new Vector2(26, KarmaSpace.Units(4));
+        var art = (Transform)Get(enemy, "art");
+        Force(EnemyAttack.UP02);
+        await Until(() => enemy.Position.y > KarmaSpace.GuardianGroundY + 2f);
+        Vector3 airborneArt = art.position;
+        enemy.TakeDamage(1000000);
+        Check((art.position - airborneArt).sqrMagnitude < 0.01f, "The first defeat frame retains the airborne art position");
+        Check(game.IsCombat && !enemy.Alive, "The enemy is defeated immediately while the presentation falls");
+        await Until(() => game.Phase == RunPhase.GuardianFallen);
+        Check(Mathf.Abs(art.position.y - KarmaSpace.GuardianGroundY) < 0.35f,
+            "The grounded fall scene starts after the boss reaches the floor");
+    }
+
+    static async Task ObserveClip(SpriteRenderer renderer, string form, string motion, string landing = null, bool checkLift = false)
     {
         var frames = Frames(form, motion);
         var ground = landing == null ? Array.Empty<Sprite>() : Frames(form, landing);
         Check(frames.Length >= 2 && (landing == null || ground.Length > 0), form + "/" + motion + " resources");
         var observed = new System.Collections.Generic.List<int>();
         var landed = new System.Collections.Generic.List<int>();
+        Sprite recoveryBridge = landing == null ? null : form == "Rise" || form == "RiseWard"
+            ? Frames(form, "Windup")[2] : Frames(form, "Landing")[2];
+        bool sawBridge = false, settled = false;
+        float previousHeight = enemy.Position.y;
+        int risingSamples = 0;
         var complete = new TaskCompletionSource<bool>();
         game.StartCoroutine(AtRender());
         await complete.Task;
         IEnumerator AtRender()
         {
-            var endOfFrame = new WaitForEndOfFrame();
             double deadline = EditorApplication.timeSinceStartup + 90;
             while (true)
             {
-                yield return endOfFrame;
+                yield return null;
                 try
                 {
+                    if (checkLift && enemy.Position.y > previousHeight + 0.005f)
+                        risingSamples++;
+                    previousHeight = enemy.Position.y;
                     int frame = Array.IndexOf(frames, renderer.sprite);
                     if (frame >= 0 && (observed.Count == 0 || observed[observed.Count-1] != frame)) observed.Add(frame);
                     int contact = Array.IndexOf(ground, renderer.sprite);
@@ -189,6 +247,11 @@ public static class KarmaRisingPlayChecks
                         Check(Mathf.Abs(enemy.Position.y - KarmaSpace.GuardianGroundY) < 0.05f, form + "/" + landing + " requires ground contact");
                         if (landed.Count == 0 || landed[landed.Count-1] != contact) landed.Add(contact);
                     }
+                    if (landed.Count > 0)
+                    {
+                        sawBridge |= renderer.sprite == recoveryBridge;
+                        settled |= sawBridge && renderer.sprite == KarmaArtwork.StageIdle(form);
+                    }
                     if (!(bool)Get(enemy, "running")) { complete.SetResult(true); yield break; }
                     Check(EditorApplication.timeSinceStartup < deadline, form + "/" + motion + " timeout");
                 }
@@ -196,42 +259,68 @@ public static class KarmaRisingPlayChecks
             }
         }
         Check(observed.Contains(0) && observed.Contains(1), form + "/" + motion + " actual starting frames: " + string.Join(",",observed));
+        if (checkLift) Check(risingSamples >= 4, form + " standalone UP01 climbs through successive heights before diving");
         for (int i = 1; i < observed.Count; i++)
             Check(observed[i] == 0 || observed[i] > observed[i-1], form + "/" + motion + " forward playback");
         if (landing != null)
+        {
             Check(landed.Count > 0 && landed[0] == 0 && landed.SequenceEqual(landed.OrderBy(i => i)), form + "/" + landing + " landing playback");
+            Check(sawBridge && settled, form + "/" + landing + " rises through the planted bridge into Idle");
+        }
     }
 
     static async Task CheckCrossingEffects(SpriteRenderer renderer, string form)
     {
         var frames = Frames(form, "UP05");
+        var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
+        var phases = new System.Collections.Generic.HashSet<string>();
         int crossings = 0, seenFrames = 0;
-        bool reachedStart = false, onRight = false;
+        bool reachedStart = false, onRight = false, framedRecovery = false;
         Force(EnemyAttack.UP05);
         await Until(() =>
         {
             if (!(bool)Get(enemy, "running")) return true;
-            var barrier = enemy.GetComponentInChildren<KarmaRisingBarrier>();
-            if (barrier == null || barrier.Opacity <= 0) return false;
+            string phase = Get(animator, "risingCrossingPose").ToString();
             int frame = Array.IndexOf(frames, renderer.sprite);
-            Check(frame >= 0 && renderer.enabled, "UP05 shield and dash effect must be visible together: " + renderer.sprite.name);
+            if (phase != "None" && Time.timeAsDouble - (double)Get(animator, "risingCrossingAt") > 0.035)
+            {
+                phases.Add(phase);
+                Check((frame >= 0) == (phase == "Crossing"), "UP05 white slash only on a crossing: " + phase);
+                if (frame >= 0)
+                {
+                    seenFrames |= 1 << frame;
+                    var effects = (Transform)Get(enemy, "effectsRoot");
+                    Check(effects.Find("Guardian motion slash") == null, "UP05 has no secondary crescent beneath the legs");
+                }
+                if (phase == "PushOff")
+                    Check((enemy.Position.x < KarmaStage.ArenaCenter) == (enemy.Facing > 0),
+                        "UP05 faces into its return path before moving");
+                Check(enemy.GetComponentInChildren<KarmaRisingBarrier>() == null, "UP05 has no separate shield");
+            }
             float x = enemy.Position.x;
             reachedStart |= x <= KarmaStage.ArenaLeft + 4.1f;
-            if (reachedStart)
+            if (reachedStart && (x > KarmaStage.ArenaCenter) != onRight)
             {
-                seenFrames |= 1 << frame;
-                if ((x > KarmaStage.ArenaCenter) != onRight)
-                {
-                    onRight = !onRight;
-                    crossings++;
-                    Check(seenFrames == (1 << frames.Length) - 1, "UP05 effect frames at crossing " + crossings);
-                    seenFrames = 0;
-                }
+                onRight = !onRight;
+                crossings++;
+            }
+            if (Get(enemy, "state").ToString() == "Recover")
+            {
+                float bossLeft = game.GameCamera.WorldToViewportPoint(renderer.bounds.min).x;
+                float bossRight = game.GameCamera.WorldToViewportPoint(renderer.bounds.max).x;
+                float player = game.GameCamera.WorldToViewportPoint(game.Player.Position).x;
+                Check(bossLeft > 0.005f && bossRight < 0.995f && player > 0.035f && player < 0.965f,
+                    "UP05 recovery frames the full boss drawing and the player");
+                framedRecovery = true;
             }
             return false;
         });
+        Check(phases.IsSupersetOf(new[] { "Charge", "Approach", "Brake", "PushOff", "Crossing" }) &&
+            seenFrames == (1 << frames.Length) - 1, "UP05 distinct charge, braking and push-off plus all three crossing frames");
+        Check(framedRecovery && enemy.GetType().GetProperty("CameraFocus", F).GetValue(enemy) == null,
+            "UP05 camera releases once recovery ends");
         Check(crossings == 8 && !frames.Contains(renderer.sprite) && enemy.GetComponentInChildren<KarmaRisingBarrier>() == null,
-            "UP05 completes eight crossings and clears both effects");
+            "UP05 completes eight crossings and clears its white slash");
     }
 
     static async Task CheckFormClips()
@@ -250,12 +339,16 @@ public static class KarmaRisingPlayChecks
             enemy.transform.position = new Vector3(16, KarmaSpace.GuardianGroundY, 0);
             body.position = game.Player.transform.position = new Vector2(39, KarmaSpace.Units(4));
             Force(EnemyAttack.UP02);
-            await ObserveClip(renderer, form, "UP02");
+            await ObserveClip(renderer, form, "UP02", "UP01Landing");
             EnemyAttack drop = Array.IndexOf(order, Essence.Guard) >= 0 ? EnemyAttack.UP04 : EnemyAttack.UP01;
-            Force(drop, KarmaSpace.Units(4));
-            await ObserveClip(renderer, form, drop.ToString(), drop == EnemyAttack.UP01 ? "UP01Landing" : "Landing");
+            Force(drop);
+            await ObserveClip(renderer, form, "UP01", "UP01Landing", checkLift: true);
             if (Array.IndexOf(order, Essence.SwordWave) >= 0)
             {
+                if (form == "RiseWave")
+                    Check(Frames(form, "UP03").Select(sprite => sprite.pixelsPerUnit)
+                        .Zip(new[] { 154.734f, 201.476f, 205.807f }, (ppu, expected) => Mathf.Abs(ppu - expected) < 0.001f)
+                        .All(matches => matches), "RiseWave UP03 imports the corrected armor scale");
                 Force(EnemyAttack.UP03);
                 await ObserveClip(renderer, form, "UP03");
             }
@@ -348,6 +441,7 @@ public static class KarmaRisingPlayChecks
             Check(!enemy.Invulnerable && !enemy.Armored, "interruption clears rising defense");
             Reset(); float health = enemy.Health; enemy.TakeDamage(1);
             Check(enemy.Health < health, "Rising retains normal damage");
+            await CheckAirborneDefeat();
             Check(error == null, "no runtime error: " + error);
             result = "PASS: Rising 12 FPS all-form playback, basic/UP01-UP05 execution, landing, defense cleanup, interruption and damage";
         }

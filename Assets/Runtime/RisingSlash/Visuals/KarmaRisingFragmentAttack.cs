@@ -27,7 +27,7 @@ namespace KarmaPrototype
             if (Visual != null)
             {
                 Visual.transform.Rotate(0, 0, 180);
-                Visual.GetComponent<KarmaRisingFragmentVisual>()?.Restart(3f);
+                Visual.GetComponent<KarmaRisingFragmentVisual>()?.BeginReturn(3f);
             }
         }
         protected override float FlightStep(Vector2 from, float dt)

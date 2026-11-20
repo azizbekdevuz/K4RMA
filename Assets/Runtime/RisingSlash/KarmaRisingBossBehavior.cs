@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
@@ -18,6 +19,17 @@ namespace KarmaPrototype
             public override KarmaBossBalance Balance { get { return Settings; } }
             float nextStride, nextAirPursuit;
             KarmaRisingBarrier barrier;
+            SpriteRenderer arenaBackdrop;
+            bool FramingUltimate => owner.running && owner.selected == EnemyAttack.UP05;
+            public override Vector3? CameraFocus => FramingUltimate
+                ? new Vector3(KarmaStage.ArenaCenter, arenaBackdrop != null ? arenaBackdrop.bounds.center.y : KarmaSpace.Units(4), -10)
+                : (Vector3?)null;
+            public override float CameraSize(float aspect)
+            {
+                // Leave space for blades and cape beside the wall-side endpoints.
+                float halfWidth = KarmaStage.ArenaWidth * 0.5f + KarmaSpace.Units(2.5f);
+                return halfWidth / Mathf.Max(0.01f, aspect);
+            }
             public override bool ReduceDamage(Vector2 source) => barrier != null && barrier.Formed;
             public void BeginBarrier(float seconds)
             {
@@ -76,13 +88,73 @@ namespace KarmaPrototype
                 motionImpact = impact;
                 try
                 {
-                    var motion = owner.Motion(target, seconds, size, contact, trail);
+                    var motion = trail != null ? owner.Motion(target, seconds, size, contact, trail)
+                        : Cross(target, seconds, size, contact);
                     while (motion.MoveNext()) yield return motion.Current;
                 }
                 finally
                 {
                     if (motionContact == contact) motionContact = null;
                 }
+            }
+            // UP01 and UP05 draw the hit on their own layers. This runner keeps the
+            // same swept contact, without spawning a second slash or landing flash.
+            public IEnumerator Cross(Vector2 target, float duration, Vector2 size, KarmaAttackContact contact = null,
+                bool acceleratingFall = false)
+            {
+                Vector2 start = owner.Position;
+                Vector2 heading = target - start;
+                FaceCrossing(target);
+                owner.state = ActionState.Attack;
+                owner.animator.Attack(heading.normalized);
+                var ledger = contact ?? new KarmaAttackContact();
+                float elapsed = 0;
+                while (elapsed < duration && owner.Active)
+                {
+                    if (owner.game.Paused) { yield return null; continue; }
+                    Vector2 from = owner.Position;
+                    elapsed += Time.deltaTime;
+                    float progress = Mathf.Clamp01(elapsed / duration);
+                    Vector2 to = Vector2.Lerp(start, target, progress);
+                    if (acceleratingFall) to.y = Mathf.Lerp(start.y, target.y, progress * progress);
+                    owner.transform.position = to;
+                    owner.TryAttackHit(from, to, size, owner.Damage, ledger, 0);
+                    yield return null;
+                }
+            }
+            public void FaceCrossing(Vector2 target)
+            {
+                float offset = target.x - owner.Position.x;
+                if (Mathf.Abs(offset) <= 0.01f) return;
+                owner.direction = Mathf.Sign(offset);
+                var scale = owner.art.localScale;
+                scale.x = owner.Facing * Mathf.Abs(scale.x);
+                owner.art.localScale = scale;
+            }
+            public override void OnDamaged()
+            {
+                owner.animator.RecordRisingHit();
+            }
+            public override IEnumerator PresentDefeatFall(Vector3 hitPosition)
+            {
+                Vector3 floor = owner.transform.position;
+                float height = hitPosition.y - floor.y;
+                return height > 0.1f ? FallFromHit(hitPosition, floor, height) : null;
+            }
+            IEnumerator FallFromHit(Vector3 hitPosition, Vector3 floor, float height)
+            {
+                Vector3 rest = owner.art.position;
+                float duration = Mathf.Clamp(Mathf.Sqrt(2 * height / KarmaSpace.Units(72)), 0.16f, 0.5f);
+                float elapsed = 0;
+                while (elapsed < duration)
+                {
+                    float progress = Mathf.Clamp01(elapsed / duration);
+                    owner.art.position = rest + Vector3.Lerp(hitPosition - floor, Vector3.zero, progress * progress);
+                    owner.animator.DrawRisingDefeatFall(elapsed, duration);
+                    yield return null;
+                    if (!owner.game.Paused) elapsed += Time.deltaTime;
+                }
+                owner.art.position = rest;
             }
             [UnityEngine.Scripting.Preserve]
             public RisingBossBehavior(KarmaEnemy owner) : base(owner)
@@ -97,10 +169,16 @@ namespace KarmaPrototype
             public override void Initialize()
             {
                 owner.animator.ConfigureRisingPresentation(KarmaArtwork.GuardianFormName(owner.game.Player.Essences.PersonalizationOrder));
+                owner.art.gameObject.AddComponent<KarmaRisingCinematics>().Initialize(owner.game, owner.animator);
                 // The rising boss uses its golden sphere instead of the shared white halo.
                 owner.shieldHalo.gameObject.SetActive(false);
+                arenaBackdrop = owner.game.World.Find("Trial hall artwork")?.GetComponent<SpriteRenderer>();
+                var body = owner.art.GetComponentInChildren<SpriteRenderer>();
+                // Keep the player silhouette above the boss and its own pattern effects.
+                body.sortingOrder = 3;
+                owner.effectsRoot.gameObject.AddComponent<SortingGroup>().sortingOrder = 4;
                 owner.gameObject.AddComponent<KarmaRisingStunStars>().Initialize(owner.game,
-                    owner.art.GetComponentInChildren<SpriteRenderer>(), () => owner.stunCue);
+                    body, () => owner.stunCue);
             }
             public override List<EnemyAttack> BuildCycle(IReadOnlyList<Essence> inherited)
             {
@@ -170,6 +248,7 @@ namespace KarmaPrototype
             }
             public override void Tick()
             {
+                if (owner.Stunned) owner.animator.SetRisingStunTime(owner.stunnedUntil - owner.FightSeconds);
                 if (knockbackLeft <= 0 || owner.game.Paused) return;
                 float dt = Mathf.Min(Time.deltaTime, knockbackLeft);
                 knockbackLeft -= dt;
@@ -214,17 +293,17 @@ namespace KarmaPrototype
             public override KarmaGuardianGrowth.Technique GrowthTechnique(Essence essence)
             {
                 if (essence == Essence.Guard)
-                    return new KarmaGuardianGrowth.Technique("Windup", "AirSlash", "Windup",
+                    return new KarmaGuardianGrowth.Technique("Windup", "UP04", "Windup",
                         KarmaRisingArt.Get("Shield"), KarmaGuardianGrowth.Motion.Surround, new Vector2(7, 7), realization: "이 몸을 감싼 채 벨 수 있다면…");
                 if (essence == Essence.SwordWave)
-                    return new KarmaGuardianGrowth.Technique("Windup", "Rising", "Windup",
+                    return new KarmaGuardianGrowth.Technique("Windup", "UP03", "Windup",
                         KarmaRisingArt.Get("Wave"), KarmaGuardianGrowth.Motion.Sweep, new Vector2(7, 4.5f), copy: "Slash", realization: "더 멀리까지 벨 수 있겠군.");
-                return new KarmaGuardianGrowth.Technique("Windup", "AirSlash", "Windup",
+                return new KarmaGuardianGrowth.Technique("Windup", "UP02", "Windup",
                     KarmaRisingArt.Get("Slash"), KarmaGuardianGrowth.Motion.Dash, new Vector2(4.5f, 5), copy: "Rising")
                     { FaceInIdle = new Vector2(0.713f, 0.723f) };
             }
             public override KarmaGuardianGrowth.Technique UltimateForeshadow => new KarmaGuardianGrowth.Technique(
-                "Guard", "Guard", "Guard", KarmaRisingArt.Get("Shield"),
+                "Windup", "Dash", "Windup", null,
                 KarmaGuardianGrowth.Motion.Dash, new Vector2(7, 7), trail: KarmaRisingArt.Get("Slash"));
             public override string VictoryPose => "Landing";
             public override string VictoryLine(int stage) => stage == 1 ? "네 움직임을 따라잡았다…"
@@ -244,8 +323,9 @@ namespace KarmaPrototype
                 Face(dx);
                 if (Mathf.Abs(dx) > Settings.preferredDistance)
                 {
+                    float before = owner.Position.x;
                     owner.Move(Mathf.Sign(dx) * owner.game.Config.enemyMoveSpeed * owner.Tuning.moveMultiplier * Settings.movementScale * Settings.approachSpeedMultiplier * dt);
-                    if (owner.FightSeconds >= nextStride)
+                    if (owner.Position.x != before && owner.FightSeconds >= nextStride)
                     { nextStride = owner.FightSeconds + 0.12f; KarmaRisingPolish.Stride(owner.effectsRoot, owner.Position, Mathf.Sign(dx)); }
                 }
                 return false;
@@ -256,7 +336,8 @@ namespace KarmaPrototype
                 if (!base.Eligible(attack, distance, sight, escape)) return false;
                 if (attack == EnemyAttack.GroundStrike)
                     return sight && !owner.game.Player.Airborne;
-                if (attack == EnemyAttack.UP01) return owner.Position.y > KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.5f);
+                if (attack == EnemyAttack.UP01) return owner.Position.y > KarmaSpace.GuardianGroundY + KarmaSpace.Units(0.5f)
+                    || sight && !owner.game.Player.Airborne && distance <= KarmaSpace.Units(7f);
                 if (attack == EnemyAttack.UP02) return owner.game.Player.Airborne && owner.previous != attack
                     && owner.FightSeconds >= nextAirPursuit;
                 return attack != EnemyAttack.UP03 || escape;

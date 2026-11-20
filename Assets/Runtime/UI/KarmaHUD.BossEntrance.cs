@@ -58,7 +58,7 @@ namespace KarmaPrototype
                         Fill(new Rect(0, 616 + i * 13, 1280, 13), new Color(0.008f, 0.012f, 0.018f, i / 7f * 0.45f * opacity));
                     Color before = GUI.color;
                     GUI.color = new Color(0.94f, 0.93f, 0.87f, opacity);
-                    GUI.Label(new Rect(160, 658, 960, 36), growth.Caption, centered);
+                    Label(new Rect(160, 658, 960, 36), growth.Caption, centered);
                     GUI.color = before;
                 }
                 return true;
@@ -85,11 +85,11 @@ namespace KarmaPrototype
             entranceLabel.active.textColor = entranceAccent;
             entranceLabel.focused.textColor = entranceAccent;
 
-            GUI.Label(new Rect(148, 513, 900, 24), "다음 수호자", entranceLabel);
+            Label(new Rect(148, 513, 900, 24), "다음 수호자", entranceLabel);
             entranceTitle.normal.textColor = new Color(0.94f, 0.93f, 0.87f);
             // A clipped reveal and small settling movement leave the canonical name intact.
             GUI.BeginGroup(new Rect(148, 542, 970 * reveal, 76));
-            GUI.Label(new Rect(18 * (1 - reveal), -12 * (1 - reveal), 950, 72), entranceName, entranceTitle);
+            Label(new Rect(18 * (1 - reveal), -12 * (1 - reveal), 950, 72), entranceName, entranceTitle);
             GUI.EndGroup();
             GUI.color = old;
             Color accent = entranceAccent; accent.a = alpha;

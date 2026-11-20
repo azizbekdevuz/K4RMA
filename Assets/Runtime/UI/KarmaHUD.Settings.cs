@@ -75,7 +75,9 @@ namespace KarmaPrototype
         bool SettingsAction(Rect bounds, string label, bool selected = false, bool primary = false)
         {
             DrawHudButtonPlate(bounds, primary, selected, false);
-            return GUI.Button(bounds, label, settingsButton);
+            bool clicked = GUI.Button(bounds, GUIContent.none, GUIStyle.none);
+            Label(bounds, label, settingsButton);
+            return clicked;
         }
 
         static string DisplayModeName(FullScreenMode mode)

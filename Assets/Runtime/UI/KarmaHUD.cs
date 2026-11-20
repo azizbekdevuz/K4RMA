@@ -61,13 +61,17 @@ namespace KarmaPrototype
             menuButton.focused.textColor = menuButton.normal.textColor;
             foreach (var s in new[] { title, heading, text, small }) s.normal.textColor = HudIvory;
             centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
-            foreach (var s in new[] { title, heading, text, small, menuButton, centered }) if (font != null) s.font = font;
+            foreach (var s in new[] { title, heading, text, small, menuButton, centered })
+            {
+                if (font != null) s.font = font;
+                s.padding = new RectOffset(s.padding.left, s.padding.right, 0, 0);
+            }
         }
         void OnGUI()
         {
             if (game == null) return;
             Styles();
-            int view = game.SettingsOpen ? game.DisplayConfirmationPending ? 101 : 100
+            int view = game.QuitConfirmationOpen ? 104 : game.SettingsOpen ? game.DisplayConfirmationPending ? 101 : 100
                 : game.Paused ? 102 : game.EndingCompleted ? 103 : (int)game.Phase;
             if (hudView != view)
             {
@@ -83,6 +87,10 @@ namespace KarmaPrototype
                 Quaternion.identity, new Vector3(scale, scale, 1));
             if (game.Phase == RunPhase.Title)
                 Art(new Rect(0, 0, 1280, 720), "MenuBackground");
+            if (game.QuitConfirmationOpen)
+            {
+                DrawQuitConfirmation(); GUI.matrix = saved; return;
+            }
             if (game.SettingsOpen)
             {
                 SettingsScreen(); GUI.matrix = saved; return;
@@ -131,13 +139,13 @@ namespace KarmaPrototype
             if (tutorialRouteArrow != null) Destroy(tutorialRouteArrow);
         }
 
-        static void Art(Rect bounds, string name, Rect? source = null)
+        void Art(Rect bounds, string name, Rect? source = null)
         {
             var texture = KarmaArtwork.Texture(name);
             if (texture == null)
             {
                 Fill(bounds, new Color(0.22f, 0.035f, 0.035f));
-                GUI.Label(bounds, "이미지 파일이 누락되었습니다. " + name + "\nAssets 전체를 적용해야 합니다.");
+                Label(bounds, "이미지 파일이 누락되었습니다. " + name + "\nAssets 전체를 적용해야 합니다.", text);
                 return;
             }
             Rect crop = source ?? new Rect(0, 0, texture.width, texture.height);
@@ -162,7 +170,29 @@ namespace KarmaPrototype
                 source.y / sprite.texture.height, source.width / sprite.texture.width, source.height / sprite.texture.height), true);
             GUI.color = old;
         }
-        void Label(float x, float y, float w, float h, string value, GUIStyle style) { GUI.Label(new Rect(x, y, w, h), value, style); }
+        readonly GUIContent labelContent = new GUIContent();
+
+        void Label(float x, float y, float w, float h, string value, GUIStyle style)
+            => Label(new Rect(x, y, w, h), value, style);
+
+        void Label(Rect bounds, string value, GUIStyle style)
+        {
+            if (Event.current.type != EventType.Repaint || string.IsNullOrEmpty(value)) return;
+            labelContent.text = value;
+            int size = style.fontSize;
+            // Allow for raster rounding at fractional viewport scales and Hangul descenders.
+            float margin = Mathf.Ceil(1f / Mathf.Max(0.1f, GUI.matrix.m11));
+            bounds.yMin += margin;
+            bounds.yMax -= margin;
+            try
+            {
+                while (style.fontSize > 1 && (style.CalcHeight(labelContent, bounds.width) > bounds.height ||
+                    !style.wordWrap && style.CalcSize(labelContent).x > bounds.width))
+                    style.fontSize--;
+                GUI.Label(bounds, labelContent, style);
+            }
+            finally { style.fontSize = size; }
+        }
         static string Clock(float seconds) { return ((int)seconds / 60) + ":" + ((int)seconds % 60).ToString("00"); }
         GUIStyle speakerNameplate;
 
@@ -180,7 +210,7 @@ namespace KarmaPrototype
             Fill(new Rect(tab.x, tab.y, tab.width, 2), accent);
             Color saved = GUI.color;
             GUI.color = new Color(saved.r, saved.g, saved.b, saved.a * opacity);
-            GUI.Label(tab, speaker, speakerNameplate);
+            Label(tab, speaker, speakerNameplate);
             GUI.color = saved;
         }
 

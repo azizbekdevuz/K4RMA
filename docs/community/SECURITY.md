@@ -17,4 +17,4 @@ K4RMA는 현재 개발 중인 Unity 프로토타입입니다. 공개적으로 �
 - 사고 발생 시 해당 비밀을 우선 폐기·교체하고 Git 기록/CI 로그 노출 범위를 검토합니다.
 - 의존 패키지, 외부 에셋, AI 작업 파이프라인의 출처를 검증합니다.
 
-일반 버그는 [이슈 템플릿](../../.github/ISSUE_TEMPLATE/bug_report.yml)으로 제보할 수 있습니다.
+일반 버그는 [GitHub 이슈](https://github.com/azizbekdevuz/K4RMA/issues/new)로 제보할 수 있습니다.

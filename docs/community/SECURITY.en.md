@@ -17,4 +17,4 @@ Maintainers will coordinate acknowledgement, remediation and disclosure where pr
 - If exposed, revoke and rotate secrets promptly and review Git history and CI logs.
 - Verify provenance of dependencies, third-party assets and AI tooling.
 
-For ordinary defects use the [bug-report form](../../.github/ISSUE_TEMPLATE/bug_report.yml).
+For ordinary defects use the [GitHub issue tracker](https://github.com/azizbekdevuz/K4RMA/issues/new).

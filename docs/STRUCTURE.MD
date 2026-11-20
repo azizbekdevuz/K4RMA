@@ -1,10 +1,5 @@
 ```text
 K4RMA/
-├── .github/
-│   └── ISSUE_TEMPLATE/
-│       ├── bug_report.yml
-│       ├── config.yml
-│       └── feature_request.yml
 ├── Assets/
 │   ├── Arts/
 │   │   ├── Backup/

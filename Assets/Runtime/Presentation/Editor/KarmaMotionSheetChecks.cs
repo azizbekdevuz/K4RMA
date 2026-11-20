@@ -10,7 +10,6 @@ namespace KarmaPrototype.EditorTools
 {
     public static class KarmaMotionSheetChecks
     {
-        [MenuItem("K4RMA/Animation/Reimport and verify motion sheets")]
         public static void ReimportAndVerify()
         {
             KarmaMotionSheetImport.Import();

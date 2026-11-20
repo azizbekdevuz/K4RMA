@@ -8,7 +8,6 @@ namespace KarmaPrototype.EditorTools
 {
     public static class KarmaMotionBindings
     {
-        [MenuItem("K4RMA/Animation/Rebind character artwork")]
         public static void Apply()
         {
             var frames = new Dictionary<(string, string), Sprite[]>();

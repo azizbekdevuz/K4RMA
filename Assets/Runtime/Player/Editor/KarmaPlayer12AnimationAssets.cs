@@ -11,7 +11,6 @@ namespace KarmaPrototype.EditorTools
         const string Folder = ResourcesRoot + KarmaPlayerTimeline.Clips;
         public static readonly string[] Names = KarmaPlayerTimeline.Motions.Select(m => m.Name).ToArray();
 
-        [MenuItem("K4RMA/Animation/Rebuild player clips (12 FPS)")]
         public static void Rebuild()
         {
             var ids = Names.Concat(new[] { "AirSlash", "Dash", "Transition" });

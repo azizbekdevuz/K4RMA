@@ -41,7 +41,11 @@ namespace KarmaPrototype
             else if (action == "Stunned") motion = "Stun";
             else if (Time.time < hurtUntil) motion = "Hurt";
             else if (sheet == "Wave") motion = SwordBodyMotion(action, attack, moved);
-            else if (sheet == "Rise") motion = RisingBodyMotion(action, attack, moved);
+            else if (sheet == "Rise")
+            {
+                if (PresentRisingCrossing(action, attack)) return;
+                motion = RisingBodyMotion(action, attack, moved);
+            }
             else motion = action == "Attack" ? "GroundStrike" : action == "Recover" ? "Recovery"
                 : action == "Telegraph" ? "Windup" : moved ? "Move" : "Idle";
             if (sheet == "Wave" && PresentSwordIntermediate(attack)) return;

@@ -14,6 +14,7 @@ namespace KarmaPrototype
                 owner.fullShield = true;
                 ((RisingBossBehavior)owner.behavior).BeginBarrier(0.5f);
                 owner.state = ActionState.Telegraph;
+                owner.animator.StartRisingCrossing();
                 var charge = BeginRisingCharge(KarmaRisingCue.Charging);
                 float warning = owner.Warning(0.62f);
                 KarmaRisingAudio.Charge(warning);
@@ -66,10 +67,10 @@ namespace KarmaPrototype
                         yield return ((RisingBossBehavior)owner.behavior).MotionWithImpact(target, duration, slash, trail, KarmaSfxId.RsUp05Final);
                     else
                         yield return owner.Motion(target, duration, slash, null, trail);
-                    owner.animator.EndRisingMotion();
                 }
                 var returnPoint = new Vector2(Mathf.Clamp(owner.Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), ground);
                 yield return owner.Motion(returnPoint, DashSeconds(returnPoint, ultimate: true), Vector2.zero);
+                owner.animator.EndRisingMotion();
                 ((RisingBossBehavior)owner.behavior).ClearBarrier();
                 yield return owner.Recovery(2.5f);
             }

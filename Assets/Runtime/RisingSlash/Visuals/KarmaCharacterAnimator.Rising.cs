@@ -87,6 +87,15 @@ namespace KarmaPrototype
         internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
         internal void EndRisingMotion() => risingMotion = null;
 
+        bool PresentRisingCrossing(string action, EnemyAttack attack)
+        {
+            if (attack != EnemyAttack.UP05 || risingMotion == null || risingMotion != risingCrossing ||
+                (action != "Telegraph" && action != "Attack"))
+                return false;
+            DrawMotion(motionForm, "UP05", (float)(Time.timeAsDouble - risingMotionAt), true);
+            return true;
+        }
+
         void StartRisingMotion(Sprite[] frames)
         {
             risingMotion = frames;

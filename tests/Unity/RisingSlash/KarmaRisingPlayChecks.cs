@@ -202,6 +202,38 @@ public static class KarmaRisingPlayChecks
             Check(landed.Count > 0 && landed[0] == 0 && landed.SequenceEqual(landed.OrderBy(i => i)), form + "/" + landing + " landing playback");
     }
 
+    static async Task CheckCrossingEffects(SpriteRenderer renderer, string form)
+    {
+        var frames = Frames(form, "UP05");
+        int crossings = 0, seenFrames = 0;
+        bool reachedStart = false, onRight = false;
+        Force(EnemyAttack.UP05);
+        await Until(() =>
+        {
+            if (!(bool)Get(enemy, "running")) return true;
+            var barrier = enemy.GetComponentInChildren<KarmaRisingBarrier>();
+            if (barrier == null || barrier.Opacity <= 0) return false;
+            int frame = Array.IndexOf(frames, renderer.sprite);
+            Check(frame >= 0 && renderer.enabled, "UP05 shield and dash effect must be visible together: " + renderer.sprite.name);
+            float x = enemy.Position.x;
+            reachedStart |= x <= KarmaStage.ArenaLeft + 4.1f;
+            if (reachedStart)
+            {
+                seenFrames |= 1 << frame;
+                if ((x > KarmaStage.ArenaCenter) != onRight)
+                {
+                    onRight = !onRight;
+                    crossings++;
+                    Check(seenFrames == (1 << frames.Length) - 1, "UP05 effect frames at crossing " + crossings);
+                    seenFrames = 0;
+                }
+            }
+            return false;
+        });
+        Check(crossings == 8 && !frames.Contains(renderer.sprite) && enemy.GetComponentInChildren<KarmaRisingBarrier>() == null,
+            "UP05 completes eight crossings and clears both effects");
+    }
+
     static async Task CheckFormClips()
     {
         foreach (var order in new[] {
@@ -228,10 +260,7 @@ public static class KarmaRisingPlayChecks
                 await ObserveClip(renderer, form, "UP03");
             }
             if (order.Length == 3)
-            {
-                Force(EnemyAttack.UP05);
-                await ObserveClip(renderer, form, "UP05_NoFX");
-            }
+                await CheckCrossingEffects(renderer, form);
             Debug.Log("PASS: " + form + " in-game 12 FPS clip coverage (" + string.Join(">", order) + ")");
         }
     }

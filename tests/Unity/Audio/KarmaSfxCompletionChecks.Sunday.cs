@@ -194,7 +194,7 @@ public static partial class KarmaSfxCompletionChecks
         await Until(() => !(bool)Get(enemy, "running"), 12, "GD02 full attack");
         Check(Count(KarmaSfxId.GdHeavySwing) == 1 && Count(KarmaSfxId.GdHeavyHit) == 1
             && Count(KarmaSfxId.PlDamage) == 1, "GD02 release and real damaging contact once");
-        Check(observed.Contains("GD02_Heavy_Hit_v2"), "Actual v2 AudioSource playback");
+        Check(observed.Contains("HeavyStrikeHit"), "Heavy strike impact plays on an AudioSource");
 
         await Prepare(Essence.Guard);
         typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
@@ -216,7 +216,7 @@ public static partial class KarmaSfxCompletionChecks
         Set(game.Player, "invulnerableUntil", 0f);
         var contact = new KarmaAttackContact();
         enemy.TryAttackHit(point, point, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.GD02);
-        Check(game.Player.Health < health && Live(KarmaSfxId.GdHeavyHit), "Accepted damage plays v2");
+        Check(game.Player.Health < health && Live(KarmaSfxId.GdHeavyHit), "Accepted damage plays the heavy strike impact");
         KarmaAudio.StopBus(KarmaSfxBus.Gameplay);
         enemy.TryAttackHit(point, point, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.GD02);
         Check(!Live(KarmaSfxId.GdHeavyHit), "Consumed contact cannot play twice");
@@ -306,10 +306,10 @@ public static partial class KarmaSfxCompletionChecks
     {
         var library = Resources.Load<KarmaSfxLibrary>("KarmaSfxLibrary");
         Check(library != null && library.Clips.Length == (int)KarmaSfxId.Count, "Catalog matches registered IDs");
-        Check(library.Clips[(int)KarmaSfxId.CombatBossSpinningStars].name == "Boss_Spinning_Stars", "Animated stars loop registered");
+        Check(library.Clips[(int)KarmaSfxId.CombatBossSpinningStars].name == "BossStunStars", "Animated stars loop registered");
         Check(library.Clips.All(c => c != null), "All clips loaded in Unity");
-        Check(library.Clips[(int)KarmaSfxId.GdHeavyHit].name == "GD02_Heavy_Hit_v2", "Heavy impact v2 registered");
-        Check(library.Clips[(int)KarmaSfxId.CombatBossStagger].name == "Boss_Stun", "New stun registered at stable ID");
+        Check(library.Clips[(int)KarmaSfxId.GdHeavyHit].name == "HeavyStrikeHit", "Heavy strike impact registered");
+        Check(library.Clips[(int)KarmaSfxId.CombatBossStagger].name == "BossStun", "Boss stun registered at stable ID");
 
         game.ReturnToTitle();
         for (int i = 0; i < 4; i++)

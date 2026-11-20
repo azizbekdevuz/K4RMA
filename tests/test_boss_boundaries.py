@@ -15,6 +15,11 @@ def code(path):
     return re.sub(r'//[^\n]*|/\*.*?\*/|@?"(?:""|\\.|[^"\\])*"', '', text, flags=re.S)
 
 
+def shared_boundary_sources():
+    # Editor checks exercise multiple bosses to verify their presentation routes.
+    return (path for path in RUNTIME.rglob('*.cs') if not path.match('Editor/*Checks.cs'))
+
+
 def owned_type_names(text):
     """Names reachable without first referring to another boss-owned type.
 
@@ -72,7 +77,7 @@ class BossBoundaries(unittest.TestCase):
             self.assertTrue(paths, f'Missing owner sources: {owner}')
             for path in paths:
                 owned_types.update(owned_type_names(code(path)))
-        for path in RUNTIME.rglob('*.cs'):
+        for path in shared_boundary_sources():
             if any(BOSSES / owner in path.parents for owner in OWNERS):
                 continue
             text = code(path)
@@ -112,7 +117,7 @@ class BossBoundaries(unittest.TestCase):
             'RisingSlash': {'ConfigureRisingPresentation'},
         }
         for owner, names in members.items():
-            for path in RUNTIME.rglob('*.cs'):
+            for path in shared_boundary_sources():
                 if BOSSES / owner in path.parents:
                     continue
                 with self.subTest(owner=owner, path=path.relative_to(ROOT)):

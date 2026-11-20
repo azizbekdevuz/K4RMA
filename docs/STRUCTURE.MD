@@ -170,85 +170,83 @@ K4RMA/
 │   │       └── WaveWard/
 │   ├── Audio/
 │   │   ├── Ambience/
-│   │   │   └── Amb_Arena_Loop.wav
+│   │   │   └── ArenaAmbienceLoop.wav
 │   │   ├── Combat/
-│   │   │   ├── Boss_Spinning_Stars.wav
-│   │   │   ├── Boss_Stun.wav
-│   │   │   ├── Combat_Blade_Hit.wav
-│   │   │   ├── Combat_Boss_Defeat.wav
-│   │   │   ├── Combat_Boss_Stagger.wav
-│   │   │   ├── Combat_Guard_Block.wav
-│   │   │   └── Combat_Perfect_Parry.wav
+│   │   │   ├── BladeHit.wav
+│   │   │   ├── BossDefeat.wav
+│   │   │   ├── BossStun.wav
+│   │   │   ├── BossStunStars.wav
+│   │   │   ├── GuardBlock.wav
+│   │   │   └── PerfectParry.wav
 │   │   ├── Guard/
-│   │   │   ├── GD02_Heavy_Hit.wav
-│   │   │   ├── GD02_Heavy_Hit_v2.wav
-│   │   │   ├── GD02_Heavy_Swing.wav
-│   │   │   ├── GD03_Shield_Flight.wav
-│   │   │   ├── GD03_Shield_Launch.wav
-│   │   │   ├── GD04_Ground_Rise.wav
-│   │   │   ├── GD05_Dome_Failure.wav
-│   │   │   ├── GD05_Dome_Success.wav
-│   │   │   ├── GD_Basic_Hit.wav
-│   │   │   ├── GD_Basic_Swing.wav
-│   │   │   ├── GD_Counter.wav
-│   │   │   ├── GD_Heavy_Slam.wav
-│   │   │   ├── GD_Protection_Pulse.wav
-│   │   │   ├── GD_Shield_Activate.wav
-│   │   │   ├── GD_Shield_Break.wav
-│   │   │   ├── GD_Shield_Hit.wav
-│   │   │   └── GD_Ultimate.wav
+│   │   │   ├── BasicSlashHit.wav
+│   │   │   ├── BasicSlashSwing.wav
+│   │   │   ├── DomeFailureExplosion.wav
+│   │   │   ├── DomeTrialStart.wav
+│   │   │   ├── DomeTrialSuccess.wav
+│   │   │   ├── GroundEruption.wav
+│   │   │   ├── GroundSlam.wav
+│   │   │   ├── HeavyStrikeHit.wav
+│   │   │   ├── HeavyStrikeSwing.wav
+│   │   │   ├── RearCounterSwing.wav
+│   │   │   ├── ShieldActivate.wav
+│   │   │   ├── ShieldBreak.wav
+│   │   │   ├── ShieldFlightLoop.wav
+│   │   │   ├── ShieldHit.wav
+│   │   │   ├── ShieldRechargeWarning.wav
+│   │   │   └── ShieldThrow.wav
 │   │   ├── Music/
-│   │   │   ├── Four_Guardians_A_Loop.wav
-│   │   │   ├── Four_Guardians_B_Loop.wav
-│   │   │   ├── Guardians_of_K4RMA_Loop.wav
-│   │   │   └── K4RMA_Main_Theme_Loop.wav
+│   │   │   ├── K4RMAMainThemeLoop.wav
+│   │   │   ├── TitleFourGuardiansALoop.wav
+│   │   │   ├── TitleFourGuardiansBLoop.wav
+│   │   │   └── TitleGuardiansOfK4RMALoop.wav
 │   │   ├── Player/
-│   │   │   ├── PL_Damage.wav
-│   │   │   ├── PL_Dash.wav
-│   │   │   ├── PL_Land.wav
-│   │   │   ├── PL_Rising_Slash.wav
-│   │   │   └── PL_Sword_Swing.wav
+│   │   │   ├── Dash.wav
+│   │   │   ├── Landing.wav
+│   │   │   ├── RisingSlash.wav
+│   │   │   ├── SwordSwing.wav
+│   │   │   └── TakeDamage.wav
 │   │   ├── Progression/
-│   │   │   ├── Game_Ability_Inherit.wav
-│   │   │   └── Game_Boss_Intro.wav
+│   │   │   ├── AbilityInheritance.wav
+│   │   │   └── CombatStart.wav
 │   │   ├── Resources/
 │   │   │   └── KarmaSfxLibrary.asset
 │   │   ├── RisingSlash/
-│   │   │   ├── RS_Dash_Impact.wav
-│   │   │   ├── RS_Dash_Start.wav
-│   │   │   ├── RS_Shards_Release.wav
-│   │   │   ├── RS_Slash_01.wav
-│   │   │   ├── RS_Slash_02.wav
-│   │   │   ├── RS_Telegraph.wav
-│   │   │   ├── RS_UP01_Ascend.wav
-│   │   │   ├── RS_UP01_Descent.wav
-│   │   │   ├── RS_UP01_Landing.wav
-│   │   │   ├── RS_UP02_Pursuit.wav
-│   │   │   ├── RS_UP03_Wave.wav
-│   │   │   ├── RS_UP04_Knockback.wav
-│   │   │   ├── RS_UP04_ShieldBurst.wav
-│   │   │   ├── RS_UP05_Charge_Short.wav
-│   │   │   ├── RS_UP05_Crossing.wav
-│   │   │   └── RS_UP05_Final.wav
+│   │   │   ├── Ascent.wav
+│   │   │   ├── AttackWarning.wav
+│   │   │   ├── BarrierBurst.wav
+│   │   │   ├── BarrierKnockback.wav
+│   │   │   ├── BarrierShardRelease.wav
+│   │   │   ├── CrossSlashCharge.wav
+│   │   │   ├── CrossSlashDash.wav
+│   │   │   ├── DashHit.wav
+│   │   │   ├── DashStart.wav
+│   │   │   ├── Dive.wav
+│   │   │   ├── DiveLanding.wav
+│   │   │   ├── FinalCrossSlashHit.wav
+│   │   │   ├── FirstSlash.wav
+│   │   │   ├── PursuitDash.wav
+│   │   │   ├── RisingWave.wav
+│   │   │   └── SecondSlash.wav
 │   │   ├── SwordWave/
-│   │   │   ├── SW04_Boss_Shock.wav
-│   │   │   ├── SW04_Player_Shock.wav
-│   │   │   ├── SW05_Ascension_Ignition.wav
-│   │   │   ├── SW05_Final_Explosion.wav
-│   │   │   ├── SW05_PerSword_Thunder.wav
-│   │   │   ├── SW05_Summoning_Energy.wav
-│   │   │   ├── SW_Crossing_Blades.wav
-│   │   │   ├── SW_Electric_Discharge.wav
-│   │   │   ├── SW_Energy_Charge.wav
-│   │   │   ├── SW_Scar_Rise.wav
-│   │   │   ├── SW_Ultimate_Rain.wav
-│   │   │   ├── SW_Wave_Impact.wav
-│   │   │   ├── SW_Wave_Launch.wav
-│   │   │   └── SW_Wave_Travel.wav
+│   │   │   ├── AimedWaveFlight.wav
+│   │   │   ├── CounterShockToPlayer.wav
+│   │   │   ├── ElectricDischarge.wav
+│   │   │   ├── EnergyCharge.wav
+│   │   │   ├── FallingSwordImpact.wav
+│   │   │   ├── GroundBladeRise.wav
+│   │   │   ├── ParriedShockToBoss.wav
+│   │   │   ├── SwordGuardFormation.wav
+│   │   │   ├── SwordRainAscent.wav
+│   │   │   ├── SwordRainExplosion.wav
+│   │   │   ├── SwordRainVolley.wav
+│   │   │   ├── SwordSummonLoop.wav
+│   │   │   ├── SwordWaveHit.wav
+│   │   │   └── SwordWaveLaunch.wav
 │   │   └── UI/
-│   │       ├── UI_Cancel.wav
-│   │       ├── UI_Confirm.wav
-│   │       └── UI_Move.wav
+│   │       ├── Cancel.wav
+│   │       ├── Confirm.wav
+│   │       └── SelectionChange.wav
 │   ├── Data/
 │   │   ├── Rendering/
 │   │   │   ├── DefaultVolumeProfile.asset
@@ -401,8 +399,6 @@ K4RMA/
 │   │   │   ├── KarmaSwordBossProfile.asset
 │   │   │   └── KarmaSwordPatternWeights.asset
 │   │   └── KarmaConfig.asset
-│   ├── Editor/
-│   │   └── KarmaMotionRouteChecks.cs
 │   ├── Scenes/
 │   │   └── KarmaPrototype.unity
 │   └── Runtime/
@@ -495,6 +491,7 @@ K4RMA/
 │       ├── Presentation/
 │       │   ├── Editor/
 │       │   │   ├── KarmaMotionBindings.cs
+│       │   │   ├── KarmaMotionRouteChecks.cs
 │       │   │   ├── KarmaMotionSheetChecks.cs
 │       │   │   └── KarmaMotionSheetImport.cs
 │       │   ├── KarmaArtResource.cs
@@ -613,8 +610,6 @@ K4RMA/
 │           ├── KarmaStage.cs
 │           └── KarmaSurface.cs
 ├── docs/
-│   ├── art/
-│   │   └── SWORDWAVE_ART.md
 │   ├── collaboration/
 │   │   ├── CONTRIBUTING.en.md
 │   │   ├── CONTRIBUTING.md

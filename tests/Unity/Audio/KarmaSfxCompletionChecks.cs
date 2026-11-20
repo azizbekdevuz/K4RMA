@@ -264,7 +264,7 @@ public static partial class KarmaSfxCompletionChecks
         Check(Count(KarmaSfxId.GdCounter) == 1 && Count(KarmaSfxId.GdHeavySwing) == 0, "GD04 rear counter keeps its dedicated release cue");
         Check(Count(KarmaSfxId.GdHeavyHit) == 1 && Count(KarmaSfxId.GdHeavySlam) == 1, "Rear-counter contact and preceding ground slam are separate events");
 
-        var bed = Array.Find(Sources(), source => source.clip != null && source.clip.name == "Amb_Arena_Loop");
+        var bed = Array.Find(Sources(), source => source.clip != null && source.clip.name == "ArenaAmbienceLoop");
         Check(bed != null && Mathf.Abs(bed.volume - 0.28f * KarmaPreferences.MusicVolume) < 0.001f,
             "Actual background music uses its cue gain and Music setting");
         Check(Mathf.Abs(AudioListener.volume - (KarmaPreferences.Muted ? 0 : KarmaPreferences.MasterVolume)) < 0.001f,
@@ -303,9 +303,9 @@ public static partial class KarmaSfxCompletionChecks
             await Wait(0.02f);
         }
         Check(game.Player.ParryCount > parries, "GD03 actual reflection; parries=" + game.Player.ParryCount + " observed=" + string.Join(",", observed));
-        Check(observed.Contains("GD_Shield_Break"), "GD03 breaks active shield; active=" + enemy.AutoShieldActive + " observed=" + string.Join(",", observed));
+        Check(observed.Contains("ShieldBreak"), "GD03 breaks active shield; active=" + enemy.AutoShieldActive + " observed=" + string.Join(",", observed));
         await Wait(2);
-        Check(observed.Contains("Boss_Stun"), "Reflected shield actually stuns Guard");
+        Check(observed.Contains("BossStun"), "Reflected shield actually stuns Guard");
         Check(Count(KarmaSfxId.GdShieldBreak) == 1 && Count(KarmaSfxId.CombatBossStagger) == 1
             && Count(KarmaSfxId.CombatPerfectParry) == 1, "Reflection has one shield break, one delayed stagger and one parry");
     }
@@ -321,7 +321,7 @@ public static partial class KarmaSfxCompletionChecks
             FindObjectsInactive.Include).Length == 1, "Subsystem reset leaves one audio host");
         Check(UnityEngine.Object.FindObjectsByType<AudioListener>().Length == 1, "One audio listener after subsystem reset");
         KarmaAudio.Play(KarmaSfxId.UiConfirm);
-        Check(Playing("UI_Confirm"), "Playback recreated after subsystem reset");
+        Check(Playing("Confirm"), "Playback recreated after subsystem reset");
     }
     static async void Run()
     {
@@ -372,16 +372,16 @@ public static partial class KarmaSfxCompletionChecks
                 await Prepare(Essence.SwordWave);
                 PlacePlayer(new Vector2(10, KarmaSpace.PlayerHalfHeight));
                 Pattern(attack);
-                await Until(() => observed.Contains("SW_Electric_Discharge"), 15, attack + " discharge audio source");
-                Check(observed.Contains("SW_Electric_Discharge"), attack + " electrical release playback");
-                Check(!observed.Contains("SW_Wave_Launch"), attack + " has no redundant generic launch");
+                await Until(() => observed.Contains("ElectricDischarge"), 15, attack + " discharge audio source");
+                Check(observed.Contains("ElectricDischarge"), attack + " electrical release playback");
+                Check(!observed.Contains("SwordWaveLaunch"), attack + " has no redundant generic launch");
             }
             Clear();
             Pattern(EnemyAttack.SW04);
             await Wait(1.5f);
             enemy.TakeDamage(1);
             await Wait(6);
-            Check(observed.Contains("SW_Wave_Launch"), "SW04 counter projectile launch");
+            Check(observed.Contains("SwordWaveLaunch"), "SW04 counter projectile launch");
             await Until(() => !game.Player.Shocked, 1, "Previous player shock clears");
             Clear();
             var playerPoint = (Vector2)game.Player.GetComponent<Collider2D>().bounds.center;
@@ -390,11 +390,11 @@ public static partial class KarmaSfxCompletionChecks
             float health = game.Player.Health;
             var contact = new KarmaAttackContact();
             enemy.TryAttackHit(playerPoint, playerPoint, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.SW04);
-            Check(game.Player.Health < health && game.Player.Shocked && Playing("SW04_Player_Shock")
-                && !Playing("SW_Wave_Impact"), "SW04 actual damaging shock uses its dedicated cue");
+            Check(game.Player.Health < health && game.Player.Shocked && Playing("CounterShockToPlayer")
+                && !Playing("SwordWaveHit"), "SW04 actual damaging shock uses its dedicated cue");
             KarmaAudio.StopBus(KarmaSfxBus.Gameplay);
             enemy.TryAttackHit(playerPoint, playerPoint, Vector2.one, 1, contact, 0, sourcePattern: EnemyAttack.SW04);
-            Check(!Playing("SW04_Player_Shock") && !Playing("SW_Wave_Impact"), "Consumed SW04 contact stays silent");
+            Check(!Playing("CounterShockToPlayer") && !Playing("SwordWaveHit"), "Consumed SW04 contact stays silent");
             typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, true);
 
             await Prepare(Essence.SwordWave);
@@ -408,22 +408,22 @@ public static partial class KarmaSfxCompletionChecks
                 };
                 rain.Add(KarmaSW05RainBlade.Spawn(game, enemy, (Transform)Get(enemy, "effectsRoot"), shot, 1, null));
             }
-            Check(!Playing("SW05_PerSword_Thunder"), "No thunder at rain spawn");
+            Check(!Playing("FallingSwordImpact"), "No thunder at rain spawn");
             await Wait(0.7f);
             foreach (var blade in rain) Check(blade.Landed, "Sword actually landed");
-            Check(observed.Contains("SW05_PerSword_Thunder"), "Landing thunder playback");
+            Check(observed.Contains("FallingSwordImpact"), "Landing thunder playback");
             int voices = 0;
             for (int i = 0; i < 12; i++)
             {
                 KarmaAudio.Play(KarmaSfxId.SwPerSwordThunder);
                 int count = 0;
                 foreach (var source in Sources())
-                    if (source.isPlaying && source.clip != null && source.clip.name == "SW05_PerSword_Thunder") count++;
+                    if (source.isPlaying && source.clip != null && source.clip.name == "FallingSwordImpact") count++;
                 voices = Mathf.Max(voices, count);
             }
             Check(voices == 3, "Dense rain capped at three thunder voices");
             Call(enemy, "InterruptPattern");
-            Check(!Playing("SW05_PerSword_Thunder"), "Interruption clears thunder tails");
+            Check(!Playing("FallingSwordImpact"), "Interruption clears thunder tails");
 
             await Prepare(Essence.Guard);
             foreach (var attack in new[] { EnemyAttack.GroundStrike, EnemyAttack.GD02 })
@@ -431,13 +431,13 @@ public static partial class KarmaSfxCompletionChecks
                 Clear();
                 Pattern(attack);
                 await Wait(3);
-                Check(observed.Contains(attack == EnemyAttack.GD02 ? "GD02_Heavy_Swing" : "GD_Basic_Swing"), "Guard release playback " + attack);
+                Check(observed.Contains(attack == EnemyAttack.GD02 ? "HeavyStrikeSwing" : "BasicSlashSwing"), "Guard release playback " + attack);
                 Call(enemy, "InterruptPattern");
             }
             typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
             foreach (var attack in new[] { EnemyAttack.GroundStrike, EnemyAttack.GD02 })
             {
-                string hit = attack == EnemyAttack.GD02 ? "GD02_Heavy_Hit_v2" : "GD_Basic_Hit";
+                string hit = attack == EnemyAttack.GD02 ? "HeavyStrikeHit" : "BasicSlashHit";
                 Clear();
                 Set(game.Player, "invulnerableUntil", 0f);
                 Set(game.Player, "guardUntil", 0f);
@@ -467,15 +467,15 @@ public static partial class KarmaSfxCompletionChecks
             KarmaAudio.Play(KarmaSfxId.SwWaveTravel, lifetimeOwner: effectOwner);
             effectOwner.enabled = false;
             await Wait(0.1f);
-            Check(!Playing("SW_Wave_Travel"), "Disabled owner cleanup");
+            Check(!Playing("AimedWaveFlight"), "Disabled owner cleanup");
             UnityEngine.Object.Destroy(effectNode);
             game.TogglePause();
             KarmaAudio.Play(KarmaSfxId.UiMove);
-            Check(Playing("UI_Move"), "UI works during pause");
+            Check(Playing("SelectionChange"), "UI works during pause");
             game.TogglePause();
             game.ReturnToTitle();
             await Wait(0.45f); // Allow the intentional 0.25-second bed transition.
-            Check(!Playing("Amb_Arena_Loop"), "Title stops ambience");
+            Check(!Playing("ArenaAmbienceLoop"), "Title stops ambience");
             game.StartRun();
             enemy = game.Enemies[0];
             Set(enemy, "timer", float.MaxValue);
@@ -486,24 +486,24 @@ public static partial class KarmaSfxCompletionChecks
             Clear();
             health = enemy.Health;
             game.Player.Essences.TryUse(Essence.SwordWave);
-            Check(Playing("SW_Wave_Launch"), "Accepted player wave launch");
+            Check(Playing("SwordWaveLaunch"), "Accepted player wave launch");
             await Wait(0.8f);
-            Check(enemy.Health < health && observed.Contains("SW_Wave_Impact"), "Player wave confirmed impact");
+            Check(enemy.Health < health && observed.Contains("SwordWaveHit"), "Player wave confirmed impact");
             Clear();
             game.Player.Essences.TryUse(Essence.RisingSlash);
-            Check(Playing("PL_Rising_Slash"), "Accepted active rising slash");
+            Check(Playing("RisingSlash"), "Accepted active rising slash");
             game.Player.Essences.TryUse(Essence.Guard);
-            Check(Playing("GD_Shield_Activate"), "Accepted player guard activation");
+            Check(Playing("ShieldActivate"), "Accepted player guard activation");
             game.Player.Essences.Preview(Essence.RisingSlash);
             game.Player.Essences.Confirm(out _);
             Clear();
             Call(game.Player, "BeginAirSlash", Vector2.right);
-            Check(Playing("PL_Sword_Swing"), "Committed inherited air slash");
+            Check(Playing("SwordSwing"), "Committed inherited air slash");
             Call(game.Player, "CancelAirSlash");
             Clear();
             Pattern(EnemyAttack.GroundStrike);
             await Wait(2);
-            Check(observed.Contains("GD_Basic_Swing"), "Neutral guardian actual release");
+            Check(observed.Contains("BasicSlashSwing"), "Neutral guardian actual release");
             Call(enemy, "InterruptPattern");
             typeof(KarmaPlayer).GetProperty("TestInvincible").SetValue(game.Player, false);
             Set(game.Player, "invulnerableUntil", 0f);
@@ -511,7 +511,7 @@ public static partial class KarmaSfxCompletionChecks
             playerPoint = game.Player.GetComponent<Collider2D>().bounds.center;
             health = game.Player.Health;
             enemy.TryAttackHit(playerPoint, playerPoint, Vector2.one, 1, new KarmaAttackContact(), 0);
-            Check(game.Player.Health < health && Playing("Combat_Blade_Hit"), "Neutral guardian confirmed contact");
+            Check(game.Player.Health < health && Playing("BladeHit"), "Neutral guardian confirmed contact");
             await CheckReflection();
             result = "PASS: " + assertions + " catalog, actual-pattern release, contact outcome, rain landing, concurrency, cleanup and pause assertions. No audible quality verdict.";
         }

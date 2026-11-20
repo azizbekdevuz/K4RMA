@@ -88,7 +88,7 @@ public static class KarmaSwordPolishPlayChecks
             SessionState.SetString("K4RMA.OverhaulChecks.Run", runId);
             Directory.CreateDirectory("output/overhaul-updated/" + runId);
             Application.logMessageReceived += (message, stack, type) =>
-            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message + "\n" + stack; };
+            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Runtime/")) runtimeError = message + "\n" + stack; };
             CheckDirections(); CheckLedge(); await Campaign();
             await Invoke(typeof(KarmaSwordOverhaulPlayChecks), "CheckCurves");
             await Invoke(typeof(KarmaSwordRetreatDashPlayChecks), "CheckBlocked");

@@ -12,7 +12,7 @@ import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
-ENERGY = ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaSW05Energy.cs"
+ENERGY = ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaSW05Energy.cs"
 HISTORICAL_REVISION = "036c22b"
 METHODS = ("Noise", "Direction", "Quad", "Line", "Shard", "SwordShard", "Bolt", "Ring",
            "HazardVolumes", "FinalEnergy", "FinalEruption", "EruptionPlume", "ClipFinalRegion",

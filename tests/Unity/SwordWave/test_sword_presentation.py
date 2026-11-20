@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
-SWORD = ROOT / "Assets/Scripts/SwordWave"
+SWORD = ROOT / "Assets/Runtime/SwordWave"
 
 
 def method(source, signature):
@@ -67,7 +67,7 @@ def run_cs(code, entry, modern=False):
 
 class PresentationChecks(unittest.TestCase):
     def test_original_warning_boxes_keep_their_pattern_owners(self):
-        patterns = ROOT / "Assets/Scripts/SwordWave/Patterns"
+        patterns = ROOT / "Assets/Runtime/SwordWave/Patterns"
         melee = (patterns / "SWBasic.cs").read_text(encoding="utf-8-sig")
         self.assertEqual(method(melee, "IEnumerator Melee()").count("owner.Mark("), 2)
         self.assertIn("KarmaSwordAttackPolish.Warning(returnMark)", melee)
@@ -81,7 +81,7 @@ class PresentationChecks(unittest.TestCase):
         self.assertIn("marks[member]);", rain)
 
     def test_attack_sweep_matches_advertised_polygon_with_player_body(self):
-        rules=(ROOT / "Assets/Scripts/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
+        rules=(ROOT / "Assets/Runtime/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
         code=rules+r"""
 public static class ContactProbe {
  struct P{public double x,y;public P(double a,double b){x=a;y=b;}}
@@ -422,7 +422,7 @@ public class KarmaSwordWaveAnimation{
 
     def test_late_body_color_preserves_shared_damage_flash_and_restores_idle(self):
         local = (SWORD / "Visuals/KarmaCharacterAnimator.SwordSW02.cs").read_text(encoding="utf-8-sig")
-        common = (ROOT / "Assets/Scripts/Presentation/KarmaCharacterAnimator.cs").read_text(encoding="utf-8-sig")
+        common = (ROOT / "Assets/Runtime/Presentation/KarmaCharacterAnimator.cs").read_text(encoding="utf-8-sig")
         code = r'''
 using System;
 struct Color {

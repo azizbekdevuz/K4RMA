@@ -328,6 +328,6 @@ public static class KarmaRisingPlayChecks
         Time.captureDeltaTime = 0; SessionState.SetBool(Key, false); EditorApplication.Exit(exit);
     }
     static void Capture(string message, string stack, LogType type)
-    { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) error = message; }
+    { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Runtime/")) error = message; }
 }
 #endif

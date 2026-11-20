@@ -220,9 +220,9 @@ public static class KarmaEndingMoonChecks
     }
     static void Log(string message, string stack, LogType type)
     {
-        if (message.StartsWith("Not allowed to override geometry") && stack.Contains("Assets/Scripts/"))
+        if (message.StartsWith("Not allowed to override geometry") && stack.Contains("Assets/Runtime/"))
         { knownWarnings++; return; }
-        if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message;
+        if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Runtime/")) runtimeError = message;
     }
     static void CheckFragmentRedistribution()
     {

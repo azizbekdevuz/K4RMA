@@ -70,7 +70,7 @@ class AssetIntegrity(unittest.TestCase):
 
     def test_editor_and_tool_asset_paths_resolve(self):
         # Authoring destinations matter even when existing assets still load.
-        paths = [*(ASSETS / 'Scripts').rglob('*.cs'), *(ROOT / 'tools').rglob('*.py')]
+        paths = [*(ASSETS / 'Runtime').rglob('*.cs'), *(ROOT / 'tools').rglob('*.py')]
         self.assertTrue(paths)
         for path in paths:
             for target in re.findall(r'''["'](Assets/[^"'\n]+)["']''', path.read_text()):

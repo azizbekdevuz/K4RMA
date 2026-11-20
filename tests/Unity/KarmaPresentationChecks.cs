@@ -98,7 +98,7 @@ public static class KarmaPresentationChecks
     {
         string verdict;
         Application.LogCallback log = (message, stack, type) => {
-            if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Scripts/")) symbolError = message;
+            if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Runtime/")) symbolError = message;
         };
         try
         {

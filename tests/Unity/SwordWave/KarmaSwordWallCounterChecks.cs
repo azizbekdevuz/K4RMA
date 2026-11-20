@@ -89,7 +89,7 @@ public static class KarmaSwordWallCounterChecks
             SessionState.SetString("K4RMA.OverhaulChecks.Run", runId); Directory.CreateDirectory("output/overhaul-updated/" + runId);
             typeof(KarmaSwordPolishPlayChecks).GetField("runId", F).SetValue(null, runId); Directory.CreateDirectory("output/polish/" + runId);
             Application.logMessageReceived += (message, stack, type) =>
-            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Scripts/")) runtimeError = message + "\n" + stack; };
+            { if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && stack.Contains("Assets/Runtime/")) runtimeError = message + "\n" + stack; };
             await MeasureScars(false); await MeasureScars(true);
             if (!baseline)
             {

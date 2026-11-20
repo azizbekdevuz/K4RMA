@@ -10,7 +10,7 @@ from test_sw05_eruption_mesh import SHIM, method as mesh_method
 
 ROOT = Path(__file__).resolve().parents[3]
 ART = ROOT / 'Assets/Arts/SwordWave/Effects'
-CODE = ROOT / 'Assets/Scripts/SwordWave/Visuals'
+CODE = ROOT / 'Assets/Runtime/SwordWave/Visuals'
 
 
 class ScarPolishChecks(unittest.TestCase):

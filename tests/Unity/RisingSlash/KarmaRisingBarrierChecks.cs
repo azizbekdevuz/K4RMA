@@ -209,7 +209,7 @@ public static class KarmaRisingBarrierChecks
     static void Log(string message, string stack, LogType type)
     {
         if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert)
-            && stack.Contains("Assets/Scripts/")) runtimeError = message;
+            && stack.Contains("Assets/Runtime/")) runtimeError = message;
     }
     static async void Run()
     {

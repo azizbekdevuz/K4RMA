@@ -185,14 +185,14 @@ static class Program
         Require(root!=null,"run inside the existing repository");
         string Read(string path)=>System.IO.File.ReadAllText(System.IO.Path.Combine(root.FullName,path));
         string asset=Read("Assets/Data/Resources/KarmaSwordPatternWeights.asset");
-        string defaults=Read("Assets/Scripts/SwordWave/KarmaSwordPatternWeights.cs");
+        string defaults=Read("Assets/Runtime/SwordWave/KarmaSwordPatternWeights.cs");
         string[] names={"swBasicWeight","sw01Weight","sw02Weight","sw03Weight","sw04Weight"};
         var current=names.Select(name=>float.Parse(System.Text.RegularExpressions.Regex.Match(asset,@"\b"+name+@":\s*([0-9.]+)").Groups[1].Value,System.Globalization.CultureInfo.InvariantCulture)).ToArray();
         Require(current.SequenceEqual(new[]{3f,3f,3f,3f,3f}),"active asset changes only SW03/SW04 from 2 to 3");
         foreach(string name in names)Require(defaults.Contains(name+" = 3f"),"missing-asset defaults match active weights: "+name);
-        string behavior=Read("Assets/Scripts/SwordWave/KarmaSwordBossBehavior.cs");
-        string counter=Read("Assets/Scripts/SwordWave/Patterns/SW04.cs");
-        string scar=Read("Assets/Scripts/SwordWave/Patterns/SW03.cs");
+        string behavior=Read("Assets/Runtime/SwordWave/KarmaSwordBossBehavior.cs");
+        string counter=Read("Assets/Runtime/SwordWave/Patterns/SW04.cs");
+        string scar=Read("Assets/Runtime/SwordWave/Patterns/SW03.cs");
         Require(behavior.Contains("if (ground.Running) return false;")
             && behavior.Contains("ultimate.ThresholdPending && !counter.Formed")
             && behavior.IndexOf("next = EnemyAttack.SW05; return true;")<behavior.IndexOf("float total = !skillAfterRetreat"),"SW03 exclusion and SW05 priority precede weighted selection");
@@ -221,14 +221,14 @@ static class Program
         Require(!mark.Contains("yield") && !release.Contains("yield") && !release.Contains("StartCoroutine")
             && release.Contains("new KarmaSwordScarClock(Time.frameCount)") && release.Contains("i % 2 != 0, clock"),"all warnings and attacks created synchronously, with a common visual clock");
         Require(scar.Split("KarmaAudio.Play(KarmaSfxId.SwElectricDischarge)").Length==2,"one round release audio call, outside sword loop");
-        string visual=Read("Assets/Scripts/SwordWave/Visuals/KarmaSwordScarRise.cs");
+        string visual=Read("Assets/Runtime/SwordWave/Visuals/KarmaSwordScarRise.cs");
         Require(visual.Contains("RiseSeconds = 0.10f") && visual.Contains("AuraDelay = 0.045f")
             && visual.Split("roundClock.Sample(").Length==3,"blade and aura sample identical shared age with preserved rise/ignition durations");
         string profile=Read("Assets/Data/Resources/KarmaSwordBossProfile.asset");
         Require(profile.Contains("scarWarningSeconds: 0.95") && profile.Contains("scarActiveSeconds: 0.65")
             && profile.Contains("scarRoundGap: 0.32"),"existing warning tuning, active lifetime and gap preserved");
-        string energy=Read("Assets/Scripts/SwordWave/Visuals/KarmaSW05Energy.cs");
-        string pool=Read("Assets/Scripts/SwordWave/Visuals/KarmaSwordAttackPolish.cs");
+        string energy=Read("Assets/Runtime/SwordWave/Visuals/KarmaSW05Energy.cs");
+        string pool=Read("Assets/Runtime/SwordWave/Visuals/KarmaSwordAttackPolish.cs");
         Require(energy.Contains("fx.sites=new Vector3[32]") && pool.Contains("Capacity = 96")
             && KarmaSwordScarPlanner.MaxSwords<=32 && 3*KarmaSwordScarPlanner.MaxSwords+2<96,
             "26 sites fit existing ground-impact buffer and even simultaneous 78 release sparks plus flashes fit pool; no runtime performance claim");

@@ -260,7 +260,7 @@ public static class KarmaSwordSlideDistanceChecks
             game = UnityEngine.Object.FindAnyObjectByType<KarmaGame>();
             foreach (var t in new[] { typeof(KarmaSwordPlayChecks), typeof(KarmaSwordRetreatDashPlayChecks), typeof(KarmaSwordOverhaulPlayChecks), typeof(KarmaSwordWallCounterChecks) }) t.GetField("game", F).SetValue(null, game);
             Set(game, "config", UnityEngine.Object.Instantiate(game.Config)); game.Config.playerHealth = 1000000;
-            Application.logMessageReceived += (m, s, t) => { if ((t == LogType.Error || t == LogType.Exception || t == LogType.Assert) && s.Contains("Assets/Scripts/")) runtimeError = m + "\n" + s; };
+            Application.logMessageReceived += (m, s, t) => { if ((t == LogType.Error || t == LogType.Exception || t == LogType.Assert) && s.Contains("Assets/Runtime/")) runtimeError = m + "\n" + s; };
             bool sw05Only = SessionState.GetBool(Key + ".SW05Only", false);
             bool presentationOnly = SessionState.GetBool(Key + ".PresentationOnly", false);
             if (sw05Only) await CheckSW05();

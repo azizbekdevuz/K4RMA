@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
-VISUAL = ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaSwordWaveAnimation.cs"
+VISUAL = ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaSwordWaveAnimation.cs"
 MOTIONS = ROOT / "Assets/Arts/Resources/Motions12"
 FORMS = ("Wave", "WaveRise", "WaveWard", "WaveFinal")
 
@@ -95,12 +95,12 @@ class ClipProbe {
                 self.assertGreaterEqual(steel, 140, (key, x, y))
 
     def test_speed_and_original_warning_contract(self):
-        sw02 = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
+        sw02 = (ROOT / "Assets/Runtime/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
         self.assertIn("return Mathf.Max(0.1f, Settings.swordSpeed * 1.25f * 1.3f);", sw02)
         self.assertIn("TrackingSeconds = 0.34f, ReleaseSeconds = 0.10f", sw02)
         self.assertIn("yield return TrackWarning(marker, warning)", sw02)
         self.assertIn("Settings.aimedDamageMultiplier", sw02)
-        sw01 = (ROOT / "Assets/Scripts/SwordWave/Patterns/SwordWaveVolley.cs").read_text(encoding="utf-8-sig")
+        sw01 = (ROOT / "Assets/Runtime/SwordWave/Patterns/SwordWaveVolley.cs").read_text(encoding="utf-8-sig")
         self.assertIn("Mathf.Max(KarmaSpace.Scale, owner.Tuning.sword.swordSpeed * 1.3f)", sw01)
         self.assertIn("owner.Warning(0.65f) : Mathf.Max(0.42f, 0.54f * owner.Tempo)", sw01)
         self.assertIn("else yield return TrackSW01(owner, sword, high, mark, waveSize, warning, advertised)", sw01)
@@ -120,7 +120,7 @@ class ClipProbe {
 
     def test_basic_ranged_shares_charge_and_melee_uses_own_warning(self):
         from test_sword_presentation import method
-        source = (ROOT / "Assets/Scripts/SwordWave/Patterns/SWBasic.cs").read_text(encoding="utf-8-sig")
+        source = (ROOT / "Assets/Runtime/SwordWave/Patterns/SWBasic.cs").read_text(encoding="utf-8-sig")
         execute = method(source, "public override IEnumerator Execute()")
         self.assertIn("KarmaSwordWaveAnimation.Charge(", execute)
         self.assertIn("basicRanged: true", execute)
@@ -133,10 +133,10 @@ class ClipProbe {
 
     def test_restored_speed_boundary_life_and_reach(self):
         from test_sword_presentation import method, run_cs
-        sw02 = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
-        geometry = (ROOT / "Assets/Scripts/SwordWave/Patterns/KarmaBossProjectileGeometry.cs").read_text(encoding="utf-8-sig")
-        contact = (ROOT / "Assets/Scripts/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
-        behavior = (ROOT / "Assets/Scripts/SwordWave/KarmaSwordBossBehavior.cs").read_text(encoding="utf-8-sig")
+        sw02 = (ROOT / "Assets/Runtime/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
+        geometry = (ROOT / "Assets/Runtime/SwordWave/Patterns/KarmaBossProjectileGeometry.cs").read_text(encoding="utf-8-sig")
+        contact = (ROOT / "Assets/Runtime/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
+        behavior = (ROOT / "Assets/Runtime/SwordWave/KarmaSwordBossBehavior.cs").read_text(encoding="utf-8-sig")
         code = r'''
 using System;
 public struct Vector2{
@@ -471,15 +471,15 @@ public class KarmaSwordWaveAnimation:Component{
                                  ("LATE", "void LateUpdate()"), ("DISABLE", "void OnDisable()"), ("DESTROY", "void OnDestroy()")]:
             code = code.replace(token, method(source, signature))
         self.assertIn("PASS 68 charge lifecycle/release cases", run_cs(code, "KarmaSwordWaveAnimation", modern=True))
-        volley = (ROOT / "Assets/Scripts/SwordWave/Patterns/SwordWaveVolley.cs").read_text(encoding="utf-8-sig")
-        aimed = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
+        volley = (ROOT / "Assets/Runtime/SwordWave/Patterns/SwordWaveVolley.cs").read_text(encoding="utf-8-sig")
+        aimed = (ROOT / "Assets/Runtime/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
         self.assertIn("for (int i = 0; i < shots; i++)", volley)
         self.assertIn("if (!scars) KarmaSwordWaveAnimation.Charge", volley)
         self.assertIn("sword.WaveLaunchVFX(origin, velocity, waveSize, false, high)", volley)
         self.assertIn("sword.WaveLaunchVFX(origin, velocity, size, true)", aimed)
 
     def test_sw03_and_sw05_remove_only_requested_range_cues(self):
-        base = ROOT / "Assets/Scripts/SwordWave"
+        base = ROOT / "Assets/Runtime/SwordWave"
         sw03 = (base / "Patterns/SW03.cs").read_text(encoding="utf-8-sig")
         self.assertNotIn("KarmaSwordAttackPolish.Charge(", sw03)
         self.assertNotIn("KarmaSwordGroundSlam", sw03)
@@ -504,7 +504,7 @@ public class KarmaSwordWaveAnimation:Component{
         self.assertIn("return pattern == EnemyAttack.SW04 || pattern == EnemyAttack.SW05 && IsFinalDetonation(contact)", behavior)
 
     def test_production_parry_callback_matrix(self):
-        source = (ROOT / "Assets/Scripts/SwordWave/KarmaSwordBossBehavior.cs").read_text(encoding="utf-8-sig")
+        source = (ROOT / "Assets/Runtime/SwordWave/KarmaSwordBossBehavior.cs").read_text(encoding="utf-8-sig")
         from test_sword_presentation import method
         callback = method(source, "public override void OnAttackParried(bool stun)").replace("public override", "public")
         returned = method(source, "public void OnReturnedCounterHit()")
@@ -572,7 +572,7 @@ public class ParryProbe {
 
 class BasicChecks(unittest.TestCase):
     def test_basic_reuses_sw01_flight_and_keeps_charge_attached(self):
-        source = (ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaSwordAttackPolish.cs").read_text(encoding="utf-8-sig")
+        source = (ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaSwordAttackPolish.cs").read_text(encoding="utf-8-sig")
         basic = source.split("public sealed class KarmaSwordBasicPresentation", 1)[1].split("// SW04-only", 1)[0]
         ranged = basic.split("public static void Ranged(", 1)[1].split("public static void Projectile", 1)[0]
         self.assertIn("KarmaSwordWaveAnimation.Flight(game, owner, shot, velocity, sw01Footprint)", ranged)
@@ -582,16 +582,16 @@ class BasicChecks(unittest.TestCase):
         charge = VISUAL.read_text(encoding="utf-8-sig")
         self.assertIn("BladePoints(swordPicture, out var heel", charge)
         self.assertIn("transform.position = heel", charge)
-        motion = (ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaWaveMotion.cs").read_text(encoding="utf-8-sig")
+        motion = (ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaWaveMotion.cs").read_text(encoding="utf-8-sig")
         self.assertIn("spriteHomeRotation * (foot - rotation * foot)", motion)
 
     def test_production_melee_timeline_damage_budget_and_pose_sequence(self):
-        source = (ROOT / "Assets/Scripts/SwordWave/Patterns/SWBasic.cs").read_text(encoding="utf-8-sig")
+        source = (ROOT / "Assets/Runtime/SwordWave/Patterns/SWBasic.cs").read_text(encoding="utf-8-sig")
         melee = source.split("            IEnumerator Melee()", 1)[1].split("            public override bool CanReach", 1)[0]
-        animator = (ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaCharacterAnimator.Sword.cs").read_text(encoding="utf-8-sig")
+        animator = (ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaCharacterAnimator.Sword.cs").read_text(encoding="utf-8-sig")
         self.assertIn('PrepareSwordBody(melee ? "BasicMelee" : "BasicRanged"', animator)
         self.assertIn("ShowSwordPatternMotion(EnemyAttack.SWBasic)", animator)
-        core = (ROOT / "Assets/Scripts/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
+        core = (ROOT / "Assets/Runtime/Core/KarmaBossRules.cs").read_text(encoding="utf-8-sig")
         consume = core.split("public bool TryConsume()", 1)[1].split("\n", 1)[0]
         code = r"""
 using System;using System.Collections;using System.Collections.Generic;
@@ -661,7 +661,7 @@ public class BasicProbe {
         # Execute the real coroutine, collision/consumption and player damage
         # methods. Only Unity objects and presentation callbacks are stand-ins.
         from test_sword_presentation import method, run_cs
-        scripts = ROOT / "Assets/Scripts"
+        scripts = ROOT / "Assets/Runtime"
         read = lambda path: (scripts / path).read_text(encoding="utf-8-sig")
         code = r'''
 using System;using System.Collections;using System.Collections.Generic;using System.Linq;

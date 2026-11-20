@@ -223,7 +223,7 @@ public static class KarmaCinematicSkipChecks
             map = (InputActionMap)typeof(KarmaInput).GetField("map", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
             map.devices = new[] { keyboard }; bindings = map.SaveBindingOverridesAsJson(); map.RemoveAllBindingOverrides();
             log = (message, stack, type) => {
-                if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Scripts/")
+                if ((type == LogType.Exception || type == LogType.Error) && stack.Contains("Assets/Runtime/")
                     && !message.StartsWith("Not allowed to override geometry")) runtimeError = message;
             };
             Application.logMessageReceived += log;

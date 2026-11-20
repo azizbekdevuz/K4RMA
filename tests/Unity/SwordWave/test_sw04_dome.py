@@ -5,12 +5,12 @@ from pathlib import Path
 from test_sword_presentation import method, run_cs
 
 ROOT = Path(__file__).resolve().parents[3]
-VISUAL = ROOT / "Assets/Scripts/SwordWave/Visuals/KarmaSwordWardVfx.cs"
+VISUAL = ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaSwordWardVfx.cs"
 
 
 class WardChecks(unittest.TestCase):
     def test_natural_expiry_has_no_shock_or_discharge(self):
-        source = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
+        source = (ROOT / "Assets/Runtime/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
         cleanup = method(source, "void ClearSwordGuard(")
         self.assertIn("wardVfx?.Finish();", cleanup)
         self.assertNotIn("ApplyShock", source)
@@ -23,8 +23,8 @@ class WardChecks(unittest.TestCase):
                       ".Stun(", "body.color =", "body.transform.localScale ="):
             self.assertNotIn(token, source)
         self.assertIn("FrameIndex=(int)Mathf.Floor(age*KarmaBootstrap.FramesPerSecond)%KarmaBootstrap.FramesPerSecond", source)
-        self.assertIn("swordGuard", (ROOT / "Assets/Scripts/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig"))
-        pattern = (ROOT / "Assets/Scripts/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
+        self.assertIn("swordGuard", (ROOT / "Assets/Runtime/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig"))
+        pattern = (ROOT / "Assets/Runtime/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
         self.assertIn("new KarmaAttackContact[4]", pattern)
         orbit = method(pattern, "void UpdateSwordGuardBlades(")
         self.assertIn("blades[i].enabled = true", orbit)
@@ -47,7 +47,7 @@ class WardChecks(unittest.TestCase):
         parry = method(pattern, "public void OnParried(")
         self.assertLess(parry.index("volley.Contacts[later].TryConsume()"), parry.index("ReturnParriedBlade(volley, parryAt)"))
         self.assertIn("slot.gameObject.SetActive(false)", parry)
-        behavior = (ROOT / "Assets/Scripts/SwordWave/KarmaSwordBossBehavior.cs").read_text(encoding="utf-8-sig")
+        behavior = (ROOT / "Assets/Runtime/SwordWave/KarmaSwordBossBehavior.cs").read_text(encoding="utf-8-sig")
         self.assertIn("ParryStunSeconds { get { return 2; } }", behavior)
         self.assertIn("owner.game.StageIndex == 3 || owner.running && owner.selected == EnemyAttack.SW05", behavior)
         self.assertIn("if (parried) { counter.OnParried(contact); }", behavior)
@@ -60,7 +60,7 @@ class WardChecks(unittest.TestCase):
         self.assertIn("counter.GuardImpact()",feedback)
 
     def test_aiming_blade_follows_dash_until_release(self):
-        pattern=(ROOT / "Assets/Scripts/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
+        pattern=(ROOT / "Assets/Runtime/SwordWave/Patterns/SW04.cs").read_text(encoding="utf-8-sig")
         update=method(pattern,"void UpdateSwordGuardBlades(")
         routine=method(pattern,"IEnumerator MaintainSwordGuard(")
         locked=routine[routine.index('float lockedUntil'):routine.index('shots[i] = owner.Attack')]

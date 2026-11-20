@@ -5,7 +5,7 @@ import unittest
 from test_sword_presentation import method, run_cs
 
 ROOT = Path(__file__).resolve().parents[3]
-SWORD = ROOT / 'Assets/Scripts/SwordWave'
+SWORD = ROOT / 'Assets/Runtime/SwordWave'
 
 
 class BasicTorsoChecks(unittest.TestCase):

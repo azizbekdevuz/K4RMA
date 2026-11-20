@@ -17,9 +17,9 @@
 
 | 담당 | 코드 | 아트·효과·재질·셰이더 | 검사 |
 |---|---|---|---|
-| RisingSlash · 상승베기 | `Assets/Scripts/RisingSlash/` | `Assets/Arts/RisingSlash/` | `tests/Unity/RisingSlash/` |
-| SwordWave · 검기 | `Assets/Scripts/SwordWave/` | `Assets/Arts/SwordWave/` | `tests/Unity/SwordWave/` |
-| Guard · 방어 | `Assets/Scripts/Guard/` | `Assets/Arts/Guard/` | `tests/Unity/Guard/` |
+| RisingSlash · 상승베기 | `Assets/Runtime/RisingSlash/` | `Assets/Arts/RisingSlash/` | `tests/Unity/RisingSlash/` |
+| SwordWave · 검기 | `Assets/Runtime/SwordWave/` | `Assets/Arts/SwordWave/` | `tests/Unity/SwordWave/` |
+| Guard · 방어 | `Assets/Runtime/Guard/` | `Assets/Arts/Guard/` | `tests/Unity/Guard/` |
 
 - 보스의 공격·선택·이동·방어·피격·자세·효과·수치와 검사 기대값은 그 보스의 담당 폴더에서 수정한다. 다른 보스의 구체 타입·전용 상태·전용 애니메이션 메서드를 참조하지 않는다. `partial`은 공통 호스트 접근 수단이며 다른 보스 상태 접근 허가가 아니다.
 - `Behavior`는 공격 목록(`BuildCycle`)·선택(`Eligible`)·이동(`TickMovement`)·공격 주기·연결을 담당한다. 검기 이동은 `KarmaSwordBossMovement.cs`, 개별 공격은 `Patterns/`, 전용 연출은 `Visuals/`, 방어 기본 공격은 `Patterns/GDBasic.cs`다.
@@ -42,9 +42,9 @@
 
 ### 배치와 연결
 
-- `Assets` 바로 아래에 `Arts`(이미지·애니메이션·재질·셰이더), `Audio`(소리·카탈로그), `Scripts`(코드), `Data`(게임·렌더링 설정), `Scenes`(씬)를 둔다. 새 중간 프로젝트 폴더나 별도의 `Art` 폴더를 만들지 않는다.
+- `Assets` 바로 아래에 `Arts`(이미지·애니메이션·재질·셰이더), `Audio`(소리·카탈로그), `Runtime`(코드), `Data`(게임·렌더링 설정), `Scenes`(씬)를 둔다. 새 중간 프로젝트 폴더나 별도의 `Art` 폴더를 만들지 않는다.
 - 동작 이미지는 `Arts/Player/`, `Arts/Master/`, `Arts/Neutral/` 바로 아래에 둔다. 보스는 `Arts/Guard/WardRise/`처럼 보스 아래 외형 한 단계로 나눈다. 캐릭터별 전용 연출은 각각의 `Effects/`, 공용 효과·배경·튜토리얼·UI는 `Arts/Resources/`에 둔다. `Arts/Reference/`에는 GameScale_HD_StageStyle 공식 원화를, `Arts/Backup/`에는 통합 직전 사용 이미지와 이전 사용처 색인을 보관한다. 오디오는 `Audio/<기능>/`에 둔다.
-- 코드는 `Scripts/<기능>/`에 둔다. `Game`은 초기화·진행·입력·설정, `Combat`은 공통 전투 계약과 적 호스트, `Presentation`은 공통 연출을 담당한다. 전용 에디터 코드는 해당 기능의 `Editor/`에 두며, `Core`의 독립 어셈블리 경계는 유지한다.
+- 코드는 `Runtime/<기능>/`에 둔다. `Game`은 초기화·진행·입력·설정, `Combat`은 공통 전투 계약과 적 호스트, `Presentation`은 공통 연출을 담당한다. 전용 에디터 코드는 해당 기능의 `Editor/`에 두며, `Core`의 독립 어셈블리 경계는 유지한다.
 - 파일·폴더·시트·아틀라스는 보스·캐릭터·동작·효과·배경·UI 등 함께 관리·로딩할 의미 단위를 유지한다. 파일 수를 줄이기 위해 관련 없는 이미지를 섞지 않는다.
 - 몸 동작과 부활은 `Motions12/<외형>/<동작>`, 기본 자세는 `GameScale_HD_StageStyle/<외형>_Idle` 논리 키로 읽는다. 동작과 이펙트 파일에는 용도를 식별할 이름을 붙이고 Sprite 이름과 프레임 순서를 유지한다.
 - 개별 동작의 프레임 및 경로로 로딩하는 전용 이펙트는 `Data/Resources/`의 `KarmaArtResource`에서 원본을 참조한다. 플레이어 클립은 `Player/Animation/`·`Player/Animation12/` 키를 사용한다. 계승 포즈는 `Motions12/BodyPoses`에서 찾는다.

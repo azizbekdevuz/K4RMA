@@ -6,7 +6,7 @@ from test_sword_presentation import method, run_cs
 from test_sw05_eruption_mesh import SHIM
 
 ROOT = Path(__file__).resolve().parents[3]
-BASE = ROOT / "Assets/Scripts/SwordWave"
+BASE = ROOT / "Assets/Runtime/SwordWave"
 ENERGY = BASE / "Visuals/KarmaSW05Energy.cs"
 
 

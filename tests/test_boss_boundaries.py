@@ -4,7 +4,7 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = ROOT / 'Assets/Scripts'
+RUNTIME = ROOT / 'Assets/Runtime'
 BOSSES = RUNTIME
 OWNERS = ('SwordWave', 'RisingSlash', 'Guard')
 SHARED_PARTIALS = {'KarmaEnemy', 'KarmaCharacterAnimator', 'KarmaBossTuning'}

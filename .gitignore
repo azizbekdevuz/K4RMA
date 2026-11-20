@@ -1,6 +1,9 @@
 # K4RMA — combined ignore rules
 # Planning files and Unity prototype development.
 
+# Local Unity project settings
+/ProjectSettings/
+
 # Unity-generated folders
 /[Ll]ibrary/
 /[Tt]emp/

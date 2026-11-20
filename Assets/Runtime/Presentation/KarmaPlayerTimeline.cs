@@ -51,8 +51,7 @@ namespace KarmaPrototype
         public static readonly Motion[] Motions = {
             new Motion("Idle", 1, duration: 1f, loop: true),
             new Motion("Walk", 8, loop: true),
-            new Motion("Run", 7, duration: 0.5416667f, loop: true),
-            new Motion("Turn", 2),
+            new Motion("Run", 8, loop: true),
             new Motion("JumpStart", 2, duration: 0.125f),
             new Motion("Jump", 5),
             new Motion("Apex", 1),

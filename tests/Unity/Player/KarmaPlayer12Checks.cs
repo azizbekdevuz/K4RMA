@@ -111,13 +111,17 @@ public static class KarmaPlayer12Checks
             await Await(()=>animator.CurrentPose=="Run","Run input missing");await Advance(0.2f);
             var body=player.GetComponent<Rigidbody2D>();
             Check(Mathf.Abs(body.linearVelocity.x-game.Config.moveSpeed)<0.02f&&player.Position.x>start,"Run keeps configured velocity");
-            await Keys(InputKey.A);await Await(()=>animator.CurrentPose=="Turn","Direction reversal uses authored turn");
-            await Await(()=>animator.CurrentPose=="Run"&&player.Facing==-1,"Turn returns to leftward run without input lock");
+            var art = (Transform)typeof(KarmaPlayer).GetField("art", F).GetValue(player);
+            async Task Reverse(InputKey key, int facing)
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(key));
+                await Await(() => player.Facing == facing, "Reversal input missing");
+                Check(art.localScale.x == facing && animator.CurrentPose == "Run",
+                    "Run faces the new direction on the input frame");
+            }
+            await Reverse(InputKey.A, -1);
+            await Reverse(InputKey.D, 1);
             await Keys();await Await(()=>animator.CurrentPose=="Idle","Run to idle");
-            typeof(KarmaCharacterAnimator).GetMethod("BeginPlayerTurn",F).Invoke(animator,null);
-            var art=(Transform)typeof(KarmaPlayer).GetField("art",F).GetValue(player);
-            art.localScale=new Vector3(-player.Facing,1,1);player.BeginSwordWave();
-            Check(art.localScale.x==player.Facing,"Turn interruption faces the action on contact frame");
             await Ground();
             await Keys(InputKey.S);await Await(()=>animator.CurrentPose=="Crouch","Crouch input missing");await Keys();
             await Keys(InputKey.Space);await Await(()=>player.Airborne,"Jump input missing");await Keys();

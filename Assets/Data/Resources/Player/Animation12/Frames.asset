@@ -40,12 +40,7 @@ MonoBehaviour:
     - {fileID: 971285018, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
     - {fileID: 351896463, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
     - {fileID: 508995818, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
-    poses: []
-  - id: Turn
-    source: Assets/Arts/Player/Turn.png
-    sprites:
-    - {fileID: -1195778965, guid: 0ba00063ce5404d089738d107e931381, type: 3}
-    - {fileID: -1610529080, guid: 0ba00063ce5404d089738d107e931381, type: 3}
+    - {fileID: 1836900712, guid: 5e947c7abb9344504ba8c9bfc29b13a4, type: 3}
     poses: []
   - id: JumpStart
     source: Assets/Arts/Player/JumpStart.png

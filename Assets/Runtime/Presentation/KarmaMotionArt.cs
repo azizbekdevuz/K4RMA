@@ -13,7 +13,7 @@ namespace KarmaPrototype
         readonly Dictionary<(string form, string motion), Sprite[]> loaded = new Dictionary<(string, string), Sprite[]>();
         static KarmaMotionArt commonPlayer = new KarmaMotionArt();
         static readonly string[] playerOpening = {
-            "JumpStart", "Run", "Jump", "Land", "Attack", "AirHorizontal", "Turn", "Fall",
+            "JumpStart", "Run", "Jump", "Land", "Attack", "AirHorizontal", "Fall",
             "Apex", "AirRecovery", "RunRecovery", "Recovery", "Walk", "Parry", "Guard"
         };
         static readonly string[] guardianOpening = {

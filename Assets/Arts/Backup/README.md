@@ -4,9 +4,9 @@
 
 공식 외형 원화는 [GameScale_HD_StageStyle](../Reference)에 있다.
 
-[Player](#player-53개) · [Master](#master-1개) · [Neutral](#neutral-3개) · [SwordWave](#swordwave-32개) · [RisingSlash](#risingslash-30개) · [Guard](#guard-42개) · [Shared](#shared-5개)
+[Player](#player-52개) · [Master](#master-1개) · [Neutral](#neutral-3개) · [SwordWave](#swordwave-32개) · [RisingSlash](#risingslash-30개) · [Guard](#guard-42개) · [Shared](#shared-5개)
 
-## Player (53개)
+## Player (52개)
 
 ### Player · 동작
 
@@ -61,7 +61,6 @@
 | [Player_StunRecovery_24fps](Player/Player_StunRecovery_24fps.png) | 플레이어 기절 해제 동작 · `KarmaCharacterAnimator / LoadNativePlayerPose` | `Player/Native24/StunRecovery.png` | 6장 · StunRecovery_00 → StunRecovery_05 |
 | [Player_StunStart_24fps](Player/Player_StunStart_24fps.png) | 플레이어 기절 시작 동작 · `KarmaCharacterAnimator / LoadNativePlayerPose` | `Player/Native24/StunStart.png` | 4장 · StunStart_00 → StunStart_03 |
 | [Player_SwordWave_24fps](Player/Player_SwordWave_24fps.png) | 플레이어 검기 발사 동작 · `KarmaCharacterAnimator / LoadNativePlayerPose` | `Player/Native24/SwordWave.png` | 6장 · SwordWave_00 → SwordWave_05 |
-| [Player_Turn_24fps](Player/Player_Turn_24fps.png) | 플레이어 방향 전환 동작 · `KarmaCharacterAnimator / LoadNativePlayerPose` | `Player/Native24/Turn.png` | 4장 · Turn_00 → Turn_03 |
 | [Player_Walk_24fps](Player/Player_Walk_24fps.png) | 플레이어 걷기 동작 · `KarmaCharacterAnimator / LoadNativePlayerPose` | `Player/Native24/Walk.png` | 16장 · Walk_00 → Walk_15 |
 
 ### Player · 이펙트

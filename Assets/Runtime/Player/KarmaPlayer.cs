@@ -85,11 +85,9 @@ namespace KarmaPrototype
             if (ControlLocked) { move = 0; jumpBufferedUntil = 0; airSlashBufferedUntil = 0; return; }
             if (game.DialogueLocksPlayerInput) return;
             move = Crouching ? 0 : KarmaInput.Horizontal;
-            int previousFacing = Facing;
             if (move != 0) Facing = move > 0 ? 1 : -1;
-            if (Facing != previousFacing && !airborne && !ControlLocked) animator.BeginPlayerTurn();
             aura.flipX = remnantHalo.flipX = Facing < 0;
-            art.localScale = new Vector3(animator.PlayerTurning ? -Facing : Facing, 1, 1);
+            FaceAction();
             if (KarmaInput.Pressed(KarmaAction.Jump)) jumpBufferedUntil = Time.time + 0.12f;
             if (game.AllowsPlayerActions)
             {

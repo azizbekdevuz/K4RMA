@@ -138,7 +138,7 @@ namespace KarmaPrototype
                         : airborne ? (verticalSpeed > 2 ? "Jump" : verticalSpeed < -2 ? "Fall" : "Apex")
                         : crouching ? "Crouch"
                         : Time.time < landedUntil ? "Land"
-                        : PlayerTurning ? "Turn" : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
+                        : Mathf.Abs(movement) > 0.1f ? "Run" : "Idle";
                     SamplePlayerClip(pose);
                 }
                 float bob = sheet == "Player" || airborne || crouching ? 0 : Mathf.Abs(movement) > 0.1f ? Mathf.Sin(Time.time * 18) * 0.025f : Mathf.Sin(Time.time * 2) * 0.008f;

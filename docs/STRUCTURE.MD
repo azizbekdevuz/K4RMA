@@ -360,7 +360,6 @@ K4RMA/
 │   │   │   │   │   ├── StunStart.anim
 │   │   │   │   │   ├── SwordWave.anim
 │   │   │   │   │   ├── Transition.anim
-│   │   │   │   │   ├── Turn.anim
 │   │   │   │   │   └── Walk.anim
 │   │   │   │   └── ParryFlash.asset
 │   │   │   ├── RisingSlash/

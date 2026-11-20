@@ -96,7 +96,8 @@ public static class KarmaPlayerLocomotionChecks
             void At(float seconds) => Field("playerClipAt", Time.time - seconds);
             void Expect(string pose, string sprite) => Check(a.CurrentPose == pose && renderer.sprite.name == sprite, "Expected " + pose + "/" + sprite + ", got " + a.CurrentPose + "/" + renderer.sprite.name);
             a.Pose(1, false); At(.502f); a.Pose(1, false); Expect("Run", "Run_06");
-            At(.543f); a.Pose(1, false); Expect("Run", "Run_00");
+            At(.584f); a.Pose(1, false); Expect("Run", "Run_07");
+            At(.668f); a.Pose(1, false); Expect("Run", "Run_00");
             a.Pose(0, true, 8); Expect("Jump", "Jump_00");
             At(.17f); a.Pose(0, true, 5); Expect("Jump", "Jump_02");
             At(.251f); a.Pose(0, true, 4); Expect("Jump", "Jump_03");
@@ -166,7 +167,7 @@ public static class KarmaPlayerLocomotionChecks
             Check(observed.Any(s => s.Contains("/Jump/Jump_")) && observed.Any(s => s.Contains("/Apex/Apex_00")) && observed.Any(s => s.Contains("/Fall/Fall_")), "Actual jump ascent/apex/descent");
             Check(observed.Any(s => s.Contains("JumpAndLand/Land/Land_00")) && observed.Any(s => s.Contains("JumpAndLand/Land/Land_01")), "Actual landing displays both drawings, including moving landing");
             Check(observed.Any(s => s.StartsWith("MovingJumpAndLand/Land/")), "Landing is visible while movement continues");
-            File.WriteAllText(Output + "/result.txt", "PASS: exact import settings and phase mapping; Run 7 frames at 12 FPS, Jump velocity phases, Land 0.10s, Crouch 0.125s/hold/release; attack/hurt/death priorities; actual Play Mode movement both directions, stationary/moving jump, both landing drawings and return to preserved Idle. Validation capture uses a 1/60s simulation step only in the test.\n");
+            File.WriteAllText(Output + "/result.txt", "PASS: exact import settings and phase mapping; Run 8 frames at 12 FPS, Jump velocity phases, Land 0.10s, Crouch 0.125s/hold/release; attack/hurt/death priorities; actual Play Mode movement both directions, stationary/moving jump, both landing drawings and return to preserved Idle. Validation capture uses a 1/60s simulation step only in the test.\n");
             exit = 0;
         }
         catch (Exception e) { File.WriteAllText(Output + "/result.txt", "FAIL: " + e); Debug.LogException(e); }

@@ -39,7 +39,7 @@ namespace KarmaPrototype
         internal void CancelPlayerActionForControl()
         {
             if (sheet != "Player") return;
-            actionUntil = poseUntil = hurtUntil = playerExplicitRecoveryEnd = playerTurnUntil = 0;
+            actionUntil = poseUntil = hurtUntil = playerExplicitRecoveryEnd = 0;
             explicitPose = null;
         }
         bool PlayerRecovering(float movement, bool airborne)
@@ -61,10 +61,6 @@ namespace KarmaPrototype
             picture.color = pictureColor; transform.localRotation = Quaternion.identity;
             SamplePlayerClip("Idle", true);
         }
-        float playerTurnUntil;
-        internal bool PlayerTurning => Time.time < playerTurnUntil
-            && Time.time >= actionUntil && Time.time >= poseUntil && Time.time >= hurtUntil;
-        internal void BeginPlayerTurn() { playerTurnUntil = Time.time + 2 * KarmaBootstrap.Step; }
         void SamplePlayerClip(string name, bool restart = false)
         {
             if (picture == null) return;

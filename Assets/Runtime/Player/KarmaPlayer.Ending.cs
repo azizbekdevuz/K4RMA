@@ -24,7 +24,7 @@ namespace KarmaPrototype
             endingArtHome = art.localPosition;
             EndingAirHeight = 0;
             animator.BeginEndingPoses("Idle", "Fall", "Walk", "Kneel", "StandFromKneel",
-                "Parry", "Riposte", "Jump", "AirDiagonal", "Land", "Pierce", "Recovery", "Salute", "Turn");
+                "Parry", "Riposte", "Jump", "AirDiagonal", "Land", "Pierce", "Recovery", "Salute");
         }
 
         internal void EndingWalkTo(float x, float speed)
@@ -81,12 +81,10 @@ namespace KarmaPrototype
             {
                 if (t >= KarmaGame.EndingKneelAt && t < KarmaGame.EndingStandAt)
                 { pose = "Kneel"; since = t - KarmaGame.EndingKneelAt; }
-                else if (t >= KarmaGame.EndingStandAt + 0.35f && t < KarmaGame.EndingPierceAt - 0.25f)
+                else if (t >= KarmaGame.EndingStandAt + 0.35f && t < KarmaGame.EndingPierceAt)
                 { pose = "Draw"; since = Mathf.InverseLerp(KarmaGame.EndingStandAt + 0.35f, KarmaGame.EndingPierceAt - 0.25f, t); }
-                else if (t >= KarmaGame.EndingStandAt && t < KarmaGame.EndingPierceAt - 0.25f)
+                else if (t >= KarmaGame.EndingStandAt && t < KarmaGame.EndingPierceAt)
                 { pose = "StandFromKneel"; since = t - KarmaGame.EndingStandAt; }
-                else if (t >= KarmaGame.EndingPierceAt - 0.25f && t < KarmaGame.EndingPierceAt)
-                { pose = "Turn"; since = t - (KarmaGame.EndingPierceAt - 0.25f); }
                 else if (t >= KarmaGame.EndingPierceAt && t < KarmaGame.EndingPierceAt + 0.53f)
                 { pose = "Pierce"; since = t - KarmaGame.EndingPierceAt; }
                 else if (t >= KarmaGame.EndingCounterAt && t < KarmaGame.EndingCounterAt + KarmaGame.EndingRelease)
@@ -105,12 +103,10 @@ namespace KarmaPrototype
                 { pose = "Sheathe"; since = Mathf.InverseLerp(KarmaGame.EndingCounterAt + 0.52f, KarmaGame.EndingGatherAt + 0.18f, t); }
                 else if (t >= KarmaGame.EndingSaluteAt && t < KarmaGame.EndingDepartAt)
                 { pose = "Salute"; since = t - KarmaGame.EndingSaluteAt; }
-                else if (t >= KarmaGame.EndingTurnToMasterAt && t < KarmaGame.EndingTurnToMasterAt + 0.25f)
-                { pose = "Turn"; since = t - KarmaGame.EndingTurnToMasterAt; }
 
                 loop = pose == "Idle";
                 if (t >= KarmaGame.EndingKneelAt && t < KarmaGame.EndingPierceAt
-                    || t >= KarmaGame.EndingTurnToMasterAt + 0.25f && t < KarmaGame.EndingDepartAt)
+                    || t >= KarmaGame.EndingTurnToMasterAt && t < KarmaGame.EndingDepartAt)
                     FaceGuardian(KarmaGame.EndingMasterX);
                 else if (t >= KarmaGame.EndingStandAt)
                     FaceGuardian(KarmaStage.Gate.x);

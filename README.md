@@ -9,7 +9,7 @@
   <img alt="Mode: single player first" src="https://img.shields.io/badge/mode-single--player_first-2563eb?style=flat-square" />
   <br /><br />
   <a href="README.md"><strong>🇰🇷 한국어</strong></a> &nbsp;|&nbsp; <a href="README.en.md"><strong>🇺🇸 English</strong></a>
-  <br /><sub>GitHub README: 언어별 문서 이동 · 같은 화면에서 즉시 전환: <a href="https://azizbekdevuz.github.io/K4RMA/">GitHub Pages</a></sub>
+  <br /><sub>GitHub README: 언어별 문서 이동 · 같은 화면에서 즉시 전환: <a href="https://azizbekdevuz.github.io/K4RMA/docs/planning/">GitHub Pages</a></sub>
 </div>
 
 <div align="center">
@@ -33,7 +33,7 @@ Unity `6000.6.2f1`에서 `Assets/Scenes/KarmaPrototype.unity`를 실행한다.
 
 ## 초기 기획 기록
 
-아래는 프로젝트 초기의 기획 기록이다. 첫 통합 버전은 [v0.1.0 실행 안내](docs/PROTOTYPE.md)에 기록되어 있다.
+아래는 프로젝트 초기의 기획 기록이다. 첫 통합 버전은 [v0.1.0 실행 안내](docs/planning/PROTOTYPE.md)에 기록되어 있다.
 
 ## 게임 소개
 
@@ -71,7 +71,7 @@ Unity `6000.6.2f1`에서 `Assets/Scenes/KarmaPrototype.unity`를 실행한다.
 
 - **간단하게 시작하되 확장을 막지 않기.** 멀티플레이 코드를 미리 만들자는 뜻이 아닙니다. 플레이어·능력·적·점수·UI를 한 곳에 뒤섞지 않고, 나중에 플레이어가 추가되어도 가능한 한 재사용할 수 있게 설계합니다.
 - **역할별 동일한 원칙.** 코드는 입력과 캐릭터/전투 동작을 분리하고, UI는 플레이어 수나 상태 표시가 늘어날 수 있게 구성하며, 모델·애니메이션은 특정 캐릭터 하나에만 고정하지 않고 재사용성을 고려합니다. 미래 기능 때문에 현재 MVP를 불필요하게 복잡하게 만들지는 않습니다.
-- **AI는 공통 맥락을 보고 사용.** AI에 작업을 맡기기 전 [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md), 현재 코드, Unity 버전, 본인 작업 범위 및 관련 인터페이스를 함께 전달합니다. 질문할 때는 원하는 동작·현재 구조·시도한 방법·오류 내용·제약 조건을 구체적으로 설명합니다. 생성된 코드는 직접 이해하고 실행·검증합니다.
+- **AI는 공통 맥락을 보고 사용.** AI에 작업을 맡기기 전 [`docs/planning/PROJECT_CONTEXT.md`](docs/planning/PROJECT_CONTEXT.md), 현재 코드, Unity 버전, 본인 작업 범위 및 관련 인터페이스를 함께 전달합니다. 질문할 때는 원하는 동작·현재 구조·시도한 방법·오류 내용·제약 조건을 구체적으로 설명합니다. 생성된 코드는 직접 이해하고 실행·검증합니다.
 - **작고 검증 가능한 단위로 개발.** 핵심 동작을 먼저 확인한 뒤 기능을 추가합니다. 변경 사항은 기록하고 서로 다른 파트를 일찍 통합합니다.
 
 ### 협업 및 저장소
@@ -79,7 +79,7 @@ Unity `6000.6.2f1`에서 `Assets/Scenes/KarmaPrototype.unity`를 실행한다.
 - **GitHub:** 공동 코드 저장소 및 변경 이력 관리. Aziz가 저장소/협업 설정과 통합을 담당합니다. 역할별 개발 담당자는 추후 확정합니다.
 - **Unity Version Control (구 Plastic SCM):** 대용량 바이너리 에셋·잠금이 필요한 경우를 포함해 적용 방식을 검토합니다. **Git과 Unity Version Control을 동시에 별도 정본으로 운영하지 않습니다.** 정본 저장소와 에셋 관리 방식은 팀이 합의해 문서화합니다.
 - **Notion:** 기획안, 회의록, 작업 분담, 개발 일정과 결정 사항 공유를 위한 예정 공간입니다.
-- **협업 가이드:** [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) · **결정 기록:** [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- **협업 가이드:** [`docs/collaboration/CONTRIBUTING.md`](docs/collaboration/CONTRIBUTING.md) · **결정 기록:** [`docs/planning/DECISIONS.md`](docs/planning/DECISIONS.md)
 
 ### 개발 환경과 시작 방법
 

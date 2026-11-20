@@ -10,7 +10,7 @@
 - [ ] 폰트·오디오·코드·패키지의 필수 고지 문안과 라이선스 파일 추가
 - [ ] 과제/대학의 배포 조건 확인
 - [ ] `README.md`·`README.en.md`의 오래된 “라이선스 미정” 및 초기 계획 내용을 최신 상태로 갱신
-- [ ] `docs/PROJECT_CONTEXT.md` 등 초기 기획 문서의 상태 표시 갱신
+- [ ] `docs/planning/PROJECT_CONTEXT.md` 등 초기 기획 문서의 상태 표시 갱신
 - [ ] 팀 전용 비공개 보안/행동 신고 채널 확정 및 문서에 구체적으로 기재
 - [ ] GitHub 이슈 라벨 `bug`, `enhancement` 존재 여부 확인
 - [ ] GitHub의 Private vulnerability reporting 사용 가능 여부 확인

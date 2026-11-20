@@ -34,4 +34,4 @@
 
 특히 Unity Asset Store의 에셋은 게임에 포함하는 것과 원본 파일을 공개 저장소에 배포하는 것이 동일한 권한이 아닙니다.
 
-**관련 문서:** [LICENSE.md](LICENSE.md) · [GOVERNANCE.md](GOVERNANCE.md)
+**관련 문서:** [LICENSE.md](LICENSE.md) · [GOVERNANCE.md](../collaboration/GOVERNANCE.md)

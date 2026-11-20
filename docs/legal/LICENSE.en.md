@@ -22,6 +22,6 @@ Unity, Unity packages, libraries, fonts, externally sourced assets and other thi
 The use of generative tools does not itself establish exclusive copyright or redistribution rights. Provenance, tool terms, input rights and human creative contributions must be examined per asset.
 
 ## Permissions and contributions
-Contact the repository maintainers to discuss reuse, co-development, distribution, commercialization, press or outside contributions. A contribution does not automatically assign its rights to the team. See [GOVERNANCE.en.md](GOVERNANCE.en.md).
+Contact the repository maintainers to discuss reuse, co-development, distribution, commercialization, press or outside contributions. A contribution does not automatically assign its rights to the team. See [GOVERNANCE.en.md](../collaboration/GOVERNANCE.en.md).
 
 **Languages:** Korean is the primary explanatory version; English is provided for access. Neither version independently grants rights absent authorization. Actual ownership and mandatory law control.

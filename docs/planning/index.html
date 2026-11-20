@@ -51,11 +51,11 @@
   <header class="top"><div class="wrap bar"><a class="brand" href="#top">K4RMA</a><nav class="switch" aria-label="Language / 언어"><button type="button" data-lang-button="ko" aria-pressed="true">🇰🇷 한국어</button><button type="button" data-lang-button="en" aria-pressed="false">🇺🇸 English</button></nav></div></header>
   <div class="wrap">
     <section class="hero" id="top">
-      <img class="logo" src="docs/planning/assets/wordmark.png" alt="K4RMA" />
+      <img class="logo" src="assets/wordmark.png" alt="K4RMA" />
       <p class="tagline">WHAT YOU GIVE UP COMES BACK.</p>
       <p class="sub">잃어버린 능력이 다음 적의 힘이 된다.</p>
       <div class="pills"><span>● PRE-PRODUCTION</span><span>UNITY</span><span>SINGLE-PLAYER FIRST</span><span>4-PERSON TEAM</span></div>
-      <figure class="art"><img src="docs/planning/assets/concept-arena.png" alt="Concept art of an adventurer facing a towering boss in a dark arena" /><figcaption>CONCEPT ART / 콘셉트 이미지 — NOT ACTUAL GAMEPLAY / 실제 게임 화면이 아닙니다.</figcaption></figure>
+      <figure class="art"><img src="assets/concept-arena.png" alt="Concept art of an adventurer facing a towering boss in a dark arena" /><figcaption>CONCEPT ART / 콘셉트 이미지 — NOT ACTUAL GAMEPLAY / 실제 게임 화면이 아닙니다.</figcaption></figure>
     </section>
     <aside data-lang-panel="ko" class="notice">K4RMA는 개발 준비 단계의 가제입니다. 일부 게임 규칙과 2D/3D 방향은 아직 확정되지 않았으며, 아래 내용은 구현 완료 목록이 아닙니다. v0.1.0부터 Unity 6000.6.2f1 2D 프로토타입이 저장소에 있으며, 이 페이지의 나머지 설명은 원래 기획 기록입니다.</aside>
     <aside data-lang-panel="en" class="notice" hidden>K4RMA is a working title in pre-production. Some game rules and 2D/3D choices are undecided; the features below are not claims of implementation. As of v0.1.0 the repository also contains the Unity 6000.6.2f1 2D prototype. The rest of this page remains the original planning record.</aside>
@@ -63,7 +63,7 @@
 <p><strong>K4RMA</strong>는 플레이어가 보스를 이길 때마다 자신의 능력 하나를 희생하고, 그 능력이 이후의 적에게 넘어가는 <strong>싱글플레이 우선 액션·보스 전투 게임</strong>입니다. 스테이지가 진행될수록 내 선택지가 줄어들고 적의 공격 패턴이 변화합니다. 남은 기술, 기본 공격, 회피 및 성장 요소를 활용해 마지막까지 살아남는 것이 핵심입니다.</p>
 <p><strong>핵심 질문:</strong> <em>다음 적이 사용할 기술을 알고도, 어떤 능력을 포기할 것인가?</em></p>
 <h3>핵심 게임 루프</h3>
-<figure class="game-loop"><img src="docs/planning/assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
+<figure class="game-loop"><img src="assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
 <ol>
 <li><strong>시작:</strong> 기본 스탯(HP·공격력·이동 속도·공격 속도)과 여러 특수 능력을 가진 캐릭터로 시작합니다. Dash, Fireball, Shield, Heal은 <strong>예시</strong>이며 최종 구성은 미정입니다.</li>
 <li><strong>전투:</strong> 기본 공격과 남은 능력으로 적/보스와 싸웁니다. 적은 이동·추적·공격 등의 기본 AI를 사용하며, 이후 단계에서는 희생된 능력도 사용할 수 있습니다.</li>
@@ -116,7 +116,7 @@
 <ul>
 <li><strong>간단하게 시작하되 확장을 막지 않기.</strong> 멀티플레이 코드를 미리 만들자는 뜻이 아닙니다. 플레이어·능력·적·점수·UI를 한 곳에 뒤섞지 않고, 나중에 플레이어가 추가되어도 가능한 한 재사용할 수 있게 설계합니다.</li>
 <li><strong>역할별 동일한 원칙.</strong> 코드는 입력과 캐릭터/전투 동작을 분리하고, UI는 플레이어 수나 상태 표시가 늘어날 수 있게 구성하며, 모델·애니메이션은 특정 캐릭터 하나에만 고정하지 않고 재사용성을 고려합니다. 미래 기능 때문에 현재 MVP를 불필요하게 복잡하게 만들지는 않습니다.</li>
-<li><strong>AI는 공통 맥락을 보고 사용.</strong> AI에 작업을 맡기기 전 <a href="docs/PROJECT_CONTEXT.md"><code>docs/PROJECT_CONTEXT.md</code></a>, 현재 코드, Unity 버전, 본인 작업 범위 및 관련 인터페이스를 함께 전달합니다. 질문할 때는 원하는 동작·현재 구조·시도한 방법·오류 내용·제약 조건을 구체적으로 설명합니다. 생성된 코드는 직접 이해하고 실행·검증합니다.</li>
+<li><strong>AI는 공통 맥락을 보고 사용.</strong> AI에 작업을 맡기기 전 <a href="PROJECT_CONTEXT.md"><code>docs/planning/PROJECT_CONTEXT.md</code></a>, 현재 코드, Unity 버전, 본인 작업 범위 및 관련 인터페이스를 함께 전달합니다. 질문할 때는 원하는 동작·현재 구조·시도한 방법·오류 내용·제약 조건을 구체적으로 설명합니다. 생성된 코드는 직접 이해하고 실행·검증합니다.</li>
 <li><strong>작고 검증 가능한 단위로 개발.</strong> 핵심 동작을 먼저 확인한 뒤 기능을 추가합니다. 변경 사항은 기록하고 서로 다른 파트를 일찍 통합합니다.</li>
 </ul>
 <h3>협업 및 저장소</h3>
@@ -124,7 +124,7 @@
 <li><strong>GitHub:</strong> 공동 코드 저장소 및 변경 이력 관리. Aziz가 저장소/협업 설정과 통합을 담당합니다. 역할별 개발 담당자는 추후 확정합니다.</li>
 <li><strong>Unity Version Control (구 Plastic SCM):</strong> 대용량 바이너리 에셋·잠금이 필요한 경우를 포함해 적용 방식을 검토합니다. <strong>Git과 Unity Version Control을 동시에 별도 정본으로 운영하지 않습니다.</strong> 정본 저장소와 에셋 관리 방식은 팀이 합의해 문서화합니다.</li>
 <li><strong>Notion:</strong> 기획안, 회의록, 작업 분담, 개발 일정과 결정 사항 공유를 위한 예정 공간입니다.</li>
-<li><strong>협업 가이드:</strong> <a href="docs/CONTRIBUTING.md"><code>docs/CONTRIBUTING.md</code></a> · <strong>결정 기록:</strong> <a href="docs/DECISIONS.md"><code>docs/DECISIONS.md</code></a></li>
+<li><strong>협업 가이드:</strong> <a href="../collaboration/CONTRIBUTING.md"><code>docs/collaboration/CONTRIBUTING.md</code></a> · <strong>결정 기록:</strong> <a href="DECISIONS.md"><code>docs/planning/DECISIONS.md</code></a></li>
 </ul>
 <h3>개발 환경과 시작 방법</h3>
 <p>Unity 프로젝트가 아직 이 저장소에 올라오지 않았거나 에디터 버전이 합의되지 않았다면 <strong>실행 가능한 빌드는 없습니다.</strong> Unity 버전·대상 플랫폼·프로젝트 경로가 정해지면 여기에 실제 설치/실행 절차를 추가합니다. 임의의 Unity 버전 또는 미확인 실행 명령을 사용하지 마세요.</p>
@@ -173,7 +173,7 @@
 <p><strong>K4RMA</strong> is a <strong>single-player-first action / boss-combat game</strong> in which each victory forces the player to sacrifice one ability. That ability becomes available to future enemies. As the player loses options, opponents inherit the consequences of earlier choices. Survive by combining the remaining skills, basic attacks, movement, and progression.</p>
 <p><strong>The central question:</strong> <em>Which ability will you surrender, knowing a later enemy can use it against you?</em></p>
 <h3>Core game loop</h3>
-<figure class="game-loop"><img src="docs/planning/assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
+<figure class="game-loop"><img src="assets/game-loop.svg" alt="Core game loop: choose abilities, fight, earn score, sacrifice an ability, and face enemies that inherit it" width="850" loading="lazy" /></figure>
 <ol>
 <li><strong>Begin:</strong> Start with baseline stats (HP, attack, movement speed, attack speed) and multiple special abilities. Dash, Fireball, Shield, and Heal are <strong>examples</strong>, not a final skill list.</li>
 <li><strong>Fight:</strong> Use basic attacks and remaining abilities. Enemies use basic movement/tracking/attack AI; later enemies may use previously surrendered skills.</li>
@@ -226,7 +226,7 @@
 <ul>
 <li><strong>Keep it simple without closing off future options.</strong> “Multiplayer-ready” does <strong>not</strong> mean building networking now. Avoid tying all players, abilities, enemies, scores, and UI to one global game object; keep responsibilities explicit and reusable.</li>
 <li><strong>Apply this beyond code.</strong> Keep player input separate from combat behaviors; design UI so extra player/state displays can be added; prefer reusable character models and animations over assets inseparable from one hard-coded player. Do not overengineer today's MVP for hypothetical features.</li>
-<li><strong>Give AI the whole relevant context.</strong> Before using AI, include <a href="docs/PROJECT_CONTEXT.md"><code>docs/PROJECT_CONTEXT.md</code></a>, the actual files, agreed Unity version, task boundaries, and related interfaces. Ask technical questions with the desired behavior, current architecture, attempted steps, exact errors, and constraints. Understand, run, and verify generated work before merging it.</li>
+<li><strong>Give AI the whole relevant context.</strong> Before using AI, include <a href="PROJECT_CONTEXT.md"><code>docs/planning/PROJECT_CONTEXT.md</code></a>, the actual files, agreed Unity version, task boundaries, and related interfaces. Ask technical questions with the desired behavior, current architecture, attempted steps, exact errors, and constraints. Understand, run, and verify generated work before merging it.</li>
 <li><strong>Build in small, testable increments.</strong> Prove the essential loop, add features progressively, record decisions, and integrate early.</li>
 </ul>
 <h3>Collaboration and version control</h3>
@@ -234,7 +234,7 @@
 <li><strong>GitHub:</strong> Shared source repository and change history. Aziz owns repository/collaboration setup and integration; implementation roles remain to be assigned.</li>
 <li><strong>Unity Version Control (formerly Plastic SCM):</strong> Evaluate where asset locking/large binaries require it. <strong>Do not run Git and Unity Version Control as two competing sources of truth.</strong> Agree on and document the authoritative repository and asset workflow first.</li>
 <li><strong>Notion:</strong> Planned shared workspace for design, meeting notes, assignments, schedule, and decisions.</li>
-<li><strong>Team workflow:</strong> <a href="docs/CONTRIBUTING.md"><code>docs/CONTRIBUTING.md</code></a> · <strong>Decision log:</strong> <a href="docs/DECISIONS.md"><code>docs/DECISIONS.md</code></a></li>
+<li><strong>Team workflow:</strong> <a href="../collaboration/CONTRIBUTING.md"><code>docs/collaboration/CONTRIBUTING.md</code></a> · <strong>Decision log:</strong> <a href="DECISIONS.md"><code>docs/planning/DECISIONS.md</code></a></li>
 </ul>
 <h3>Setup</h3>
 <p><strong>There is no verified runnable build yet</strong> if the Unity project or selected editor version has not been committed. Once the team selects a version, target platform, and project location, replace this section with tested setup/run instructions. Do not assume an unverified Unity version or invent a run command.</p>

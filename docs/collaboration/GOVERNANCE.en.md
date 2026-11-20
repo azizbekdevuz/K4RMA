@@ -21,4 +21,4 @@ K4RMA is a four-person university project. Ownership of code, art and other mate
 ## External contributions
 Outside contributions are not automatically accepted. Propose first via an issue and ask maintainers about authorization. Merging a PR is not by itself a copyright assignment.
 
-**See:** [CONTRIBUTING](CONTRIBUTING.en.md) · [LICENSE](LICENSE.en.md) · [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.en.md)
+**See:** [CONTRIBUTING](CONTRIBUTING.en.md) · [LICENSE](../legal/LICENSE.en.md) · [THIRD_PARTY_NOTICES](../legal/THIRD_PARTY_NOTICES.en.md)

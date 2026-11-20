@@ -618,34 +618,39 @@ K4RMA/
 │           ├── KarmaStage.cs
 │           └── KarmaSurface.cs
 ├── docs/
+│   ├── art/
+│   │   └── SWORDWAVE_ART.md
+│   ├── collaboration/
+│   │   ├── CONTRIBUTING.en.md
+│   │   ├── CONTRIBUTING.md
+│   │   ├── GOVERNANCE.en.md
+│   │   ├── GOVERNANCE.md
+│   │   ├── PULL_REQUEST_TEMPLATE.md
+│   │   ├── REVIEW_BEFORE_MERGE.en.md
+│   │   └── REVIEW_BEFORE_MERGE.md
+│   ├── community/
+│   │   ├── CODE_OF_CONDUCT.en.md
+│   │   ├── CODE_OF_CONDUCT.md
+│   │   ├── SECURITY.en.md
+│   │   ├── SECURITY.md
+│   │   ├── SUPPORT.en.md
+│   │   └── SUPPORT.md
+│   ├── legal/
+│   │   ├── LICENSE.en.md
+│   │   ├── LICENSE.md
+│   │   ├── THIRD_PARTY_NOTICES.en.md
+│   │   └── THIRD_PARTY_NOTICES.md
 │   ├── planning/
-│   │   └── assets/
-│   │       ├── concept-arena.png
-│   │       ├── game-loop.svg
-│   │       └── wordmark.png
-│   ├── CODE_OF_CONDUCT.en.md
-│   ├── CODE_OF_CONDUCT.md
-│   ├── CONTRIBUTING.en.md
-│   ├── CONTRIBUTING.md
-│   ├── DECISIONS.md
-│   ├── GOVERNANCE.en.md
-│   ├── GOVERNANCE.md
-│   ├── LICENSE.en.md
-│   ├── LICENSE.md
-│   ├── PROJECT_CONTEXT.md
-│   ├── PROTOTYPE.md
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── REVIEW_BEFORE_MERGE.en.md
-│   ├── REVIEW_BEFORE_MERGE.md
+│   │   ├── assets/
+│   │   │   ├── concept-arena.png
+│   │   │   ├── game-loop.svg
+│   │   │   └── wordmark.png
+│   │   ├── DECISIONS.md
+│   │   ├── index.html
+│   │   ├── PROJECT_CONTEXT.md
+│   │   └── PROTOTYPE.md
 │   ├── RULES.MD
-│   ├── SECURITY.en.md
-│   ├── SECURITY.md
-│   ├── STRUCTURE.MD
-│   ├── SUPPORT.en.md
-│   ├── SUPPORT.md
-│   ├── SWORDWAVE_ART.md
-│   ├── THIRD_PARTY_NOTICES.en.md
-│   └── THIRD_PARTY_NOTICES.md
+│   └── STRUCTURE.MD
 ├── Packages/
 │   ├── manifest.json
 │   └── packages-lock.json
@@ -767,7 +772,6 @@ K4RMA/
 │   └── run-boss-playchecks.py
 ├── .gitignore
 ├── AGENTS.md
-├── index.html
 ├── README.en.md
 └── README.md
 ```

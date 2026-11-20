@@ -9,7 +9,7 @@
   <img alt="Mode: single player first" src="https://img.shields.io/badge/mode-single--player_first-2563eb?style=flat-square" />
   <br /><br />
   <a href="README.md"><strong>🇰🇷 한국어</strong></a> &nbsp;|&nbsp; <a href="README.en.md"><strong>🇺🇸 English</strong></a>
-  <br /><sub>GitHub README: choose a language page · Instant in-place switch: <a href="https://azizbekdevuz.github.io/K4RMA/">GitHub Pages</a></sub>
+  <br /><sub>GitHub README: choose a language page · Instant in-place switch: <a href="https://azizbekdevuz.github.io/K4RMA/docs/planning/">GitHub Pages</a></sub>
 </div>
 
 <div align="center">
@@ -23,7 +23,7 @@ Open the project in **Unity 6000.6.2f1** and play [KarmaPrototype](Assets/Scenes
 
 ## Original planning record
 
-The following sections describe the initial project plan. For the first integrated prototype, see the [v0.1.0 run notes](docs/PROTOTYPE.md).
+The following sections describe the initial project plan. For the first integrated prototype, see the [v0.1.0 run notes](docs/planning/PROTOTYPE.md).
 
 ## Overview
 
@@ -61,7 +61,7 @@ Validate the actual hook with **one player → one arena → basic attack and a 
 
 - **Keep it simple without closing off future options.** “Multiplayer-ready” does **not** mean building networking now. Avoid tying all players, abilities, enemies, scores, and UI to one global game object; keep responsibilities explicit and reusable.
 - **Apply this beyond code.** Keep player input separate from combat behaviors; design UI so extra player/state displays can be added; prefer reusable character models and animations over assets inseparable from one hard-coded player. Do not overengineer today's MVP for hypothetical features.
-- **Give AI the whole relevant context.** Before using AI, include [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md), the actual files, agreed Unity version, task boundaries, and related interfaces. Ask technical questions with the desired behavior, current architecture, attempted steps, exact errors, and constraints. Understand, run, and verify generated work before merging it.
+- **Give AI the whole relevant context.** Before using AI, include [`docs/planning/PROJECT_CONTEXT.md`](docs/planning/PROJECT_CONTEXT.md), the actual files, agreed Unity version, task boundaries, and related interfaces. Ask technical questions with the desired behavior, current architecture, attempted steps, exact errors, and constraints. Understand, run, and verify generated work before merging it.
 - **Build in small, testable increments.** Prove the essential loop, add features progressively, record decisions, and integrate early.
 
 ### Collaboration and version control
@@ -69,7 +69,7 @@ Validate the actual hook with **one player → one arena → basic attack and a 
 - **GitHub:** Shared source repository and change history. Aziz owns repository/collaboration setup and integration; implementation roles remain to be assigned.
 - **Unity Version Control (formerly Plastic SCM):** Evaluate where asset locking/large binaries require it. **Do not run Git and Unity Version Control as two competing sources of truth.** Agree on and document the authoritative repository and asset workflow first.
 - **Notion:** Planned shared workspace for design, meeting notes, assignments, schedule, and decisions.
-- **Team workflow:** [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) · **Decision log:** [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- **Team workflow:** [`docs/collaboration/CONTRIBUTING.md`](docs/collaboration/CONTRIBUTING.md) · **Decision log:** [`docs/planning/DECISIONS.md`](docs/planning/DECISIONS.md)
 
 ### Setup
 

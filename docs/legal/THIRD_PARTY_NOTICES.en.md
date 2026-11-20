@@ -34,4 +34,4 @@ These versions come from the README and `Packages/manifest.json`; no legal-compl
 
 Unity Asset Store licenses may permit embedding assets in games while restricting standalone/raw redistribution.
 
-**Related:** [LICENSE.en.md](LICENSE.en.md) · [GOVERNANCE.en.md](GOVERNANCE.en.md)
+**Related:** [LICENSE.en.md](LICENSE.en.md) · [GOVERNANCE.en.md](../collaboration/GOVERNANCE.en.md)

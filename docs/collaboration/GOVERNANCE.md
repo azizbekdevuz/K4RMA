@@ -22,4 +22,4 @@ K4RMA는 SW설계기초 4인 팀 프로젝트입니다. 코드·아트 등 각 �
 ## 외부 기여
 현재 일반 공개 기여를 자동으로 수락하지 않습니다. 외부 기여자는 먼저 이슈를 통해 제안하고 유지관리자에게 승인 절차를 문의하세요. PR 병합은 별도의 권리 양도 합의로 간주되지 않습니다.
 
-**문서 링크:** [CONTRIBUTING](CONTRIBUTING.md) · [LICENSE](LICENSE.md) · [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)
+**문서 링크:** [CONTRIBUTING](CONTRIBUTING.md) · [LICENSE](../legal/LICENSE.md) · [THIRD_PARTY_NOTICES](../legal/THIRD_PARTY_NOTICES.md)

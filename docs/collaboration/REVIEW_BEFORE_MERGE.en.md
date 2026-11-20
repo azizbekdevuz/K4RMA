@@ -10,7 +10,7 @@
 - [ ] Add exact required license texts and notices for fonts, audio, source and packages.
 - [ ] Review applicable university and course distribution rules.
 - [ ] Update outdated “license undecided” and original-planning language in both READMEs.
-- [ ] Correct stale status in `docs/PROJECT_CONTEXT.md` and other initial planning records.
+- [ ] Correct stale status in `docs/planning/PROJECT_CONTEXT.md` and other initial planning records.
 - [ ] Establish a real private conduct/security contact channel and publish verified details.
 - [ ] Confirm GitHub labels `bug` and `enhancement` exist.
 - [ ] Check if GitHub Private vulnerability reporting is enabled.

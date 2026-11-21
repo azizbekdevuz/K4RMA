@@ -21,6 +21,7 @@ namespace KarmaPrototype
                 var mark = owner.Mark("전방 대검기 · 등 뒤로", center, size);
                 owner.state = ActionState.Telegraph;
                 float warning = owner.Warning(0.72f);
+                owner.animator.PrepareRisingWave(warning);
                 KarmaRisingAudio.Warn(warning);
 
                 var preview = KarmaRisingArt.Get("WaveEcho");

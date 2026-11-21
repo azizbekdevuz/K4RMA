@@ -14,6 +14,7 @@ namespace KarmaPrototype
         Sprite[] risingBasicStrike, risingDescent, risingPursuit, risingWave, risingCrossing;
         Sprite[] risingMotion;
         double risingMotionAt;
+        double risingWaveWindupAt = double.PositiveInfinity;
         double risingDescentAt = -1, risingLandingAt = -1;
         double risingStrikeAt = -1;
 
@@ -23,9 +24,14 @@ namespace KarmaPrototype
             if (risingLandingAt >= 0) return attack == EnemyAttack.UP01 ? "UP01Landing" : "Landing";
             if (attack == EnemyAttack.GroundStrike && risingStrikeAt >= 0) return "UPBasic";
             if (action == "Attack" && attack == EnemyAttack.GroundStrike && CurrentPose == "Dash") return "Dash";
+            if (attack == EnemyAttack.UP03 && action == "Attack" && risingMotion == null)
+                return moved ? "Dash" : "Idle";
             if (risingMotion != null || action == "Attack") return attack == EnemyAttack.GroundStrike ? "UPBasic"
                 : attack == EnemyAttack.UP05 && RisingBarrierVisible ? "UP05_NoFX" : attack.ToString();
-            if (action == "Recover") return "Landing";
+            // UP03 releases its wave with both feet planted.
+            if (action == "Recover") return attack == EnemyAttack.UP03 ? "Idle" : "Landing";
+            if (action == "Telegraph" && attack == EnemyAttack.UP03 && Time.timeAsDouble >= risingWaveWindupAt)
+                return "UP03";
             if (action == "Telegraph") return attack == EnemyAttack.UP05 ? "UP05" : "Windup";
             return moved || CurrentPose == "Dash" ? "Dash" : "Idle";
         }
@@ -83,9 +89,19 @@ namespace KarmaPrototype
         }
 
         internal void StartRisingPursuit() => StartRisingMotion(risingPursuit);
+        internal void PrepareRisingWave(float warning)
+        {
+            // Reach the high cut on release. RiseWave has an extra drawing on the way up.
+            int leadFrames = motionForm == "RiseWave" ? 2 : 1;
+            risingWaveWindupAt = Time.timeAsDouble + Mathf.Max(0, warning - leadFrames * KarmaBootstrap.Step);
+        }
         internal void StartRisingWave() => StartRisingMotion(risingWave);
         internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
-        internal void EndRisingMotion() => risingMotion = null;
+        internal void EndRisingMotion()
+        {
+            risingMotion = null;
+            risingWaveWindupAt = double.PositiveInfinity;
+        }
 
         bool PresentRisingCrossing(string action, EnemyAttack attack)
         {

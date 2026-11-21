@@ -104,6 +104,8 @@ public static class KarmaRisingPlayChecks
                 pose("Attack", EnemyAttack.UP02, false, "Slash");
                 pose("Attack", EnemyAttack.UP01, true, "AirSlash");
                 pose("Recover", EnemyAttack.UP01, false, "Landing");
+                if (Array.IndexOf(order, Essence.SwordWave) >= 0)
+                    pose("Recover", EnemyAttack.UP03, false, "Idle");
                 pose("Stunned", EnemyAttack.UP01, false, "Hurt");
                 animator.transform.position += Vector3.right * 0.2f;
                 pose("Approach", EnemyAttack.UP01, false, "Dash");
@@ -196,6 +198,8 @@ public static class KarmaRisingPlayChecks
             }
         }
         Check(observed.Contains(0) && observed.Contains(1), form + "/" + motion + " actual starting frames: " + string.Join(",",observed));
+        if (form == "RiseWave" && motion == "UP03")
+            Check(observed.SequenceEqual(new[] { 0, 1, 2, 3 }), "RiseWave UP03 plays the sword transition in order");
         for (int i = 1; i < observed.Count; i++)
             Check(observed[i] == 0 || observed[i] > observed[i-1], form + "/" + motion + " forward playback");
         if (landing != null)

@@ -26,16 +26,16 @@ namespace KarmaPrototype
                         endingSpeakerLabel = new GUIStyle(centered) { fontSize = 15, fontStyle = FontStyle.Bold };
 
                     GUI.color = captionHeadingColor;
-                    GUI.Label(new Rect(160, 638, 960, 23), speaker, endingSpeakerLabel);
+                    Label(new Rect(160, 638, 960, 23), speaker, endingSpeakerLabel);
                     GUI.color = new Color(1, 1, 1, captionAlpha);
-                    GUI.Label(new Rect(160, 658, 960, 36), game.EndingLine, centered);
+                    Label(new Rect(160, 658, 960, 36), game.EndingLine, centered);
                 }
                 else
                 {
                     GUI.color = captionHeadingColor;
-                    GUI.Label(new Rect(200, 632, 880, 24), speaker, centered);
+                    Label(new Rect(200, 632, 880, 24), speaker, centered);
                     GUI.color = new Color(1, 1, 1, captionAlpha);
-                    GUI.Label(new Rect(160, 656, 960, 46), game.EndingLine, centered);
+                    Label(new Rect(160, 656, 960, 46), game.EndingLine, centered);
                 }
                 GUI.color = old;
             }
@@ -43,10 +43,11 @@ namespace KarmaPrototype
             if (game.EndingCompleted)
             {
                 DrawHudShade(0.23f);
-                Panel(new Rect(388, 208, 504, 241));
+                Panel(new Rect(388, 208, 504, 279));
                 Label(388, 224, 504, 62, "시련 완료", title);
                 if (ShortcutButton(new Rect(410, 313, 460, 42), "다시 수련하기", KarmaAction.Restart, true)) game.RestartSession();
                 if (ShortcutButton(new Rect(410, 367, 460, 40), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
+                QuitButton(new Rect(410, 421, 460, 40));
             }
             else if (game.Paused) DrawPauseOverlay();
         }

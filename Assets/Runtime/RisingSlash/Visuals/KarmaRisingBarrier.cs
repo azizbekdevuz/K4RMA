@@ -23,7 +23,7 @@ namespace KarmaPrototype
             barrier.growSeconds = Mathf.Max(0, growSeconds);
             barrier.picture = go.AddComponent<SpriteRenderer>();
             barrier.picture.sprite = sprite;
-            barrier.picture.sortingOrder = 18;
+            barrier.picture.sortingOrder = 4;
             KarmaVisuals.ApplyMaterial(barrier.picture);
             barrier.diameter = KarmaSpace.Units(5.3f);
             barrier.Draw();

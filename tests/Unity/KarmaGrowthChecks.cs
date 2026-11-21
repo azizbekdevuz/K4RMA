@@ -351,6 +351,8 @@ public static class KarmaGrowthChecks
         var attempts = new HashSet<int>(); var staggers = new HashSet<int>();
         bool checkedRender = false, checkedFall = false, inspectedWeapon = false;
         var releases = new List<int>();
+        var risingMasteryDrawings = new HashSet<string>();
+        bool risingMastery = stage == 3 && game.Enemies[0].PrimaryType == Essence.RisingSlash;
         var demos = (SpriteRenderer[])Get(growth, "demonstrations");
         bool hintedBeforeLine = false;
         float rememberHeld = 0, reachHeld = 0, revealHeld = 0;
@@ -420,6 +422,8 @@ public static class KarmaGrowthChecks
             if (stage == 3)
             {
                 Check(!source.enabled, "Mastery begins without a player demonstration");
+                if (risingMastery && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Combine)
+                    risingMasteryDrawings.Add(body.sprite.name);
                 for (int i = 0; i < demos.Length; i++)
                     if (demos[i].enabled && demos[i].color.a > 0.2f && !releases.Contains(i)) releases.Add(i);
                 if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Foreshadow && growth.CaptionAlpha == 0)
@@ -490,6 +494,8 @@ public static class KarmaGrowthChecks
             "The guardian announces the first move and acknowledges mastery after the ultimate hint");
         if (stage == 3) Check(releases.SequenceEqual(new[] { 0, 1, 2 }) && hintedBeforeLine,
             "Each inherited technique appears in acquisition order and the ultimate appears before the line");
+        if (risingMastery) Check(risingMasteryDrawings.IsSupersetOf(new[] { "GrowthMastery_02", "GrowthMastery_03", "UP04_01" }),
+            "RisingSlash shows distinct wave, aerial slash and guard draws during mastery");
     }
     static async Task Ending()
     {
@@ -505,6 +511,7 @@ public static class KarmaGrowthChecks
         var art = (Transform)Get(game, "fallenGuardian");
         Check(art != null && art.GetComponent<KarmaCharacterAnimator>().CurrentPose == "Ending/Reflect", "Guardian reflects on the mastered technique");
         var picture = art.GetComponentInChildren<SpriteRenderer>();
+        var reflectionDrawing = picture.sprite;
         Check(HudOpacity == 0 && Framed(picture.bounds.min.x, 0.07f) && Framed(picture.bounds.max.x, 0.07f),
             "The final guardian's acknowledgment is fully visible after a ranged edge kill");
         var block = new MaterialPropertyBlock(); picture.GetPropertyBlock(block);
@@ -515,6 +522,9 @@ public static class KarmaGrowthChecks
         if (recordVideo) ScreenCapture.CaptureScreenshot(Output + "/ui-ending-acknowledge.png");
         Check(game.EndingLine.Contains("넘지 못했구나")
             && art.GetComponent<KarmaCharacterAnimator>().CurrentPose == "Ending/Acknowledge", "Guardian raises gaze and accepts defeat");
+        if (art.GetComponent<KarmaRisingCinematics>() != null)
+            Check(picture.sprite != reflectionDrawing && picture.sprite.name == "FinalDefeat_03",
+                "RisingSlash bows on the acknowledgement cue before the dissolve");
         await Until(() => game.EndingTime >= 4.2f);
         picture.GetPropertyBlock(block); Check(block.GetFloat("_Progress") > 0 && block.GetFloat("_Progress") < 1, "Existing dissolve follows recognition");
         await Until(() => game.EndingTime >= 5.6f);
@@ -629,7 +639,11 @@ public static class KarmaGrowthChecks
             {
                 game.StartRun(); game.Player.ToggleTestInvincibility();
                 for (int stage = 1; stage <= 3; stage++) await Transition(routes[route][stage - 1], stage);
-                if (!focusOnly) { await Ultimate(); if (route == 2) await Ending(); }
+                if (!focusOnly)
+                {
+                    await Ultimate();
+                    if (route == 1 || route == 2) await Ending();
+                }
                 game.ReturnToTitle(); await Frames();
                 Check(UnityEngine.Object.FindObjectsByType<KarmaGuardianGrowth>(FindObjectsSortMode.None).Length == 0, "Title cleans all growth objects");
             }

@@ -21,19 +21,18 @@ namespace KarmaPrototype
                 var mark = owner.Mark("전방 대검기 · 등 뒤로", center, size);
                 owner.state = ActionState.Telegraph;
                 float warning = owner.Warning(0.72f);
+                owner.animator.PrepareRisingWave(warning);
                 KarmaRisingAudio.Warn(warning);
 
-                var preview = KarmaRisingArt.Get("WaveEcho");
-                if (preview != null)
-                {
-                    var ghost = KarmaCombatVFX.Burst(owner.effectsRoot, new Vector2(start.x + owner.direction * (gap + size.x * 0.22f), height * 0.45f),
-                    preview, "검기 예고", new Vector2(size.x * 0.42f, height * 0.55f), 0.7f, 0f, new Color(0.72f, 0.86f, 1f));
-                    if (ghost != null) ghost.transform.parent.localScale = new Vector3(owner.direction, 1, 1);
-                }
                 yield return owner.Wait(warning);
-                if (mark != null) Destroy(mark.gameObject);
+                if (mark != null) { mark.gameObject.SetActive(false); Destroy(mark.gameObject); }
                 KarmaRisingAudio.EndWarning();
-                var wave = owner.Attack(center, Vector2.zero, size, 0.42f, Settings.waveDamageMultiplier, null, 0f, visualPose: "Wave");
+                const float activeTime = 0.42f;
+                const float finishTime = 0.48f;
+                var wave = KarmaBossAttack.Spawn(owner.game, owner, owner.effectsRoot, center, Vector2.zero,
+                    size, activeTime, owner.Damage * Settings.waveDamageMultiplier, Color.white, null, 0f,
+                    visualPose: "Wave", renderArtwork: false, sourcePattern: owner.selected);
+                SpriteRenderer visual = null;
                 if (wave != null)
                 {
                     if (owner.Active)
@@ -41,10 +40,28 @@ namespace KarmaPrototype
                         owner.animator.StartRisingWave();
                         KarmaRisingAudio.Wave();
                     }
-                    wave.Repaint(KarmaRisingArt.Get("Wave"), true);
-                    if (wave.Visual != null) wave.Visual.flipX = owner.direction < 0;
+                    visual = KarmaRisingPolish.ShowContact(wave, KarmaRisingArt.Get("Wave"));
+                    if (visual != null) visual.flipX = owner.direction < 0;
                 }
-                yield return owner.Wait(0.48f);
+                Vector3 fullScale = visual != null ? visual.transform.localScale : Vector3.one;
+                float release = 0;
+                while (release < finishTime && owner.Active)
+                {
+                    if (owner.game.Paused) { yield return null; continue; }
+                    float sample = Mathf.Floor(release / KarmaBootstrap.Step) * KarmaBootstrap.Step;
+                    if (visual != null)
+                    {
+                        float spread = Mathf.Lerp(0.90f, 1f, Mathf.Clamp01(sample / (2 * KarmaBootstrap.Step)));
+                        var scale = fullScale;
+                        scale.x *= spread;
+                        visual.transform.localScale = scale;
+                        visual.transform.localPosition = Vector3.left * owner.direction * size.x * (1f - spread) * 0.5f;
+                        float dissolve = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(KarmaBootstrap.Step, activeTime, sample));
+                        visual.color = new Color(1, 1, 1, Mathf.Lerp(1f, 0.24f, dissolve));
+                    }
+                    release += Time.deltaTime;
+                    yield return null;
+                }
                 owner.animator.EndRisingMotion();
                 yield return owner.Recovery(1.15f);
             }

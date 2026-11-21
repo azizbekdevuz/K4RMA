@@ -14,6 +14,7 @@ namespace KarmaPrototype
             Fill(new Rect(122, 320, 326 * HudReveal, 1), HudBrass);
             if (ShortcutButton(new Rect(120, 351, 350, 52), "시작", KarmaAction.Confirm, true)) game.StartOpening();
             if (ShortcutButton(new Rect(120, 414, 350, 52), "환경설정", KarmaAction.Settings)) game.OpenSettings();
+            QuitButton(new Rect(120, 477, 350, 52));
         }
 
         static readonly KarmaAction[] choiceKeys = {
@@ -200,7 +201,7 @@ namespace KarmaPrototype
                 var node = new Rect(x - diameter / 2, top - diameter / 2, diameter, diameter);
                 GUI.DrawTexture(node, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0, color, cleared ? 0 : 1, diameter / 2);
                 choiceProgressText.normal.textColor = cleared ? HudInk : color;
-                GUI.Label(node, cleared ? "✓" : (i + 1).ToString(), choiceProgressText);
+                Label(node, cleared ? "✓" : (i + 1).ToString(), choiceProgressText);
                 choiceProgressText.normal.textColor = color;
                 Label(x - 42, top + 15, 84, 22, next ? "다음 시련" : "시련 " + (i + 1), choiceProgressText);
             }
@@ -219,13 +220,31 @@ namespace KarmaPrototype
         void DrawPauseOverlay()
         {
             DrawHudShade(0.74f);
-            Panel(new Rect(420, 212, 440, 449));
-            Label(280, 245, 720, 55, "일시정지", title);
-            SpriteArt(new Rect(460, 315, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            if (ShortcutButton(new Rect(440, 350, 400, 55), "계속하기", KarmaAction.Pause, true)) game.TogglePause();
-            if (ShortcutButton(new Rect(440, 425, 400, 55), "처음부터", KarmaAction.Restart)) game.RestartSession();
-            if (ShortcutButton(new Rect(440, 500, 400, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
-            if (ShortcutButton(new Rect(440, 575, 400, 55), "환경설정", KarmaAction.Settings)) game.OpenSettings();
+            Panel(new Rect(420, 141, 440, 477));
+            Label(420, 165, 440, 55, "일시정지", title);
+            SpriteArt(new Rect(460, 232, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+            if (ShortcutButton(new Rect(440, 270, 400, 52), "계속하기", KarmaAction.Pause, true)) game.TogglePause();
+            if (ShortcutButton(new Rect(440, 337, 400, 52), "처음부터", KarmaAction.Restart)) game.RestartSession();
+            if (ShortcutButton(new Rect(440, 404, 400, 52), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
+            if (ShortcutButton(new Rect(440, 471, 400, 52), "환경설정", KarmaAction.Settings)) game.OpenSettings();
+            QuitButton(new Rect(440, 538, 400, 52));
+        }
+
+        void QuitButton(Rect bounds)
+        {
+            if (ShortcutButton(bounds, "게임 종료", KarmaAction.Quit)) game.RequestQuit();
+        }
+
+        void DrawQuitConfirmation()
+        {
+            DrawHudShade(0.82f);
+            Panel(new Rect(300, 216, 680, 286));
+            Label(324, 237, 632, 60, "게임을 종료할까요?", title);
+            SpriteArt(new Rect(476, 306, 328, 16), KarmaArtwork.Sprite("UI", "LongRule"));
+            Label(324, 333, 632, 44, game.Phase == RunPhase.Title || game.EndingCompleted
+                ? "게임을 닫고 바탕 화면으로 돌아갑니다." : "종료하면 현재 수련을 이어갈 수 없습니다.", centered);
+            if (ShortcutButton(new Rect(333, 411, 292, 55), "취소", KarmaAction.Pause, true)) game.CancelQuit();
+            if (ShortcutButton(new Rect(655, 411, 292, 55), "종료", KarmaAction.Confirm)) game.ConfirmQuit();
         }
         void StageTransitionScreen()
         {
@@ -245,14 +264,14 @@ namespace KarmaPrototype
             Fill(new Rect(0, 622, 1280, 98), new Color(0.008f, 0.012f, 0.018f, alpha * 0.65f));
             Color previous = GUI.color;
             GUI.color = new Color(0.94f, 0.93f, 0.87f, alpha);
-            GUI.Label(new Rect(160, 658, 960, 36), game.DefeatLine, centered);
+            Label(new Rect(160, 658, 960, 36), game.DefeatLine, centered);
             GUI.color = previous;
         }
 
         void EndScreen(bool victory)
         {
             DrawHudShade(0.76f);
-            Panel(new Rect(250, 143, 780, 519));
+            Panel(new Rect(250, 143, 780, 552));
             if (victory)
             {
                 Label(280, 180, 720, 60, "시련의 끝", title);
@@ -263,17 +282,18 @@ namespace KarmaPrototype
                 Label(443, 401, 610, 28, "이제 그 기술들은 누구의 것이냐?", text);
                 DrawSpeakerNameplate(340, 439, "제자");
                 Label(443, 439, 610, 28, "배웠습니다. 하지만 이제는 제 방식으로 쓸 수 있습니다.", text);
-                if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart, true)) game.RestartSession();
-                if (ShortcutButton(new Rect(420, 585, 440, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
-                return;
             }
-            Label(280, 180, 720, 60, "시련 실패", title);
-            SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
-            Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
-            Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
-            Label(180, 405, 920, 55, "원형과 고유화 순서를 초기화하고\n첫 번째 시련부터 다시 도전합니다.", centered);
-            if (ShortcutButton(new Rect(420, 510, 440, 55), "처음부터 다시 도전", KarmaAction.Restart, true)) game.RestartSession();
-            if (ShortcutButton(new Rect(420, 585, 440, 55), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
+            else
+            {
+                Label(280, 180, 720, 60, "시련 실패", title);
+                SpriteArt(new Rect(460, 255, 360, 18), KarmaArtwork.Sprite("UI", "LongRule"));
+                Label(180, 295, 920, 32, "시간: " + Clock(game.Elapsed) + " · 누적 피해: " + game.DamageTaken.ToString("0"), centered);
+                Label(180, 335, 920, 55, "고유화 순서: " + KarmaPatternCatalog.FusionSummary(game.Player.Essences.PersonalizationOrder), centered);
+                Label(180, 405, 920, 55, "원형과 고유화 순서를 초기화하고\n첫 번째 시련부터 다시 도전합니다.", centered);
+            }
+            if (ShortcutButton(new Rect(420, 500, 440, 50), "처음부터 다시 도전", KarmaAction.Restart, true)) game.RestartSession();
+            if (ShortcutButton(new Rect(420, 563, 440, 50), "타이틀", KarmaAction.Title)) game.ReturnToTitle();
+            QuitButton(new Rect(420, 626, 440, 50));
         }
     }
 }

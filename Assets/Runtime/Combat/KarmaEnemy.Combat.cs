@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 namespace KarmaPrototype
 {
@@ -65,9 +66,24 @@ namespace KarmaPrototype
             animator.StartDamageFlash(game.Config.hitInvulnerability);
             if (Health <= 0)
             {
-                CancelCombat(); art.SetParent(game.World, true); animator.Die();
-                game.EnemyDefeated(this, art); Destroy(gameObject);
+                Vector3 hitPosition = transform.position;
+                CancelCombat();
+                var fall = behavior.PresentDefeatFall(hitPosition);
+                if (fall == null) FinishDefeat();
+                else StartCoroutine(FinishDefeatAfter(fall));
             }
+        }
+        IEnumerator FinishDefeatAfter(IEnumerator fall)
+        {
+            yield return fall;
+            FinishDefeat();
+        }
+        void FinishDefeat()
+        {
+            art.SetParent(game.World, true);
+            animator.Die();
+            game.EnemyDefeated(this, art);
+            Destroy(gameObject);
         }
     }
 }

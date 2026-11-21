@@ -153,7 +153,13 @@ public static class KarmaRisingBarrierChecks
             Reset(true); Set(Get(enemy, "behavior"), "PracticeHold", true);
             if (pattern == EnemyAttack.UP01) enemy.transform.position += Vector3.up * KarmaSpace.Units(4);
             Force(pattern);
-            await Until(() => Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 14);
+            await Until(() => Root.Find("UP04 방패 붕괴") != null);
+            var shell = Root.Find("UP04 방패 붕괴");
+            Check(shell.gameObject.activeSelf && Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 0,
+                "Empowered landing shows the shield break before any shards");
+            await Until(() => Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length > 0);
+            Check((shell == null || !shell.gameObject.activeSelf) && Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 14,
+                "The shield clears before the original fourteen-shard volley");
             Capture(pattern + "-flank-burst");
             Call(enemy, "InterruptPattern");
             Check(Root.GetComponentsInChildren<KarmaRisingFragmentAttack>().Length == 0,
@@ -189,6 +195,7 @@ public static class KarmaRisingBarrierChecks
         game.Player.BeginCounter();
         enemy.TryAttackHit(point, point, KarmaSpace.Units(new Vector2(1.05f, 0.675f)), 1, contact, 0);
         Check(game.Player.ParryCount == parries + 1 && shot.Reflected, "Actual parry reflects the contacted shard");
+        Check(shot.Visual.color.b > shot.Visual.color.r, "The reflected shard switches to a visibly cooler tint");
         Check(!enemy.Stunned && !(bool)Get(enemy, "pendingParry") && enemy.Health == before,
             "Parry does not instantly stun or damage boss");
         await Task.Yield();
@@ -270,7 +277,17 @@ public static class KarmaRisingBarrierChecks
                 var shots = Root.GetComponentsInChildren<KarmaBossAttack>();
                 foreach (var shot in shots) if (shot.name == "방패 파편")
                 {
-                    if (!fragments) { fragmentAt = Time.time; Capture("up01-golden-fragments"); }
+                    if (!fragments)
+                    {
+                        var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
+                        var landing = animator.GetComponentInChildren<SpriteRenderer>();
+                        Check(landing.sprite.name.StartsWith("UP01Landing_"),
+                            "The planted pose is visible on the frame the shield breaks");
+                        var impact = Array.Find(shots, attack => attack.Visual != null && attack.Visual.sprite == KarmaRisingArt.Get("Impact"));
+                        Check(impact != null && Mathf.Abs(impact.Visual.transform.position.y - KarmaSpace.GuardianGroundY) < 0.05f,
+                            "The impact flash sits on the floor even though the empowered hitbox extends upward");
+                        fragmentAt = Time.time; Capture("up01-golden-fragments");
+                    }
                     if (!capturedFlight && fragments && Time.time - fragmentAt >= 0.35f)
                     { Capture("fragments-translucent-flight"); capturedFlight = true; }
                     fragments = true;
@@ -287,9 +304,9 @@ public static class KarmaRisingBarrierChecks
                         "Membrane is translucent while lattice remains readable");
                     var local = shot.Visual.transform.localScale;
                     var bounds = shot.Visual.sprite.bounds.size;
-                    Check(Mathf.Abs(local.x * bounds.x - KarmaSpace.Units(1.05f) * 1.5f) < 0.01f
-                        && Mathf.Abs(local.y * bounds.y - KarmaSpace.Units(0.675f) * 1.5f) < 0.01f,
-                        "Fragments display fifty percent larger for a substantial silhouette without changing hit size");
+                    Check(Mathf.Abs(local.x * bounds.x - KarmaSpace.Units(1.05f) * 1.08f) < 0.01f
+                        && Mathf.Abs(local.y * bounds.y - KarmaSpace.Units(0.675f) * 1.08f) < 0.01f,
+                        "Fragment artwork remains close to its original hit size");
                     Check(shot.Visual.color.r == 1 && shot.Visual.color.g == 1 && shot.Visual.color.b == 1,
                         "Shard keeps its golden color");
                 }
@@ -303,7 +320,7 @@ public static class KarmaRisingBarrierChecks
             Call(enemy, "InterruptPattern");
             Check(Root.GetComponentsInChildren<KarmaBossAttack>().Length == 0, "Interruption removes all fragments");
             Reset(true); Force(EnemyAttack.UP05);
-            Check(Barrier != null && enemy.Invulnerable, "UP05 begins sphere and invulnerability");
+            Check(Barrier == null && enemy.Invulnerable, "UP05 keeps invulnerability without a shield effect");
             Check(!((SpriteRenderer)Get(enemy, "shieldHalo")).gameObject.activeSelf,
                 "Old white halo remains disabled during UP05");
             float health = enemy.Health; enemy.TakeDamage(1000000);
@@ -316,12 +333,14 @@ public static class KarmaRisingBarrierChecks
                 { sawRecovery = true; Check(Barrier == null && !enemy.Invulnerable, "Recovery clears sphere and immunity"); }
                 else if ((bool)Get(enemy, "running"))
                 {
-                    Check(Barrier != null && enemy.Invulnerable, "UP05 maintains sphere throughout motion");
-                    if (!capturedUltimate && Barrier.Opacity > 0.35f) { Capture("up05-sphere"); capturedUltimate = true; }
+                    Check(Barrier == null && enemy.Invulnerable, "UP05 remains invulnerable without a shield throughout motion");
+                    var picture = enemy.GetComponentInChildren<KarmaCharacterAnimator>().GetComponentInChildren<SpriteRenderer>();
+                    if (!capturedUltimate && picture.sprite.name.StartsWith("UP05_"))
+                    { Capture("up05-white-slash"); capturedUltimate = true; }
                 }
                 return !(bool)Get(enemy, "running");
             });
-            Check(sawRecovery && capturedUltimate, "UP05 reaches visible sphere and recovery");
+            Check(sawRecovery && capturedUltimate, "UP05 reaches the white slash and recovery");
             enemy.TakeDamage(1); Check(enemy.Health < health, "Damage resumes after UP05");
             Reset(true); Force(EnemyAttack.UP02); enemy.CancelCombat();
             Check(Barrier == null, "Cancellation removes forming sphere");

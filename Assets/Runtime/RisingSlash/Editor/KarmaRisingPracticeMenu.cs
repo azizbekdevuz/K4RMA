@@ -19,9 +19,6 @@ namespace KarmaPrototype.EditorTools
                 if (attack == EnemyAttack.GroundStrike)
                     KarmaBossPractice.Invoke(KarmaBossPractice.Get(owner, "behavior"), "BuildCycle",
                         new object[] { new[] { Essence.RisingSlash, Essence.Guard } });
-                if (attack == EnemyAttack.UP01 || attack == EnemyAttack.UP04)
-                    owner.transform.position = new UnityEngine.Vector3(owner.Position.x,
-                        KarmaSpace.GuardianGroundY + KarmaSpace.Units(3f), 0);
                 return false;
             }));
         }

@@ -5,6 +5,7 @@ namespace KarmaPrototype
     public sealed partial class KarmaCharacterAnimator
     {
         bool growthActive, personalizationProofActive;
+        System.Predicate<string> holdFallenRevivalDrawing;
 
         internal void BeginGrowth(Sprite fallen, string previousForm)
         {
@@ -27,7 +28,12 @@ namespace KarmaPrototype
             int frame = Mathf.Clamp(Mathf.FloorToInt(progress * 5), 0, 5);
             string pose = frame == 0 ? "Death" : frame == 1 ? "RevivePush" : frame == 2 ? "ReviveKneel"
                 : frame == 3 ? "ReviveRise" : frame == 4 ? "ReviveStand" : "Idle";
-            PlayBody(pose, previousMotionForm);
+            if (frame == 0 && holdFallenRevivalDrawing?.Invoke(previousMotionForm) == true)
+            {
+                int last = motionArt.Frames(previousMotionForm, pose).Length - 1;
+                DrawMotion(previousMotionForm, pose, last * KarmaBootstrap.Step);
+            }
+            else PlayBody(pose, previousMotionForm);
             picture.transform.localScale = pictureScale;
             picture.transform.localPosition = pictureHome;
             picture.transform.localRotation = Quaternion.identity;

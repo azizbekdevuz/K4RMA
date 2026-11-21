@@ -16,6 +16,9 @@ namespace KarmaPrototype
         public Transform World { get; private set; }
         public int StageIndex { get; private set; }
         public bool Paused { get; private set; }
+        internal bool QuitConfirmationOpen { get; private set; }
+        bool CanRequestQuit => !SettingsOpen && (Phase == RunPhase.Title || Paused ||
+            EndingCompleted || Phase == RunPhase.Defeat || Phase == RunPhase.Victory);
         public bool IsCombat { get { return Phase == RunPhase.Combat && !Paused; } }
         public bool CanMove { get { return Time.frameCount != openingSpeechDismissFrame && !Paused && (Phase == RunPhase.Combat || Phase == RunPhase.Gate || Tutorial != null && Tutorial.CanAct); } }
         public KarmaTutorial Tutorial { get; private set; }
@@ -74,6 +77,17 @@ namespace KarmaPrototype
         }
         void Update()
         {
+            if (QuitConfirmationOpen)
+            {
+                if (KarmaInput.Pressed(KarmaAction.Pause)) CancelQuit();
+                else if (KarmaInput.Pressed(KarmaAction.Confirm)) ConfirmQuit();
+                return;
+            }
+            if (CanRequestQuit && KarmaInput.Pressed(KarmaAction.Quit))
+            {
+                RequestQuit();
+                return;
+            }
             UpdateDisplaySettings();
             OpeningArrivalFade = Mathf.Max(0, OpeningArrivalFade - Time.unscaledDeltaTime * 1.5f);
             UpdateOpeningArrivalSpeech();
@@ -136,7 +150,32 @@ namespace KarmaPrototype
             if (Phase == RunPhase.Defeat && KarmaInput.Pressed(KarmaAction.Restart)) RetryRoom();
         }
 
-        void OnDisable() { CancelEnding(); RevertDisplaySettings(); Time.timeScale = 1; }
+        internal void RequestQuit()
+        {
+            if (!CanRequestQuit || QuitConfirmationOpen) return;
+            QuitConfirmationOpen = true;
+            KarmaAudio.Play(KarmaSfxId.UiConfirm);
+        }
+
+        internal void CancelQuit()
+        {
+            if (!QuitConfirmationOpen) return;
+            QuitConfirmationOpen = false;
+            KarmaAudio.Play(KarmaSfxId.UiCancel);
+        }
+
+        internal void ConfirmQuit()
+        {
+            if (!QuitConfirmationOpen) return;
+            PlayerPrefs.Save();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        void OnDisable() { QuitConfirmationOpen = false; CancelEnding(); RevertDisplaySettings(); Time.timeScale = 1; }
         void OnDestroy() { if (ownsConfig && config != null) Destroy(config); }
     }
 }

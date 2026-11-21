@@ -92,6 +92,7 @@ namespace KarmaPrototype
             }
             public virtual void Tick() { }
             public virtual void OnDamaged() { }
+            public virtual IEnumerator PresentDefeatFall(Vector3 hitPosition) => null;
             public virtual void ReducedDamageFeedback(bool basicMelee) { }
             public virtual Bounds DamageBounds(SpriteRenderer renderer) { return owner.animator.DisplayDamageBounds(renderer); }
             // Opt in per contact; the damage-inclusive player API still decides

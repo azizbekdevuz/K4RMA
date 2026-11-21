@@ -63,14 +63,14 @@ namespace KarmaPrototype
             Panel(new Rect(210, 615, 860, 65));
             var objective = new Rect(230, 630, 820, 42);
             if (outsideGate)
-                GUI.Label(objective, "모든 훈련을 마쳤습니다. 관문으로 이동하면 다음 시련을 시작할 수 있습니다.", centered);
+                Label(objective, "모든 훈련을 마쳤습니다. 관문으로 이동하면 다음 시련을 시작할 수 있습니다.", centered);
             else if (t.Step == KarmaTutorialStep.Gate)
                 KeyPrompt(objective, 18, true, "관문 앞에서  ", KarmaAction.Interact, "  키를 누르면 다음 시련으로 이동합니다.");
             else if (t.Step == KarmaTutorialStep.Travel && t.Lesson < 0)
                 KeyPrompt(objective, 18, true, KarmaAction.Left, " / ", KarmaAction.Right, "  이동   ·   ",
                     KarmaAction.Down, "  앉기   ·   ", KarmaAction.Jump, "  점프");
             else if (t.Step == KarmaTutorialStep.Travel)
-                GUI.Label(objective, "다음 훈련 장소에서 수련을 이어갈 수 있습니다.", centered);
+                Label(objective, "다음 훈련 장소에서 수련을 이어갈 수 있습니다.", centered);
             else
             {
                 string detail = t.Lesson switch
@@ -108,7 +108,7 @@ namespace KarmaPrototype
             string caption = approach ? "가까이 다가가세요" : "훈련 표적";
             if (point.x > 1) caption += "  ›";
             else if (point.x < 0) caption = "‹  " + caption;
-            GUI.Label(label, caption, trainingTargetLabel);
+            Label(label, caption, trainingTargetLabel);
             if (point.x >= 0 && point.x <= 1)
                 SpriteArt(new Rect(x - 5, y - 3, 10, 10), KarmaArtwork.Sprite("UI", "FilledSlot"), HudBrass);
         }

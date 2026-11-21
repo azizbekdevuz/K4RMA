@@ -157,6 +157,9 @@ namespace KarmaPrototype
                 }
             }
             if (float.IsInfinity(min.x)) return;
+            glyphScale = Mathf.Max(glyphScale, Mathf.Max(
+                (max.x - min.x) / Mathf.Max(1, bounds.width - 4),
+                (max.y - min.y) / Mathf.Max(1, bounds.height - 3)));
             // Place the center of the actual rendered glyph quads at the key center.
             // The same vertices are measured and drawn, on every OS and viewport scale.
             Vector2 center = (min + max) * 0.5f;
@@ -192,7 +195,7 @@ namespace KarmaPrototype
             bool clicked = GUI.Button(bounds, GUIContent.none, GUIStyle.none);
             if (Event.current.type == EventType.Repaint)
             {
-                GUI.Label(bounds, label, style);
+                Label(bounds, label, style);
                 KeycapStyles();
                 var cap = new Keycap(KarmaInput.BindingLabel(action));
                 var size = KeycapSize(cap, Mathf.Min(32, bounds.height - 8));
@@ -234,14 +237,17 @@ namespace KarmaPrototype
             promptText.fontSize = fontSize;
             promptText.normal.textColor = game.SettingsOpen ? Color.white : text.normal.textColor;
             float height = Mathf.Min(bounds.height - 2, fontSize + 11);
-            float x = bounds.x;
-            if (center)
+            float width;
+            do
             {
-                float width = 0;
+                width = 0;
                 foreach (var part in parts)
                     width += part.IsKey ? KeycapSize(new Keycap(KarmaInput.BindingLabel(part.Action)), height).x : PromptTextWidth(part.Text);
-                x = Mathf.Max(x, bounds.center.x - width * 0.5f);
-            }
+                if (width <= bounds.width || promptText.fontSize <= 1) break;
+                promptText.fontSize--;
+                height = Mathf.Min(height, promptText.fontSize + 11);
+            } while (true);
+            float x = center ? Mathf.Max(bounds.x, bounds.center.x - width * 0.5f) : bounds.x;
 
             foreach (var part in parts)
             {
@@ -254,9 +260,9 @@ namespace KarmaPrototype
                 }
                 else
                 {
-                    float width = PromptTextWidth(part.Text);
-                    GUI.Label(new Rect(x, bounds.y, width + 1, bounds.height), promptContent, promptText);
-                    x += width;
+                    float partWidth = PromptTextWidth(part.Text);
+                    Label(new Rect(x, bounds.y, partWidth + 1, bounds.height), part.Text, promptText);
+                    x += partWidth;
                 }
             }
         }

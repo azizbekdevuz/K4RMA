@@ -9,7 +9,7 @@ namespace KarmaPrototype
     {
         Left, Right, Up, Down, Jump, Attack, Counter, SwordWave, RisingSlash, Guard,
         Interact, Pause, Confirm, Restart, Title, ChooseSwordWave, ChooseRisingSlash, ChooseGuard,
-        ToggleInvincibility, Pierce, Settings, DialogueConfirm, SkipCinematic, RestoreHealth
+        ToggleInvincibility, Pierce, Settings, DialogueConfirm, SkipCinematic, RestoreHealth, Quit
     }
 
     // Shared actions stay enabled in menus and while Time.timeScale is zero.
@@ -97,6 +97,7 @@ namespace KarmaPrototype
             Bind(KarmaAction.DialogueConfirm, "space");
             Bind(KarmaAction.SkipCinematic, "f");
             Bind(KarmaAction.RestoreHealth, "semicolon");
+            Bind(KarmaAction.Quit, "q");
             if (PlayerPrefs.HasKey(BindingsKey))
             {
                 try { RestoreSavedBindings(map, PlayerPrefs.GetString(BindingsKey)); }

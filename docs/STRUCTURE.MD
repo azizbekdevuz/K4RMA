@@ -537,6 +537,7 @@ K4RMA/
 │       │   │   ├── KarmaRisingAudio.cs
 │       │   │   ├── KarmaRisingBarrier.cs
 │       │   │   ├── KarmaRisingCharge.cs
+│       │   │   ├── KarmaRisingCinematics.cs
 │       │   │   ├── KarmaRisingFragmentAttack.cs
 │       │   │   ├── KarmaRisingFragmentVisual.cs
 │       │   │   ├── KarmaRisingPolish.cs

@@ -28,10 +28,11 @@ namespace KarmaPrototype
                 yield return owner.Wait(warning);
                 if (mark != null) Destroy(mark.gameObject);
                 var rising = (RisingBossBehavior)owner.behavior;
+                bool gauntlet = owner.animator.MotionForm == "RiseWard";
                 KarmaRisingAudio.EndWarning();
                 if (owner.Active) KarmaRisingAudio.Dash();
                 yield return rising.MotionWithImpact(target, DashSeconds(target),
-                    bodyAttackSize, KarmaRisingArt.Get("Slash"), KarmaSfxId.RsDashImpact);
+                    bodyAttackSize, gauntlet ? null : KarmaRisingArt.Get("Slash"), KarmaSfxId.RsDashImpact);
                 if (slashMark != null)
                 {
                     slashMark.gameObject.SetActive(false);
@@ -45,10 +46,21 @@ namespace KarmaPrototype
                         Mathf.Abs(player.y - center.y) > size.y / 2 + KarmaSpace.PlayerHalfHeight) break;
                     owner.state = ActionState.Attack;
                     owner.animator.Attack(Vector2.right * owner.direction);
-                    owner.animator.StartRisingBasicStrike();
+                    if (i == 0) owner.animator.StartRisingBasicStrike();
+                    else owner.animator.StartRisingBasicFollowup();
                     KarmaRisingAudio.Slash(i);
-                    var slash = owner.Attack(center, Vector2.zero, size, 0.09f, Settings.meleeDamageMultiplier, null, 0f, visualPose: "Cleave");
-                    if (slash != null) slash.Repaint(KarmaRisingArt.Get("Slash"), true);
+                    var slash = KarmaBossAttack.Spawn(owner.game, owner, owner.effectsRoot, center, Vector2.zero,
+                        size, 0.09f, owner.Damage * Settings.meleeDamageMultiplier, Color.white, null, 0f,
+                        visualPose: "Cleave", renderArtwork: false, sourcePattern: owner.selected);
+                    var impact = gauntlet ? KarmaArtwork.Sprite("HitVFX", "Burst") : KarmaRisingArt.Get("Slash");
+                    var strike = KarmaRisingPolish.ShowContact(slash, impact);
+                    if (strike != null)
+                    {
+                        strike.flipX = owner.direction < 0;
+                        if (gauntlet) strike.transform.localScale *= 0.72f;
+                        else if (i == 1 && owner.animator.MotionForm == "Rise")
+                            strike.transform.localRotation = Quaternion.Euler(0, 0, -28f * owner.direction);
+                    }
                     yield return owner.Wait(0.12f);
                 }
                 yield return owner.Recovery(0.4f);

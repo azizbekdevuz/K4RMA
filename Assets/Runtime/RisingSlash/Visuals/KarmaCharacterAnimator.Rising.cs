@@ -19,6 +19,17 @@ namespace KarmaPrototype
         double risingStrikeAt = -1;
 
         internal bool RisingBarrierVisible { get; set; }
+
+        void ShowFallenRisingGrowth()
+        {
+            // Combat seats this pose using the revival support point. The rehearsal
+            // has its own picture transform and starts with the boss already prone.
+            DrawMotion(previousMotionForm, "Death", 3 * KarmaBootstrap.Step);
+            var fallen = KarmaBodyPoses.Get("@RisingSlash/Revival/Rise", "Revive00");
+            if (KarmaBodyPoses.TryFloor(fallen, out float contact))
+                picture.transform.localPosition -= Vector3.up * (contact * pictureScale.y);
+        }
+
         string RisingBodyMotion(string action, EnemyAttack attack, bool moved)
         {
             if (risingLandingAt >= 0) return attack == EnemyAttack.UP01 ? "UP01Landing" : "Landing";

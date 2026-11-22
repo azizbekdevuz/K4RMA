@@ -31,6 +31,7 @@ namespace KarmaPrototype
             picture.transform.localScale = pictureScale;
             picture.transform.localPosition = pictureHome;
             picture.transform.localRotation = Quaternion.identity;
+            if (frame == 0 && previousMotionForm == "Rise") ShowFallenRisingGrowth();
             picture.color = Color.Lerp(new Color(0.55f, 0.55f, 0.6f), pictureColor, progress);
             CurrentPose = "Growth/Revive/" + frame;
         }

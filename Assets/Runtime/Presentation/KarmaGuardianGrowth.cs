@@ -215,7 +215,18 @@ namespace KarmaPrototype
             if (Stage == 3)
             {
                 DrawMastery(t);
-                animator.ShowGrowthMotion("GrowthMastery", false, t - Revived);
+                if (animator.MotionForm == "RiseFinal")
+                {
+                    if (t < FirstStroke)
+                        animator.ShowRisingMasteryStance(t - MasterStance);
+                    else if (t < HintStart)
+                    {
+                        int stroke = Mathf.Min(2, Mathf.FloorToInt((t - FirstStroke) / StrokeLength));
+                        animator.ShowRisingMasteryStroke(order[stroke], t - FirstStroke - stroke * StrokeLength);
+                    }
+                    else animator.ShowRisingMasteryFinish(t - HintStart, CurrentBeat == Beat.Ready);
+                }
+                else animator.ShowGrowthMotion("GrowthMastery", false, t - Revived);
                 return;
             }
             if (t < Observed)
@@ -368,6 +379,8 @@ namespace KarmaPrototype
             {
                 CurrentBeat = Beat.Imitate;
                 animator.GrowthPose(techniques[1].Copy, true, Vector2.zero);
+                if (order[0] == Essence.RisingSlash && order[1] == Essence.SwordWave)
+                    animator.ShowRisingWaveAttempt(local);
                 float action = Mathf.InverseLerp(0.3f, AttemptReleaseEnd, local);
                 DrawOriginal(guardian.Position, order[1], action * (0.32f + index * 0.16f),
                     Smooth(0.27f, 0.4f, local) * (1 - Smooth(0.8f, AttemptReleaseEnd, local)) * 0.8f);

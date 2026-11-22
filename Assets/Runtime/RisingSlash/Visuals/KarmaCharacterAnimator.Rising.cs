@@ -32,6 +32,35 @@ namespace KarmaPrototype
                 picture.transform.localPosition -= Vector3.up * (contact * pictureScale.y);
         }
 
+        internal void ShowRisingWaveAttempt(float elapsed)
+        {
+            // Reuse the base body's low draw, extension and recovery from its sword study.
+            if (elapsed >= 0.75f) DrawMotion(previousMotionForm, "Idle", 0);
+            else DrawMotion(previousMotionForm, "GrowthTechnique", Mathf.Max(0, elapsed - 0.2f));
+        }
+
+        internal void ShowRisingMasteryStance(float elapsed)
+        {
+            DrawMotion(motionForm, "GrowthMastery", Mathf.Clamp(elapsed, 0, KarmaBootstrap.Step));
+        }
+
+        internal void ShowRisingMasteryStroke(Essence technique, float elapsed)
+        {
+            if (technique == Essence.SwordWave)
+                DrawMotion(motionForm, "UP03", Mathf.Max(0, elapsed - KarmaBootstrap.Step));
+            else if (technique == Essence.Guard)
+                DrawMotion(motionForm, "UP04", Mathf.Clamp(elapsed, KarmaBootstrap.Step, 2 * KarmaBootstrap.Step));
+            else DrawMotion(motionForm, "GrowthMastery", Mathf.Max(0, elapsed - KarmaBootstrap.Step));
+        }
+
+        internal void ShowRisingMasteryFinish(float elapsed, bool ready)
+        {
+            if (ready) DrawMotion(motionForm, "Idle", 0);
+            else if (elapsed < 0.4f) DrawMotion(motionForm, "UP04", KarmaBootstrap.Step + elapsed);
+            else if (elapsed < 1.25f) DrawMotion(motionForm, "UPBasic", elapsed - 0.4f);
+            else DrawMotion(motionForm, "GrowthMastery", 4 * KarmaBootstrap.Step + elapsed - 1.25f);
+        }
+
         string RisingBodyMotion(string action, EnemyAttack attack, bool moved)
         {
             if (risingLandingAt >= 0)

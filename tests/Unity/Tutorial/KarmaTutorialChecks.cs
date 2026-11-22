@@ -117,7 +117,12 @@ public static class KarmaTutorialChecks
         foreach (var name in new[] { "01_Dojo_NoMaster", "04_Boss_Gate" })
             Check(game.World.Find(name) != null, "Supplied background loaded: " + name);
         foreach (var target in targets)
-            Check(Mathf.Abs(target.GetComponent<SpriteRenderer>().bounds.min.y) < 0.01f, "Dummy stands on the ground");
+        {
+            var spriteBounds = target.GetComponent<SpriteRenderer>().bounds;
+            float baseNotchY = spriteBounds.min.y + spriteBounds.size.y * (101f / 1536f);
+            Check(Mathf.Abs(baseNotchY - game.Player.DamageBounds.min.y) < 0.05f,
+                "The bottom notch between the dummy's front planks aligns with the grounded player's feet");
+        }
         float floorEnd = -26;
         for (int segment = 0; segment < 2; segment++)
         {

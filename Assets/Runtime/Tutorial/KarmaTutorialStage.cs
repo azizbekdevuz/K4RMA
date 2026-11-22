@@ -16,6 +16,8 @@ namespace KarmaPrototype
         static string PicturePath(string name) => name == "Master" ? KarmaArtwork.StageArt + "Master_Idle" : "Tutorial/" + name;
         internal const float MasterSoleInset = 16f / 1312f;
         internal static float MasterGroundCenter(float height) => height * (0.5f - MasterSoleInset);
+        // The lower edges of the front planks meet 101 pixels above the texture's bottom edge.
+        const float DummyBaseNotchInset = 101f / 1536f;
         public const float RoomWidth = 50;
         public const float Right = 75;
         public const float FinalGate = 59;
@@ -41,7 +43,9 @@ namespace KarmaPrototype
                 barriers[i].AddComponent<KarmaTutorialGate>().Initialize(tutorial);
                 if (i == 0)
                 {
-                    var post = Picture(parent, "TrainingDummy", new Vector2(x + 5, 2.5f), new Vector2(10f / 3, 5), 2);
+                    const float dummyHeight = 5f;
+                    float centerY = dummyHeight * (0.5f - DummyBaseNotchInset);
+                    var post = Picture(parent, "TrainingDummy", new Vector2(x + 5, centerY), new Vector2(10f / 3, dummyHeight), 2);
                     targets[i] = post.gameObject.AddComponent<KarmaTrainingTarget>();
                 }
                 else targets[i] = targets[0].gameObject.AddComponent<KarmaTrainingTarget>();

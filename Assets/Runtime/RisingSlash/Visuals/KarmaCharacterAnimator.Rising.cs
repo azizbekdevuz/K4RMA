@@ -113,11 +113,16 @@ namespace KarmaPrototype
         internal void StartRisingPursuit() => StartRisingMotion(risingPursuit);
         internal void PrepareRisingWave(float warning)
         {
-            // Reach the high cut on release. RiseWave has an extra drawing on the way up.
-            int leadFrames = motionForm == "RiseWave" ? 2 : 1;
+            int leadFrames = motionForm == "RiseWave" || motionForm == "RiseFinal" ? 2 : 1;
             risingWaveWindupAt = Time.timeAsDouble + Mathf.Max(0, warning - leadFrames * KarmaBootstrap.Step);
         }
-        internal void StartRisingWave() => StartRisingMotion(risingWave);
+        internal void StartRisingWave()
+        {
+            StartRisingMotion(risingWave);
+            // The pattern coroutine can release after the regular pose update.
+            if (motionForm == "RiseFinal" && risingWave != null)
+                DrawMotion(motionForm, "UP03", 2 * KarmaBootstrap.Step);
+        }
         internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
         internal void EndRisingMotion()
         {
@@ -132,6 +137,21 @@ namespace KarmaPrototype
             {
                 DrawMotion(motionForm, "UP02", 2 * KarmaBootstrap.Step);
                 return true;
+            }
+            if (attack == EnemyAttack.UP03 && motionForm == "RiseFinal")
+            {
+                double now = Time.timeAsDouble;
+                if (risingMotion != null && risingMotion == risingWave)
+                {
+                    DrawMotion(motionForm, "UP03", 2 * KarmaBootstrap.Step + (float)(now - risingMotionAt));
+                    return true;
+                }
+                if (action == "Telegraph" && now >= risingWaveWindupAt)
+                {
+                    // The live wave owns frame 02, even if the warning ends between ticks.
+                    DrawMotion(motionForm, "UP03", Mathf.Min((float)(now - risingWaveWindupAt), KarmaBootstrap.Step));
+                    return true;
+                }
             }
             if (attack != EnemyAttack.UP05 || risingMotion == null || risingMotion != risingCrossing ||
                 (action != "Telegraph" && action != "Attack"))

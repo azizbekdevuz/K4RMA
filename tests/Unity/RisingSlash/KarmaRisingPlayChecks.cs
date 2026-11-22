@@ -171,6 +171,8 @@ public static class KarmaRisingPlayChecks
         Check(frames.Length >= 2 && (landing == null || ground.Length > 0), form + "/" + motion + " resources");
         var observed = new System.Collections.Generic.List<int>();
         var landed = new System.Collections.Generic.List<int>();
+        var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
+        bool finalWaveStarted = false;
         var complete = new TaskCompletionSource<bool>();
         game.StartCoroutine(AtRender());
         await complete.Task;
@@ -184,6 +186,12 @@ public static class KarmaRisingPlayChecks
                 try
                 {
                     int frame = Array.IndexOf(frames, renderer.sprite);
+                    if (form == "RiseFinal" && motion == "UP03" && !finalWaveStarted)
+                    {
+                        finalWaveStarted = Get(animator, "risingMotion") != null;
+                        Check(finalWaveStarted ? frame == 2 : frame < 2,
+                            "Final UP03 reaches the high sword cel on the live wave");
+                    }
                     if (frame >= 0 && (observed.Count == 0 || observed[observed.Count-1] != frame)) observed.Add(frame);
                     int contact = Array.IndexOf(ground, renderer.sprite);
                     if (contact >= 0 && observed.Count > 0)
@@ -198,8 +206,8 @@ public static class KarmaRisingPlayChecks
             }
         }
         Check(observed.Contains(0) && observed.Contains(1), form + "/" + motion + " actual starting frames: " + string.Join(",",observed));
-        if (form == "RiseWave" && motion == "UP03")
-            Check(observed.SequenceEqual(new[] { 0, 1, 2, 3 }), "RiseWave UP03 plays the sword transition in order");
+        if ((form == "RiseWave" || form == "RiseFinal") && motion == "UP03")
+            Check(observed.SequenceEqual(new[] { 0, 1, 2, 3 }), form + " UP03 plays the sword transition in order");
         for (int i = 1; i < observed.Count; i++)
             Check(observed[i] == 0 || observed[i] > observed[i-1], form + "/" + motion + " forward playback");
         if (landing != null)

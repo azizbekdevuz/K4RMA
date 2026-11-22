@@ -116,7 +116,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 768
         width: 768
         height: 768
       alignment: 9
@@ -138,7 +138,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 768
-        y: 0
+        y: 768
         width: 768
         height: 768
       alignment: 9
@@ -159,7 +159,29 @@ TextureImporter:
       name: UP03_02
       rect:
         serializedVersion: 2
-        x: 1536
+        x: 0
+        y: 0
+        width: 768
+        height: 768
+      alignment: 9
+      pivot: {x: 0.46354, y: 0.22396}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4ec2546b607c4bbaa4f04a726d7ecd91
+      internalID: 1837446505
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UP03_03
+      rect:
+        serializedVersion: 2
+        x: 768
         y: 0
         width: 768
         height: 768
@@ -193,7 +215,8 @@ TextureImporter:
     nameFileIdTable:
       UP03_00: -319715090
       UP03_01: -50187091
-      UP03_02: 415986787
+      UP03_02: 1837446505
+      UP03_03: 415986787
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

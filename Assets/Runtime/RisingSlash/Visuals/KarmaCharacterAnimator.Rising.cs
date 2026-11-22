@@ -17,6 +17,8 @@ namespace KarmaPrototype
         double risingWaveWindupAt = double.PositiveInfinity;
         double risingDescentAt = -1, risingLandingAt = -1;
         double risingStrikeAt = -1;
+        bool holdingPursuitApex;
+        bool UsesChainedDescentArt => motionForm == "Rise" || motionForm == "RiseWave";
 
         internal bool RisingBarrierVisible { get; set; }
 
@@ -32,7 +34,13 @@ namespace KarmaPrototype
 
         string RisingBodyMotion(string action, EnemyAttack attack, bool moved)
         {
-            if (risingLandingAt >= 0) return attack == EnemyAttack.UP01 ? "UP01Landing" : "Landing";
+            if (risingLandingAt >= 0)
+                return attack == EnemyAttack.UP01 || (attack == EnemyAttack.UP02 && motionForm == "RiseWave")
+                    ? "UP01Landing" : "Landing";
+            // UP02 hands off directly to UP01. Keep the last pursuit cel through
+            // the lock-on, then play the existing descent from its own first cel.
+            if (attack == EnemyAttack.UP02 && UsesChainedDescentArt && risingDescentAt >= 0 && action == "Attack")
+                return "UP01";
             if (attack == EnemyAttack.GroundStrike && risingStrikeAt >= 0) return "UPBasic";
             if (action == "Attack" && attack == EnemyAttack.GroundStrike && CurrentPose == "Dash") return "Dash";
             if (attack == EnemyAttack.UP03 && action == "Attack" && risingMotion == null)
@@ -40,7 +48,8 @@ namespace KarmaPrototype
             if (risingMotion != null || action == "Attack") return attack == EnemyAttack.GroundStrike ? "UPBasic"
                 : attack == EnemyAttack.UP05 && RisingBarrierVisible ? "UP05_NoFX" : attack.ToString();
             // UP03 releases its wave with both feet planted.
-            if (action == "Recover") return attack == EnemyAttack.UP03 ? "Idle" : "Landing";
+            if (action == "Recover") return attack == EnemyAttack.UP03 ||
+                (attack == EnemyAttack.GroundStrike && motionForm == "RiseWave") ? "Idle" : "Landing";
             if (action == "Telegraph" && attack == EnemyAttack.UP03 && Time.timeAsDouble >= risingWaveWindupAt)
                 return "UP03";
             if (action == "Telegraph") return attack == EnemyAttack.UP05 ? "UP05" : "Windup";
@@ -79,6 +88,7 @@ namespace KarmaPrototype
         internal void StartRisingDescent(float duration)
         {
             if (risingDescent == null) return;
+            holdingPursuitApex = false;
             risingLandingAt = -1;
             // Hold the first pose on long drops, then play the cut at its authored rate.
             risingDescentAt = Time.timeAsDouble + Mathf.Max(0, duration - RisingDropFrameCount * (0.5f * KarmaBootstrap.Step));
@@ -97,6 +107,7 @@ namespace KarmaPrototype
         {
             risingStrikeAt = risingDescentAt = risingLandingAt = -1;
             EndRisingMotion();
+            holdingPursuitApex = false;
         }
 
         internal void StartRisingPursuit() => StartRisingMotion(risingPursuit);
@@ -110,12 +121,18 @@ namespace KarmaPrototype
         internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
         internal void EndRisingMotion()
         {
+            holdingPursuitApex = UsesChainedDescentArt && risingMotion != null && risingMotion == risingPursuit;
             risingMotion = null;
             risingWaveWindupAt = double.PositiveInfinity;
         }
 
-        bool PresentRisingCrossing(string action, EnemyAttack attack)
+        bool PresentRisingAttackFrame(string action, EnemyAttack attack)
         {
+            if (attack == EnemyAttack.UP02 && holdingPursuitApex && action == "Telegraph")
+            {
+                DrawMotion(motionForm, "UP02", 2 * KarmaBootstrap.Step);
+                return true;
+            }
             if (attack != EnemyAttack.UP05 || risingMotion == null || risingMotion != risingCrossing ||
                 (action != "Telegraph" && action != "Attack"))
                 return false;

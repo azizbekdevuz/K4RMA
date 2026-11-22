@@ -43,7 +43,7 @@ namespace KarmaPrototype
             else if (sheet == "Wave") motion = SwordBodyMotion(action, attack, moved);
             else if (sheet == "Rise")
             {
-                if (PresentRisingCrossing(action, attack)) return;
+                if (PresentRisingAttackFrame(action, attack)) return;
                 motion = RisingBodyMotion(action, attack, moved);
             }
             else motion = action == "Attack" ? "GroundStrike" : action == "Recover" ? "Recovery"

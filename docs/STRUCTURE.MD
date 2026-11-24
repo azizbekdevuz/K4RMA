@@ -533,6 +533,7 @@ K4RMA/
 │       │   │   └── UPBasic.cs
 │       │   ├── Visuals/
 │       │   │   ├── KarmaCharacterAnimator.Rising.cs
+│       │   │   ├── KarmaCharacterAnimator.RisingFarewell.cs
 │       │   │   ├── KarmaRisingArt.cs
 │       │   │   ├── KarmaRisingAudio.cs
 │       │   │   ├── KarmaRisingBarrier.cs

@@ -15,5 +15,6 @@ MonoBehaviour:
   asset: {fileID: 0}
   frames:
   - {fileID: 141134668, guid: 33b78172b100c4e168bee223e6826df6, type: 3}
+  - {fileID: 961385247, guid: 33b78172b100c4e168bee223e6826df6, type: 3}
   - {fileID: -1581362147, guid: 33b78172b100c4e168bee223e6826df6, type: 3}
   - {fileID: 94917366, guid: 33b78172b100c4e168bee223e6826df6, type: 3}

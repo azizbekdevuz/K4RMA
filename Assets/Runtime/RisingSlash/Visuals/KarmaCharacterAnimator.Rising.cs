@@ -14,18 +14,73 @@ namespace KarmaPrototype
         Sprite[] risingBasicStrike, risingDescent, risingPursuit, risingWave, risingCrossing;
         Sprite[] risingMotion;
         double risingMotionAt;
+        double risingWaveWindupAt = double.PositiveInfinity;
         double risingDescentAt = -1, risingLandingAt = -1;
         double risingStrikeAt = -1;
+        bool holdingPursuitApex;
+        bool UsesChainedDescentArt => motionForm == "Rise" || motionForm == "RiseWave";
 
         internal bool RisingBarrierVisible { get; set; }
+
+        void ShowFallenRisingGrowth()
+        {
+            // Combat seats this pose using the revival support point. The rehearsal
+            // has its own picture transform and starts with the boss already prone.
+            DrawMotion(previousMotionForm, "Death", 3 * KarmaBootstrap.Step);
+            var fallen = KarmaBodyPoses.Get("@RisingSlash/Revival/Rise", "Revive00");
+            if (KarmaBodyPoses.TryFloor(fallen, out float contact))
+                picture.transform.localPosition -= Vector3.up * (contact * pictureScale.y);
+        }
+
+        internal void ShowRisingWaveAttempt(float elapsed)
+        {
+            // Reuse the base body's low draw, extension and recovery from its sword study.
+            if (elapsed >= 0.75f) DrawMotion(previousMotionForm, "Idle", 0);
+            else DrawMotion(previousMotionForm, "GrowthTechnique", Mathf.Max(0, elapsed - 0.2f));
+        }
+
+        internal void ShowRisingMasteryStance(float elapsed)
+        {
+            DrawMotion(motionForm, "GrowthMastery", Mathf.Clamp(elapsed, 0, KarmaBootstrap.Step));
+        }
+
+        internal void ShowRisingMasteryStroke(Essence technique, float elapsed)
+        {
+            if (technique == Essence.SwordWave)
+                DrawMotion(motionForm, "UP03", Mathf.Max(0, elapsed - KarmaBootstrap.Step));
+            else if (technique == Essence.Guard)
+                DrawMotion(motionForm, "UP04", Mathf.Clamp(elapsed, KarmaBootstrap.Step, 2 * KarmaBootstrap.Step));
+            else DrawMotion(motionForm, "GrowthMastery", Mathf.Max(0, elapsed - KarmaBootstrap.Step));
+        }
+
+        internal void ShowRisingMasteryFinish(float elapsed, bool ready)
+        {
+            if (ready) DrawMotion(motionForm, "Idle", 0);
+            else if (elapsed < 0.4f) DrawMotion(motionForm, "UP04", KarmaBootstrap.Step + elapsed);
+            else if (elapsed < 1.25f) DrawMotion(motionForm, "UPBasic", elapsed - 0.4f);
+            else DrawMotion(motionForm, "GrowthMastery", 4 * KarmaBootstrap.Step + elapsed - 1.25f);
+        }
+
         string RisingBodyMotion(string action, EnemyAttack attack, bool moved)
         {
-            if (risingLandingAt >= 0) return attack == EnemyAttack.UP01 ? "UP01Landing" : "Landing";
+            if (risingLandingAt >= 0)
+                return attack == EnemyAttack.UP01 || (attack == EnemyAttack.UP02 && motionForm == "RiseWave")
+                    ? "UP01Landing" : "Landing";
+            // UP02 hands off directly to UP01. Keep the last pursuit cel through
+            // the lock-on, then play the existing descent from its own first cel.
+            if (attack == EnemyAttack.UP02 && UsesChainedDescentArt && risingDescentAt >= 0 && action == "Attack")
+                return "UP01";
             if (attack == EnemyAttack.GroundStrike && risingStrikeAt >= 0) return "UPBasic";
             if (action == "Attack" && attack == EnemyAttack.GroundStrike && CurrentPose == "Dash") return "Dash";
+            if (attack == EnemyAttack.UP03 && action == "Attack" && risingMotion == null)
+                return moved ? "Dash" : "Idle";
             if (risingMotion != null || action == "Attack") return attack == EnemyAttack.GroundStrike ? "UPBasic"
                 : attack == EnemyAttack.UP05 && RisingBarrierVisible ? "UP05_NoFX" : attack.ToString();
-            if (action == "Recover") return "Landing";
+            // UP03 releases its wave with both feet planted.
+            if (action == "Recover") return attack == EnemyAttack.UP03 ||
+                (attack == EnemyAttack.GroundStrike && motionForm == "RiseWave") ? "Idle" : "Landing";
+            if (action == "Telegraph" && attack == EnemyAttack.UP03 && Time.timeAsDouble >= risingWaveWindupAt)
+                return "UP03";
             if (action == "Telegraph") return attack == EnemyAttack.UP05 ? "UP05" : "Windup";
             return moved || CurrentPose == "Dash" ? "Dash" : "Idle";
         }
@@ -62,6 +117,7 @@ namespace KarmaPrototype
         internal void StartRisingDescent(float duration)
         {
             if (risingDescent == null) return;
+            holdingPursuitApex = false;
             risingLandingAt = -1;
             // Hold the first pose on long drops, then play the cut at its authored rate.
             risingDescentAt = Time.timeAsDouble + Mathf.Max(0, duration - RisingDropFrameCount * (0.5f * KarmaBootstrap.Step));
@@ -80,15 +136,52 @@ namespace KarmaPrototype
         {
             risingStrikeAt = risingDescentAt = risingLandingAt = -1;
             EndRisingMotion();
+            holdingPursuitApex = false;
         }
 
         internal void StartRisingPursuit() => StartRisingMotion(risingPursuit);
-        internal void StartRisingWave() => StartRisingMotion(risingWave);
-        internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
-        internal void EndRisingMotion() => risingMotion = null;
-
-        bool PresentRisingCrossing(string action, EnemyAttack attack)
+        internal void PrepareRisingWave(float warning)
         {
+            int leadFrames = motionForm == "RiseWave" || motionForm == "RiseFinal" ? 2 : 1;
+            risingWaveWindupAt = Time.timeAsDouble + Mathf.Max(0, warning - leadFrames * KarmaBootstrap.Step);
+        }
+        internal void StartRisingWave()
+        {
+            StartRisingMotion(risingWave);
+            // The pattern coroutine can release after the regular pose update.
+            if (motionForm == "RiseFinal" && risingWave != null)
+                DrawMotion(motionForm, "UP03", 2 * KarmaBootstrap.Step);
+        }
+        internal void StartRisingCrossing() => StartRisingMotion(risingCrossing);
+        internal void EndRisingMotion()
+        {
+            holdingPursuitApex = UsesChainedDescentArt && risingMotion != null && risingMotion == risingPursuit;
+            risingMotion = null;
+            risingWaveWindupAt = double.PositiveInfinity;
+        }
+
+        bool PresentRisingAttackFrame(string action, EnemyAttack attack)
+        {
+            if (attack == EnemyAttack.UP02 && holdingPursuitApex && action == "Telegraph")
+            {
+                DrawMotion(motionForm, "UP02", 2 * KarmaBootstrap.Step);
+                return true;
+            }
+            if (attack == EnemyAttack.UP03 && motionForm == "RiseFinal")
+            {
+                double now = Time.timeAsDouble;
+                if (risingMotion != null && risingMotion == risingWave)
+                {
+                    DrawMotion(motionForm, "UP03", 2 * KarmaBootstrap.Step + (float)(now - risingMotionAt));
+                    return true;
+                }
+                if (action == "Telegraph" && now >= risingWaveWindupAt)
+                {
+                    // The live wave owns frame 02, even if the warning ends between ticks.
+                    DrawMotion(motionForm, "UP03", Mathf.Min((float)(now - risingWaveWindupAt), KarmaBootstrap.Step));
+                    return true;
+                }
+            }
             if (attack != EnemyAttack.UP05 || risingMotion == null || risingMotion != risingCrossing ||
                 (action != "Telegraph" && action != "Attack"))
                 return false;

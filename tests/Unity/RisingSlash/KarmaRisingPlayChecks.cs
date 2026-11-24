@@ -104,6 +104,8 @@ public static class KarmaRisingPlayChecks
                 pose("Attack", EnemyAttack.UP02, false, "Slash");
                 pose("Attack", EnemyAttack.UP01, true, "AirSlash");
                 pose("Recover", EnemyAttack.UP01, false, "Landing");
+                if (Array.IndexOf(order, Essence.SwordWave) >= 0)
+                    pose("Recover", EnemyAttack.UP03, false, "Idle");
                 pose("Stunned", EnemyAttack.UP01, false, "Hurt");
                 animator.transform.position += Vector3.right * 0.2f;
                 pose("Approach", EnemyAttack.UP01, false, "Dash");
@@ -169,6 +171,8 @@ public static class KarmaRisingPlayChecks
         Check(frames.Length >= 2 && (landing == null || ground.Length > 0), form + "/" + motion + " resources");
         var observed = new System.Collections.Generic.List<int>();
         var landed = new System.Collections.Generic.List<int>();
+        var animator = enemy.GetComponentInChildren<KarmaCharacterAnimator>();
+        bool finalWaveStarted = false;
         var complete = new TaskCompletionSource<bool>();
         game.StartCoroutine(AtRender());
         await complete.Task;
@@ -182,6 +186,12 @@ public static class KarmaRisingPlayChecks
                 try
                 {
                     int frame = Array.IndexOf(frames, renderer.sprite);
+                    if (form == "RiseFinal" && motion == "UP03" && !finalWaveStarted)
+                    {
+                        finalWaveStarted = Get(animator, "risingMotion") != null;
+                        Check(finalWaveStarted ? frame == 2 : frame < 2,
+                            "Final UP03 reaches the high sword cel on the live wave");
+                    }
                     if (frame >= 0 && (observed.Count == 0 || observed[observed.Count-1] != frame)) observed.Add(frame);
                     int contact = Array.IndexOf(ground, renderer.sprite);
                     if (contact >= 0 && observed.Count > 0)
@@ -196,6 +206,8 @@ public static class KarmaRisingPlayChecks
             }
         }
         Check(observed.Contains(0) && observed.Contains(1), form + "/" + motion + " actual starting frames: " + string.Join(",",observed));
+        if ((form == "RiseWave" || form == "RiseFinal") && motion == "UP03")
+            Check(observed.SequenceEqual(new[] { 0, 1, 2, 3 }), form + " UP03 plays the sword transition in order");
         for (int i = 1; i < observed.Count; i++)
             Check(observed[i] == 0 || observed[i] > observed[i-1], form + "/" + motion + " forward playback");
         if (landing != null)
@@ -296,6 +308,39 @@ public static class KarmaRisingPlayChecks
         Check(SelectAttack(4f) == EnemyAttack.UP02, "Airborne player prioritizes UP02 pursuit");
         Debug.Log("PASS: Rising basic skill links, airborne pursuit and once-per-threshold UP05 selection");
     }
+    static void CheckFinalFarewell()
+    {
+        foreach (int facing in new[] { -1, 1 })
+        foreach (int playerSide in new[] { -1, 1 })
+        {
+            Reset();
+            var art = (Transform)Get(enemy, "art");
+            Vector3 scale = art.localScale;
+            scale.x = Mathf.Abs(scale.x) * facing;
+            art.localScale = scale;
+            var body = game.Player.GetComponent<Rigidbody2D>();
+            body.position = game.Player.transform.position = new Vector2(enemy.Position.x + 10 * playerSide, body.position.y);
+            var animator = art.GetComponent<KarmaCharacterAnimator>();
+            var picture = (SpriteRenderer)Get(animator, "picture");
+            enemy.TakeDamage(100000, game.Player.Position);
+            Check(game.Phase == RunPhase.Ending && picture.sprite.name == "Death_00", "Ending takes over the visible death frame");
+            bool turns = playerSide != facing;
+            for (int tick = 8; tick < 14; tick++)
+            {
+                Call(animator, "PresentEndingDefeat", tick * KarmaBootstrap.Step);
+                string expected = turns ? "DefeatTurn_" + (tick - 8).ToString("00") : "FinalDefeat_03";
+                Check(picture.sprite.name == expected, "Facing-specific farewell: " + expected);
+                Check(!picture.flipX, "Turn drawings keep their authored orientation");
+            }
+            Call(animator, "PresentEndingDefeat", 14 * KarmaBootstrap.Step);
+            var original = Frames("RiseFinal", "FinalDefeat");
+            Check(picture.sprite == original[3] && picture.flipX == turns, "Guardian settles into the original player-facing kneel");
+            Call(animator, "PresentEndingDefeat", 4f);
+            Check(picture.sprite == original[2] && picture.flipX == turns, "Guardian holds the original downward bow through dissolve");
+            Check(Mathf.Sign(art.localScale.x) == facing, "Farewell keeps the entering rig orientation");
+        }
+    }
+
     static async void Run()
     {
         int exit = 0; string result;
@@ -306,6 +351,7 @@ public static class KarmaRisingPlayChecks
             var config = UnityEngine.Object.Instantiate(game.Config); config.playerHealth = 1000000; Set(game, "config", config);
             Application.logMessageReceived += Capture;
             Debug.Log(CheckPoseConnections());
+            CheckFinalFarewell();
             await CheckBaseStrike();
             await CheckFormClips();
             CheckAttackMix();

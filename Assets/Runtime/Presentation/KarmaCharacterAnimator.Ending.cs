@@ -82,8 +82,9 @@ namespace KarmaPrototype
             picture.transform.localScale = pictureScale;
             picture.transform.localRotation = Quaternion.identity;
             transform.localRotation = Quaternion.identity;
-            DrawMotion(motionForm, "FinalDefeat", elapsed);
-            picture.color = Color.Lerp(new Color(0.72f, 0.72f, 0.76f), pictureColor,
+            if (risingFarewell) DrawRisingFarewell(elapsed);
+            else DrawMotion(motionForm, "FinalDefeat", elapsed);
+            picture.color = Color.Lerp(risingFarewell ? farewellEntryColor : new Color(0.72f, 0.72f, 0.76f), pictureColor,
                 KarmaGame.EndingEase(0.55f, 1.15f, elapsed));
             CurrentPose = elapsed < 2.9f ? "Ending/Reflect" : "Ending/Acknowledge";
         }

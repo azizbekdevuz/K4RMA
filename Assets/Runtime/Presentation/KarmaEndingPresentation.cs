@@ -44,11 +44,14 @@ namespace KarmaPrototype
             ending.game = game; ending.fallen = fallen;
             if (fallen != null)
             {
-                fallen.position = origin;
-                var scale = fallen.localScale;
-                scale.x = Mathf.Abs(scale.x) * (game.Player.Position.x < origin.x ? -1 : 1);
-                fallen.localScale = scale;
                 ending.fallenAnimator = fallen.GetComponent<KarmaCharacterAnimator>();
+                if (ending.fallenAnimator == null || !ending.fallenAnimator.BeginRisingFarewell(game.Player.Position.x))
+                {
+                    fallen.position = origin;
+                    var scale = fallen.localScale;
+                    scale.x = Mathf.Abs(scale.x) * (game.Player.Position.x < origin.x ? -1 : 1);
+                    fallen.localScale = scale;
+                }
                 ending.fallenPictures = fallen.GetComponentsInChildren<SpriteRenderer>();
                 ending.fallenAnimator?.PresentEndingDefeat(0);
                 var material = KarmaArtResource.Load<Material>("Shared/Rendering/KarmaEndingDissolve");

@@ -90,6 +90,11 @@ namespace KarmaPrototype
                 DrawMastery();
 
             var enemy = game.Enemies.Count > 0 ? game.Enemies[0] : null;
+            if (game.IsCombat && enemy != null && !string.IsNullOrEmpty(enemy.LearningLine))
+            {
+                Panel(new Rect(390, 90, 500, 40));
+                Label(395, 90, 490, 40, enemy.LearningLine, centered);
+            }
             string name = enemy != null && enemy.Alive ? enemy.DisplayName :
                 game.Phase == RunPhase.GuardianFallen || game.Phase == RunPhase.Ending ? fallenBossName : null;
             if (name == null) return;

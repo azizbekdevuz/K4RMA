@@ -75,7 +75,7 @@ namespace KarmaPrototype
                         "Guardian landing impact", hitSize * new Vector2(2.4f, 1.2f), 0.35f, 0, new Color(1, 0.55f, 0.1f), WaveVisuals);
             }
         }
-        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null, float? segmentStart = null, float segmentSeconds = 0)
+        public void TryAttackHit(Vector2 from, Vector2 to, Vector2 size, float amount, KarmaAttackContact contact, float stun, Vector2? attackAxis = null, bool parryStun = false, bool shieldBreak = false, EnemyAttack? sourcePattern = null, float? segmentStart = null, float segmentSeconds = 0, bool plainTechnique = false)
         {
             if (!Active || game.Paused || contact.Consumed) return;
             var player = game.Player; var p = player.Position;
@@ -86,6 +86,12 @@ namespace KarmaPrototype
                 ? KarmaBossGeometry.SweptOrientedBox(from.x, from.y, to.x, to.y, p.x, p.y, attackAxis.Value.x, attackAxis.Value.y,
                     size.x, size.y, body.extents.x, body.extents.y, out first)
                 : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y, out first);
+            if (hit && plainTechnique)
+            {
+                if (contact.TryConsume()) player.TakeDamageAt(amount, true,
+                    segmentStart.HasValue ? segmentStart.Value + first * segmentSeconds : Time.time);
+                return;
+            }
             if (hit) ResolveAttackHit(body.center, amount, contact, stun, parryStun, shieldBreak, sourcePattern,
                 segmentStart.HasValue ? segmentStart.Value + first * segmentSeconds : Time.time);
         }

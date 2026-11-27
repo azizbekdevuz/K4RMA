@@ -10,7 +10,7 @@ namespace KarmaPrototype
         float remaining, damage, stun;
         KarmaAttackContact contact;
         EnemyAttack sourcePattern;
-        bool parryStun, shieldBreak;
+        bool parryStun, shieldBreak, plainTechnique;
         protected virtual bool Oriented { get { return false; } }
         protected virtual bool AttachTrail { get { return true; } }
         protected virtual bool AttachLaunch { get { return true; } }
@@ -21,10 +21,11 @@ namespace KarmaPrototype
         protected virtual bool FinishFlight(Vector2 to) { return false; }
         public static KarmaBossAttack Spawn(KarmaGame game, KarmaEnemy owner, Transform root, Vector2 at,
             Vector2 velocity, Vector2 size, float life, float damage, Color color, KarmaAttackContact contact, float stun, string visualPose = null,
-            bool restrainedVisual = false, bool separateLaunch = false, string extraWavePose = null, string visualSheet = "GuardianVFX", bool parryStun = false, bool shieldBreak = false, bool renderArtwork = true, EnemyAttack? sourcePattern = null)
+            bool restrainedVisual = false, bool separateLaunch = false, string extraWavePose = null, string visualSheet = "GuardianVFX", bool parryStun = false, bool shieldBreak = false, bool renderArtwork = true, EnemyAttack? sourcePattern = null, bool plainTechnique = false)
         {
             var go = new GameObject("유효 보스 공격"); go.transform.SetParent(root, false); go.transform.localPosition = at;
-            var attack = owner.CreateAttackComponent(go);
+            var attack = plainTechnique ? go.AddComponent<KarmaBossAttack>() : owner.CreateAttackComponent(go);
+            attack.plainTechnique = plainTechnique;
             var picture = new GameObject("Directional attack artwork"); picture.transform.SetParent(go.transform, false);
             var sr = picture.AddComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(sr); sr.sortingOrder = 26;
             string pose = visualPose ?? VisualPose(velocity, size);
@@ -93,7 +94,7 @@ namespace KarmaPrototype
             dt = FlightStep(from, dt);
             Vector2 to = from + velocity * dt;
             transform.position = to;
-            owner.TryAttackHit(from, to, size, damage, contact, stun, Oriented ? (velocity.sqrMagnitude > 0.000001f ? velocity.normalized : Vector2.right) : (Vector2?)null, parryStun, shieldBreak, sourcePattern, tickEnd - Time.fixedDeltaTime, dt);
+            owner.TryAttackHit(from, to, size, damage, contact, stun, Oriented ? (velocity.sqrMagnitude > 0.000001f ? velocity.normalized : Vector2.right) : (Vector2?)null, parryStun, shieldBreak, sourcePattern, tickEnd - Time.fixedDeltaTime, dt, plainTechnique);
             remaining -= Time.fixedDeltaTime;
             if (FinishFlight(to))
             { gameObject.SetActive(false); Destroy(gameObject); return; }

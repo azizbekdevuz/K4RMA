@@ -6,6 +6,14 @@ namespace KarmaPrototype
     {
         bool growthActive, personalizationProofActive;
 
+        internal void PresentLearningMotion(string motion, float elapsed)
+        {
+            if (!KarmaMotionArt.Has(motionForm, motion))
+                motion = KarmaMotionArt.Has(motionForm, "GrowthTechnique") ? "GrowthTechnique" : "Idle";
+            DrawMotion(motionForm, motion, elapsed);
+            CurrentPose = "Learning/" + motion;
+        }
+
         internal void BeginGrowth(Sprite fallen, string previousForm)
         {
             EndGuardianAction();

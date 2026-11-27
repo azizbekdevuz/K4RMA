@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6c3476ff5f62048942b4602c4229f7, type: 3}
+  m_Name: WaveWard
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSwordBasicArt
+  idle: {fileID: 21300000, guid: 917e3c69bb02aa54ca08199f20ed2f16, type: 3}
+  poses:
+  - {fileID: -395612995, guid: 05ddec876f7fdce408146c6d95e4f848, type: 3}
+  - {fileID: -1139858300, guid: 05ddec876f7fdce408146c6d95e4f848, type: 3}
+  - {fileID: 998320753, guid: 05ddec876f7fdce408146c6d95e4f848, type: 3}
+  - {fileID: 798340730, guid: 05ddec876f7fdce408146c6d95e4f848, type: 3}
+  - {fileID: -1948538980, guid: 05ddec876f7fdce408146c6d95e4f848, type: 3}
+  - {fileID: 1548239271, guid: 05ddec876f7fdce408146c6d95e4f848, type: 3}
+  - {fileID: -1012781153, guid: 6d3159bbef25a4c4ab57f18fe9742c73, type: 3}
+  - {fileID: 183087432, guid: 6d3159bbef25a4c4ab57f18fe9742c73, type: 3}
+  - {fileID: -829919844, guid: 6d3159bbef25a4c4ab57f18fe9742c73, type: 3}
+  blade: {fileID: 1429932785, guid: d1dd4f1b28bd29d43aadc82e069cb202, type: 3}
+  sockets:
+  - {x: 285, y: 223}
+  - {x: 319, y: 168}
+  - {x: 142, y: 65}
+  - {x: 355, y: 174}
+  - {x: 388, y: 226}
+  - {x: 375, y: 210}
+  - {x: 438.35938, y: 207.86719}
+  - {x: 346.4453, y: 159.78906}
+  - {x: 261.60156, y: 100.39844}
+  angles:
+  - -80
+  - -70
+  - -135
+  - -85
+  - -90
+  - -80
+  - -90
+  - -90
+  - -125
+  bladeLength: 1.4828038

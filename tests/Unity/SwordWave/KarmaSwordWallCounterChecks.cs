@@ -290,7 +290,7 @@ public static class KarmaSwordWallCounterChecks
             for (int i = index; i < 4; i++)
                 Check(scope == null || scope != slots[i] && !scope.IsChildOf(slots[i]), "canceled shot leaves no launch particles or flight echoes");
             var renderer = (SpriteRenderer)Get(entry, "renderer");
-            if (renderer.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional") && scope == null && (float)Get(entry, "growth") < 0)
+            if (renderer.sprite == KarmaWaveArtwork.Sprite("SW04_CounterBlade_v2") && scope == null && (float)Get(entry, "growth") < 0)
             {
                 dissolves++;
                 Check((Vector3)Get(entry, "velocity") == Vector3.zero && (float)Get(entry, "growth") < 0,

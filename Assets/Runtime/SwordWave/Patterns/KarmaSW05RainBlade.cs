@@ -21,6 +21,7 @@ namespace KarmaPrototype
         KarmaAttackContact explosionContact;
         public const float ExplosionActiveSeconds = 0.12f;
         public bool Landed { get; private set; }
+        internal float FallWarningAge => age; // Read-only VFX clock; never advances flight.
         // A grounded player's collider bottom rises by v²/2g at most (the
         // fixed-step trajectory is slightly lower). Put the ceiling halfway
         // into the real upward air-slash travel above that apex. A normal jump

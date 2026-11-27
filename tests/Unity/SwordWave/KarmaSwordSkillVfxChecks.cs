@@ -58,6 +58,7 @@ public static class KarmaSwordSkillVfxChecks
         Fixture.GetMethod("Place",F).Invoke(null,new object[]{20f+(melee?5:pattern==EnemyAttack.SWBasic?9:15)});
         await Task.Delay(60);Set(Enemy,"running",true);Set(Enemy,"timer",float.MaxValue);
         var data=new Cast{key=pattern+(melee?"-melee":"")};int tick=0,first=-1;bool prepared=false,formed=false,triggered=false,forceBegun=pattern!=EnemyAttack.SW01;
+        int advertisedScars = 0;
         var seen=new HashSet<UnityEngine.Object>();var probe=new GameObject("focused skill VFX observation").AddComponent<KarmaSwordDashFrameProbe>();
         probe.After=()=>
         {
@@ -65,6 +66,8 @@ public static class KarmaSwordSkillVfxChecks
             try
             {
                 var b=Enemy.DamageBounds;data.frames.Add(new Frame{tick=tick,state=Get(Enemy,"state").ToString(),position=Enemy.Position,center=b.center,size=b.size});
+                if (pattern == EnemyAttack.SW03 && advertisedScars == 0)
+                    advertisedScars = Root.GetComponentsInChildren<KarmaSwordScarRise>().Count(cue => cue.name.StartsWith("SW03 sword-cut warning / site "));
                 foreach(var shot in Root.GetComponentsInChildren<KarmaBossAttack>())if(seen.Add(shot))
                 {
                     data.shots.Add(new Shot{tick=tick,kind="projectile",position=shot.transform.position,velocity=(Vector2)Get(shot,"velocity"),size=(Vector2)Get(shot,"size"),damage=(float)Get(shot,"damage"),life=(float)Get(shot,"remaining")});
@@ -96,7 +99,15 @@ public static class KarmaSwordSkillVfxChecks
             probe.Before=()=>{typeof(KarmaEnemy).GetProperty("FightSeconds").SetValue(Enemy,0f);Fixture.GetMethod("Force",F).Invoke(null,new object[]{pattern});forceBegun=true;probe.Before=null;};
         else Fixture.GetMethod("Force",F).Invoke(null,new object[]{pattern});
         await Until(()=>probe.After==null);UnityEngine.Object.Destroy(probe.gameObject);Check(failure==null,failure);
-        int expected=pattern==EnemyAttack.SW01?2:pattern==EnemyAttack.SW03?20:pattern==EnemyAttack.SW04?4:pattern==EnemyAttack.SW05?data.shots.Count:1;
+        int expected = pattern switch
+        {
+            EnemyAttack.SWBasic when melee => 2,
+            EnemyAttack.SW01 => 2,
+            EnemyAttack.SW03 => advertisedScars,
+            EnemyAttack.SW04 => 4,
+            EnemyAttack.SW05 => data.shots.Count,
+            _ => 1
+        };
         Check(data.shots.Count==expected&&expected>0,"shot count "+data.key+"="+data.shots.Count);
         if(pattern==EnemyAttack.SW05)Check(expected>=16&&expected<=18,"first dense rain group");
         if(pattern==EnemyAttack.SW04){KarmaSwordAttackPolish.ParrySuccess(game,Enemy,game.Player.Position);await Task.Delay(25);Capture("SW04-parry-success");}

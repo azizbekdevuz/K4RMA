@@ -131,7 +131,7 @@ public static class KarmaSwordSkillRefreshChecks
         while(elapsed<seconds){elapsed+=1f/60;frames++;}
         return frames/60f;
     }
-    static async Task BasicLinkOnly()
+    static async Task BasicDowncutOnly()
     {
         foreach(int side in new[]{-1,1})foreach(bool landFirst in new[]{false,true})
         {
@@ -157,13 +157,9 @@ public static class KarmaSwordSkillRefreshChecks
             };
             try { await Until(()=>!(bool)Get(enemy,"running")); }
             finally {probe.Tick=null;UnityEngine.Object.Destroy(probe);}
-            Check(releases.Count==2,"both authored melee release events occur");
-            Check(damageTimes.Count==(landFirst?2:1),"real Health falls independently on each connected cut");
-            float interval=releases[1]-releases[0];
-            if(landFirst)Check(interval<0.75f && damageTimes[1]-damageTimes[0]>game.Config.hitInvulnerability,
-                "confirmed opener shortens link without losing second hit to immunity");
-            else Check(interval<0.25f,"missed opener follows with a prompt return cut");
-            Pass("BASIC LINK facing="+side+" firstHit="+landFirst+" releaseInterval="+interval.ToString("F3")+" healthLosses="+damageTimes.Count);
+            Check(releases.Count==1,"one authored melee release event occurs");
+            Check(damageTimes.Count==(landFirst?1:0),"one connected downcut or one miss");
+            Pass("BASIC DOWNCUT facing="+side+" hit="+landFirst+" healthLosses="+damageTimes.Count);
         }
     }
     static async Task ContinuousAimOnly()
@@ -537,12 +533,16 @@ public static class KarmaSwordSkillRefreshChecks
                 Check(picture.color.a>=0.96f,"released SW04 blade preserves opaque core");
                 Check(!shots[i].GetComponentsInChildren<TrailRenderer>().Any(t=>t.enabled && t.emitting),"no lines trail a released counter blade");
                 if(i==0)Capture("sw04-solid-flight");
-                Check(picture.sprite==KarmaArtwork.Sprite("SwordBossVFX","SW05_HeavyJudgementSword_optional"),"SW04 flight uses the same straight blade as its orbit");
+                Check(picture.sprite == KarmaWaveArtwork.Sprite("SW04_CounterBlade_v2"), "SW04 releases its orbiting counter blade");
                 var axis=((Vector2)Get(shots[i],"velocity")).normalized;
-                Check(Vector2.Dot(-(Vector2)picture.transform.up,axis)>.999f,"straight sword tip follows actual projectile velocity");
+                Check(Vector2.Dot(picture.transform.right, axis) > .999f, "counter blade tip follows its velocity");
                 var size=(Vector2)Get(shots[i],"size");
-                Check(Mathf.Abs(picture.transform.lossyScale.y*968/100-size.x*0.88f)<.001f
-                    && Mathf.Abs(picture.transform.lossyScale.x*396/100-size.y)<.001f,"counter silhouette is twelve percent shorter within the original damage footprint");
+                var core = KarmaWaveArtwork.CorePixels("SW04_CounterBlade_v2");
+                var importer = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(picture.sprite));
+                importer.GetSourceTextureWidthAndHeight(out int width, out int height);
+                var importedCore = Vector2.Scale(core.size, new Vector2(picture.sprite.rect.width / width, picture.sprite.rect.height / height));
+                var bladeSize = Vector2.Scale(importedCore, picture.transform.lossyScale) / picture.sprite.pixelsPerUnit;
+                Check(Vector2.Distance(bladeSize, size) < .001f, "counter blade core fits the advertised attack footprint");
             }
         });
         float tracking=(float)counter.GetType().GetProperty("GuardTrackingTime",F).GetValue(counter);
@@ -566,7 +566,7 @@ public static class KarmaSwordSkillRefreshChecks
         foreach(var blade in (SpriteRenderer[])Get(Get(counter,"activeVolley"),"Blades"))
         {
             Check(blade.enabled,"four orbit blades remain visible on the single dome");
-            Check(blade.sprite==KarmaArtwork.Sprite("SwordBossVFX","SW05_HeavyJudgementSword_optional"),"orbit reuses silver/cyan straight sword artwork");
+            Check(blade.sprite == KarmaWaveArtwork.Sprite("SW04_CounterBlade_v2"), "orbit uses the navy counter blade artwork");
         }
         Capture("sw04-grand-orbit");enemy.TakeDamage(1);
         await Seconds(0.06f);Capture("sw04-grand-absorb");
@@ -893,8 +893,8 @@ public static class KarmaSwordSkillRefreshChecks
         {
             if(began<0)
             {
-                if(waitForRain&&!game.World.GetComponentsInChildren<SpriteRenderer>()
-                    .Any(e=>e.enabled && e.name=="SW05 낙하 지면 전조"))return;
+                if(waitForRain&&!game.World.GetComponentsInChildren<KarmaSW05Energy>()
+                    .Any(e => Get(e, "kind").ToString() == "FallWarning"))return;
                 if(waitForKind!=null&&!game.World.GetComponentsInChildren<KarmaSW05Energy>()
                     .Any(e=>Get(e,"kind").ToString()==waitForKind))return;
                 began=Time.time;
@@ -1213,12 +1213,13 @@ public static class KarmaSwordSkillRefreshChecks
             if (launches.Count > lastCount) { if (waves.Count == 0 || enemy.FightSeconds - waves.Last() > 0.5f) waves.Add(enemy.FightSeconds); lastCount = launches.Count; }
             retained |= shots.Count(s => s.Landed) >= 32;
             var sprites = Root.GetComponentsInChildren<SpriteRenderer>();
-            var fallBoxes = sprites.Where(s=>s.enabled && s.name=="SW05 낙하 지면 전조").ToArray();
-            foreach (var box in fallBoxes)
-                Check(!box.forceRenderingOff && box.sprite != null && box.GetComponent<Collider2D>() == null,
-                    "SW05 uses the original visible, non-damaging landing box");
-            formationWarned |= shots.Length==0 && fallBoxes.Length>0;
             var energies = Root.GetComponentsInChildren<KarmaSW05Energy>();
+            bool fallWarningVisible = energies.Any(e => Get(e, "kind").ToString() == "FallWarning"
+                && e.GetComponent<MeshRenderer>().enabled && (int)Get(e, "count") > 0);
+            foreach (var marker in sprites.Where(s => s.name == "SW05 낙하 지면 전조"))
+                Check(!marker.enabled && marker.GetComponent<Collider2D>() == null,
+                    "landing tokens stay invisible while the mesh draws the telegraph");
+            formationWarned |= shots.Length == 0 && fallWarningVisible;
             foreach(var energy in energies)
             {
                 Check(!energy.CapacityExceeded,"bounded VFX meshes do not truncate");
@@ -1249,7 +1250,7 @@ public static class KarmaSwordSkillRefreshChecks
             if(energies.Any(e=>e.Detonated))
                 Check(!sprites.Any(s=>s.gameObject.activeInHierarchy && s.name.Contains("planted explosion warning")),
                     "historical warnings retire at the shared release event");
-            warned |= shots.Any(s=>!s.Landed) && fallBoxes.Length>0;
+            warned |= shots.Any(s=>!s.Landed) && fallWarningVisible;
             dimmed |= sprites.Any(s => s.name.Contains("wood-embedded sword") && s.color.a >= 0.4f && s.color.a <= 0.55f && s.sortingOrder == 15);
             echoSeen |= sprites.Any(s=>s.name=="SW05 compact blade echo / no damage");
             if (!rainCaptured && shots.Any(s => !s.Landed && (float)Get(s,"age") > 0.025f))
@@ -1736,15 +1737,15 @@ public static class KarmaSwordSkillRefreshChecks
             Reset(); Force(EnemyAttack.SW03);
             var phase=GroundPhase;var scope=(Transform)Get(phase,"groundRoot");
             await Seconds(.20f);
-            Check(GroundRunning && !(bool)Get(phase,"firstRoundReleased"),"initial command has not struck during anticipation");
+            Check(GroundRunning && !(bool)Get(phase,"swordPlanted"),"initial command has not struck during anticipation");
             Check(scope.GetComponentsInChildren<KarmaBossAttack>().Length==0,"no damage before first warning expires");
             if(mode=="warning-restart")
             {
                 Set(game.Player,"stunUntil",Time.time+.20f);await Seconds(.22f);
-                Check(!(bool)Get(phase,"firstRoundReleased"),"player stun restarts first warning without an early ground strike");
-                await Until(()=>(bool)Get(phase,"firstRoundReleased"));
+                Check(!(bool)Get(phase,"swordPlanted"),"player stun holds the windup without an early ground strike");
+                await Until(()=>(bool)Get(phase,"swordPlanted"));
                 Check(scope.GetComponentsInChildren<KarmaSW05Energy>().Count(fx=>fx.name=="SW03 first ground strike / no damage")==1,
-                    "first actual release owns exactly one crack effect after warning restart");
+                    "first contact owns exactly one impact effect before ground warnings");
                 Call(enemy,"InterruptPattern");
             }
             else if(mode=="interrupt")Call(enemy,"InterruptPattern");
@@ -1755,7 +1756,7 @@ public static class KarmaSwordSkillRefreshChecks
             var animator=(KarmaCharacterAnimator)Get(enemy,"animator");
             Check(animator.GetType().GetProperty("SwordBodyAction",F).GetValue(animator)==null,"cancelled command cannot regain the body: "+mode);
         }
-        Pass("SW03 initial command cancellation, death, disable and player-stun warning restart");
+        Pass("SW03 initial command cancellation, death, disable and player-stun windup pause");
     }
     static async Task SW03Transitions()
     {
@@ -2118,9 +2119,10 @@ public static class KarmaSwordSkillRefreshChecks
                         {
                             await Seconds(.3f);
                             Check(Mathf.Abs(enemy.Position.x - 20) < .05f, "safe SW03 command plants the feet instead of sliding");
-                            await Until(()=>(bool)Get(GroundPhase,"firstRoundReleased"));
+                            await Until(()=>(bool)Get(GroundPhase,"swordPlanted"));
                             await Seconds(.25f);
-                            Check(Mathf.Abs(enemy.Position.x - 20) > .1f, "ordinary spacing resumes after the first ground strike");
+                            Check(Mathf.Abs(enemy.Position.x - 20) < .05f, "boss holds the planted sword during the first ground warning");
+                            await Until(() => Mathf.Abs(enemy.Position.x - 20) > .1f, timeout: 4);
                         }
                         await Until(() => !(bool)Get(enemy, "running") || observationError != null, timeout: 45);
                         Set(enemy, "timer", float.MaxValue);
@@ -2140,7 +2142,7 @@ public static class KarmaSwordSkillRefreshChecks
                     Check(displayed.Count >= 3 && checkedDamageIsolation, label + " displays distinct action poses with independent hit geometry");
                     if (pattern == EnemyAttack.SW03)
                         Check(displayed.Contains("GroundRaise") && displayed.Contains("GroundDrop") && displayed.Contains("GroundStrike") && lastRaised - firstRaised >= .075f,
-                            "SW03 raises, drops and strikes exactly at first release before spacing resumes");
+                            "SW03 raises, drops and plants the sword before spacing resumes");
                     if (pattern != EnemyAttack.SW04)
                         Check(!(bool)animator.GetType().GetProperty("SwordBodyVisible", F).GetValue(animator), label + " naturally releases body ownership before explicit interruption");
                     casts++;
@@ -2177,7 +2179,7 @@ public static class KarmaSwordSkillRefreshChecks
                         }
                         await Seconds(.2f);
                         Check(GroundRunning && Mathf.Abs(enemy.Position.x - 20) < .05f, "initial ground strike keeps its planted anticipation under pressure");
-                        await Until(()=>(bool)Get(GroundPhase,"firstRoundReleased"));
+                        await Until(()=>(bool)Get(GroundPhase,"swordPlanted"));
                         await Seconds(.35f);
                         Check(GroundRunning && Mathf.Abs(enemy.Position.x - 20) > .5f,
                             "urgent evasion resumes after the single initial ground strike");
@@ -2240,7 +2242,7 @@ public static class KarmaSwordSkillRefreshChecks
             {
                 Check(GraphicsSettings.currentRenderPipeline!=null,"validation copy must use the project's render pipeline");
                 if(Environment.GetEnvironmentVariable("KARMA_REVIEW_FROM")!="SW05"){await ContinuousAimOnly();await SW04Sequence();}
-                await BasicLinkOnly();await SW03Active();
+                await BasicDowncutOnly();await SW03Active();
                 await AppearanceOnly(Environment.GetEnvironmentVariable("KARMA_MOTION_NO_VIDEO")!="1");
                 Check(error==null,error??"no runtime errors");
                 Pass("connected melee, skill commands, one initial SW03 ground strike, pale ward and path facets review complete");
@@ -2248,7 +2250,7 @@ public static class KarmaSwordSkillRefreshChecks
             }
             if(SessionState.GetBool(Key+".SkillVisualReview",false))
             {
-                await BasicLinkOnly();await SW05();await SW03Active();await SW04Sequence();
+                await BasicDowncutOnly();await SW05();await SW03Active();await SW04Sequence();
                 Check(error==null,"runtime error: "+error);Pass("SW03/SW04/SW05 VISUAL REVIEW CHECKS COMPLETE");
                 Time.captureDeltaTime=0;SessionState.SetBool(Key,false);EditorApplication.Exit(0);return;
             }

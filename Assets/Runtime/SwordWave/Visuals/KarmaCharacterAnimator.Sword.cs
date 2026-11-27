@@ -22,6 +22,16 @@ namespace KarmaPrototype
         string SwordBodyMotion(string action, EnemyAttack attack, bool moved)
         {
             if (CurrentPose == "Backstep") return "Backstep";
+            bool stationaryGesture = action == "Approach" && !moved &&
+                (SwordBodyAction == "Counter" || SwordBodyAction == "Summon");
+            if (SwordBodyVisible && (action == "Telegraph" || action == "Attack" || stationaryGesture ||
+                action == "Recover" && (SwordBodyAction == "Volley" || SwordBodyAction == ShieldRaiseAction || BasicBodyActive)))
+                return SwordPatternMotion(attack);
+            // A flinch can end the cast presentation while its attack is still live.
+            // The shield arm stays braced until the next explicit release pose.
+            if (SwordCarriesShield && (attack == EnemyAttack.SW01 || attack == EnemyAttack.SW02)
+                && (action == "Telegraph" || action == "Attack"))
+                return "Guard";
             if (action == "Attack" || action == "Telegraph" && CurrentPose != "Windup" && CurrentPose != "Guard")
                 return attack == EnemyAttack.SWBasic && RangedBasicBody ? "SWBasicRanged" : attack.ToString();
             if (action == "Recover") return "FollowThrough";
@@ -29,6 +39,20 @@ namespace KarmaPrototype
             return moved || CurrentPose == "Move" ? "Move" : CurrentPose == "Guard" ? "Guard" : "Idle";
         }
         float basicStrikeSeconds = BasicSwingSeconds;
+
+        internal bool PresentSwordCeremony()
+        {
+            bool empowering = Time.time < empowermentUntil;
+            if (!growthActive && !empowering) return false;
+            bool startingRevival = growthActive ? CurrentPose == "Growth/Revive/0" : CurrentPose == "Death";
+            if (startingRevival && previousMotionForm != null &&
+                previousMotionForm.StartsWith("Wave", System.StringComparison.Ordinal))
+            {
+                var fall = motionArt.Frames(previousMotionForm, "Death");
+                picture.sprite = displaySprite = fall[fall.Length - 1];
+            }
+            return true;
+        }
         internal bool BasicBodyActive => basicPresentationActive &&
             (SwordBodyAction == "BasicMelee" || SwordBodyAction == "BasicRanged");
         internal float BasicReleaseAge => Mathf.Max(0, Time.time - basicReleasedAt);
@@ -38,7 +62,7 @@ namespace KarmaPrototype
             // Basic display below holds the loaded sword until the real event.
             PrepareWaveAttack(warningSeconds, false);
             basicPresentationActive = true; basicReleaseStarted = false;
-            BasicStrikeIndex = 0; basicLinkAt = float.NegativeInfinity;
+            BasicStrikeIndex = 0;
             PrepareSwordBody(melee ? "BasicMelee" : "BasicRanged", warningSeconds);
         }
         public void BeginBasicRelease(float strikeSeconds = BasicSwingSeconds, int strike = 0)
@@ -69,6 +93,10 @@ namespace KarmaPrototype
                 if (sprite != null && !poses.ContainsKey(sprite.name)) poses.Add(sprite.name, sprite);
             ConfigureSW02Frames();
             ConfigureSwordLocomotion();
+            ConfigureSwordBasicArt();
+            ConfigureSwordCastArt();
+            ConfigureSwordGroundArt();
+            ConfigureSwordShieldRaise();
             guardianPose = SwordGuardianPose;
             deferExplicitPose = true;
             onPoseRequested = () => waveSwingAt = float.PositiveInfinity;

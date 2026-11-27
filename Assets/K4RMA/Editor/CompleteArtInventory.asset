@@ -1,0 +1,204 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 986098e28fadf4f2197d4cdc17682de1, type: 3}
+  m_Name: CompleteArtInventory
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::KarmaPrototype.Editor.KarmaArtInventory
+  images:
+  - source: image/K4RMA_Production_Art_v1/00_ArtDirection/master-art-direction.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 1958727fb5c348540b5a162603ec8df1, type: 3}
+  - source: image/K4RMA_Production_Art_v1/01_Player/player-keyposes.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 4ae9ff81351aa344c916b201a1d7b3c4, type: 3}
+  - source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-neutral-keyposes.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: d654dbc2d39ee47449b42d965af13bd4, type: 3}
+  - source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-rise-keyposes.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 4fe7a174d96830746828bfd78b07a45d, type: 3}
+  - source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-ward-keyposes.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 857f543f6d6820d4cba98c26dc5777af, type: 3}
+  - source: image/K4RMA_Production_Art_v1/02_Guardians/guardian-wave-keyposes.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: d5187d1f293c0434f8b12491ffc49e92, type: 3}
+  - source: image/K4RMA_Production_Art_v1/03_Variants/guardian-inheritance-atlas.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 1e5a05174976f414dafd4dbcd5d6502b, type: 3}
+  - source: image/K4RMA_Production_Art_v1/04_VFX/guardian-attack-vfx.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 8b62cce2f56002041a4a6eaabde52f5a, type: 3}
+  - source: image/K4RMA_Production_Art_v1/04_VFX/hit-vfx.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: ccbb2d34716f4ab469c9e56e5097de42, type: 3}
+  - source: image/K4RMA_Production_Art_v1/04_VFX/personalization-vfx.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: bda4da54714eeb34181d5a4ce8609a0e, type: 3}
+  - source: image/K4RMA_Production_Art_v1/04_VFX/player-attack-vfx.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: f3dc1ed7ee041584aa1790e49480f4a3, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-dojo.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 181561add71635e46974037e70116cd8, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-far_forest.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: b125a9b5ae021c54ba26c2210e5bf51d, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-far_mountains.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: afe3288177ea4754abe01a7a8291bae7, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-floor.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 00d24418acb067a49a0c0a35c998bbf3, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-mid_forest.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: b126a866dbf9d9746b1e8a2574d424ac, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-moon.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 24f0111f3ea9c6b408421b9f73fb0244, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-rocks.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 2ddecf35738b2ac43b0ee8c8bd000fa8, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-silhouettes.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 5249eb2736e5ffd49b65dbdc97d22e95, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-sky.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 013dedb5e5f2052479498109eff64b10, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-trees.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 2b58964bdc8ca5541ae6ac171f1d1aa7, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-vegetation.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: f83dd7da8c22bcc4985e2e2beaec7a70, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-water.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 0966839ee3f7eee44bbf8e209c5a396a, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/MountainDojo/ext-layer-waterfall.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 153b49d41c236b345af9b20c321d2f3e, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-back_wall_windows.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 52eab6155960b7d47aba8e63272aaee0, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-banners.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: dd006e71a18abc940a402e6df6fb67e5, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-floor.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 47684828a447dda4783b4a4da7beeac8, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-front_rail.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: fc20c26bfaa1ce345aab12a357b27e11, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-front_silhouette.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 4b31378847f9d624f92087b964389b23, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-lanterns.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: d9416ecae234e4c458d565aa9826375f, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-moon_forest.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 2a3964ffe823c8c429cf75768a8fecc4, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-outside_sky.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: a7db8cd8b691a304aa325805d7f8344a, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-pillars.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: e3e7e69f8c9ecf04cbdf8d0f80e269de, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/TrialHall/hall-layer-rear_rail.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: b517f6a3332ceed4d9769f196a668fde, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/guardian-hall-composite.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 7e64d3baf9e4cf54d8cac16dbada6b04, type: 3}
+  - source: image/K4RMA_Production_Art_v1/05_Environments/mountain-dojo-composite.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 7566e953218b0f34dbf50ebbfee17132, type: 3}
+  - source: image/K4RMA_Production_Art_v1/06_Props/props-foreground-atlas.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: fb5cfa00630cd8746a8d4cd98b4c6c7d, type: 3}
+  - source: image/K4RMA_Production_Art_v1/07_UI/skill-icons-lineart.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 0517f5b33202187469c3b0b446e52061, type: 3}
+  - source: image/K4RMA_Production_Art_v1/07_UI/ui-hud-atlas.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 197a3e3053b6e254f975ab4f5832db49, type: 3}
+  - source: image/K4RMA_Production_Art_v1/08_Screens/personalization-selection.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: f907dc61661baab4597563eb25c36c1d, type: 3}
+  - source: image/K4RMA_Production_Art_v1/08_Screens/results-transition-layouts.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: ee3649dff1ea03044992b32ecf34f1db, type: 3}
+  - source: image/K4RMA_Production_Art_v1/08_Screens/title-main-menu.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: c9a4e44514c063249863f13de00bad7d, type: 3}
+  - source: image/K4RMA_Production_Art_v1/09_Mockups/final-trial-gameplay-mockup.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 857f536bc0d9aea4d8fae00a88123585, type: 3}
+  - source: image/K4RMA_Production_Art_v1/09_Mockups/gameplay-exterior-mockup.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 01a55a870891e3d438c032a84208c122, type: 3}
+  - source: image/K4RMA_Production_Art_v1/09_Mockups/gameplay-hall-mockup.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 0b76359344c0e5449a64ae7276bafdeb, type: 3}
+  - source: image/K4RMA_Production_Art_v1/10_Original_References/reference-01-image-20261007-080734.jpeg
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 40c8265f904681547977c10b02b57125, type: 3}
+  - source: image/K4RMA_Production_Art_v1/10_Original_References/reference-02-image-5.jpeg
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: b0cbe2d63d3e2ad43a3842ef310bbcbc, type: 3}
+  - source: image/K4RMA_Production_Art_v1/10_Original_References/reference-03-IMG_1761-1.jpeg
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 933485e9c85e95740b600798025d9a28, type: 3}
+  - source: image/K4RMA_Production_Art_v1/10_Original_References/reference-04-9715591dfc80cee8-1.jpeg
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: ad6cf07df823c8b478e4f9c30f0c6924, type: 3}
+  - source: image/K4RMA_Production_Art_v1/10_Original_References/reference-05-image-20261007-080735.jpeg
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 462f2c9ed7f903945934cee04e37bd3d, type: 3}
+  - source: image/K4RMA_Production_Art_v1/10_Original_References/reference-06-image-4.jpeg
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 9417d82cf1cb7ad41b19df3524d8b059, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Reference/gameplay-approved-v7.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 03cbff9fd36eabf4e8f3a439ddd962bf, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/01-title-menu.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: d09bb65f28c1abf4e941e3a992acc99b, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/02-personalization-selection.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: d09e393c8157fbc4c86a0ad7324a8904, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/03-trial-clear.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 999b98c7c19628c44af987172969576f, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/04-pause.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: 1fbfa9be611da0b41adafe7a4567b46f, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/05-settings.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: e9faf04a4b5bc634494a600d3b1621a7, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/06-game-over.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: f2a1221b26af1d8448a626070b82edd1, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/07-final-clear.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: fd464c269e3575748be1f2b61e1267d7, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/08-scene-transition.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: d16d87e9661389444a775b9751cc9293, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/Screens/09-personalization-confirmation.png
+    usage: "\uD654\uBA74 \uAD6C\uC131 / \uC6D0\uD654 \uCC38\uC870 (\uC870\uC791 UI \uC544\uB2D8)"
+    image: {fileID: 2800000, guid: b2db4e27739ee8f4f9ae16deb6b220eb, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/UI/10-ui-component-atlas.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: c147c19846807b74d8f4f11170f835e1, type: 3}
+  - source: image/K4RMA_UI_Screens_v3/UI/menu-background-clean.png
+    usage: "\uAC8C\uC784\uD50C\uB808\uC774 / UI \uC6D0\uD654"
+    image: {fileID: 2800000, guid: 494e3ccc20e1c1846be8b42d6aa7865b, type: 3}

@@ -1,0 +1,500 @@
+fileFormatVersion: 2
+guid: cfc0fcfdd0ebf904182e293fa53353a4
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 1
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 150
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SW02Downcut_01
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1518
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: feaabf02b23c4e84483083c15472d2b0
+      internalID: -121116103
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_02
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 1518
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23d8b287d25586f4c96a486612e8df7a
+      internalID: 566185114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_03
+      rect:
+        serializedVersion: 2
+        x: 1320
+        y: 1518
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 132d09251fa44db40907327cea385b9f
+      internalID: -997867470
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_04
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 1012
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 004bf3554417e6a469c78613e46150e3
+      internalID: 1163459124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_05
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 506
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33ce290cb7520954fba48b96f7345818
+      internalID: 2041444888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_06
+      rect:
+        serializedVersion: 2
+        x: 1320
+        y: 506
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f6ca651c5dd810541899400295e212be
+      internalID: 263538730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_07
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 59b7a2cbca8303c42b4677955f3b38e1
+      internalID: -1274265638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_08
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 0
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6a155fffd51414c48b3ffff550380f3d
+      internalID: 1480109926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_09
+      rect:
+        serializedVersion: 2
+        x: 1320
+        y: 0
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 98f9e2f8f72b90c4dbac33fc828979b3
+      internalID: -1507419237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_01b
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 1518
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: feb16b6a6a4f2444391d77304d96df53
+      internalID: 153128446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_03b
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1012
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a4efbda8e7f21fc4cb84531e09b0221d
+      internalID: 3863520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_03c
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 1012
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83382743df2789a4392950ff6b40c220
+      internalID: 1717537276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_04b
+      rect:
+        serializedVersion: 2
+        x: 1320
+        y: 1012
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd1ede1ae24e4e44d9a67a1d9ee88ca4
+      internalID: -362251895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_05b
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 506
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 929e25d3996b52c4f9fc452e32b4aa74
+      internalID: 1750655108
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_05c
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 506
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1fdeeb2f802d4a8498e09ac20131b49a
+      internalID: 779287496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SW02Downcut_07b
+      rect:
+        serializedVersion: 2
+        x: 440
+        y: 0
+        width: 440
+        height: 506
+      alignment: 9
+      pivot: {x: 0.35454544, y: 0.03359684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2de1804bc2ea54a419d5e4c2aef417ef
+      internalID: -1404431431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 517d4ad52c0a70e4d80a005f8cacafe4
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SW02Downcut_01: -121116103
+      SW02Downcut_01b: 153128446
+      SW02Downcut_02: 566185114
+      SW02Downcut_03: -997867470
+      SW02Downcut_03b: 3863520
+      SW02Downcut_03c: 1717537276
+      SW02Downcut_04: 1163459124
+      SW02Downcut_04b: -362251895
+      SW02Downcut_05: 2041444888
+      SW02Downcut_05b: 1750655108
+      SW02Downcut_05c: 779287496
+      SW02Downcut_06: 263538730
+      SW02Downcut_07: -1274265638
+      SW02Downcut_07b: -1404431431
+      SW02Downcut_08: 1480109926
+      SW02Downcut_09: -1507419237
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: WaveInheritedWood
+  assetBundleName: 
+  assetBundleVariant: 

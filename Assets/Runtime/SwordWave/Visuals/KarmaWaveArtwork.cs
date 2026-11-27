@@ -41,7 +41,7 @@ namespace KarmaPrototype
                 case "SW03_GroundScar_v7": return new Rect(75, 283, 2028, 180);
                 case "SW03_RisingBlade_v7": return KarmaSwordScarRise.BladePixels;
                 case "SW03_HitCut_v7": return new Rect(113, 108, 1076, 1038);
-                case "SW04_CounterBlade_v6": return new Rect(46, 251, 2073, 244);
+                case "SW04_CounterBlade_v6": return new Rect(381, 157, 1747, 390);
                 case "Sword_Impact_v6": return new Rect(41, 91, 398, 364);
                 case "Sword_Release_v6": return new Rect(70, 95, 391, 327);
                 case "Sword_GuardRing_v6": return new Rect(27, 51, 459, 409);
@@ -66,7 +66,6 @@ namespace KarmaPrototype
                 case "SW01_StaggeredWave_v2": return new Rect(84, 197, 2018, 328);
                 case "SW03_GroundScar_v2": return new Rect(35, 232, 1920, 293);
                 case "SW03_RisingBlade_v2": return new Rect(34, 23, 661, 2138);
-                case "SW04_CounterBlade_v2": return new Rect(132, 167, 1994, 370);
                 case "SW01_StaggeredWave": return new Rect(43, 35, 1373, 279);
                 case "SW02_AimedSlash": return new Rect(124, 38, 878, 1445);
                 case "SW03_RisingBlade": return new Rect(39, 41, 233, 1325);
@@ -85,8 +84,9 @@ namespace KarmaPrototype
             // New poses load independently; legacy SW05 and shared
             // SW03_GroundImpact references keep their original library sprites.
             KarmaVisuals.ApplyMaterial(renderer);
-            if (Resolve(pose) == "SW03_GroundScar_v7") KarmaSwordSkillSurface.Apply(renderer, 5);
-            else if (Resolve(pose) == "SW04_CounterBlade_v6") KarmaSwordSkillSurface.Apply(renderer, 3);
+            string resolved = Resolve(pose);
+            if (resolved == "SW03_GroundScar_v7") KarmaSwordSkillSurface.Apply(renderer, 5);
+            else if (resolved == "SW04_CounterBlade_v6") KarmaSwordSkillSurface.Apply(renderer, 3);
             if (pose == "SW05_AerialSword")
             {
                 var material = KarmaArtResource.Load<Material>("SwordWave/SW05/KarmaAerialSword");
@@ -94,6 +94,12 @@ namespace KarmaPrototype
                 renderer.sharedMaterial = material;
             }
             Rect core = CorePixels(pose);
+            if (resolved == "SW04_CounterBlade_v6")
+            {
+                // The cutting core was measured on the original 2172 x 724 canvas.
+                var rect = renderer.sprite.rect;
+                core.size = Vector2.Scale(core.size, new Vector2(rect.width / 2172f, rect.height / 724f));
+            }
             float ppu = renderer.sprite.pixelsPerUnit;
             // The new crescent faces +X. Mirror horizontal lanes without turning
             // the upper half upside down when firing left.

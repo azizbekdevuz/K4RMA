@@ -16,7 +16,7 @@ ENERGY = ROOT / "Assets/Runtime/SwordWave/Visuals/KarmaSW05Energy.cs"
 HISTORICAL_REVISION = "036c22b"
 METHODS = ("Noise", "Direction", "Quad", "Line", "Shard", "SwordShard", "Bolt", "Ring",
            "HazardVolumes", "FinalEnergy", "FinalEruption", "EruptionPlume", "ClipFinalRegion",
-           "RibbonSegment", "Facet", "JudgementBlade", "FinalSite", "GroundSigil")
+           "RibbonSegment", "Facet", "JudgementBlade", "FinalSite", "GroundSigil", "WarningGround")
 
 
 
@@ -245,7 +245,7 @@ class SW05RestoredExplosionChecks(unittest.TestCase):
         self.assertNotIn("HazardVolumes(", charge)
         self.assertNotIn("JudgementBlade(", charge)
         self.assertNotIn("Shard(", charge)
-        self.assertNotIn("WarningGround(", charge)
+        self.assertIn("WarningGround(", charge)
         for s in self.samples:
             if s["mode"] == 0:
                 with self.subTest(sample=s):

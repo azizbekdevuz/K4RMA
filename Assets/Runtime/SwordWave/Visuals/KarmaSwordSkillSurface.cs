@@ -6,6 +6,8 @@ namespace KarmaPrototype
     // collider, random stream, attack clock or source Sprite is ever changed.
     public sealed class KarmaSwordSkillSurface : MonoBehaviour
     {
+        internal const int SteelPalette = 7;
+        internal bool UsesSteelPalette => style == SteelPalette;
         static Material material;
         static readonly int Style = Shader.PropertyToID("_Style");
         static readonly int Phase = Shader.PropertyToID("_Phase");
@@ -34,6 +36,7 @@ namespace KarmaPrototype
         internal void Restart(int mode)
         {
             age = 0; style = mode;
+            enabled = mode != SteelPalette;
             Paint();
         }
         void Update()

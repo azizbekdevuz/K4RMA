@@ -6,7 +6,7 @@ namespace KarmaPrototype
     {
         Sprite[] swordWalkFrames;
         bool swordWalkAllowed, swordWasWalking;
-        float swordWalkPhase, swordWalkSampleAge, swordWalkStopAge;
+        float swordWalkPhase, swordWalkStopAge;
         int swordWalkFacing, swordWalkFrame;
         float swordStride;
         const float WalkSampleSeconds = KarmaBootstrap.Step;
@@ -35,7 +35,7 @@ namespace KarmaPrototype
             // a walking cycle many times. Attack/air/evade never call ShowPose.
             if (!allowed || dt <= 0 || Mathf.Abs(travel) > stride * 0.75f)
             {
-                swordWasWalking = false; swordWalkSampleAge = swordWalkStopAge = 0;
+                swordWasWalking = false; swordWalkStopAge = 0;
                 swordWalkFacing = facing;
                 return false;
             }
@@ -45,22 +45,22 @@ namespace KarmaPrototype
             if (!moving && !swordWasWalking) return false;
             if (moving)
             {
-                swordWalkPhase = AdvanceSwordGait(swordWalkPhase, travel, stride, facing, turned);
-                swordWalkSampleAge += dt;
-                if (!swordWasWalking || turned || swordWalkSampleAge >= WalkSampleSeconds)
-                {
-                    swordWalkFrame = Mathf.Min(swordWalkFrames.Length - 1, Mathf.FloorToInt(swordWalkPhase * swordWalkFrames.Length));
-                    swordWalkSampleAge = Mathf.Repeat(swordWalkSampleAge, WalkSampleSeconds);
-                }
+                // One phase clock. Sampling distance with a second fixed clock
+                // used to repeat one contact and skip the opposite passing foot.
+                float maxTravel = stride * (dt + swordWalkStopAge) / (swordWalkFrames.Length * WalkSampleSeconds);
+                swordWalkPhase = AdvanceSwordGait(swordWalkPhase, Mathf.Clamp(travel, -maxTravel, maxTravel), stride, facing, turned);
+                swordWalkFrame = Mathf.Min(swordWalkFrames.Length - 1, (int)(swordWalkPhase * swordWalkFrames.Length));
                 swordWalkStopAge = 0;
             }
             else
             {
-                if (turned) swordWalkPhase = AdvanceSwordGait(swordWalkPhase, 0, stride, facing, true);
+                if (turned)
+                {
+                    swordWalkPhase = AdvanceSwordGait(swordWalkPhase, 0, stride, facing, true);
+                    swordWalkFrame = (int)(swordWalkPhase * swordWalkFrames.Length);
+                }
                 swordWalkStopAge += dt;
-                // Settle on the nearest supporting contact for at most two
-                // authored samples. No walking continues against a wall.
-                swordWalkFrame = Mathf.Repeat(swordWalkPhase + 0.25f, 1) < 0.5f ? 0 : swordWalkFrames.Length / 2;
+                // Retain the actual planted foot across a missed movement tick.
                 if (swordWalkStopAge >= 2 * WalkSampleSeconds)
                 { swordWasWalking = false; return false; }
             }

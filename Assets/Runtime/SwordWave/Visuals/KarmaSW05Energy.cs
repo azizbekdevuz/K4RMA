@@ -6,7 +6,7 @@ namespace KarmaPrototype
     // hundreds of particle/line objects; motion never touches gameplay geometry.
     public sealed class KarmaSW05Energy : MonoBehaviour
     {
-        enum Kind { Form = 1, Fall, Landing, Charge, Detonation, Eruption, Scar, ScarWarning, ScarFade, WardRelease, WardImpact, WardCollapse, Planted, Splinters, GroundStrike }
+        enum Kind { Form = 1, Fall, Landing, Charge, Detonation, Eruption, Scar, ScarWarning, ScarFade, WardRelease, WardImpact, WardCollapse, Planted, FallWarning, Splinters, GroundStrike }
         sealed class Buffer
         {
             public readonly Mesh mesh;
@@ -41,7 +41,7 @@ namespace KarmaPrototype
         struct LandingSite { public Vector2 at, axis; public float width, born; public int seed; }
         int landingCount, sampledFrame = -1;
         static int nextSeed;
-        static readonly Color Blue = new Color(0.08f, 0.55f, 1.1f), White = new Color(0.75f, 1.15f, 1.4f);
+        static readonly Color Blue = new Color(0.28f, 0.49f, 0.80f), White = new Color(0.84f, 0.95f, 1.08f);
         KarmaGame game; Transform follow; KarmaSW05RainBlade rain;
         SpriteRenderer bladePicture;
         MeshRenderer display; MeshFilter filter; Buffer buffer;
@@ -51,6 +51,12 @@ namespace KarmaPrototype
             public Vector2 foot, hilt;
             public float width;
         }
+        KarmaEnemy warningOwner;
+        SpriteRenderer[] fallMarks;
+        KarmaAerialSwordPlanner.Shot[] fallShots;
+        KarmaSW05RainBlade[] fallBlades;
+        float formationWarning;
+        int[] fallGroup, fallUrgent;
         Vector2[] chargeFeet, chargeHilts;
         KarmaSW05RainBlade[] chargeSwords;
         const float DetonationVisualSeconds = 0.48f;
@@ -124,6 +130,117 @@ namespace KarmaPrototype
                     Mathf.Max(0, size.y * (t * 4 - t * t * 5)));
                 Shard(p, new Vector2(side * 0.7f, 1).normalized, size.y * 0.30f * (1 - t), fade * 0.45f);
             }
+        }
+        public static KarmaSW05Energy FallWarnings(Transform root,KarmaGame game,KarmaEnemy owner,
+            SpriteRenderer[] marks,KarmaAerialSwordPlanner.Shot[] shots,float formationSeconds)
+        {
+            var fx=Create(root,game,Kind.FallWarning,float.PositiveInfinity,4096);
+            fx.warningOwner=owner;fx.fallMarks=marks;fx.fallShots=shots;
+            fx.fallBlades=new KarmaSW05RainBlade[marks.Length];fx.formationWarning=formationSeconds;
+            fx.fallGroup=new int[marks.Length];fx.fallUrgent=new int[marks.Length];
+            fx.name="SW05 batched falling sword warnings / no damage";fx.display.sortingOrder=31;
+            fx.count=0;fx.FallingWarnings();fx.Upload();return fx;
+        }
+        public void BindFallWarning(int index,KarmaSW05RainBlade blade) {fallBlades[index]=blade;}
+        bool HasFallWarnings()
+        {
+            if(warningOwner==null||!warningOwner.PresentationActive||warningOwner.Stunned
+                ||warningOwner.CurrentPattern!=(int)EnemyAttack.SW05)return false;
+            foreach(var mark in fallMarks)if(mark!=null&&mark.gameObject.activeInHierarchy)return true;
+            return false;
+        }
+        float FallWarningProgress(int index)
+        {
+            var shot=fallShots[index];
+            float elapsed=fallBlades[index]!=null?formationWarning+fallBlades[index].FallWarningAge:Mathf.Min(age,formationWarning);
+            return Mathf.Clamp01(elapsed/Mathf.Max(0.001f,formationWarning+shot.delay+shot.life));
+        }
+        float FallWarningWidth(int index)
+        {return fallShots[index].size.y/Mathf.Max(0.001f,Mathf.Abs(fallShots[index].velocity.normalized.y));}
+        float FallWarningRemaining(int index)
+        {
+            var shot=fallShots[index];
+            float elapsed=fallBlades[index]!=null?formationWarning+fallBlades[index].FallWarningAge:Mathf.Min(age,formationWarning);
+            return Mathf.Max(0,formationWarning+shot.delay+shot.life-elapsed);
+        }
+        void FallingWarnings()
+        {
+            float clock=age;int groups=0;
+            // Merge only coincident footprints, against a fixed group anchor.
+            // A later array entry may land FIRST: never discard its urgency.
+            for(int i=0;i<fallMarks.Length;i++)
+            {
+                var mark=fallMarks[i];if(mark==null||!mark.gameObject.activeInHierarchy)continue;
+                int group=-1;float x=mark.transform.position.x,width=FallWarningWidth(i);
+                for(int g=0;g<groups;g++)
+                {
+                    int anchor=fallGroup[g];
+                    if(Mathf.Abs(x-fallMarks[anchor].transform.position.x)<0.025f
+                        &&Mathf.Abs(width-FallWarningWidth(anchor))<0.025f){group=g;break;}
+                }
+                if(group<0){fallGroup[groups]=fallUrgent[groups]=i;groups++;}
+                else if(FallWarningRemaining(i)<FallWarningRemaining(fallUrgent[group]))fallUrgent[group]=i;
+            }
+            for(int g=0;g<groups;g++)
+            {
+                int anchor=fallGroup[g];float x=fallMarks[anchor].transform.position.x,width=FallWarningWidth(anchor);
+                int neighbors=0;
+                for(int other=0;other<groups;other++)
+                {
+                    if(other==g)continue;int j=fallGroup[other];
+                    if(Mathf.Abs(x-fallMarks[j].transform.position.x)<(width+FallWarningWidth(j))*0.65f)neighbors++;
+                }
+                DrawFallWarning(new Vector2(x,0.04f),width,FallWarningProgress(fallUrgent[g]),clock,
+                    Mathf.Max(0.55f,1/(1+neighbors*0.16f)),anchor);
+            }
+        }
+        void DrawFallWarning(Vector2 foot,float width,float progress,float clock,float crowd,int index)
+        {
+            int first=count;
+            float half=width*0.5f;
+            float ready=Mathf.SmoothStep(0,1,progress);
+            float power=(0.72f+0.28f*ready)*crowd;
+            // Dense decorations fade, but exact danger brackets stay legible.
+            float boundaryPower=(0.72f+0.28f*ready)*Mathf.Max(0.85f,crowd);
+            float lo=Mathf.Max(KarmaStage.ArenaLeft,foot.x-half),hi=Mathf.Min(KarmaStage.ArenaRight,foot.x+half);
+            if(hi<=lo)return;
+            float center=(lo+hi)*0.5f,span=(hi-lo)*0.5f;
+            // All anticipation stays on the floor. The outer edges are fixed;
+            // only the inner engraving converges as the actual landing approaches.
+            WarningGround(lo,hi,progress,power);
+            Quad(new Vector2(lo,0.15f),new Vector2(hi,0.15f),0.065f,
+                new Color(0.17f,0.33f,0.57f,power*(0.16f+0.18f*ready)));
+            for(int side=-1;side<=1;side+=2)
+            {
+                float edge=side<0?lo:hi;
+                Line(new Vector2(edge,0.045f),new Vector2(edge,0.30f),0.032f+ready*0.012f,boundaryPower);
+                float inset=Mathf.Min(span*0.28f,0.18f);
+                Line(new Vector2(edge,0.30f),new Vector2(edge-side*inset,0.34f),0.025f,boundaryPower*0.82f);
+                Vector2 tip=new Vector2(center+side*span*(0.12f+0.52f*(1-ready)),0.15f);
+                Line(tip+new Vector2(side*Mathf.Min(span*0.22f,0.20f),0.07f),tip,0.025f,power*0.8f);
+                Line(tip+new Vector2(side*Mathf.Min(span*0.22f,0.20f),-0.07f),tip,0.025f,power*0.8f);
+            }
+            Line(new Vector2(center,0.08f),new Vector2(center,0.23f),0.025f,power*(0.4f+0.6f*ready));
+            for(int v=first*4;v<count*4;v++)
+            {buffer.vertices[v].x=Mathf.Clamp(buffer.vertices[v].x,lo,hi);buffer.vertices[v].y=Mathf.Max(0.01f,buffer.vertices[v].y);}
+        }
+        void WarningGround(float left,float right,float progress,float power)
+        {
+            float center=(left+right)*0.5f,half=(right-left)*0.5f;
+            Vector2 a=new Vector2(left,0.15f),b=new Vector2(right,0.15f);
+            // Low navy contrast, a curved cyan seal, and converging blue-white
+            // strokes remain readable without an opaque rectangular floor bar.
+            Quad(a,b,0.12f,new Color(0.008f,0.025f,0.07f,power*0.8f));
+            for(int i=0;i<32;i++)
+            {
+                float u=i*Mathf.PI*2/32,v=(i+1)*Mathf.PI*2/32;
+                Vector2 p=new Vector2(center+Mathf.Cos(u)*half,0.15f+Mathf.Sin(u)*0.11f);
+                Vector2 q=new Vector2(center+Mathf.Cos(v)*half,0.15f+Mathf.Sin(v)*0.11f);
+                Line(p,q,0.020f,power*0.65f);
+            }
+            float gap=half*(1-Mathf.SmoothStep(0,1,progress));
+            Line(a,new Vector2(center-gap,a.y),0.04f,power);
+            Line(new Vector2(center+gap,b.y),b,0.04f,power);
         }
         public static void Blade(Transform root, KarmaGame game, Transform blade, Vector2 size, bool falling)
         {
@@ -718,8 +835,8 @@ namespace KarmaPrototype
 
         void ScarLine(Vector2 a,Vector2 b,float width,float alpha)
         {
-            Quad(a,b,width*1.65f,new Color(0.04f,0.42f,1.0f,alpha*0.26f));
-            Quad(a,b,width*0.55f,new Color(0.70f,1.02f,1.22f,alpha));
+            Quad(a,b,width*1.65f,new Color(0.21f,0.42f,0.72f,alpha*0.26f));
+            Quad(a,b,width*0.55f,new Color(0.78f,0.89f,1.04f,alpha));
         }
 
         void WardEnergy()
@@ -971,7 +1088,7 @@ namespace KarmaPrototype
             Vector2 notch=root+d*0.67f-n*breadth*0.13f;
             Facet(root,left,tip,Blue,power*0.13f,power*0.06f);
             Facet(root,right,tip,Blue,power*0.27f,power*0.08f);
-            Facet(root,left,notch,new Color(0.12f,0.83f,1.3f),power*0.40f,power*0.24f);
+            Facet(root,left,notch,new Color(0.38f,0.65f,0.94f),power*0.40f,power*0.24f);
             Facet(root,shoulder+n*breadth*0.16f,tip,White,power*0.83f,power*0.18f);
             Facet(root,shoulder-n*breadth*0.12f,notch,White,power*0.95f,power*0.75f);
             Vector2 hook=left+d*0.15f-n*breadth*0.23f;
@@ -1026,6 +1143,7 @@ namespace KarmaPrototype
             foreach(var zone in zones)
             {
                 int first=count*4,clusters=Mathf.Clamp(Mathf.CeilToInt((zone.y-zone.x)/3.8f),1,18);
+                WarningGround(zone.x,zone.y,t,0.68f+0.32f*t);
                 // Light boundary strokes announce the actual jump-clearance ceiling.
                 for (int k = 0; k < clusters * 4; k++)
                 {
@@ -1182,6 +1300,7 @@ namespace KarmaPrototype
         {
             if (game == null || game.Phase != RunPhase.Combat || buffer == null)
             { Destroy(gameObject); return; }
+            if(kind==Kind.FallWarning&&!HasFallWarnings()){gameObject.SetActive(false);Destroy(gameObject);return;}
             if (game.Paused) return;
             if ((kind != Kind.Detonation || Time.frameCount != detonationFrame)
                 && (kind != Kind.Splinters || Time.frameCount != splinterFrame)) age += Time.deltaTime;
@@ -1206,6 +1325,7 @@ namespace KarmaPrototype
                 if(landingCount==0){gameObject.SetActive(false);Destroy(gameObject);return;}
             }
             else if(kind==Kind.GroundStrike)GroundStrikeEnergy();
+            else if(kind==Kind.FallWarning)FallingWarnings();
             else if (kind == Kind.Form || kind == Kind.Fall) BladeEnergy();
             else if (kind == Kind.Planted) PlantedEnergy();
             else if(kind==Kind.Scar||kind==Kind.ScarWarning||kind==Kind.ScarFade)ScarEnergy();

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aba87f58e676474b87c6f825b4aed1e0, type: 3}
+  m_Name: WaveWardShieldRaise
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtResource
+  asset: {fileID: 0}
+  frames:
+  - {fileID: -1059818835, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: -1918865990, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: 1116136763, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: -836889760, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: 1114310891, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: -1107573542, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: -1889010395, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: 580466011, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}
+  - {fileID: 1305005017, guid: 4d8c994b924c5794e9aa421dacb82b2d, type: 3}

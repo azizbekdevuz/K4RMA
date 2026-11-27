@@ -11,7 +11,7 @@ namespace KarmaPrototype
             Transform groundRoot, roundRoot;
             int? seedOverride;
             float[] previousPlacement;
-            bool firstRoundReleased;
+            bool swordPlanted;
             public int Seed { get; private set; }
             public KarmaSwordScarPlanner.Plan CurrentPlan { get; private set; }
             public bool Running { get { return groundRoot != null && groundRoot.gameObject.activeSelf; } }
@@ -38,17 +38,18 @@ namespace KarmaPrototype
             public override IEnumerator Execute()
             {
                 if (Running || !owner.Active) yield break;
-                firstRoundReleased = false;
+                swordPlanted = false;
+                CurrentPlan = null;
                 owner.state = ActionState.Telegraph;
-                owner.animator.BeginSwordGroundStrike(Mathf.Max(KarmaSwordScarPlanner.MinimumWarning, owner.Warning(Settings.scarWarningSeconds)));
                 groundRoot = new GameObject("SW03 independent ground timeline").transform;
                 groundRoot.SetParent(sword.PersistentRoot, false);
                 groundRoot.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
                 groundRoutine = owner.StartCoroutine(RunGround());
-                // Plant only for the initial command. Later rounds retain their
-                // independent clock and the existing mobile evasion behaviour.
-                while (Running && owner.Active && !firstRoundReleased) yield return null;
-                if (firstRoundReleased && owner.Active) yield return owner.Wait(2f / 24);
+                // Hold the initial planted sword for one second. Ground rounds
+                // retain their independent clock, then mobile evasion resumes.
+                while (Running && owner.Active && !swordPlanted) yield return null;
+                if (swordPlanted && owner.Active)
+                    yield return owner.Wait(KarmaCharacterAnimator.SwordGroundPlantSeconds + KarmaBootstrap.Step);
             }
             IEnumerator RunGround()
             {
@@ -103,6 +104,25 @@ namespace KarmaPrototype
             }
             IEnumerator ExecuteSequence()
             {
+                float windup = Mathf.Max(KarmaSwordScarPlanner.MinimumWarning, owner.Warning(Settings.scarWarningSeconds));
+                owner.animator.BeginSwordGroundStrike(windup);
+                float raised = 0;
+                while (raised < windup)
+                {
+                    yield return null;
+                    if (!owner.Active) yield break;
+                    if (owner.game.Paused || owner.game.Player.Stunned) continue;
+                    raised += Time.deltaTime;
+                    owner.animator.SampleSwordGroundStrike(raised / windup);
+                }
+                if (!owner.animator.ReleaseSwordGroundStrike()) yield break;
+                swordPlanted = true;
+                owner.state = ActionState.Attack;
+                KarmaSW05Energy.GroundStrike(groundRoot, owner.game,
+                    new Vector2(owner.animator.SwordGroundTipX, 0.04f), owner.animator.SwordChargeBodyHeight);
+                // Let the contact drawing reach the screen before revealing the marked sites.
+                yield return owner.Wait(KarmaBootstrap.Step);
+                if (!owner.Active) yield break;
                 Seed = seedOverride ?? KarmaSwordScarPlanner.NextSeed();
                 // Explicit test casts replay from the same initial inputs. Normal
                 // casts retain the last visible layout, even after interruption.
@@ -160,7 +180,6 @@ namespace KarmaPrototype
                         {
                             elapsed = 0;
                             foreach (var mark in marks) mark.SetWarningProgress(0);
-                            if (round == 0) owner.animator.SampleSwordGroundStrike(0);
                             continue;
                         }
                         elapsed += Time.deltaTime;
@@ -168,31 +187,18 @@ namespace KarmaPrototype
                         {
                             float progress = Mathf.Clamp01(elapsed / warning);
                             foreach (var mark in marks) mark.SetWarningProgress(progress);
-                            if (round == 0) owner.animator.SampleSwordGroundStrike(progress);
                             // Frame drops may extend the common warning, never shorten it.
                             if (elapsed < warning) continue;
                             warningRoot.gameObject.SetActive(false);
                             Destroy(warningRoot.gameObject);
                             releaseAt = elapsed;
                             // No yields or delayed starts inside this whole-round pass.
-                            if (round == 0)
-                            {
-                                firstRoundReleased = true;
-                                owner.state = ActionState.Attack;
-                                owner.animator.ReleaseSwordGroundStrike();
-                                KarmaSW05Energy.GroundStrike(groundRoot, owner.game,
-                                    new Vector2(owner.Position.x + owner.direction * owner.animator.SwordChargeBodyHeight * 0.12f, 0.04f),
-                                    owner.animator.SwordChargeBodyHeight);
-                            }
                             ReleaseRound(releaseRoot, size, active, contacts);
                             KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_Release_v6",
                                 owner.Position + new Vector2(owner.direction * 1.1f, -0.8f),
                                 new Vector2(0.55f, 4.5f), 0.12f, scope: roundRoot);
                             KarmaAudio.StopSlot("sw-bed");
                             KarmaAudio.Play(KarmaSfxId.SwElectricDischarge);
-                            if (round == KarmaSwordScarPlanner.Rounds - 1)
-                                KarmaSwordVfxPool.For(owner.game).Flash(owner, "Sword_GuardRing_v6",
-                                    owner.Position, Vector2.one * 3.5f, 0.16f, scope: roundRoot);
                         }
                         for (int i = 0; i < contacts.Length; i++)
                             if (!feedbackShown[i] && contacts[i].DealtDamage)

@@ -139,8 +139,8 @@ public static class KarmaSW02AnimationChecks
         probe.After = null; UnityEngine.Object.Destroy(probe.gameObject); Check(error == null, error);
         Check(cast.shots == 1 && cast.hitTick >= 0 && cast.damage > 0, cast.key + " one actual shot and damage contact");
         if (!baseline && form == 0)
-            foreach (var name in new[] { "Prepare01", "Prepare02", "Swing01", "Swing02", "Recover01", "Recover02" })
-                Check(sprites.Contains(name), cast.key + " real-loop displayed " + name);
+            foreach (var pose in Resources.Load<KarmaSwordBasicArt>("SwordWave/Cast/Wave").poses)
+                Check(sprites.Contains(pose.name), cast.key + " real-loop displayed " + pose.name);
         results.Add("PASS: " + cast.key + " release=" + cast.releaseTick + ", hit=" + cast.hitTick + ", recovery=" + cast.recoveryTick + ", end=" + cast.endTick + ", damage=" + cast.damage);
         return cast;
     }

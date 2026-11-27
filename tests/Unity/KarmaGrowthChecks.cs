@@ -360,6 +360,9 @@ public static class KarmaGrowthChecks
         var guardianArt = game.Enemies[0].GetComponentInChildren<KarmaCharacterAnimator>();
         var body = guardianArt.GetComponentInChildren<SpriteRenderer>();
         var bodyMaterial = body.sharedMaterial;
+        var firstSword = stage == 1 && game.Enemies[0].PrimaryType == Essence.SwordWave
+            ? Resources.Load<KarmaSwordBasicArt>("SwordWave/Basic/Wave") : null;
+        var basicFlight = firstSword != null ? KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_SW01Flight_0") : null;
         var halo = (SpriteRenderer)Get(growth, "inheritedHalo");
         if (stage == 1 && game.Enemies[0].PrimaryType == Essence.Guard)
             Check(halo != null && game.Enemies[0].AutoShieldActive, "The guard shield remains active during its visual introduction");
@@ -409,6 +412,15 @@ public static class KarmaGrowthChecks
                 Check(halo.color.a == 0, "The inherited shield is invisible on the neutral guardian");
             if (halo != null && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Adapt)
                 Check(halo.color == (Color)Get(growth, "haloColor"), "The normal shield is restored before the signature");
+            if (firstSword != null && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Adapt)
+            {
+                Check(basicFlight != null && demos[0].sprite == basicFlight, "First sword inheritance fires the basic ranged drawing");
+                Check(body.sprite == firstSword.idle || body.sprite.texture == firstSword.poses[0].texture,
+                    "First sword demonstration uses the full-size basic attack body");
+            }
+            if (firstSword != null && growth.CurrentBeat == KarmaGuardianGrowth.Beat.Ready)
+                Check(body.sprite == firstSword.idle && body.transform.localScale == (Vector3)Get(guardianArt, "pictureScale"),
+                    "First sword inheritance holds its combat-sized Idle after release");
             if (growth.CaptionAlpha > 0.9f && captions.LastOrDefault() != growth.Caption) captions.Add(growth.Caption);
             if (growth.CurrentBeat == KarmaGuardianGrowth.Beat.Hesitate)
             {
@@ -461,7 +473,11 @@ public static class KarmaGrowthChecks
             {
                 string path = AssetDatabase.GetAssetPath(body.sprite);
                 string owner = previousForm == "Wave" ? "SwordWave" : previousForm == "Ward" ? "Guard" : "RisingSlash";
-                Check(path == "Assets/Arts/" + owner + "/" + previousForm + "/InspectWeapon.png", "Original weapon inspection is displayed by the previous guardian");
+                if (previousForm == "Wave" && game.LastPersonalizedEssence == Essence.Guard)
+                    Check(body.sprite == KarmaArtResource.First("Motions12/Wave/Guard"),
+                        "The sword guardian studies its blade in the same guard stance it rehearsed");
+                else
+                    Check(path == "Assets/Arts/" + owner + "/" + previousForm + "/InspectWeapon.png", "Original weapon inspection is displayed by the previous guardian");
                 inspectedWeapon = true;
             }
             if (beats.Add(growth.CurrentBeat))

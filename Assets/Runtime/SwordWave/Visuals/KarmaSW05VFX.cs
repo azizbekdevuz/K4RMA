@@ -8,10 +8,8 @@ namespace KarmaPrototype
     public sealed class KarmaSW05VFX : MonoBehaviour
     {
         static readonly Color Ember = new Color(0.42f, 0.86f, 1);
-        static Material celestial, crimsonBlade, woodMaterial, contactMaterial;
+        static Material crimsonBlade, woodMaterial, contactMaterial;
         static Sprite judgementSword;
-        static readonly int Progress = Shader.PropertyToID("_Progress");
-        static readonly int Mode = Shader.PropertyToID("_Mode");
         static readonly int Formation = Shader.PropertyToID("_Formation");
         static readonly int Dissolve = Shader.PropertyToID("_Dissolve");
         static readonly int VisualTime = Shader.PropertyToID("_VisualTime");
@@ -25,19 +23,11 @@ namespace KarmaPrototype
         float fallingWidth;
         Color plantedTint, chargeTint;
         float age, visualAge, life;
-        bool falling, warning, planted, forming;
+        bool falling, planted, forming;
         bool charging, embedding;
         float chargeAge, chargeSeconds;
         public SpriteRenderer Sword => sigil;
 
-        static Material Celestial
-        {
-            get
-            {
-                if (celestial == null) celestial = KarmaArtResource.Load<Material>("SwordWave/SW05/SW05Celestial");
-                return celestial;
-            }
-        }
         public static void ApplySword(SpriteRenderer renderer, Vector2 size, Vector2 velocity)
         {
             if (judgementSword == null) judgementSword = KarmaArtwork.Sprite("SwordBossVFX", "SW05_HeavyJudgementSword_optional");
@@ -62,19 +52,11 @@ namespace KarmaPrototype
             sword.color = tint;
             sword.sortingOrder = 23 + Mathf.RoundToInt(depth * 6);
         }
-        public static SpriteRenderer Warning(Transform root, KarmaGame game, Vector2 at, Vector2 size)
+        public static SpriteRenderer FallWarning(Transform root, Vector2 at, Vector2 size)
         {
-            var marker = KarmaVisuals.Box(root, "SW05 locked warning / no damage", at, size, Ember, 32);
-            if (Celestial != null) marker.sharedMaterial = Celestial;
-            var fx = marker.gameObject.AddComponent<KarmaSW05VFX>();
-            fx.game = game;
-            fx.sigil = marker;
-            fx.warning = true;
-            fx.life = float.PositiveInfinity;
-            fx.properties = new MaterialPropertyBlock();
-            fx.properties.SetFloat(Mode, 5);
-            fx.properties.SetFloat(Progress, 0);
-            marker.SetPropertyBlock(fx.properties);
+            // The rain blade owns this landing point until impact. One mesh draws the whole group.
+            var marker = KarmaVisuals.Box(root, "SW05 fall glyph lifetime / no damage", at, size, Color.clear, 10);
+            marker.enabled = false;
             return marker;
         }
         public static KarmaSW05VFX Ascent(SpriteRenderer blade, Vector2 size, KarmaGame game)
@@ -239,14 +221,7 @@ namespace KarmaPrototype
                 if (age >= life) Destroy(gameObject);
                 return;
             }
-            if (warning)
-            {
-                float pulse = 0.5f + 0.5f * Mathf.Sin(age * 12);
-                sigil.color = Color.Lerp(Ember, Color.white, pulse * 0.55f);
-                properties.SetFloat(Progress, age);
-                sigil.SetPropertyBlock(properties);
-                // The pattern owns the warning through its final yield frame.
-            }
+
         }
     }
 }

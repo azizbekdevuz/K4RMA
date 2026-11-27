@@ -57,8 +57,7 @@ namespace KarmaPrototype
         MeshFilter backFilter,frontFilter;MeshRenderer back,front;
         Buffer shell,detail;
         float age,absorbedAt=-10,releasedAt=-10,lockedAt=-10,endingAt=-1;
-        bool countering,locked,collapsed,preparing,dispersing;
-        float preparationSeconds;
+        bool countering,locked,collapsed,dispersing;
         const float DissolveSeconds=0.12f;
         const float ShatterSeconds=0.58f;
         // Visual randomness is independent of combat's Unity random stream.
@@ -78,9 +77,8 @@ namespace KarmaPrototype
                 }
             }
         }
-        float bladesBoundAt;
-        int aiming=-1;
-        Vector2 aimOrigin,aimAxis,aimSize,foot;
+        Vector2 foot;
+        Vector2? formationOrigin;
         float height,radius;
         public bool Countering => countering;
         public int FrameIndex { get; private set; }
@@ -90,30 +88,21 @@ namespace KarmaPrototype
         Vector2 Center=>foot+Vector2.up*(height*0.48f);
         float FloorAngle=>-Mathf.Asin(height*0.48f/radius);
         float GroundRadius=>Mathf.Sqrt(radius*radius-height*height*0.48f*0.48f);
-        public static KarmaSwordWardVfx Create(Transform root,KarmaGame game,KarmaEnemy owner,SpriteRenderer[] blades)
+        public static KarmaSwordWardVfx Create(Transform root,KarmaGame game,KarmaEnemy owner,SpriteRenderer[] blades,Vector2? formationOrigin = null)
         {
             var go=new GameObject("SW04 electric hex dome / no damage");go.transform.SetParent(root,false);
             var fx=go.AddComponent<KarmaSwordWardVfx>();fx.game=game;fx.owner=owner;fx.blades=blades;
-            fx.BindBlades(blades);
+            fx.formationOrigin=formationOrigin;
+            fx.bladeScales=new Vector3[blades.Length];fx.bladeOrders=new int[blades.Length];
+            for(int i=0;i<blades.Length;i++)if(blades[i]!=null)
+            {fx.bladeScales[i]=blades[i].transform.localScale;fx.bladeOrders[i]=blades[i].sortingOrder;}
             var art=owner.transform.Find("Artwork/Guardian sprite");
             fx.body=art!=null?art.GetComponent<SpriteRenderer>():null;
             fx.animator=art!=null?art.GetComponentInParent<KarmaCharacterAnimator>():null;
             fx.shell=spare.Count>0?spare.Pop():new Buffer();fx.detail=spare.Count>0?spare.Pop():new Buffer();
             fx.back=fx.Layer("SW04 transparent shell behind body",fx.shell,out fx.backFilter);
             fx.front=fx.Layer("SW04 fine hexes and electric rim",fx.detail,out fx.frontFilter);
-            fx.age=0.30f;fx.Paint();return fx;
-        }
-        void BindBlades(SpriteRenderer[] pictures)
-        {
-            blades=pictures;bladesBoundAt=age;
-            bladeScales=new Vector3[blades.Length];bladeOrders=new int[blades.Length];
-            for(int i=0;i<blades.Length;i++)if(blades[i]!=null)
-            {bladeScales[i]=blades[i].transform.localScale;bladeOrders[i]=blades[i].sortingOrder;}
-        }
-        public void Form(Transform root,SpriteRenderer[] pictures)
-        {
-            // Preserve the shell, phase and pooled meshes across the warning boundary.
-            preparing=false;transform.SetParent(root,true);BindBlades(pictures);Paint();
+            fx.Paint();return fx;
         }
         MeshRenderer Layer(string name,Buffer buffer,out MeshFilter filter)
         {
@@ -163,7 +152,7 @@ namespace KarmaPrototype
         }
         public float BladeOrbitAlpha(int blade,float seconds)
         { return (0.985f+0.015f*Mathf.Sin(OrbitPhase(blade,seconds)))
-                *Mathf.SmoothStep(0,1,(age-bladesBoundAt)/0.18f); }
+                *Mathf.SmoothStep(0,1,age/0.18f); }
         public void ApplyBladeOrbitDepth(int blade,float seconds)
         {
             if(blades[blade]==null)return;
@@ -191,12 +180,28 @@ namespace KarmaPrototype
                     center+new Vector2(Mathf.Cos(b)*rx,Mathf.Sin(b)*ry),width*(0.25f+taper*0.75f),color);
             }
         }
-        public static KarmaSwordWardVfx Prepare(KarmaGame game,KarmaEnemy owner,float seconds)
+        void GroundRim(float unfold)
         {
-            var fx=Create(game.World,game,owner,System.Array.Empty<SpriteRenderer>());
-            fx.preparing=true;fx.preparationSeconds=seconds;fx.age=0;fx.Paint();
-            if(game.IsCombat&&owner.Alive)KarmaAudio.Play(KarmaSfxId.SwEnergyCharge,seconds,fx);
-            return fx;
+            // Both halves meet the cut edges of the dome at foot height.
+            // Positive screen Y recedes along the floor, behind the guardian.
+            const int segments = 32;
+            float width = GroundRadius * unfold;
+            float depth = width * 0.23f;
+            float stroke = height * unfold * 0.006f;
+            Vector2 previous = new Vector2(width, 0);
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = Mathf.PI * i / segments;
+                Vector2 next = new Vector2(Mathf.Cos(angle) * width, Mathf.Sin(angle) * depth);
+                float facing = Mathf.Sin(angle - 0.5f * Mathf.PI / segments);
+                shell.Line(foot + previous, foot + next, stroke * (1 - 0.35f * facing),
+                    Blue((0.53f - 0.18f * facing) * unfold));
+                Vector2 nearA = foot + new Vector2(previous.x, -previous.y);
+                Vector2 nearB = foot + new Vector2(next.x, -next.y);
+                detail.Line(nearA, nearB, stroke * (1 + 0.55f * facing),
+                    Color.Lerp(Blue(0.53f * unfold), White(0.82f * unfold), facing));
+                previous = next;
+            }
         }
         Vector2 Surface(float longitude,float latitude,float unfold)
         {
@@ -232,41 +237,6 @@ namespace KarmaPrototype
         }
         void ElectricLine(Buffer buffer,Vector2 a,Vector2 b,float width,float alpha)
         {buffer.Line(a,b,width*4,Blue(alpha*0.10f));buffer.Line(a,b,width,White(alpha));}
-        void Crackle(float unfold,float clock,float intensity)
-        {
-            // Deterministic 24 Hz bursts: new short forks every 2-3 frames,
-            // confined to the rim and outer cells instead of flashing the body.
-            int frame=(int)Mathf.Floor(clock*24);
-            for(int i=0;i<10;i++)
-            {
-                int tick=frame+i*7,cycle=tick/3;
-                if((cycle+i)%4==0)continue;
-                float seed=Mathf.Repeat(Mathf.Sin(cycle*13.37f+i*7.91f)*437.3f,1);
-                float u=0.04f+seed*0.88f;
-                Vector2 last=Dome(u,unfold);
-                float alpha=(tick%3==0?0.90f:0.48f)*unfold*intensity;
-                for(int j=1;j<=6;j++)
-                {
-                    Vector2 next=Dome(Mathf.Min(0.98f,u+j*0.009f),unfold);
-                    if(j<6)next+=Direction(seed*19+j*2.4f)*radius*0.018f;
-                    ElectricLine(detail,last,next,height*0.005f,alpha);
-                    if(j==3)
-                    {
-                        Vector2 branch=next+(foot-next)*0.06f+Direction(seed*9)*height*0.022f;
-                        ElectricLine(detail,next,branch,height*0.003f,alpha*0.65f);
-                    }
-                    last=next;
-                }
-                // A short lightning seam follows the curved hex surface.
-                float longitude=(i%2==0?-1:1)*(0.85f+seed*0.35f);
-                last=Surface(longitude,0.25f+seed*0.75f,unfold);
-                for(int j=1;j<=3;j++)
-                {
-                    Vector2 next=Surface(longitude+(j%2==0?0:0.08f),0.25f+seed*0.75f+j*0.04f,unfold);
-                    ElectricLine(detail,last,next,height*0.003f,alpha*0.55f);last=next;
-                }
-            }
-        }
         void Membrane(float unfold,float clock,float warning)
         {
             // A continuous blue volume, with denser edges and a soft moving
@@ -291,27 +261,6 @@ namespace KarmaPrototype
                 Vector2 b=foot+(Dome(u+0.007f,unfold)-foot)*0.94f;
                 float taper=Mathf.Sin((i+0.5f)/24*Mathf.PI);
                 ElectricLine(detail,a,b,height*0.008f*taper,0.42f*taper*unfold);
-            }
-        }
-        void BladeTrails(float unfold)
-        {
-            // The pattern and trails sample the same shell orbit. Anchor the
-            // trail to the actual slot, including its arena-edge safety clamp.
-            for(int blade=0;blade<blades.Length;blade++)
-            {
-                if(blades[blade]==null||!blades[blade].enabled||blade==aiming)continue;
-                Vector2 at=blades[blade].transform.position;
-                float seconds=owner.FightSeconds;
-                Vector2 current=OrbitPoint(blade,seconds);
-                for(int j=0;j<12;j++)
-                {
-                    float a=j*0.015f,b=(j+1)*0.015f;
-                    Vector2 from=at+OrbitPoint(blade,seconds-a)-current;
-                    Vector2 to=at+OrbitPoint(blade,seconds-b)-current;
-                    float fade=(1-j/12f)*unfold*BladeOrbitAlpha(blade,seconds)/0.96f;
-                    Buffer layer=Mathf.Sin(OrbitPhase(blade,seconds-a))<0?shell:detail;
-                    ElectricLine(layer,from,to,height*0.007f*fade,fade*0.78f);
-                }
             }
         }
         void PaintShards()
@@ -373,7 +322,11 @@ namespace KarmaPrototype
             if(dispersing){PaintShards();return;}
             // Mesh motion follows render frames; only authored sprite indexing is 24 FPS.
             float clock=age;FrameIndex=(int)Mathf.Floor(age*KarmaBootstrap.FramesPerSecond)%KarmaBootstrap.FramesPerSecond;
-            float unfold=Mathf.SmoothStep(0,1,age/(preparing?Mathf.Max(0.05f,preparationSeconds):0.30f));
+            float unfold=Mathf.SmoothStep(0,1,age/0.18f);
+            // The shell grows from the raised buckler into its body-centred shape.
+            // Orbit slots are siblings and keep their gameplay positions.
+            if (formationOrigin.HasValue && unfold < 1 && endingAt < 0)
+                transform.position = (formationOrigin.Value - foot) * (1 - unfold);
             float absorb=1-Mathf.SmoothStep(0,1,(age-absorbedAt)/0.30f);
             float release=1-Mathf.Clamp01((age-releasedAt)/0.16f);
             float warning=locked?Mathf.Clamp01((age-lockedAt)/0.18f):0;
@@ -383,7 +336,6 @@ namespace KarmaPrototype
             float fade=1-Mathf.SmoothStep(0,1,(endProgress-0.2f)/0.8f);
             Membrane(unfold,clock,warning);
             Hexagons(unfold,clock,intensity);
-            Crackle(unfold,clock,intensity);
             for(int i=0;i<96;i++)
             {
                 Vector2 a=Dome(i/96f,unfold),b=Dome((i+1)/96f,unfold);
@@ -394,20 +346,7 @@ namespace KarmaPrototype
                 detail.Line(a,b,height*0.018f,Blue(0.045f*unfold));
                 ElectricLine(detail,a,b,height*(0.0045f+release*0.003f),(0.65f+warning*0.2f+release*0.15f)*unfold);
             }
-            // Current crawls around the shell, with short jagged branches.
-            for(int i=0;i<8;i++)
-            {
-                float u=Mathf.Repeat(clock*0.12f+i/8f,0.94f)+0.03f;
-                Vector2 last=Dome(u,unfold);
-                for(int j=1;j<=5;j++)
-                {
-                    Vector2 next=Dome(Mathf.Min(1,u+j*0.008f),unfold);
-                    if(j<5)next+=Direction(j*2.9f+i+clock*17)*height*0.009f;
-                    detail.Line(last,next,height*(locked?0.007f:0.004f),White(0.48f*intensity*unfold));last=next;
-                }
-            }
-            Curve(detail,foot,GroundRadius*unfold,height*0.035f*unfold,0,Mathf.PI*2,height*0.004f,Blue(0.48f*unfold));
-            BladeTrails(unfold);
+            GroundRim(unfold);
             // A shallow pulse travels over the existing surface after a real hit.
             // Its low opacity leaves the boss silhouette and aiming cue readable.
             if(absorb>0)
@@ -417,22 +356,6 @@ namespace KarmaPrototype
                     detail.Line(foot+(Dome(i/48f,unfold)-foot)*(0.88f+travel*0.12f),
                         foot+(Dome((i+1)/48f,unfold)-foot)*(0.88f+travel*0.12f),
                         height*0.005f,White(absorb*0.28f));
-            }
-            if(age<0.30f)for(int i=0;i<8;i++)
-            {
-                float u=Mathf.Repeat(clock*2+i/8f,1);float x=(i-3.5f)*radius/4;
-                detail.Line(foot+new Vector2(x,height*0.18f*(1-u)),foot+new Vector2(x*0.8f,0),height*0.004f,Blue((1-u)*0.4f));
-            }
-            if(aiming>=0)
-            {
-                Vector2 n=new Vector2(-aimAxis.y,aimAxis.x);
-                for(int i=0;i<12;i++)
-                {
-                    float t=i/12f,u=(i+1)/12f;
-                    detail.Line(aimOrigin+aimAxis*aimSize.x*(0.1f+t*0.5f)+n*Mathf.Sin(t*12+clock*20)*0.04f,
-                        aimOrigin+aimAxis*aimSize.x*(0.1f+u*0.5f)+n*Mathf.Sin(u*12+clock*20)*0.04f,
-                        locked?0.075f:0.035f,White(locked?0.8f:0.4f));
-                }
             }
             // Brief rim flash, then a fast cut; no outward burst or shock contact.
             if(endingAt>=0)
@@ -455,16 +378,15 @@ namespace KarmaPrototype
             foreach(var blade in blades)if(blade!=null)blade.enabled=true;
             Attach();Paint();
         }
-        public void Aim(int index,Vector2 origin,Vector2 axis,Vector2 size,bool committed)
+        public void Aim(int index, bool committed)
         {
             RestoreAimingBlade(index);
             if(committed&&!locked)lockedAt=age;
-            aiming=index;aimOrigin=origin;aimAxis=axis;aimSize=size;locked=committed;
+            locked=committed;
         }
-        public void Released(Vector2 origin,Vector2 axis)
+        public void Released()
         {
-            aiming=-1;locked=false;releasedAt=age;
-            KarmaSW05Energy.WardBurst(transform,game,origin,axis,radius,0);
+            locked=false;releasedAt=age;
             Paint();
         }
         public static void CounterProjectile(KarmaGame game,KarmaEnemy owner,KarmaBossAttack shot,Vector2 velocity,Vector2 size)
@@ -476,12 +398,7 @@ namespace KarmaPrototype
 
         public static void ApplyBlade(SpriteRenderer renderer,Vector2 size,Vector2 direction)
         {
-            // Reuse the straight silver/cyan weapon already used by SW05.
-            // Its downward source axis needs +90 degrees to face the shot.
-            // A slightly shorter silhouette reduces the needle-like taper.
-            // Width and the gameplay rectangle remain unchanged.
-            KarmaSW05VFX.ApplySword(renderer,new Vector2(size.x*0.88f,size.y),direction);
-            KarmaSwordSkillSurface.Apply(renderer,3);
+            KarmaWaveArtwork.Apply(renderer, "SW04_CounterBlade_v2", size, direction);
         }
 
         public void Collapse()
@@ -497,14 +414,13 @@ namespace KarmaPrototype
             // Keep only harmless pictures alive while gameplay slots stop immediately.
             if(collapsed||endingAt>=0)return;
             Attach();
-            aiming=-1;locked=false;endingAt=age;transform.SetParent(game.World,true);
+            locked=false;endingAt=age;transform.SetParent(game.World,true);
             foreach(var blade in blades)if(blade!=null)blade.transform.SetParent(transform,true);
             Paint();
         }
         void LateUpdate()
         {
-            if(game==null||owner==null||!owner.PresentationActive||owner.Stunned&&!dispersing||game.Phase!=RunPhase.Combat
-                ||preparing&&owner.CurrentPattern!=(int)EnemyAttack.SW04)
+            if(game==null||owner==null||!owner.PresentationActive||owner.Stunned&&!dispersing||game.Phase!=RunPhase.Combat)
             {gameObject.SetActive(false);Destroy(gameObject);return;}
             if(game.Paused||collapsed)return;
             age+=Time.deltaTime;

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aba87f58e676474b87c6f825b4aed1e0, type: 3}
+  m_Name: WaveAimedSlash
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaArtResource
+  asset: {fileID: 0}
+  frames:
+  - {fileID: 215936760, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+  - {fileID: -334866559, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+  - {fileID: -1200440430, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+  - {fileID: -1384519290, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+  - {fileID: -2015978983, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}
+  - {fileID: -1516553558, guid: b060eaa1c4d100048b6d56bd4c8b5c7c, type: 3}

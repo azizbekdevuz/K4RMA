@@ -234,7 +234,8 @@ public static class KarmaSwordPlayChecks
         Check(blades.Count == 4, "SW04 four orbiting swords");
         var start = blades[0].transform.position; await Seconds(0.15f);
         Check(Vector3.Distance(start, blades[0].transform.position) > 0.1f, "SW04 Sin/Cos orbit advances");
-        Check(blades[0].sprite.name == "SW04_CounterBlade_v2", "SW04 new blade PNG");
+        Check(blades.TrueForAll(blade => blade.sprite == KarmaWaveArtwork.Sprite("SW04_CounterBlade_v2")),
+            "all four orbiting swords use the counter blade artwork");
         Snapshot("sw04-orbit");
         enemy.TakeDamage(1); enemy.TakeDamage(1);
         var ids = new HashSet<KarmaBossAttack>(); bool aimCaptured = false;
@@ -392,8 +393,13 @@ public static class KarmaSwordPlayChecks
             if (pose == "SW03_RisingBlade_v7")
                 Check(Vector2.Distance(sprite.pivot, sprite.rect.size * 0.5f) < 0.02f,
                     "SW03 v7 keeps its authored center pivot; ground placement is visual only");
-            else Check(Vector2.Distance(sprite.pivot, KarmaWaveArtwork.CorePixels(pose).center) < 0.02f,
-                "pivot centers the cutting core: " + pose);
+            else
+            {
+                importer.GetSourceTextureWidthAndHeight(out int width, out int height);
+                var importScale = new Vector2(sprite.rect.width / width, sprite.rect.height / height);
+                var expectedPivot = Vector2.Scale(KarmaWaveArtwork.CorePixels(pose).center, importScale);
+                Check(Vector2.Distance(sprite.pivot, expectedPivot) < 0.02f, "pivot centers the cutting core: " + pose);
+            }
         }
         results.Add("All eight sword sprites load from the boss library with preserved import settings and pivots.");
     }

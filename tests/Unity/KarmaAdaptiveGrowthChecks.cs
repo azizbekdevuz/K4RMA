@@ -54,6 +54,40 @@ public static class KarmaAdaptiveGrowthChecks
     static object Call(object target, string name, params object[] args) =>
         target.GetType().GetMethod(name, Instance).Invoke(target, args);
 
+    static bool Flag(KarmaEnemy enemy, string field) =>
+        (bool)typeof(KarmaEnemy).GetField(field, Instance).GetValue(enemy);
+
+    static void CheckContacts(KarmaEnemy enemy, KarmaPlayer player)
+    {
+        Vector2 point = player.DamageBounds.center;
+        float health = player.Health;
+        var block = new KarmaAttackContact();
+        enemy.TryAttackHit(point, point, Vector2.one, 5, block, 0, plainTechnique: true);
+        Assert(block.Consumed && !block.DealtDamage && player.Health == health, "Plain attack bypassed original guard");
+
+        player.ClearStatus();
+        Set(player, "guardUntil", 0f);
+        var parry = new KarmaAttackContact();
+        player.BeginCounter();
+        int parries = player.ParryCount;
+        enemy.TryAttackHit(point, point, Vector2.one, 5, parry, 0, plainTechnique: true);
+        Assert(parry.Consumed && !parry.DealtDamage && player.ParryCount == parries + 1
+            && !Flag(enemy, "pendingParry"), "Plain projectile parry was not local");
+
+        Set(player, "invulnerableUntil", 0f);
+        var hit = new KarmaAttackContact();
+        enemy.TryAttackHit(point, point, Vector2.one, 5, hit, 0, plainTechnique: true);
+        enemy.TryAttackHit(point, point, Vector2.one, 5, hit, 0, plainTechnique: true);
+        Assert(hit.Consumed && hit.DealtDamage && player.Health == health - 5, "Plain attack contact ledger did not apply one hit");
+
+        Set(player, "invulnerableUntil", 0f);
+        player.BeginCounter();
+        enemy.TryAttackHit(point, point, Vector2.one, 5, new KarmaAttackContact(), 0, parryStun: true);
+        Assert(Flag(enemy, "pendingParry"), "Native parry lost the stun route");
+        Call(enemy, "FixedUpdate");
+        Assert(enemy.Stunned, "Native stun did not resolve");
+    }
+
     static void DrivePlayerTo(float x)
     {
         var body = game.Player.GetComponent<Rigidbody2D>();
@@ -115,15 +149,41 @@ public static class KarmaAdaptiveGrowthChecks
         Assert(player.Essences.Mastery(Essence.Guard) == game.Config.guardMastery, "Guard duplicate or missing block");
         var enemy = game.Enemies[0];
         Assert(enemy.Alive, "Unexpected defeat");
+        CheckContacts(enemy, player);
+        Call(player.Essences, "RecordSuccess", Essence.Guard);
+        Call(player.Essences, "RecordSuccess", Essence.SwordWave);
         Set(enemy, "timer", 0f);
         float deadline = Time.time + 19;
         Set(player, "invulnerableUntil", deadline);
         while (string.IsNullOrEmpty((string)typeof(KarmaEnemy).GetProperty("LearningLine", Instance).GetValue(enemy))
             && Time.time < deadline) yield return null;
         Assert(Time.time < deadline, "Stage-one guardian did not imitate");
+        Assert(((string)typeof(KarmaEnemy).GetProperty("LearningLine", Instance).GetValue(enemy)).StartsWith(KarmaPatternCatalog.Name(Essence.Guard)),
+            "Imitation picked the recent hit instead of the mastery leader");
         yield return new WaitForSeconds(1.03f);
         Capture("01-guard-imitation");
         yield return null;
+        Call(enemy, "InterruptPattern");
+        Assert(!Flag(enemy, "presentingCopy") && !Flag(enemy, "running") && !enemy.Invulnerable
+            && enemy.GetComponentInChildren<SpriteRenderer>() != null, "Copy interruption leaked action state");
+        Call(player.Essences, "RecordSuccess", Essence.SwordWave);
+        Call(player.Essences, "RecordSuccess", Essence.SwordWave);
+        Assert(!(bool)Call(enemy, "TryImitate"), "Leader switch ignored the spacing gate");
+        Set(enemy, "nextLearningAt", 0f);
+        Assert(!(bool)Call(enemy, "TryImitate"), "A copy interrupted the requirement for a native pattern");
+        Set(enemy, "completedPatternSinceCopy", true);
+        Assert((bool)Call(enemy, "TryImitate"), "New dominant unlearned technique did not trigger a copy");
+        var effects = (Transform)typeof(KarmaEnemy).GetField("effectsRoot", Instance).GetValue(enemy);
+        yield return new WaitForSeconds(1.03f);
+        var copy = effects.GetComponentInChildren<KarmaBossAttack>();
+        Assert(copy != null && copy.GetType() == typeof(KarmaBossAttack), "Copy used a specialized projectile");
+        Call(enemy, "InterruptPattern");
+        Assert(!copy.gameObject.activeInHierarchy && string.IsNullOrEmpty(
+            (string)typeof(KarmaEnemy).GetProperty("LearningLine", Instance).GetValue(enemy)),
+            "Interruption left a live projectile or dialogue");
+        Set(enemy, "nextLearningAt", 0f);
+        Set(enemy, "completedPatternSinceCopy", true);
+        Assert(!(bool)Call(enemy, "TryImitate"), "An interrupted technique could be baited again");
         game.StartRun();
         Assert(game.Player.Essences.Mastery(Essence.Guard) == 0 && game.Player.Essences.Count == 0, "Restart retained mastery");
         DrivePlayerTo(22);
@@ -195,20 +255,40 @@ public static class KarmaAdaptiveGrowthChecks
 
             bool representative = first == Essence.SwordWave;
             enemy = game.Enemies[0];
-            DrivePlayerTo(17);
-            enemy.TakeDamage(100000);
-            Assert(enemy.Alive, "Stage-three burst skipped the demonstration");
-            Set(enemy, "timer", 0f);
-            yield return new WaitForSeconds(0.86f);
-            if (representative)
-            {
-                Capture("04-final-technique-" + second);
-                yield return null;
-            }
-            deadline = Time.time + 20;
-            while (game.Phase == RunPhase.Combat && Time.time < deadline) yield return null;
+            DrivePlayerTo(enemy.Position.x - 6);
             var last = Array.Find(skills, skill => skill != first && skill != second);
-            if (game.Phase == RunPhase.GuardianFallen) Advance(last);
+            if (representative || first == Essence.Guard)
+            {
+                deadline = Time.time + 15;
+                while (!Flag(enemy, "finalTechniqueReleased") && Time.time < deadline) yield return null;
+                Assert(Flag(enemy, "finalTechniqueReleased") && enemy.Health == enemy.MaxHealth,
+                    "Stage three did not demonstrate at an early combat opportunity");
+                if (last == Essence.Guard)
+                {
+                    Assert(enemy.Invulnerable, "Mastered guard did not raise its shield");
+                    enemy.TakeDamage(100000);
+                    Assert(enemy.Health == enemy.MaxHealth, "Mastered guard no longer blocks damage");
+                }
+                if (representative || last == Essence.SwordWave)
+                {
+                    yield return new WaitForSeconds(0.14f);
+                    Capture("04-final-technique-" + last);
+                    yield return null;
+                }
+                while (Flag(enemy, "presentingCopy") && Time.time < deadline) yield return null;
+                Assert(!enemy.Invulnerable, "Demonstration left the shield raised");
+            }
+            else if (second == Essence.Guard)
+            {
+                typeof(KarmaEnemy).GetProperty("FightSeconds").SetValue(enemy, 3f);
+                Call(enemy, "BeginAttack");
+                Assert(Flag(enemy, "presentingCopy") && !Flag(enemy, "finalTechniqueReleased"),
+                    "Expected a Stage-three windup before the lethal hit");
+            }
+            enemy.TakeDamage(100000);
+            Assert(!enemy.Alive, "Stage-three lethal hit was deferred");
+            Assert(!Flag(enemy, "presentingCopy"), "Lethal hit did not cancel the demonstration");
+            Advance(last);
             Assert(game.LastPersonalizedEssence == last && game.Player.Essences.Count == 3, "Third technique did not resolve");
             Set(game, "transitionLeft", 0f);
             Call(game, "UpdatePersonalization");

@@ -56,10 +56,7 @@ namespace KarmaPrototype
                 while (elapsed < seconds && owner.Active)
                 {
                     if (!owner.game.Paused)
-                    {
-                        sword.ChargeDash(seconds-elapsed);
                         RefreshAim(marker, out _, out _, out _);
-                    }
                     yield return null;
                     if (!owner.game.Paused) elapsed += Time.deltaTime;
                 }
@@ -77,13 +74,15 @@ namespace KarmaPrototype
 
                 owner.animator.PlayPose("Windup", tracking + 0.18f);
                 owner.animator.BeginSW02Presentation(tracking);
-                KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, marker.transform, tracking, true, true);
+                // The sixteen-drawing Wave cast starts its charge at the overhead pose.
+                if (owner.animator.MotionForm != "Wave")
+                    KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, marker.transform, tracking, true, true);
                 while (elapsed < tracking && owner.Active)
                 {
                     if (owner.game.Paused) { yield return null; continue; }
-                    sword.ChargeDash(tracking-elapsed+0.8f);
                     RefreshAim(marker, out origin, out velocity, out facing);
-                    elapsed += Time.deltaTime; yield return null;
+                    yield return null;
+                    if (!owner.game.Paused) elapsed += Time.deltaTime;
                 }
                 if (!owner.Active) yield break;
                 marker.gameObject.SetActive(false); Destroy(marker.gameObject);
@@ -95,11 +94,10 @@ namespace KarmaPrototype
                 // Retain the same preparation budget. The presentation's Locked
                 // phase is only its pose clock; targeting continues until firing.
                 float warning = AimedSlashWarningTime(origin, facing, size);
-                KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, marker.transform, warning, true);
                 owner.animator.PrepareWaveAttack(warning, true);
                 owner.animator.LockSW02Presentation(warning);
+                KarmaSwordWaveAnimation.Charge(owner.game, owner, owner.art, marker.transform, warning, true);
                 yield return TrackWarning(marker, warning);
-                sword.EndChargeDash();
                 if (!owner.Active) yield break;
                 // Keep the last visible path after the final coroutine yield.
                 origin = advertisedOrigin; velocity = advertisedVelocity; facing = advertisedFacing;

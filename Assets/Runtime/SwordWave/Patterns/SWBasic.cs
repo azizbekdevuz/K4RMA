@@ -7,15 +7,6 @@ namespace KarmaPrototype
         // Pattern execution and pattern-local state. Shared damage and cancellation stay in the host.
         sealed class SWBasicPattern : SwordBossPattern
         {
-            KarmaAttackContact firstMeleeContact;
-            float firstMeleeResumeAt;
-            public void ContactResolved(KarmaAttackContact contact, bool parried, bool damaged)
-            {
-                if(contact!=firstMeleeContact || !damaged && !parried)return;
-                // Keep a successful parry's brief protection intact even if it
-                // happens on the final active frame of the opening cut.
-                firstMeleeResumeAt=owner.FightSeconds+(damaged?owner.game.Config.hitInvulnerability:3f/24);
-            }
             public SWBasicPattern(KarmaEnemy owner, SwordBossBehavior sword) : base(owner, sword) { }
             public override IEnumerator Execute()
             {
@@ -54,10 +45,6 @@ namespace KarmaPrototype
             IEnumerator Melee()
             {
                 const float contactSeconds = 3f / 24;
-                const float minimumLink = 2f / 24;
-                float strikeInterval = contactSeconds + minimumLink;
-                firstMeleeContact = null;
-                firstMeleeResumeAt = float.NegativeInfinity;
                 Vector2 size = sword.BasicMeleeSize;
                 Vector2 center = owner.Position + Vector2.right * owner.direction * sword.BasicMeleeOffset;
                 float warning = owner.Warning(0.4f);
@@ -68,45 +55,19 @@ namespace KarmaPrototype
                 yield return owner.Wait(warning);
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 if (!owner.Active) yield break;
-                // Independent one-contact cuts each own half the original combo
-                // damage. A block, parry or miss never transfers damage to the other.
-                float strikeDamage = Settings.basicDamageMultiplier * 0.5f;
-                for (int strike = 0; strike < 2; strike++)
-                {
-                    if (!owner.Active) yield break;
-                    owner.state = ActionState.Attack; owner.animator.PlayPose("Slash", strike == 0 ? strikeInterval : 8f / 24);
-                    owner.animator.BeginBasicRelease(contactSeconds, strike);
-                    var contact = new KarmaAttackContact();
-                    if (strike == 0) firstMeleeContact = contact;
-                    var shot = owner.Attack(center, Vector2.zero, size, contactSeconds, strikeDamage, contact);
-                    KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, Vector2.zero, size);
-                    shot.Visual.flipX = owner.direction < 0;
-                    yield return owner.Wait(contactSeconds);
-                    // Lifetime expiry can fall between Update and coroutine ticks.
-                    // Retire explicitly before starting the non-damaging link.
-                    if (shot != null) { shot.gameObject.SetActive(false); Destroy(shot.gameObject); }
-                    if (!owner.Active) yield break;
-                    if (strike == 0)
-                    {
-                        // A landed first cut waits only for its actual i-frame
-                        // deadline. Misses and guards link immediately;
-                        // neither cut bypasses shared damage or contact rules.
-                        // The contact deadline is a gameplay clock, not a
-                        // sprite frame: avoid padding it by an extra artwork
-                        // frame and then rounding it up a second time.
-                        float linkSeconds = Mathf.Max(minimumLink,
-                            firstMeleeResumeAt + 0.001f - owner.FightSeconds);
-                        firstMeleeContact = null;
-                        // The return cut owns a separate contact window. Keep
-                        // its same fixed footprint visible throughout the link.
-                        var returnMark = owner.Mark("SWBasic return cut warning", center, size);
-                        KarmaSwordAttackPolish.Warning(returnMark);
-                        owner.animator.BeginBasicLink(linkSeconds);
-                        yield return owner.Wait(linkSeconds);
-                        if (returnMark != null) { returnMark.gameObject.SetActive(false); Destroy(returnMark.gameObject); }
-                    }
-                    else yield return owner.Wait(5f / 24);
-                }
+                // One committed downcut consumes the configured basic damage once.
+                owner.state = ActionState.Attack;
+                owner.animator.PlayPose("Slash", 8f / 24);
+                owner.animator.BeginBasicRelease(contactSeconds, 0);
+                var contact = new KarmaAttackContact();
+                var shot = owner.Attack(center, Vector2.zero, size, contactSeconds,
+                    Settings.basicDamageMultiplier, contact);
+                KarmaSwordAttackPolish.Projectile(owner.game, owner, shot, Vector2.zero, size);
+                shot.Visual.flipX = owner.direction < 0;
+                yield return owner.Wait(contactSeconds);
+                if (shot != null) { shot.gameObject.SetActive(false); Destroy(shot.gameObject); }
+                if (!owner.Active) yield break;
+                yield return owner.Wait(5f / 24);
                 yield return owner.Recovery(0.5f);
             }
             public override bool CanReach(Vector2 from, Vector2 target)

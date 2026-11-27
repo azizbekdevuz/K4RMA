@@ -25,8 +25,18 @@ namespace KarmaPrototype
             }
             displayForm = motionForm;
             displayMotion = "SW02";
-            DrawMotion(motionForm, "SW02", sw02DisplayFrame * KarmaBootstrap.Step);
+            DrawAimedFrame();
             return true;
+        }
+
+        internal bool SwordCarriesShield => motionForm == "WaveWard" || motionForm == "WaveFinal";
+
+        void DrawAimedFrame()
+        {
+            if (DrawSwordCastArt(EnemyAttack.SW02)) return;
+            if (sw02DisplayFrame < 6) DrawMotion(motionForm, "SW02", sw02DisplayFrame * KarmaBootstrap.Step);
+            else DrawMotion(motionForm, "FollowThrough", (sw02DisplayFrame - 5) * KarmaBootstrap.Step);
+            RegisterSwordAppearance();
         }
 
         void ConfigureSW02Frames()
@@ -48,6 +58,9 @@ namespace KarmaPrototype
             sw02VisualPhase = SW02VisualPhase.Locked;
             sw02PhaseAt = Time.time; sw02PhaseSeconds = warningSeconds;
             PrepareSwordBody("Heavy", warningSeconds);
+            // The pattern attaches its charge to the current blade immediately after this call.
+            if (motionForm == "Wave" && SwordBodyCanOverride("Telegraph", EnemyAttack.SW02))
+                DrawSwordCastArt(EnemyAttack.SW02);
         }
         internal void ReleaseSW02Presentation()
         {
@@ -64,7 +77,9 @@ namespace KarmaPrototype
             if (!sw02RecoveryRequested || sw02Owner == null || !sw02Owner.Alive)
             { CancelSW02Presentation(); return; }
             sw02RecoveryRequested = false;
-            sw02VisualPhase = SW02VisualPhase.Recovery; sw02PhaseAt = Time.time;
+            // Release and recovery use the same clock, including when recovery
+            // starts between two 12 fps samples.
+            sw02VisualPhase = SW02VisualPhase.Recovery;
         }
         internal void CancelSW02Presentation()
         {
@@ -87,22 +102,20 @@ namespace KarmaPrototype
                 case SW02VisualPhase.Tracking:
                     frame = elapsed < sw02PhaseSeconds * 0.35f ? 0 : 1; break;
                 case SW02VisualPhase.Locked:
-                    // Two authored 24fps samples lead into the real release.
+                    // The last preparation drawing leads into the real release.
                     // The full strike cannot appear before the projectile event.
-                    float swing = sw02PhaseSeconds - elapsed;
-                    frame = swing > 2f / 24 ? 1 : 2; break;
+                    frame = elapsed < SwordFrameTime(sw02PhaseSeconds - KarmaBootstrap.Step) ? 1 : 2; break;
                 case SW02VisualPhase.Released:
-                    // The blade keeps travelling after launch. Do not freeze
-                    // the shoulders at the release pose for the whole wait.
-                    frame = elapsed < 3f / 24 ? 3 : elapsed < 6f / 24 ? 4 : 5; break;
-                default:
-                    // Both recovery frames finish inside the existing minimum
-                    // 0.38-second recovery, then retain the base ready picture.
-                    if (elapsed >= 8f / 24) { picture.sprite = poses["Idle"]; return; }
-                    frame = elapsed < 3f / 24 ? 4 : 5; break;
+                case SW02VisualPhase.Recovery:
+                    // Let the support hand leave the hilt and the point pass the knee before standing.
+                    if (sw02VisualPhase == SW02VisualPhase.Recovery
+                        && elapsed >= (motionForm == "Wave" ? WaveDowncutEnd : 5 * KarmaBootstrap.Step)) return;
+                    frame = Mathf.Min(sw02VisualPhase == SW02VisualPhase.Recovery ? 7 : 5,
+                        3 + Mathf.RoundToInt(elapsed * KarmaBootstrap.FramesPerSecond));
+                    break;
+                default: return;
             }
             sw02DisplayFrame = frame;
-            picture.sprite = sw02Frames[frame];
             SW02UsesIntermediateFrame = true;
         }
 
@@ -115,7 +128,6 @@ namespace KarmaPrototype
         internal int SwordStrikeIndex { get; private set; }
         bool SwordPreviousReleaseVisible => Time.time - swordPreviousRelease < 3f / 24;
         internal bool SwordBodyReleased => !float.IsNegativeInfinity(swordBodyReleasedAt) || SwordPreviousReleaseVisible;
-        internal int SwordMotionStrike => SwordPreviousReleaseVisible ? swordPreviousStrike : SwordStrikeIndex;
         internal float SwordBodyAge => SwordFrameTime(Time.time - swordBodyAt);
         internal float SwordAscentProgress { get; private set; }
         internal void SampleSwordAscent(float progress)
@@ -126,34 +138,43 @@ namespace KarmaPrototype
         internal float SwordReleaseAge => SwordFrameTime(Time.time - (SwordPreviousReleaseVisible ? swordPreviousRelease : swordBodyReleasedAt));
         internal float SwordBodyDuration { get; private set; }
         internal bool SwordBodyVisible { get; private set; }
-        internal bool SwordHeavyLocked => sw02VisualPhase == SW02VisualPhase.Locked;
         float swordBodyAt, swordBodyReleasedAt = float.NegativeInfinity;
         float swordPreviousRelease = float.NegativeInfinity;
-        int swordPreviousStrike;
         internal static float SwordFrameTime(float seconds) => Mathf.Floor(Mathf.Max(0, seconds) * KarmaBootstrap.FramesPerSecond) * KarmaBootstrap.Step;
 
         internal void PrepareSwordBody(string action, float seconds, int strike = 0)
         {
             if (sheet != "Wave" || deathAt >= 0) return;
             if (action != "Counter") swordWalkAllowed = false;
-            swordPreviousRelease = action == "Volley" && SwordBodyAction == "Volley" ? swordBodyReleasedAt : float.NegativeInfinity;
-            swordPreviousStrike = SwordStrikeIndex;
+            swordPreviousRelease = action == "Volley" && SwordBodyAction == "Volley" && strike == SwordStrikeIndex + 1
+                ? swordBodyReleasedAt : float.NegativeInfinity;
             SwordBodyAction = action; SwordBodyDuration = seconds; SwordStrikeIndex = strike;
             swordBodyAt = Time.time; swordBodyReleasedAt = float.NegativeInfinity;
             if (action == "UltimateAscent") SwordAscentProgress = 0;
+            if (action == "UltimateWindup") SwordGroundProgress = 0;
         }
         internal void ReleaseSwordBody(string action, int strike = 0)
         {
             if (sheet != "Wave" || deathAt >= 0 || Time.time < hurtUntil) return;
             SwordBodyAction = action; SwordStrikeIndex = strike;
             swordBodyAt = swordBodyReleasedAt = Time.time;
+            if (action == "UltimateCommand") swordRainCutAt = swordBodyReleasedAt;
+            swordPreviousRelease = float.NegativeInfinity;
             WaveMotionRevision++;
             // Real coroutine release is authoritative, even between Update and
-            // LateUpdate. A 24fps sample may never move this event to a later tick.
-            if (SwordBodyCanOverride(action == "Counter" ? "Approach" : "Attack",
-                sw02Owner != null ? (EnemyAttack)sw02Owner.CurrentPattern : EnemyAttack.SWBasic))
+            // LateUpdate. Show the contact drawing in the event's render frame.
+            var attack = sw02Owner != null ? (EnemyAttack)sw02Owner.CurrentPattern :
+                action == ShieldRaiseAction ? EnemyAttack.SW04 :
+                action == "Heavy" ? EnemyAttack.SW02 : action == "Volley" ? EnemyAttack.SW01 : EnemyAttack.SWBasic;
+            if (SwordBodyCanOverride(action == "Counter" ? "Approach" : "Attack", attack))
             {
-                ShowSwordPatternMotion(sw02Owner != null ? (EnemyAttack)sw02Owner.CurrentPattern : EnemyAttack.SWBasic);
+                if (action == "Heavy")
+                {
+                    sw02DisplayFrame = 3;
+                    SW02UsesIntermediateFrame = true;
+                    PresentSwordIntermediate(EnemyAttack.SW02);
+                }
+                else ShowSwordPatternMotion(attack);
                 SwordBodyVisible = true; GuardianPhaseOverridesPose = true;
             }
         }
@@ -164,6 +185,14 @@ namespace KarmaPrototype
         }
         internal void CancelSwordBodyPresentation()
         {
+            HideSwordShieldRaise();
+            swordGroundDrawing = -1;
+            RegisterSwordGroundArt();
+            swordCastDrawing = -1;
+            swordRainCutAt = float.NegativeInfinity;
+            if (swordCastBlade != null) swordCastBlade.enabled = false;
+            swordBasicDrawing = -1;
+            if (swordBasicBlade != null) swordBasicBlade.enabled = false;
             SwordBodyAction = null; swordBodyReleasedAt = float.NegativeInfinity;
             SwordBodyVisible = false; swordPreviousRelease = float.NegativeInfinity;
             wavePhase = null; waveReleasedUntil = 0; waveSwingAt = wavePhaseSwingAt = float.PositiveInfinity;
@@ -174,21 +203,37 @@ namespace KarmaPrototype
         }
         internal void EndSwordCounterBody()
         {
-            if (SwordBodyAction != "Counter") return;
+            if (SwordBodyAction != "Counter" && SwordBodyAction != ShieldRaiseAction) return;
+            HideSwordShieldRaise();
             SwordBodyAction = null; SwordBodyVisible = false; swordBodyReleasedAt = float.NegativeInfinity;
         }
         bool SwordBodyCanOverride(string action, EnemyAttack attack)
         {
             if (action == "Stunned" || Time.time < hurtUntil || deathAt >= 0) return false;
+            if (SwordBodyAction == ShieldRaiseAction)
+                return attack == EnemyAttack.SW04 && (action == "Telegraph" || action == "Attack"
+                    || action == "Recover" && SwordBodyReleased);
+            if (SwordBodyAction == "Volley")
+                return attack == EnemyAttack.SW01 && (action == "Telegraph" || action == "Attack" ||
+                    action == "Recover" && SwordBodyReleased);
+            if (SwordBodyAction == "Heavy")
+                return attack == EnemyAttack.SW02 && sw02VisualPhase != SW02VisualPhase.None &&
+                    (action == "Telegraph" || action == "Attack" || action == "Recover");
             if (SwordBodyAction != null && SwordBodyAction.StartsWith("Ultimate"))
                 return attack == EnemyAttack.SW05 && (action == "Telegraph" || action == "Attack" || action == "Recover");
             // Persistent SW03/SW04 effects cannot take over another cast. Mobile
             // spacing and evasion always win over the short summoning gesture.
             if (SwordBodyAction == "Summon")
                 return attack == EnemyAttack.SW03 && (action == "Telegraph" || action == "Attack"
-                    || action == "Approach" && CurrentPose != "Move" && CurrentPose != "Backstep" && SwordReleaseAge < 5f / 24);
+                    || action == "Approach" && CurrentPose != "Move" && CurrentPose != "Backstep"
+                        && SwordReleaseAge < SwordGroundPlantSeconds + 2 * KarmaBootstrap.Step);
             if (SwordBodyAction == "Counter")
-                return CurrentPose != "Backstep" && (action == "Approach" || action == "Recover" || attack == EnemyAttack.SW04);
+            {
+                bool gestureActive = SwordBodyReleased ? SwordReleaseAge < 3 * KarmaBootstrap.Step
+                    : SwordBodyAge <= SwordBodyDuration + KarmaBootstrap.Step;
+                return gestureActive && CurrentPose != "Backstep" &&
+                    (action == "Approach" || action == "Recover" || attack == EnemyAttack.SW04);
+            }
             return action == "Telegraph" || action == "Attack" || action == "Recover";
         }
         void ApplySwordBodyPresentation(string action, EnemyAttack attack)
@@ -199,29 +244,139 @@ namespace KarmaPrototype
                 SwordBodyAction = null;
                 swordBodyReleasedAt = float.NegativeInfinity;
             }
-            if (SwordBodyVisible && attack != EnemyAttack.SW02) ShowSwordPatternMotion(attack);
+            if (SwordBodyVisible && !(attack == EnemyAttack.SW02 && SwordBodyAction == "Heavy"))
+                ShowSwordPatternMotion(attack, action);
         }
 
-        void ShowSwordPatternMotion(EnemyAttack attack)
+        string SwordPatternMotion(EnemyAttack attack)
         {
-            string motion = SwordBodyAction == "Counter" ? "SW04" : SwordBodyAction == "Summon" ? "SW03"
+            return SwordBodyAction == "UltimateRecover" ? "FollowThrough"
+                : SwordBodyAction == "Counter" ? "SW04" : SwordBodyAction == "Summon" ? "SW03"
                 : attack == EnemyAttack.SWBasic && RangedBasicBody ? "SWBasicRanged" : attack.ToString();
+        }
+
+        void ShowSwordPatternMotion(EnemyAttack attack, string action = "Attack")
+        {
+            if (attack == EnemyAttack.SW01 && SwordBodyAction == "Volley") { DrawSwordVolley(action); return; }
+            if (SwordBodyAction == ShieldRaiseAction) { DrawSwordShieldRaise(); return; }
+            if (DrawSwordGroundArt(attack)) return;
+            if (DrawSwordCastArt(attack)) return;
+            if (attack == EnemyAttack.SWBasic && BasicBodyActive && swordBasicArt != null)
+            { DrawSwordBasicArt(attack); return; }
+            string motion = SwordPatternMotion(attack);
             if (!KarmaMotionArt.Has(motionForm, motion)) return;
+            if (motion == "FollowThrough")
+            {
+                PlayBody(motion);
+                RegisterSwordAppearance();
+                return;
+            }
             var frames = motionArt.Frames(motionForm, motion);
-            // Hold the authored preparation until the combat event, then advance through contact and recovery.
-            int frame = SwordBodyReleased ? Mathf.Min(frames.Length - 1, 1 + Mathf.FloorToInt(SwordReleaseAge * KarmaBootstrap.FramesPerSecond))
-                : SwordBodyAction == "Summon" ? Mathf.FloorToInt(SwordGroundProgress * (frames.Length - 1))
-                : SwordBodyAction == "UltimateAscent" ? Mathf.FloorToInt(SwordAscentProgress * (frames.Length - 1))
-                : SwordBodyAction == "UltimateHold" || SwordBodyAction == "UltimateCharge" ? frames.Length - 1 : 0;
+            int last = frames.Length - 1;
+            int raised = Mathf.Max(0, last - 1);
+            string drawing = motion;
+            int frame;
+            switch (SwordBodyAction)
+            {
+                case "BasicMelee":
+                case "BasicRanged":
+                    // Both basic modes share the same two-handed downcut.
+                    drawing = "SWBasic";
+                    if (!SwordBodyReleased)
+                    {
+                        if (SwordBodyAge < KarmaBootstrap.Step)
+                        { drawing = "SW02"; frame = 0; }
+                        else frame = 0;
+                    }
+                    else if (SwordReleaseAge < KarmaBootstrap.Step) frame = 1;
+                    else if (SwordReleaseAge < 3 * KarmaBootstrap.Step) frame = 2;
+                    else
+                    {
+                        int basicSettle = Mathf.FloorToInt(SwordReleaseAge * KarmaBootstrap.FramesPerSecond) - 3;
+                        drawing = basicSettle < 2 ? "FollowThrough" : "Idle";
+                        frame = basicSettle < 2 ? basicSettle + 1 : 0;
+                    }
+                    break;
+                case "Summon":
+                case "UltimateWindup":
+                    // Each skill has its own lift, loaded hold, drive and impact drawings.
+                    float remaining = (1 - SwordGroundProgress) * SwordBodyDuration;
+                    if (SwordBodyReleased) frame = 3;
+                    else if (SwordBodyAction == "UltimateWindup" && SwordStrikeIndex > 0 && SwordBodyAge < KarmaBootstrap.Step) frame = 3;
+                    else if (SwordGroundProgress < 0.25f) frame = 0;
+                    else frame = remaining > 1.5f * KarmaBootstrap.Step ? 1 : 2;
+                    break;
+                case "UltimateStart":
+                    drawing = "Guard";
+                    frame = SwordBodyAge < SwordBodyDuration * 0.5f ? 0 : 1;
+                    break;
+                case "UltimateAscent":
+                case "UltimateHold":
+                    // Carry the sword up to its ready position with the ascent.
+                    // Each of the three volleys owns its overhead lift and slam.
+                    frame = 0;
+                    break;
+                case "UltimateCharge":
+                case "UltimateCommand":
+                case "UltimateFinish":
+                    // Hold the third point through the detonation. Only a new
+                    // group of falling swords starts another downstroke.
+                    frame = 3;
+                    break;
+                case "Counter":
+                    frame = SwordBodyReleased ? Mathf.Min(last, raised + Mathf.RoundToInt(SwordReleaseAge * KarmaBootstrap.FramesPerSecond))
+                        : SwordBodyAge < KarmaBootstrap.Step ? 0 : 1;
+                    break;
+                default:
+                    frame = SwordBodyReleased ? Mathf.Min(last, 1 + Mathf.RoundToInt(SwordReleaseAge * KarmaBootstrap.FramesPerSecond)) : 0;
+                    break;
+            }
             displayForm = motionForm; displayMotion = motion;
-            DrawMotion(motionForm, motion, frame * KarmaBootstrap.Step);
+            DrawMotion(motionForm, drawing, frame * KarmaBootstrap.Step);
+            RegisterSwordAppearance();
         }
 
         internal float SwordChargeBodyHeight => standingDamageBounds.size.y * Mathf.Abs(pictureScale.y * transform.lossyScale.y);
+        // The new combat sheets reserve room around the idle-scale body for its full blade arc.
+        const float CombatSheetPacking = 0.67f;
+        static float SwordStandingHeight(string form) => form == "WaveWard" ? 2.79f : form == "WaveFinal" ? 2.77f : 2.68f;
+
+        float SwordInheritedDrawingScale(Texture2D texture)
+        {
+            if (motionForm != "WaveFinal" || texture == null) return 1;
+            // Final wears its own gear on the Rise ground strike and the Ward shield lift.
+            if (texture.name == "GroundPlunge" && swordGroundArt != null)
+            {
+                // Fit the whole rigid pose to the final blade. Its painted guard is
+                // exactly one blade length above the soles on the contact drawing.
+                return swordGroundArt.bladeLength / ShieldLocalPoint(swordGroundArt.poses[4], swordGroundArt.sockets[4]).y;
+            }
+            string source = texture.name switch {
+                "ShieldRaise" => "WaveWard",
+                _ => null
+            };
+            return source == null ? 1 : SwordStandingHeight(motionForm) / SwordStandingHeight(source);
+        }
+        Texture2D registeredSwordTexture;
+        float swordSheetScale = 1;
         internal void RegisterSwordAppearance()
         {
-            // Each approved frame imports its own calibrated PPU and sole pivot.
-            if (picture != null) picture.transform.localScale = pictureScale;
+            RegisterSwordBasicArt();
+            RegisterSwordCastArt();
+            RegisterSwordGroundArt();
+            RegisterSwordShieldRaise();
+            if (picture == null) return;
+            var texture = picture.sprite != null ? picture.sprite.texture : null;
+            if (texture != registeredSwordTexture)
+            {
+                registeredSwordTexture = texture;
+                swordSheetScale = texture != null && texture.name is
+                    ("SWBasic" or "SWBasicRanged" or "SW01" or "SW02" or "SW03" or "SW04" or "SW05"
+                    or "Guard" or "Windup" or "FollowThrough") ? 1 / CombatSheetPacking : 1;
+                swordSheetScale *= SwordInheritedDrawingScale(texture);
+            }
+            float scale = IsVolleyDrawing(picture.sprite) ? volleyDrawingScale : swordSheetScale;
+            picture.transform.localScale = Vector3.Scale(pictureScale, new Vector3(scale, scale, 1));
         }
         void ApplySwordBodyColor(Color color)
         {

@@ -18,7 +18,7 @@ public static class KarmaSW02InheritedChecks
     const string Key = "K4RMA.SW02Inherited";
     const BindingFlags F = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
     static readonly string[] Forms = { "WaveRise", "WaveWard", "WaveFinal" };
-    static readonly string[] Names = { "Prepare01", "Prepare02", "Swing01", "Swing02", "Recover01", "Recover02" };
+    static readonly string[] Names = Enumerable.Range(1, 7).Select(i => "CastDowncut_" + i.ToString("00")).ToArray();
     static bool started;
     static KarmaGame game;
     static int form, side;
@@ -68,16 +68,18 @@ public static class KarmaSW02InheritedChecks
         if (Enemy == null) return;
         var animator = (KarmaCharacterAnimator)Get(Enemy, "animator");
         var picture = (SpriteRenderer)Get(animator, "picture");
-        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField") || AssetDatabase.GetAssetPath(picture.sprite) != KarmaPrototype.EditorTools.KarmaMotionSheetImport.SheetPath(Forms[form - 1], "SW02"))
+        var binding = Resources.Load<KarmaSwordBasicArt>("SwordWave/Cast/" + Forms[form - 1]);
+        if (!(bool)Get(animator, "<SW02UsesIntermediateFrame>k__BackingField")
+            || !binding.poses.Any(s => s.name == picture.sprite.name && s.texture == picture.sprite.texture))
         {
-            if (side > 0 && picture.sprite == KarmaArtwork.StageIdle(Forms[form - 1]) && captured.Add("OriginalIdle"))
+            if (side > 0 && picture.sprite == binding.idle && captured.Add("OriginalIdle"))
                 CapturePicture(picture, "OriginalIdle");
             return;
         }
-        int frame = Array.FindIndex(Names, n => picture.sprite.name == "SW02_" + Array.IndexOf(Names, n).ToString("00"));
+        int frame = Array.IndexOf(Names, picture.sprite.name);
         if (frame < 0) return;
         string name = Names[frame];
-        if (!Names.Contains(name) || (side < 0 && name != "Swing02") || !captured.Add(name)) return;
+        if ((side < 0 && name != "CastDowncut_04") || !captured.Add(name)) return;
         CapturePicture(picture, name);
     }
     static void CapturePicture(SpriteRenderer picture, string name)
@@ -129,11 +131,11 @@ public static class KarmaSW02InheritedChecks
                     Check(Vector3.Distance(cast.frames[i].center, before.frames[i].center) < 0.0001f && Vector3.Distance(cast.frames[i].size, before.frames[i].size) < 0.0001f,
                         cast.key + " unchanged incoming DamageBounds at frame " + i);
                 foreach (string name in Names) Check(cast.frames.Any(f => f.sprite == name), cast.key + " played " + name);
-                Check(Names.Count(n => captured.Contains(n)) == (side > 0 ? 6 : 1), cast.key + " actual renders captured");
-                results.Add("PASS: " + Forms[form - 1] + "/" + side + " all six frames; release=" + cast.releaseTick + "; unchanged projectile and per-frame incoming bounds");
+                Check(Names.Count(n => captured.Contains(n)) == (side > 0 ? Names.Length : 1), cast.key + " actual renders captured");
+                results.Add("PASS: " + Forms[form - 1] + "/" + side + " all cast phases; release=" + cast.releaseTick + "; unchanged projectile and per-frame incoming bounds");
                 data.casts.Add(cast);
             }
-            results.Insert(0, "PASS: inherited SW02 only, three forms x two directions; 18 authored poses rendered");
+            results.Insert(0, "PASS: inherited SW02 only, three forms x two directions; seven active phases per form rendered");
         }
         catch (Exception e) { results.Insert(0, "FAIL: " + e); Debug.LogException(e); exit = 1; }
         File.WriteAllText(Folder + "/updated.json", JsonUtility.ToJson(data, true));

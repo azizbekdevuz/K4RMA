@@ -4,7 +4,7 @@ Shader "K4RMA/SwordSkillPolish"
     {
         [PerRendererData] _MainTex ("Authored skill sprite", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        [PerRendererData] _Style ("Basic / Stagger / Aimed / Counter / Flash / Scar / Ward", Float) = 0
+        [PerRendererData] _Style ("Basic / Stagger / Aimed / Counter / Flash / Scar / Ward / Steel", Float) = 0
         [PerRendererData] _Phase ("Cosmetic age", Float) = 0
     }
     SubShader
@@ -39,6 +39,16 @@ Shader "K4RMA/SwordSkillPolish"
             half4 frag(Output i) : SV_Target
             {
                 half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                if (_Style > 6.5)
+                    return half4(SwordScarSteel(tex.rgb, 0) * 0.94h, tex.a) * i.color;
+                if (_Style > 2.5 && _Style < 3.5)
+                {
+                    // Keep the steel facets crisp. Only the painted translucent
+                    // halo breathes, with one slow luminance change over the blade.
+                    half mist = 1.0h - smoothstep(0.18h, 0.86h, tex.a);
+                    half light = 0.94h + 0.10h * sin(_Phase * 2.8);
+                    return half4(tex.rgb * lerp(1.0h, light, mist), tex.a) * i.color;
+                }
                 tex.rgb = SW05CrimsonPalette(tex.rgb);
                 float2 p = i.uv * 2 - 1;
                 float grain = 0.5 + 0.5 * sin(i.uv.y * 115 + i.uv.x * 39 - _Phase * 22);
@@ -58,14 +68,6 @@ Shader "K4RMA/SwordSkillPolish"
                     float spine = exp(-p.x * p.x * 18);
                     energy = 0.32 + spine * 0.35 + sweep * 0.32;
                     hot = half3(1.3, 1.85, 2.1);
-                }
-                else if (_Style > 2.5 && _Style < 3.5)
-                {
-                    // Solid steel first; the glint occupies only a narrow strip.
-                    // Preserve transparent canvas pixels and renderer lifetime fades.
-                    tex.a = lerp(tex.a, 1, smoothstep(0.28, 0.72, tex.a));
-                    energy = 0.055 + sweep * 0.24;
-                    hot = half3(0.78, 1.10, 1.24);
                 }
                 else if (_Style > 3.5 && _Style < 4.5)
                 {

@@ -227,6 +227,8 @@ public static class KarmaSW05PlayChecks
             Set(game.Player, "invulnerableUntil", 0f); Set(game.Player, "guardUntil", 0f);
             float safeHealth = game.Player.Health;
             game.Player.enabled = false;
+            float combatCeiling = Mathf.Min(KarmaSpace.Units(12),
+                game.GameCamera.transform.position.y + game.GameCamera.orthographicSize);
             Force();
             int firstFrame = Time.frameCount;
             await Until(() => Forming().Length > 0, 8);
@@ -270,9 +272,8 @@ public static class KarmaSW05PlayChecks
                 diagonal |= Mathf.Abs(shot.velocity.normalized.x) > 0.35f;
                 Vector2 tip = shot.PositionAt(shot.life) + shot.velocity.normalized * shot.size.x / 2;
                 leftTip = Mathf.Min(leftTip, tip.x); rightTip = Mathf.Max(rightTip, tip.x);
-                float ceiling = Mathf.Min(KarmaSpace.Units(12), game.GameCamera.transform.position.y + game.GameCamera.orthographicSize);
-                Check(shot.origin.y + shot.velocity.normalized.y * shot.size.x / 2 >= ceiling - 4.6f,
-                    "every sword releases from the top of the screen");
+                Check(shot.origin.y + shot.velocity.normalized.y * shot.size.x / 2 >= combatCeiling - 4.6f,
+                    "widening the camera preserves the combat release height");
                 Check(Mathf.Abs(tip.y - 0.05f) < 0.002f, "accelerated diagonal tip hits the advertised ground plane");
                 Check(shot.life < 0.16f, "rain strikes rapidly after its warning");
             }

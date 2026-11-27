@@ -183,6 +183,13 @@ namespace KarmaPrototype
             readonly SW04Pattern counter;
             readonly SW05Pattern ultimate;
             readonly SW03Pattern ground;
+            // Frame the overhead command and the player's landing lanes as the caster ascends.
+            public override Vector3? CameraFocus => ultimate.Framing
+                ? new Vector3((owner.Position.x + owner.game.Player.Position.x) * 0.5f, KarmaSpace.Units(5.2f), -10) : null;
+            public override float CameraSize(float aspect) => ultimate.Framing
+                ? Mathf.Max(KarmaSpace.Units(8.2f),
+                    (Mathf.Abs(owner.Position.x - owner.game.Player.Position.x) * 0.5f + KarmaSpace.Units(4)) / Mathf.Max(aspect, 0.01f))
+                : 0;
             int swordSkillsSinceBasic;
             int attacksSinceGround;
             int consecutiveBasics;
@@ -274,7 +281,6 @@ namespace KarmaPrototype
             }
             public override void ContactResolved(EnemyAttack pattern, KarmaAttackContact contact, Vector2 point, bool parried, bool damaged)
             {
-                if (pattern == EnemyAttack.SWBasic) basic.ContactResolved(contact, parried, damaged);
                 if (pattern == EnemyAttack.SW04)
                 {
                     counter.TraceResolved(contact);
@@ -334,7 +340,8 @@ namespace KarmaPrototype
                         KarmaWaveArtwork.Sprite("SW03_RisingBlade_v5"),
                         KarmaGuardianGrowth.Motion.Rise, new Vector2(3.5f, 6), copy: "Rising", realization: "내 검을 솟구치게 한다면…");
                 return new KarmaGuardianGrowth.Technique("Windup", "Wave", "Windup",
-                    KarmaWaveArtwork.Sprite("SW01_CrescentWave_v4"),
+                    owner.game.Player.Essences.Count == 1 ? KarmaSwordWaveAnimation.BasicFlightDrawing
+                        : KarmaWaveArtwork.Sprite("SW01_CrescentWave_v4"),
                     KarmaGuardianGrowth.Motion.Sweep, new Vector2(3.5f, 4.5f), copy: "Wave")
                     { FaceInIdle = new Vector2(0.623f, 0.886f) };
             }
@@ -344,8 +351,11 @@ namespace KarmaPrototype
             public override string VictoryPose => "Recovery";
             public override string VictoryLine(int stage) => stage == 1 ? "그 움직임… 이제는 보인다."
                 : stage == 2 ? "네가 준 힘, 내 검에 익었다." : "내 검이… 너를 넘어섰구나.";
-            public override Sprite GrowthReflection => KarmaArtResource.First("SwordWave/Growth/Reflection");
-            public override Vector2 GrowthInspectionAnchor => new Vector2(1.4f, 2.8f);
+            public override Sprite GrowthReflection => KarmaArtResource.First(owner.game.LastPersonalizedEssence == Essence.Guard
+                ? "Motions12/Wave/Guard" : "SwordWave/Growth/Reflection");
+            // The guard drawing holds the blade diagonally across the chest.
+            public override Vector2 GrowthInspectionAnchor => owner.game.LastPersonalizedEssence == Essence.Guard
+                ? new Vector2(0.85f, 4.95f) : new Vector2(1.4f, 2.8f);
             protected override bool Eligible(EnemyAttack attack, float distance, bool sight, bool escape)
             {
                 if (ground.Running) return false;

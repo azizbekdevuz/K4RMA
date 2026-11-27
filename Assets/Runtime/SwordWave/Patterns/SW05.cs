@@ -8,6 +8,7 @@ namespace KarmaPrototype
         sealed class SW05Pattern : SwordBossPattern
         {
             public SW05Pattern(KarmaEnemy owner, SwordBossBehavior sword) : base(owner, sword) { }
+            public bool Framing { get; private set; }
             Vector2 AerialSwordCastPosition { get { return new Vector2(KarmaStage.ArenaCenter, KarmaSpace.Units(3.75f)); } }
             int thresholdsUsed;
             public bool ThresholdPending
@@ -47,6 +48,7 @@ namespace KarmaPrototype
                 {
                     if (owner.game.Paused) { yield return null; continue; }
                     elapsed += Time.deltaTime;
+                    owner.animator.SampleSwordGroundStrike(elapsed / seconds);
                     for (int i = 0; i < blades.Length; i++)
                     {
                         float delay = 0.3f * i / Mathf.Max(1, blades.Length - 1);
@@ -93,10 +95,14 @@ namespace KarmaPrototype
             }
             public override IEnumerator Execute()
             {
-                try { yield return Cast(); }
-                finally { KarmaAudio.StopSlot("sw-summon", 0.12f); }
+                // Keep the ordinary combat ceiling for the escape simulation and physical drops.
+                float ceiling = KarmaAerialSwordPlanner.FormationCeiling(owner.game.GameCamera);
+                Framing = true;
+                try { yield return Cast(ceiling); }
+                finally { Framing = false; KarmaAudio.StopSlot("sw-summon", 0.12f); }
             }
-            IEnumerator Cast()
+            public override void Interrupt() { Framing = false; }
+            IEnumerator Cast(float ceiling)
             {
                 // Consume at cast start, never at completion: an interruption or
                 // healing cannot re-arm an already used 50% / 25% ultimate.
@@ -117,7 +123,7 @@ namespace KarmaPrototype
                 owner.animator.PrepareSwordBody("UltimateHold", 0);
                 KarmaAudio.Play(KarmaSfxId.SwSummoningEnergy, lifetimeOwner: owner);
                 int seed = KarmaAerialSwordPlanner.ResolveSeed(Settings.aerialSwordSeed);
-                var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed);
+                var planner = KarmaAerialSwordPlanner.Create(owner.effectsRoot, owner.game, seed, ceiling);
                 int groups = KarmaAerialSwordPlanner.VolleyCount;
                 var planted = new System.Collections.Generic.List<KarmaSW05RainBlade>();
                 Vector2 size = RainSize;
@@ -153,7 +159,7 @@ namespace KarmaPrototype
                         // This fixed ground mark never tracks after the sky layout locks.
                         Vector2 axis = shot.velocity.normalized;
                         Vector2 tip = shot.PositionAt(shot.life) + axis * (shot.size.x / 2);
-                        marks[member] = KarmaSW05VFX.Warning(owner.effectsRoot, owner.game, new Vector2(tip.x, 0.18f),
+                        marks[member] = KarmaSW05VFX.FallWarning(owner.effectsRoot, new Vector2(tip.x, 0.18f),
                             new Vector2(shot.size.y / Mathf.Abs(axis.y), 0.34f));
                         marks[member].name = "SW05 낙하 지면 전조";
                         blades[member] = KarmaVisuals.Box(owner.effectsRoot, "Forming aerial sword / no damage",
@@ -165,13 +171,18 @@ namespace KarmaPrototype
                         reveals[member] = KarmaSW05VFX.Ascent(blades[member], shot.size, owner.game);
                     }
 
+                    var fallWarnings = KarmaSW05Energy.FallWarnings(owner.effectsRoot, owner.game, owner, marks, plan.shots, warning);
+                    owner.animator.PrepareSwordBody("UltimateWindup", warning, group);
                     yield return FormAerialSword(blades, reveals, plan, warning);
                     if (!owner.Active) yield break;
+                    owner.animator.ReleaseWavePhase();
+                    owner.animator.ReleaseSwordBody("UltimateCommand", group);
                     for (int member = 0; member < plan.shots.Length; member++)
                     {
                         var shot = plan.shots[member];
                         var attack = KarmaSW05RainBlade.Spawn(owner.game, owner, owner.effectsRoot,
                             shot, owner.Damage * Settings.aerialSwordDamageMultiplier, marks[member]);
+                        fallWarnings.BindFallWarning(member, attack);
                         KarmaSW05VFX.ReleaseFormation(blades[member], attack.Visual);
                         blades[member].gameObject.SetActive(false); Destroy(blades[member].gameObject);
                         planner.RegisterLaunch(attack.transform);
@@ -179,8 +190,6 @@ namespace KarmaPrototype
                     }
                     KarmaAudio.StopSlot("sw-rain");
                     KarmaAudio.Play(KarmaSfxId.SwUltimateRain);
-                    owner.animator.ReleaseWavePhase();
-                    owner.animator.ReleaseSwordBody("UltimateCommand", group);
                     while (owner.Active && planner.HasLiveShots) yield return null;
                     if (!owner.Active) yield break;
                     // Only the final landing starts the common countdown. Rain
@@ -208,6 +217,7 @@ namespace KarmaPrototype
                 owner.animator.PrepareSwordBody("UltimateRecover", 0.7f);
                 owner.animator.PlayWavePhase("Rising");
                 yield return FlyBoss(ground, 0.7f);
+                Framing = false;
                 // Let the last harmless impact finish during descent rather than
                 // clearing it in the same frame as the last blade's ground contact.
                 yield return owner.Recovery(2);

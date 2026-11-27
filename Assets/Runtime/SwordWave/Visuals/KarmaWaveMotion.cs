@@ -78,6 +78,21 @@ namespace KarmaPrototype
         void AdvanceMotion(float dt)
         {
             if (!initialized) return;
+            // Growth draws in LateUpdate before this component. Its inspection scale,
+            // authored lean and revival poses belong to the cinematic until it ends.
+            if (animator != null && animator.PresentSwordCeremony())
+            {
+                if (game != null && game.GuardianGrowth != null)
+                {
+                    if (game.LastPersonalizedEssence == Essence.Guard)
+                        animator.PresentSwordGuardInheritance(game.GuardianGrowth);
+                    else if (game.LastPersonalizedEssence == Essence.RisingSlash)
+                        animator.PresentSwordRiseInheritance(game.GuardianGrowth);
+                    else animator.PresentFirstSwordDemonstration(game.GuardianGrowth);
+                }
+                ResetMotionState();
+                return;
+            }
             // Resolve the material/scale of the actual selected sprite even
             // after death, interruption, or an external pose overwrite.
             if (animator != null) animator.RegisterSwordAppearance();
@@ -116,6 +131,7 @@ namespace KarmaPrototype
             bool grounded = enemy.Position.y <= KarmaSpace.GuardianGroundY + 0.1f;
             bool walkingFrames = animator.SampleSwordLocomotion(travel, dt, facing, grounded);
             animator.SampleSwordBasicContactPose();
+            animator.SampleWaveDownstroke();
             animator.RegisterSwordAppearance();
             float nominalSpeed = game != null
                 ? Mathf.Max(0.1f, game.Config.enemyMoveSpeed * game.Config.BossTuning.moveMultiplier)
@@ -239,45 +255,25 @@ namespace KarmaPrototype
             }
             previousBodyAction = bodyAction;
             bool mobile = pose == "Move" || pose == "Backstep";
-            if (animator.SwordBodyVisible && bodyAction != null && pose != "Hurt" && !mobile && !walkingFrames)
+            bool drawnSwing = animator.BasicBodyActive || aimed && bodyAction == "Heavy";
+            if (drawnSwing && (animator.SwordBodyVisible || pose == "FollowThrough") && pose != "Hurt" && !mobile)
+            {
+                // These drawings already move the hips over the planted foot.
+                // Let any incoming movement settle without rocking the whole figure.
+                delta = Vector3.zero;
+                angle = 0;
+            }
+            else if (animator.SwordBodyVisible && bodyAction != null && pose != "Hurt" && !mobile && !walkingFrames)
             {
                 float age = animator.SwordBodyAge;
                 float release = animator.SwordReleaseAge;
                 float load = Mathf.SmoothStep(0, 1, age / Mathf.Max(1f / 24, animator.SwordBodyDuration));
                 bool released = animator.SwordBodyReleased;
-                if (animator.BasicBodyActive)
+                if (bodyAction == "Volley" && current == (int)EnemyAttack.SW01)
                 {
-                    // Arms/waist still come from the authored drawings. A
-                    // single weight transfer supports each cut; never reset
-                    // momentum merely because the next drawing was selected.
-                    bool melee = bodyAction == "BasicMelee";
-                    if (!released)
-                    { delta.x = -0.018f * load; angle = 2.4f * load; }
-                    else if (melee && animator.BasicLinkActive)
-                    {
-                        float t = animator.BasicLinkAge, duration = animator.BasicLinkDuration;
-                        float linkBlend = Mathf.SmoothStep(0, 1, t / duration);
-                        if (duration < 5f / 24)
-                        { delta.x = Mathf.Lerp(0.02178f, 0.035f, linkBlend); angle = Mathf.Lerp(-2.033f, 2.08f, linkBlend); }
-                        else
-                        {
-                            float settle = Mathf.SmoothStep(0, 1, t / (3f / 24));
-                            float loadBack = Mathf.SmoothStep(0, 1, (t - duration + 2f / 24) / (2f / 24));
-                            delta.x = Mathf.Lerp(Mathf.Lerp(0.02178f, -0.016f, settle), 0.035f, loadBack);
-                            angle = Mathf.Lerp(Mathf.Lerp(-2.033f, 1.3f, settle), 2.08f, loadBack);
-                        }
-                    }
-                    else
-                    {
-                        float strike = 1 - Mathf.SmoothStep(0, 1, (release - 1f / 24) / (6f / 24));
-                        float backhand = animator.BasicStrikeIndex == 0 ? -1 : 0.65f;
-                        delta.x = (melee ? 0.035f : 0.025f) * strike;
-                        angle = (melee ? 3.2f * backhand : -2.8f) * strike;
-                        // Between the two contacts, transfer back into the low
-                        // loaded pose instead of freezing in the first hit.
-                        if (melee && animator.BasicStrikeIndex == 0)
-                        { delta.x -= 0.016f * (1 - strike); angle += 1.3f * (1 - strike); }
-                    }
+                    float impulse = 1 - Mathf.SmoothStep(0, 1, (release - 1f / 24) / .22f);
+                    delta.x = released ? attackReach * .85f * impulse : -.03f * load;
+                    angle = released ? attackTilt * -.9f * impulse : 3.4f * load;
                 }
                 else if (bodyAction == "UltimateAscent")
                 {
@@ -292,24 +288,15 @@ namespace KarmaPrototype
                     float gather = Mathf.Sin(load * Mathf.PI);
                     delta.x = -0.04f * gather; angle = 4.8f * gather;
                 }
-                else if (bodyAction == "Summon")
+                else if (bodyAction == "Summon" || bodyAction == "UltimateWindup" || bodyAction == KarmaCharacterAnimator.ShieldRaiseAction)
                 {
-                    float drop = Mathf.SmoothStep(0, 1, (animator.SwordGroundProgress - 0.80f) / 0.20f);
-                    float settle = released ? 1 - Mathf.SmoothStep(0, 1, release / (5f / 24)) : 1;
-                    delta.x = Mathf.Lerp(-0.025f, 0.040f, drop) * settle;
-                    angle = Mathf.Lerp(2.5f, -3.5f, drop) * settle;
+                    // The shoulder, knees and downward point are drawn in the sheet.
+                    // Keep the sole and the point registered at impact.
+                    delta = Vector3.zero; angle = 0;
                 }
-                else if (bodyAction == "UltimateHold")
-                { delta.x = 0; angle = 0.5f * Mathf.Sin(KarmaCharacterAnimator.SwordFrameTime(visualClock) * 2f); }
-                else if (bodyAction == "UltimateCharge")
-                { delta.x = -0.05f * load; angle = 6f * load; }
-                else if (bodyAction == "UltimateCommand" || bodyAction == "UltimateFinish")
-                {
-                    bool finish = bodyAction == "UltimateFinish";
-                    float impulse = 1 - Mathf.SmoothStep(0, 1, (release - 2f / 24) / (finish ? .42f : .3f));
-                    delta.x = attackReach * (finish ? 1.3f : .7f) * impulse;
-                    angle = -attackTilt * (finish ? 1.5f : .9f) * impulse;
-                }
+                else if (bodyAction == "UltimateHold" || bodyAction == "UltimateCommand"
+                    || bodyAction == "UltimateCharge" || bodyAction == "UltimateFinish")
+                { delta.x = 0; angle = 0; }
                 else if (bodyAction == "UltimateRecover")
                 { delta.x = 0; angle = -2f * (1 - Mathf.SmoothStep(0, 1, age / Mathf.Max(1f / 24, animator.SwordBodyDuration))); }
                 else if (bodyAction == "Counter")
@@ -319,22 +306,6 @@ namespace KarmaPrototype
                     // before the next aim. No alternating full-body wobble.
                     delta.x = released ? 0.04f * counterRelease : -0.018f * load;
                     angle = released ? -4.2f * counterRelease : 2.2f * load;
-                }
-                else if (released)
-                {
-                    bool heavy = bodyAction == "Heavy";
-                    float impulse = 1 - Mathf.SmoothStep(0, 1, (release - 1f / 24) / (heavy ? .32f : .22f));
-                    delta.x = attackReach * (heavy ? 1.4f : .85f) * impulse;
-                    angle = attackTilt * (heavy ? -1.4f : bodyAction == "Volley" || animator.SwordMotionStrike % 2 == 0 ? -.9f : .55f) * impulse;
-                }
-                else
-                {
-                    bool heavy = bodyAction == "Heavy";
-                    // Locking SW02 starts a fresh warning clock but must not
-                    // unload the torso and restart anticipation a second time.
-                    float tension = heavy && animator.SwordHeavyLocked ? 1 : load;
-                    delta.x = -(heavy ? .045f : .03f) * tension;
-                    angle = (heavy ? 5.5f : 3.4f) * tension;
                 }
             }
 
@@ -395,6 +366,13 @@ namespace KarmaPrototype
         void ResetVisualTransform()
         {
             if (spriteTransform == null) return;
+            ResetMotionState();
+            spriteTransform.localPosition = animator != null && animator.CurrentPose != "Death" ? animator.SwordVisualHome : spriteHome;
+            spriteTransform.localRotation = spriteHomeRotation;
+        }
+
+        void ResetMotionState()
+        {
             motionOffset = motionVelocity = Vector3.zero;
             motionAngle = angularVelocity = 0;
             locomotionSpeed = 0;
@@ -402,8 +380,6 @@ namespace KarmaPrototype
             previousFacing = transform.lossyScale.x < 0 ? -1 : 1;
             HoverActive = false;
             previousBodyAction = null;
-            spriteTransform.localPosition = animator != null && animator.CurrentPose != "Death" ? animator.SwordVisualHome : spriteHome;
-            spriteTransform.localRotation = spriteHomeRotation;
         }
 
         void OnDisable()

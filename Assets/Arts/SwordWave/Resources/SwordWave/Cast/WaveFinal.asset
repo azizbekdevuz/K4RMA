@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6c3476ff5f62048942b4602c4229f7, type: 3}
+  m_Name: WaveFinal
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSwordBasicArt
+  idle: {fileID: 21300000, guid: 79f502ba9b5d54d4ea626968fe96ca85, type: 3}
+  poses:
+  - {fileID: 1430861214, guid: b09169a929b301443b0be1768ac83c9c, type: 3}
+  - {fileID: 489300673, guid: 6f7ed6cb7540c224790dd8f8984cc85a, type: 3}
+  - {fileID: -981319922, guid: 6f7ed6cb7540c224790dd8f8984cc85a, type: 3}
+  - {fileID: -1150961125, guid: 6f7ed6cb7540c224790dd8f8984cc85a, type: 3}
+  - {fileID: 1519413804, guid: b09169a929b301443b0be1768ac83c9c, type: 3}
+  - {fileID: 2095051376, guid: b09169a929b301443b0be1768ac83c9c, type: 3}
+  - {fileID: -725083406, guid: b09169a929b301443b0be1768ac83c9c, type: 3}
+  - {fileID: -1686151651, guid: b09169a929b301443b0be1768ac83c9c, type: 3}
+  blade: {fileID: -468652396, guid: d3c351ecb4575c84881817824f6c28a7, type: 3}
+  sockets:
+  - {x: 257, y: 259}
+  - {x: 239, y: 190}
+  - {x: 219, y: 257}
+  - {x: 312, y: 151}
+  - {x: 325, y: 187}
+  - {x: 315, y: 254}
+  - {x: 291, y: 256}
+  - {x: 257, y: 259}
+  angles:
+  - -18
+  - 151
+  - 204
+  - 122
+  - 0
+  - -20
+  - -18
+  - -18
+  bladeLength: 1.6947806

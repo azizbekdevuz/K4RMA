@@ -31,6 +31,7 @@ namespace KarmaPrototype
         }
 
         KarmaGame game;
+        float? combatCeiling;
         System.Random random;
         Scene simulationScene;
         PhysicsScene2D physics;
@@ -57,12 +58,20 @@ namespace KarmaPrototype
         public static int ResolveSeed(int configuredSeed)
         { return configuredSeed != 0 ? configuredSeed : UnityEngine.Random.Range(1, int.MaxValue); }
 
-        public static KarmaAerialSwordPlanner Create(Transform lifetimeRoot, KarmaGame game, int seed)
+        internal static float FormationCeiling(Camera camera)
+        {
+            float ceiling = KarmaSpace.Units(12);
+            return camera != null && camera.orthographic
+                ? Mathf.Min(ceiling, camera.transform.position.y + camera.orthographicSize) : ceiling;
+        }
+
+        public static KarmaAerialSwordPlanner Create(Transform lifetimeRoot, KarmaGame game, int seed, float? combatCeiling = null)
         {
             var go = new GameObject("Aerial sword escape planner");
             go.transform.SetParent(lifetimeRoot, false);
             var planner = go.AddComponent<KarmaAerialSwordPlanner>();
             planner.game = game; planner.Seed = seed; planner.random = new System.Random(seed);
+            planner.combatCeiling = combatCeiling;
             planner.GroupSizes = CreateGroupSizes(game.Config.BossTuning.sword, planner.random);
             planner.CopyPhysicsWorld();
             return planner;
@@ -95,9 +104,7 @@ namespace KarmaPrototype
             var formation = new Vector2[count];
             var orbits = new Vector2[count];
             var depths = new float[count];
-            float ceiling = KarmaSpace.Units(12);
-            if (game.GameCamera != null && game.GameCamera.orthographic)
-                ceiling = Mathf.Min(ceiling, game.GameCamera.transform.position.y + game.GameCamera.orthographicSize);
+            float ceiling = combatCeiling ?? FormationCeiling(game.GameCamera);
             for (int i = 0; i < count; i++)
             {
                 float sample = (float)random.NextDouble();

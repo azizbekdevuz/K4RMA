@@ -106,6 +106,9 @@ namespace KarmaPrototype
         }
         public static KarmaSwordScarRise Warning(KarmaGame game, KarmaEnemy owner, Transform root, float x, float width, float seconds, string name)
         {
+            // Keep a steady floor rectangle underneath the animated crack.
+            KarmaVisuals.Box(root, "SW03 ground footprint", new Vector2(x, 0.12f),
+                new Vector2(width, 0.24f), new Color(0.22f, 0.62f, 0.90f, 0.36f), 8);
             var node = new GameObject(name); node.transform.SetParent(root, false);
             node.AddComponent<SpriteRenderer>().sortingOrder = 9;
             var cue = node.AddComponent<KarmaSwordScarRise>();

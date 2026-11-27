@@ -104,13 +104,13 @@ public static class KarmaSwordFinalPolishChecks
             var orientedSize = Vector2.Scale(visual.sprite.bounds.size, visual.transform.lossyScale);
             Check(Vector2.Distance(orientedSize, expected) < 0.002f,
                 "final world bounds equal SW01, including parents and frame bounds fitting");
-            Check(visual.color == Color.white && visual.flipX == (velocity.x < 0) && !visual.flipY,
-                "same SW01 tint and facing");
-            var reference = new GameObject("SW01 material reference");
+            Check(visual.color == KarmaSwordAttackPolish.WaveTint && visual.flipX == (velocity.x < 0) && !visual.flipY,
+                "Basic tint and committed facing");
+            var reference = new GameObject("Basic material reference");
             try
             {
                 var renderer = reference.AddComponent<SpriteRenderer>(); KarmaVisuals.ApplyMaterial(renderer);
-                Check(visual.sharedMaterial == renderer.sharedMaterial, "same SW01 sprite material");
+                Check(visual.sharedMaterial == renderer.sharedMaterial, "Basic retains its sprite material");
             }
             finally { UnityEngine.Object.Destroy(reference); }
             Check((EnemyAttack)Get(shot, "sourcePattern") == EnemyAttack.SWBasic && size == footprint * 0.90f,
@@ -125,6 +125,10 @@ public static class KarmaSwordFinalPolishChecks
             for (int i = 0; i < 5; i++)
                 validFrame |= visual.sprite == KarmaArtwork.Sprite("SwordBossVFX", "SwordEnergy_" + sequence + "_" + i);
             Check(validFrame, "released shot uses a registered frame from its electric flight sequence");
+            var properties = new MaterialPropertyBlock();
+            visual.GetPropertyBlock(properties);
+            Check(visual.sharedMaterial.shader.name == "K4RMA/SwordSkillPolish" && properties.GetFloat("_Style") == 7,
+                "SW01 and SW02 draw the steel palette on the original flight frames");
             Vector2 footprint = size;
             if (pattern == EnemyAttack.SW01) footprint.x *= 1.12f;
             Vector2 coreFraction = pattern == EnemyAttack.SW02 ? new Vector2(0.83f, 0.86f) : new Vector2(0.65f, 0.81f);
@@ -158,6 +162,7 @@ public static class KarmaSwordFinalPolishChecks
         Reset(); Place(20 + side * (melee ? 5 : pattern == EnemyAttack.SWBasic ? 9 : 15));
         if (enraged) typeof(KarmaEnemy).GetProperty("Health").SetValue(Enemy, Enemy.MaxHealth * 0.2f);
         await Seconds(0.1f); Force(pattern);
+        Vector2 castPosition = Enemy.Position;
         var m = new PatternMetrics { pattern = pattern.ToString() + (melee ? "-melee" : ""), side = side, enraged = enraged };
         string prefix = m.pattern + "-" + side + "-" + enraged; float start = Enemy.FightSeconds, nextDamage = start + 0.08f;
         var seen = new HashSet<KarmaBossAttack>(); bool rising = false, warned = false, recovery = false, both = false; string lastState = "";
@@ -168,6 +173,8 @@ public static class KarmaSwordFinalPolishChecks
             try
             {
                 var attacks = Root.GetComponentsInChildren<KarmaBossAttack>();
+                if (pattern == EnemyAttack.SW02 && (bool)Get(Enemy, "running"))
+                    Check(Vector2.Distance(Enemy.Position, castPosition) < 0.001f, "SW02 stays at its casting position");
                 var animator = (KarmaCharacterAnimator)Get(Enemy, "animator"); Check(animator.CurrentPose != "Hurt", "ordinary hit preserves committed attack pose");
                 string state = Get(Enemy, "state") + "/" + animator.CurrentPose;
                 if (state != lastState) { m.timeline.Add((Enemy.FightSeconds - start).ToString("F4") + " " + state); lastState = state; }
@@ -194,7 +201,7 @@ public static class KarmaSwordFinalPolishChecks
         };
         await Until(() => !(bool)Get(Enemy, "running") || error != null); probe.Before = probe.After = null; UnityEngine.Object.Destroy(probe.gameObject); Set(Enemy, "running", true);
         m.seconds = Enemy.FightSeconds - start; Check(error == null, error);
-        Check(m.shots == (pattern == EnemyAttack.SW01 || pattern == EnemyAttack.SWBasic && melee ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
+        Check(m.shots == (pattern == EnemyAttack.SW01 ? 2 : 1), "exact committed shot count " + JsonUtility.ToJson(m));
 
         // SW01 chooses its first lane randomly once per cast. Both original
         // heights and their stagger must survive in either order.
@@ -203,7 +210,7 @@ public static class KarmaSwordFinalPolishChecks
             && Mathf.Abs(Mathf.Max(m.heights[0], m.heights[1]) - 6.6f) < 0.01f
             && m.releaseTimes[1] - m.releaseTimes[0] >= 0.42f,
             "SW01 retains both randomized lanes and release stagger: " + JsonUtility.ToJson(m) + "; overlap=" + both);
-        if (pattern == EnemyAttack.SWBasic && melee) Check(seen.Count == 2, "two melee cuts retain latched mode");
+        if (pattern == EnemyAttack.SWBasic && melee) Check(seen.Count == 1, "one melee downcut retains latched mode");
         Check(m.peakCosmetics <= KarmaSwordVfxPool.Capacity, "bounded sprite pool");
         File.WriteAllText(output + "/" + prefix + ".json", JsonUtility.ToJson(m, true)); Log(prefix + ": " + m.shots + " shots, " + m.rounds + " rises, " + m.seconds.ToString("F3") + "s, cosmetics peak " + m.peakCosmetics);
     }
@@ -258,14 +265,18 @@ public static class KarmaSwordFinalPolishChecks
     {
         Reset(); await Seconds(0.1f); Force(EnemyAttack.SW01);
         await Until(() => Root.GetComponentsInChildren<KarmaBossAttack>().Length > 0);
-        var accent = ((Transform)Get(Enemy, "art")).GetComponent<KarmaSwordAttackAccent>();
-        Check(accent != null, "live release has cosmetic recoil");
+        var art = (Transform)Get(Enemy, "art");
+        var accent = art.GetComponent<KarmaSwordAttackAccent>();
+        Check(accent == null || (float)Get(accent, "age") >= 0.22f, "SW01 release uses its drawn follow-through");
+        // Exercise interruption with an active ordinary-release accent.
+        if (accent == null) accent = art.gameObject.AddComponent<KarmaSwordAttackAccent>();
+        accent.Fire(game, Enemy, false);
         Set(Enemy, "pendingParry", true); await Until(() => Enemy.Stunned);
         await Seconds(0.05f); Check((float)Get(accent, "age") >= 0.22f, "stun cancels recoil rather than resuming it later");
-        Reset(); await Seconds(0.1f); var art = (Transform)Get(Enemy, "art"); accent = art.gameObject.AddComponent<KarmaSwordAttackAccent>(); accent.Fire(game, Enemy, true);
+        Reset(); await Seconds(0.1f); art = (Transform)Get(Enemy, "art"); accent = art.gameObject.AddComponent<KarmaSwordAttackAccent>(); accent.Fire(game, Enemy, true);
         Set(Enemy, "selected", EnemyAttack.SW05); await Seconds(0.05f);
         Check((float)Get(accent, "age") >= 0.22f, "SW05 never inherits an unfinished ordinary recoil");
-        Log("live release recoil cancels on real forced stun and on SW05 transition; no deferred visual impulse");
+        Log("SW01 uses drawn follow-through; ordinary recoil cancels on forced stun and on SW05 transition");
     }
     static async Task CounterChecks()
     {

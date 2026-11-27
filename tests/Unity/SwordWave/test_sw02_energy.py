@@ -1,4 +1,5 @@
 """Offline SW01/SW02 asset, blade-socket and event contract checks."""
+import math
 import re
 import unittest
 from pathlib import Path
@@ -17,10 +18,120 @@ def motion_catalog():
 
 def blade_endpoints():
     rows = [line.split("\t") for line in (MOTIONS / "BladeSockets.txt").read_text().splitlines()]
-    return {key: tuple(map(int, coords)) for key, *coords in rows}
+    endpoints = {key: tuple(map(int, coords)) for key, *coords in rows}
+    for key, (heel, _, tip) in combat_blade_points().items():
+        endpoints[key] = (*heel, *tip)
+    return endpoints
+
+
+def combat_blade_points():
+    source = VISUAL.read_text(encoding="utf-8-sig")
+    entries = re.findall(r'\["(Wave(?:Ward|Final|Rise)?/\w+_\d+)"\] = \((.*?)\),$', source, re.MULTILINE)
+    return {key: [tuple(map(float, xy)) for xy in re.findall(r"new\(([\d.]+)f, ([\d.]+)f\)", points)]
+            for key, points in entries}
 
 
 class EnergyChecks(unittest.TestCase):
+    def test_visible_blade_distinguishes_cut_aim_and_ground_commands(self):
+        sockets = combat_blade_points()
+        catalog = motion_catalog()
+
+        def bearing(form, motion, frame):
+            heel, _, tip = sockets[f"{form}/{motion}_{frame:02}"]
+            row = catalog[form, motion]
+            return math.degrees(math.atan2((tip[1] - heel[1]) * int(row[6]),
+                                           (tip[0] - heel[0]) * int(row[5])))
+
+        for form in FORMS:
+            phases = [bearing(form, motion, frame) for motion, frame in
+                      (("SWBasicRanged", 0), ("Windup", 2), ("SWBasicRanged", 1), ("SWBasicRanged", 2))]
+            self.assertTrue(phases[0] < -90 < phases[1] < 0 < phases[2] < phases[3] < 90, (form, phases))
+            for frame in (2, 3):
+                self.assertLess(abs(bearing(form, "SW02", frame)), 12, (form, frame))
+        for form in ("WaveRise", "WaveFinal"):
+            self.assertGreater(bearing(form, "SW03", 1), 65, form)
+            self.assertGreater(bearing(form, "SW03", 3), 65, form)
+        self.assertLess(bearing("WaveFinal", "SW05", 1), -90)
+        self.assertGreater(bearing("WaveFinal", "SW05", 3), 65)
+
+    def test_combat_blade_keeps_its_idle_length(self):
+        # Positions of the guard and tip on each official Idle, on a 500 px long side.
+        reference = {
+            "Wave": ((155.5, 300), (6, 476)),
+            "WaveWard": ((159, 316), (6, 468)),
+            "WaveRise": ((216.5, 276), (5, 417)),
+            "WaveFinal": ((174.5, 268), (5, 414)),
+        }
+        catalog = motion_catalog()
+        animator = (VISUAL.parent / "KarmaCharacterAnimator.SwordSW02.cs").read_text()
+        packing = float(re.search(r"CombatSheetPacking = ([\d.]+)f", animator)[1])
+        lengths = {}
+        for form, (heel, tip) in reference.items():
+            path = ROOT / "Assets/Arts/Reference" / (form + "_Idle.png")
+            with Image.open(path) as idle:
+                pixels = math.dist(heel, tip) * max(idle.size) / 500
+            ppu = float(re.search(r"spritePixelsToUnits: ([\d.]+)", Path(str(path) + ".meta").read_text())[1])
+            # The two sockets lie 4.5% and 94.5% along the visible steel.
+            lengths[form] = pixels * 0.90 / ppu
+        for key, (heel, _, tip) in combat_blade_points().items():
+            form, frame = key.split("/")
+            motion, index = frame.rsplit("_", 1)
+            row = catalog[form, motion]
+            dx = (tip[0] - heel[0]) * int(row[5]) / 96
+            dy = (tip[1] - heel[1]) * int(row[6]) / 96
+            ppu = float(row[10].split(",")[int(index)]) * packing
+            self.assertAlmostEqual(math.hypot(dx, dy) / ppu, lengths[form], delta=.035, msg=key)
+
+    def test_both_basics_share_one_two_handed_downcut(self):
+        from test_sword_presentation import method
+        skills = (VISUAL.parent / "KarmaCharacterAnimator.SwordSkills.cs").read_text()
+        poses = (VISUAL.parent / "KarmaCharacterAnimator.SwordSW02.cs").read_text()
+        self.assertNotIn("BeginBasicLink(", skills)
+        body = method(poses, "void ShowSwordPatternMotion(")
+        self.assertIn('case "BasicMelee":', body)
+        self.assertIn('case "BasicRanged":', body)
+        self.assertIn('drawing = "SWBasic";', body)
+        points = combat_blade_points()
+        for form in FORMS:
+            raised, contact = (points[f"{form}/SWBasic_{frame}"] for frame in ("00", "01"))
+            self.assertLess(raised[0][1] + 8, contact[0][1], form)
+            self.assertLess(raised[2][1], raised[0][1], form)
+            self.assertGreater(contact[2][0], contact[0][0], form)
+
+    def test_volley_charge_follows_visible_steel(self):
+        cuts = {key: points for key, points in combat_blade_points().items() if "/SW01_" in key}
+        self.assertEqual(set(cuts), {f"{form}/SW01_{frame:02}" for form in FORMS for frame in range(4)})
+        for key, points in cuts.items():
+            form, frame = key.split("/")
+            index = int(frame[-2:])
+            with Image.open(ROOT / "Assets/Arts/SwordWave" / form / "SW01.png") as image:
+                width, height = image.width // 2, image.height // 2
+                for x, y in points:
+                    color = image.getpixel((index % 2 * width + round(x * width / 96),
+                                            index // 2 * height + round(y * height / 96)))
+                    self.assertGreater(color[3], 170, (key, x, y))
+                    self.assertGreater(min(color[:3]), 95, (key, x, y))
+                    self.assertLess(max(color[:3]) - min(color[:3]), 55, (key, x, y))
+
+    def test_restored_volley_charge_covers_the_curved_steel(self):
+        source = VISUAL.read_text(encoding="utf-8-sig")
+        table = source.split("volleyBlades = new()", 1)[1].split("};", 1)[0]
+        entries = re.findall(r'\["([^"]+)"\] = \((.*?)\),$', table, re.MULTILINE)
+        self.assertEqual(len(entries), 24)
+        for key, points in entries:
+            form, pose = key.split("/")
+            sheet = ROOT / "Assets/Arts/SwordWave" / form / "SW01Cast.png"
+            meta = sheet.with_suffix(".png.meta").read_text()
+            rect = re.search(r"name: " + pose + r"\s+rect:\s+serializedVersion: \d+\s+x: (\d+)\s+y: (\d+)\s+width: (\d+)\s+height: (\d+)", meta)
+            x, y, w, h = map(int, rect.groups())
+            coords = [tuple(map(float, v)) for v in re.findall(r"new\(([\d.]+)f, ([\d.]+)f\)", points)]
+            with Image.open(sheet) as image:
+                for t in (.12, .35, .5, .72, .9):
+                    p = [(1-t)*(1-2*t)*a + 4*t*(1-t)*b + t*(2*t-1)*c for a,b,c in zip(*coords)]
+                    sx, sy = x + int(p[0]*w/96), image.height-y-h + int(p[1]*h/96)
+                    colors = (image.getpixel((sx+dx,sy+dy)) for dx in range(-2,3) for dy in range(-2,3))
+                    self.assertTrue(any(a>140 and min(r,g,b)>90 and max(r,g,b)-min(r,g,b)<50 for r,g,b,a in colors), (key,t))
+
     def test_charge_mesh_clips_at_both_walls_without_moving_anchor(self):
         from test_sword_presentation import method, run_cs
         from test_sw05_eruption_mesh import SHIM
@@ -95,15 +206,20 @@ class ClipProbe {
                 self.assertGreaterEqual(steel, 140, (key, x, y))
 
     def test_speed_and_original_warning_contract(self):
+        from test_sword_presentation import method
+
         sw02 = (ROOT / "Assets/Runtime/SwordWave/Patterns/SW02.cs").read_text(encoding="utf-8-sig")
         self.assertIn("return Mathf.Max(0.1f, Settings.swordSpeed * 1.25f * 1.3f);", sw02)
         self.assertIn("TrackingSeconds = 0.34f, ReleaseSeconds = 0.10f", sw02)
         self.assertIn("yield return TrackWarning(marker, warning)", sw02)
+        self.assertNotIn("sword.ChargeDash(", sw02)
+        self.assertIn("RefreshAim(marker, out _, out _, out _)", sw02)
         self.assertIn("Settings.aimedDamageMultiplier", sw02)
         sw01 = (ROOT / "Assets/Runtime/SwordWave/Patterns/SwordWaveVolley.cs").read_text(encoding="utf-8-sig")
         self.assertIn("Mathf.Max(KarmaSpace.Scale, owner.Tuning.sword.swordSpeed * 1.3f)", sw01)
         self.assertIn("owner.Warning(0.65f) : Mathf.Max(0.42f, 0.54f * owner.Tempo)", sw01)
         self.assertIn("else yield return TrackSW01(owner, sword, high, mark, waveSize, warning, advertised)", sw01)
+        self.assertIn("sword.ChargeDash(", method(sw01, "static IEnumerator TrackSW01("))
 
     def test_charge_uses_blade_and_actual_release(self):
         source = VISUAL.read_text(encoding="utf-8-sig")
@@ -184,7 +300,7 @@ public class SpeedProbe{
             ("REACH", behavior, "public bool SwordShotCanReach("),
         ]:
             code = code.replace(token, method(source, signature))
-        self.assertIn("PASS 12 normal/enraged speed", run_cs(code, "SpeedProbe"))
+        self.assertIn("PASS 12 normal/enraged speed", run_cs(code, "SpeedProbe", modern=True))
 
     def test_basic_core_isolated_from_progressive_skill_blade_fill(self):
         from test_sword_presentation import method
@@ -222,7 +338,7 @@ public class SpeedProbe{
             values = []
             for frame in range(6):
                 x1, y1, x2, y2 = sockets[f"{form}/SW02_{frame:02d}"]
-                values.extend((f"new Vector2({x1},{y1})", f"new Vector2({x2},{y2})"))
+                values.extend((f"new Vector2({x1}f,{y1}f)", f"new Vector2({x2}f,{y2}f)"))
             rows.append("{" + ",".join(values) + "}")
         table = "= {" + ",".join(rows) + "};"
         ppus = [float(catalog[form, "SW02"][7]) for form in FORMS]
@@ -251,7 +367,7 @@ public class ChargeProbe{
  Vector3[] vertices=new Vector3[Strokes*VerticesPerStroke];Color[] colors=new Color[Strokes*VerticesPerStroke];Vector2[] path=new Vector2[Points];
  static readonly Vector2[,] BladeSockets SOCKETS
  Vector2 bladeHeel,bladeBend,bladeTip;float bladePixelSize,chargeBodyHeight,chargeSecondsLeft,age,power,facing;int stroke;bool heavy,aiming,smallCharge;uint seed=747796405,arcSeed=747796405;
- static readonly Color Cyan=new Color(.14f,1.1f,2,1),White=new Color(1.25f,1.7f,2.1f,1);
+ Color edgeColor=new Color(.14f,.36f,.72f,1),coreColor=new Color(.81f,.91f,1,1);
  INTENSITY
  class Arc{public Vector2 from,to;public float width,alpha;}
  List<Arc> bolts=new List<Arc>(),packets=new List<Arc>();
@@ -322,7 +438,7 @@ public class ChargeProbe{
   p.Sample(0,0);int earlyStroke=p.stroke;p.BoundsCheck();
   float earlyFront=p.BladeFillProgress(0);p.Sample(.1f,.5f);float middle=p.BladeFillProgress(.5f);p.Sample(.2f,1);float late=p.BladeFillProgress(1);
   Check(earlyFront<middle&&middle<late,"charge front advances guard to tip");
-  Check(p.stroke==(p.heavy?42:30),"layered sheath, travelling packets, tip focus and bounded sparks");Check(p.stroke<Strokes,"fixed buffer headroom");
+  Check(p.stroke==(p.heavy?42:31),"layered sheath, travelling packets, tip focus and bounded sparks");Check(p.stroke<Strokes,"fixed buffer headroom");
   for(int i=0;i<Points;i++)Check(Vector2.Distance((Vector2)p.vertices[i*Lanes+1],p.OnBlade(late*i/(Points-1)))<.8f,"light follows actual blade");
   p.BoundsCheck();var before=p.bolts[0].from;Vector2 shift=new Vector2(7,-3);p.ConfigureBlade(shift,bend-heel+shift,tip-heel+shift,pixel,4);p.Sample(.2f,1);Check(Vector2.Distance(p.bolts[0].from,before+shift)<.0001f,"moving blade attachment");p.BoundsCheck();
   p.aiming=false;p.stroke=0;p.bolts.Clear();Array.Clear(p.colors,0,p.colors.Length);p.ChargeRelease(0);Check(p.bolts.Count>0,"release on actual shot event");maxStrokes=Math.Max(maxStrokes,p.stroke);p.BoundsCheck();
@@ -395,7 +511,7 @@ public class GameObject{
 }
 public class SpriteRenderer:Component{public int sortingLayerID,sortingOrder;public bool flipX;public Bounds bounds=new Bounds{extents=new Vector3(2,3,0)};}
 public enum EnemyAttack{SWBasic,SW01,SW02}public enum RunPhase{Combat,End}public enum SwordEnergyPhase{Charge,ChargeRelease}
-public class KarmaCharacterAnimator{public string SwordBodyAction="Volley";public float SwordChargeBodyHeight=4;}
+public class KarmaCharacterAnimator{public string SwordBodyAction="Volley";public float SwordChargeBodyHeight=4;public bool SwordCarriesShield;}
 public class Camera{public bool orthographic=true;public int pixelHeight=720;public float orthographicSize=14.0625f;}
 public class KarmaGame{public Transform World=new GameObject().transform;public RunPhase Phase=RunPhase.Combat;public bool Paused;public Camera GameCamera=new Camera();}
 public class KarmaEnemy{public int CurrentPattern,Facing=1;public bool PresentationActive=true,Stunned;public Transform transform=new GameObject().transform;public Bounds DamageBounds;}
@@ -449,7 +565,7 @@ public class KarmaSwordWaveAnimation:Component{
    game.Paused=true;charge.LateUpdate();Check(charge.age==0&&rig.Active,"pause freezes contraction as well as charge");game.Paused=false;
    if(pattern==1&&i==0)previousTail=charge;
    else {for(int tick=0;tick<25;tick++)charge.LateUpdate();Check(!rig.Active&&!charge.gameObject.activeInHierarchy,"short discharge expires without an extra attack wait");}
-   Check(lastBurst.energy.anchor.x==(pattern==0?10:facing*4)&&lastBurst.energy.anchor.y==(pattern==0?2:3),"same event discharges at rendered blade tip");cases++;
+   Check(lastBurst.energy.anchor.x==facing*4&&lastBurst.energy.anchor.y==3,"same event discharges at rendered blade tip");cases++;
   }
   Check(bursts-before==releases,"SW01 two releases / SW02 one release, no new wait");
   for(int reason=0;reason<10;reason++){
@@ -530,7 +646,6 @@ class Feedback { public bool armed; public void ArmElectrocution(){armed=true;} 
 public class ParryProbe {
  Owner owner=new Owner(); Feedback stunFeedback=new Feedback();
  bool parryPendingBeforeContact;
- CALLBACK
  RETURNED
  static void Check(bool value){if(!value)throw new Exception("parry matrix failed");}
  public static void Run(){int cases=0;
@@ -628,36 +743,31 @@ static class Mathf {public static float Min(float a,float b){return Math.Min(a,b
 public class BasicProbe {
  Owner owner=new Owner();Sword sword=new Sword();SettingsData Settings=new SettingsData();
  static void Destroy(object o){}
- KarmaAttackContact firstMeleeContact;float firstMeleeResumeAt;
  IEnumerator Melee() MELEE
  static void Check(bool v,string message){if(!v)throw new Exception(message);}
  static void Drive(IEnumerator e,Owner o){while(e.MoveNext()){var nested=e.Current as IEnumerator;if(nested!=null)Drive(nested,o);else if(e.Current is float)o.clock+=(float)e.Current;}}
  public static void Run(){
  foreach(int facing in new[]{-1,1}) {
  var p=new BasicProbe();p.owner.direction=facing;Drive(p.Melee(),p.owner);var hits=p.owner.shots;
- Check(p.owner.warnings.Count==2 && p.owner.warnings[0].x==p.owner.warnings[1].x,"both cuts advertise the same fixed area");
- Check(hits.Count==2,"two contact windows");Check(Math.Abs(hits[0].at-.4f)<.0001f,"original preparation");
- Check(Math.Abs(hits[1].at-(hits[0].at+hits[0].life)-2f/24)<.0001f,"missed opener links after two visible warning frames");
- Check(Math.Abs(p.owner.clock-(.4f+.125f+2f/24+8f/24+.5f))<.0001f,"shortened whiff combo duration");
- Check(hits[0].life==3f/24&&hits[1].life==3f/24,"active windows");
- Check(!Object.ReferenceEquals(hits[0].contact,hits[1].contact),"independent contact records");
- Check(hits[0].damage==.5f&&hits[1].damage==.5f,"each hit owns D/2");
- float damage=0;foreach(var shot in hits)if(shot.contact.TryConsume())damage+=shot.damage;
- foreach(var shot in hits)Check(!shot.contact.TryConsume(),"no duplicate damage per cut");
- Check(damage==1,"total damage capped at original multiplier");
- Check(hits[0].center.x==20+facing*3.2f&&hits[1].center.x==hits[0].center.x,"mirrored fixed warning footprint");
- Check(p.owner.animator.strikes[0]==0&&p.owner.animator.strikes[1]==1,"both real release events");
- var miss=new BasicProbe();Drive(miss.Melee(),miss.owner);Check(miss.owner.shots[1].contact.TryConsume(),"return cut hits if opener misses");
+ Check(p.owner.warnings.Count==1,"single warning");
+ Check(hits.Count==1,"one contact window");
+ Check(Math.Abs(hits[0].at-.4f)<.0001f,"original preparation");
+ Check(Math.Abs(p.owner.clock-(.4f+8f/24+.5f))<.0001f,"single downcut duration");
+ Check(hits[0].life==3f/24,"active window");
+ Check(hits[0].damage==1,"configured damage on one hit");
+ Check(hits[0].contact.TryConsume()&&!hits[0].contact.TryConsume(),"one damage consumption");
+ Check(hits[0].center.x==20+facing*3.2f,"mirrored warning footprint");
+ Check(p.owner.animator.strikes.Count==1&&p.owner.animator.strikes[0]==0,"one real release");
  var cancelled=new BasicProbe();cancelled.owner.Active=false;Drive(cancelled.Melee(),cancelled.owner);Check(cancelled.owner.shots.Count==0,"cancelled windup never releases");
  }
- Console.WriteLine("PASS production melee timeline, mirrored contacts, damage cap, cancellation and two release events");
+ Console.WriteLine("PASS production melee timeline, mirrored contacts, damage cap, cancellation and one release event");
  }
 }
 """.replace("CONSUME", consume).replace("MELEE", melee)
         from test_sword_presentation import run_cs
         self.assertIn("PASS production melee timeline", run_cs(code, "BasicProbe", modern=True))
 
-    def test_two_health_losses_use_production_damage_and_defenses(self):
+    def test_single_health_loss_uses_production_damage_and_defenses(self):
         # Execute the real coroutine, collision/consumption and player damage
         # methods. Only Unity objects and presentation callbacks are stand-ins.
         from test_sword_presentation import method, run_cs
@@ -748,27 +858,21 @@ static class KarmaSwordAttackPolish{public static void Warning(Marker m){}public
 static class KarmaSwordBasicPresentation{public static void MeleeWarning(Game g,Owner o,Marker n,Vector2 z,float t,int s=0){}}
 public class HealthProbe{
  Owner owner=new Owner();Sword sword=new Sword();SettingsData Settings=new SettingsData();static void Destroy(object o){}
- KarmaAttackContact firstMeleeContact;float firstMeleeResumeAt;
- CALLBACK
  MELEE
  void Drive(IEnumerator e){while(owner.Active&&e.MoveNext()){var nested=e.Current as IEnumerator;if(nested!=null)Drive(nested);else if(e.Current is float)owner.Advance((float)e.Current);}}
  static void Check(bool v,string m){if(!v)throw new Exception(m);}
  public static void Run(){int cases=0;
  foreach(int facing in new[]{-1,1})foreach(bool late in new[]{false,true})foreach(float immunity in new[]{0f,.7f,1.2f})foreach(int mode in new[]{0,1,2,3,4,5,6,7,8}){
-  var p=new HealthProbe();p.owner.behavior.resolved=p.ContactResolved;p.owner.direction=facing;p.owner.mode=mode;p.owner.lateFirst=late;p.owner.game.Config.hitInvulnerability=immunity;
+  var p=new HealthProbe();p.owner.direction=facing;p.owner.mode=mode;p.owner.lateFirst=late;p.owner.game.Config.hitInvulnerability=immunity;
   if(mode==7)p.owner.Active=false;p.Drive(p.Melee());var o=p.owner;var hits=o.shots;
   if(mode==7){Check(hits.Count==0,"windup interruption");cases++;continue;}
   if(mode==6){Check(hits.Count==1,"interruption prevents second emission");cases++;continue;}
-  Check(hits.Count==2&&!Object.ReferenceEquals(hits[0].contact,hits[1].contact),"two independent contacts");
-  if(hits[0].contact.DealtDamage)Check(hits[1].at-o.damageTimes[0]>=immunity+.0009f,"return cut respects actual early or latest first-hit immunity deadline");
-  else if(mode==5)Check(hits[1].at-hits[0].at<.26f,"late parry keeps its brief protection before the return cut");
-  else Check(Math.Abs(hits[1].at-hits[0].at-(5f/24))<.0001f,"miss/guard links promptly without extra damage");
-  Check(!hits[0].gameObject.active&&!hits[1].gameObject.active,"both contacts explicitly retired");
-  int expected=mode==8||mode==4?0:mode==0?2:1;
-  Check(o.damageTimes.Count==expected,"number of real Health decreases, mode "+mode+" late "+late);
-  foreach(float loss in o.losses)Check(Math.Abs(loss-4.025f)<.0001f,"fractional D/2, no catch-up damage");
-  Check(o.game.DamageTaken<=8.0501f,"combo total capped at D");
-  if(mode==0){Check(o.damageTimes[1]>o.damageTimes[0]+immunity,"distinct Health loss times after i-frames");Check(Math.Abs(o.game.Player.Health-(160-8.05f))<.0001f,"two losses sum to D");}
+  Check(hits.Count==1,"one committed contact");
+  Check(!hits[0].gameObject.active,"contact explicitly retired");
+  int expected=mode==0||mode==2?1:0;
+  Check(o.damageTimes.Count==expected,"one real Health decrease or defended contact, mode "+mode+" late "+late);
+  foreach(float loss in o.losses)Check(Math.Abs(loss-8.05f)<.0001f,"configured damage once");
+  Check(o.game.DamageTaken<=8.0501f,"single downcut damage cap");
   if(mode==5)Check(o.game.Player.ParryCount==1&&!hits[0].contact.DealtDamage,"parried contact consumes no health");
   foreach(var h in hits)if(h.contact.Consumed)Check(!h.contact.TryConsume(),"repeat overlap cannot deal a second hit");cases++;
  }
@@ -782,7 +886,6 @@ public class HealthProbe{
             ("TRY_HIT", "Combat/KarmaEnemy.Presentation.cs", "public void TryAttackHit("),
             ("RESOLVE", "Combat/KarmaEnemy.Presentation.cs", "void ResolveAttackHit("),
             ("MELEE", "SwordWave/Patterns/SWBasic.cs", "IEnumerator Melee()"),
-            ("CALLBACK", "SwordWave/Patterns/SWBasic.cs", "public void ContactResolved("),
         ]:
             code = code.replace(token, method(read(path), signature))
         self.assertIn("PASS 108 production health/contact scenarios", run_cs(code, "HealthProbe", modern=True))

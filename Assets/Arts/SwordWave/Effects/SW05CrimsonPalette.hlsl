@@ -1,5 +1,25 @@
 #ifndef K4RMA_SW05_CRIMSON_PALETTE
 #define K4RMA_SW05_CRIMSON_PALETTE
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+
+// Ramp sampled from the opaque facets of SW03_RisingBlade_v7, in sRGB.
+half3 SwordScarSteel(half3 source, half deepen)
+{
+#ifndef UNITY_COLORSPACE_GAMMA
+    source = LinearToSRGB(source);
+#endif
+    half light = saturate(dot(source, half3(0.2126h, 0.7152h, 0.0722h)));
+    light = lerp(light, light * light, deepen);
+    half3 steel = lerp(half3(0, 0, 0), half3(0.11h, 0.31h, 0.67h), saturate(light / 0.30h));
+    steel = lerp(steel, half3(0.49h, 0.63h, 0.80h), saturate((light - 0.30h) / 0.30h));
+    steel = lerp(steel, half3(0.84h, 0.91h, 0.97h), saturate((light - 0.60h) / 0.30h));
+    steel = lerp(steel, half3(0.97h, 0.99h, 1), saturate((light - 0.90h) / 0.10h));
+#ifndef UNITY_COLORSPACE_GAMMA
+    steel = SRGBToLinear(steel);
+#endif
+    return steel;
+}
+
 half3 SW05CrimsonPalette(half3 source)
 {
     // Preserve neutral steel/white cores and already-blue artwork; grade warm
@@ -27,7 +47,8 @@ half3 SW05BladeRadiance(half3 source, float2 uv, half presence, float visualTime
     // Renderer-owned time freezes on pause and survives form/fall/plant handoff.
     half scan = pow(saturate(cos(uv.y*42-visualTime*(9+energy*7))),20)*mask;
     half edge = exp(-abs(abs(uv.x-0.5)-0.055)*95)*mask;
-    return lerp(SW05CrimsonPalette(source),half3(0.88h,1.08h,1.25h),
+    // The judgement sword has much brighter midtones than the SW03 source.
+    return lerp(SwordScarSteel(source, 1),half3(0.86h,0.94h,1.0h),
         saturate(core*(0.65h+energy*0.30h)+scan*(0.10h+energy*0.16h)+edge*energy*0.16h));
 }
 #endif

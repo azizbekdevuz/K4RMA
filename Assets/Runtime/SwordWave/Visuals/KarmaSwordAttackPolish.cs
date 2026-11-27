@@ -5,6 +5,7 @@ namespace KarmaPrototype
     // Attack-only cosmetics. No contact, timers, time scale or camera writes.
     public static class KarmaSwordAttackPolish
     {
+        public static readonly Color WaveTint = new Color(0.82f, 0.87f, 0.94f);
         public static readonly Color Blue = new Color(0.22f, 0.72f, 1);
         public static void Warning(SpriteRenderer marker)
         {
@@ -25,9 +26,12 @@ namespace KarmaPrototype
                 pool.Flash(owner, "Sword_Release_v6", at - velocity.normalized * 1.2f, new Vector2(5.8f, 0.28f), 0.09f, angle, scope);
             else if (owner.CurrentPattern == (int)EnemyAttack.SW01)
                 pool.Flash(owner, "Sword_Release_v6", at, new Vector2(3.5f, 0.22f), 0.10f, angle + (at.y < 4 ? -12 : 12), scope);
-            var accent = art.GetComponent<KarmaSwordAttackAccent>();
-            if (accent == null) accent = art.gameObject.AddComponent<KarmaSwordAttackAccent>();
-            accent.Fire(game, owner, heavy, scope);
+            if (!animated)
+            {
+                var accent = art.GetComponent<KarmaSwordAttackAccent>();
+                if (accent == null) accent = art.gameObject.AddComponent<KarmaSwordAttackAccent>();
+                accent.Fire(game, owner, heavy, scope);
+            }
         }
         public static void Projectile(KarmaGame game, KarmaEnemy owner, KarmaBossAttack shot, Vector2 velocity, Vector2 size)
         {
@@ -148,13 +152,13 @@ namespace KarmaPrototype
         public void Echo(KarmaEnemy owner, SpriteRenderer source, float alpha, float seconds, Transform scope = null)
         {
             var e = Next(owner, source.sprite, source.transform.position, source.transform.lossyScale, seconds,
-                new Color(0.3f, 0.78f, 1, alpha), source.transform.eulerAngles.z, Vector2.zero, -0.08f, scope != null ? scope : source.transform);
+                new Color(0.46f, 0.64f, 0.84f, alpha), source.transform.eulerAngles.z, Vector2.zero, -0.08f, scope != null ? scope : source.transform);
             e.echo = true;
             e.renderer.flipX = source.flipX; e.renderer.flipY = source.flipY; e.renderer.sortingOrder = source.sortingOrder - 1;
-            // A basic crescent echo uses the same emitted-light surface as its
-            // source. Other skill slots retain their existing surface behavior.
             if (source.sharedMaterial == KarmaSwordBasicPresentation.CrescentMaterial)
                 e.renderer.sharedMaterial = source.sharedMaterial;
+            else if (source.TryGetComponent<KarmaSwordSkillSurface>(out var sourceSurface) && sourceSurface.UsesSteelPalette)
+                e.surface?.Restart(KarmaSwordSkillSurface.SteelPalette);
         }
         public void Sparks(KarmaEnemy owner, Vector2 at, Vector2 direction, int count, float speed, Transform scope = null, Material material = null)
         {
@@ -274,7 +278,7 @@ namespace KarmaPrototype
             }
         }
         static readonly System.Collections.Generic.Stack<Buffers> spare = new System.Collections.Generic.Stack<Buffers>(4);
-        static readonly Color Cyan = new Color(0.18f, 1.05f, 1.7f, 1), White = new Color(0.85f, 1.25f, 1.6f, 1);
+        static readonly Color Cyan = new Color(0.32f, 0.61f, 0.88f, 1), White = new Color(0.86f, 0.94f, 1.04f, 1);
         KarmaGame game; KarmaEnemy owner; KarmaSwordVfxPool pool;
         SpriteRenderer sword, source; KarmaCharacterAnimator animator;
         Transform scope;

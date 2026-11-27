@@ -77,7 +77,7 @@ class PresentationChecks(unittest.TestCase):
             self.assertNotIn("FlowWarning(", code)
             self.assertNotIn("CounterWarning(", code)
         rain = (patterns / "SW05.cs").read_text(encoding="utf-8-sig")
-        self.assertIn("marks[member] = KarmaSW05VFX.Warning(", rain)
+        self.assertIn("marks[member] = KarmaSW05VFX.FallWarning(", rain)
         self.assertIn("marks[member]);", rain)
 
     def test_attack_sweep_matches_advertised_polygon_with_player_body(self):
@@ -353,7 +353,8 @@ public static class Resources{public static T Load<T>(string s) where T:new(){ob
 public static class KarmaVisuals{static object material=new object();public static void ApplyMaterial(SpriteRenderer r){r.sharedMaterial=material;}}
 public static class KarmaArtwork{public static Sprite Sprite(string group,string key){return new Sprite{name=group+"/"+key,bounds=new Bounds{size=new Vector2(2+key[key.Length-1]%3,4+key[key.Length-1]%2)}};}}
 public class KarmaSwordVfxPool{static KarmaSwordVfxPool pool=new KarmaSwordVfxPool();public static KarmaSwordVfxPool For(KarmaGame g){return pool;}}
-public static class KarmaSwordAttackPolish{public static void Core(KarmaBossAttack s){}}
+public static class KarmaSwordAttackPolish{public static readonly Color WaveTint = Color.white;public static void Core(KarmaBossAttack s){}}
+public static class KarmaSwordSkillSurface{public const int SteelPalette=7;public static readonly object Steel=new object();public static void Apply(SpriteRenderer r,int mode){if(mode==SteelPalette)r.sharedMaterial=Steel;}}
 public static class BasicRoute{RANGED}
 public class KarmaSwordWaveAnimation{
  enum Playback{Flight}const int FrameCount=5; static readonly int[] FlightDrawings = { 0, 3 };
@@ -379,7 +380,7 @@ public class KarmaSwordWaveAnimation{
  basic.gameObject.flight.Sample(frame/30f);sw01.gameObject.flight.Sample(frame/30f);
  var a=basic.Visual;var b=sw01.Visual;
  Check(a.sprite.name==b.sprite.name&&a.sprite.name=="SwordBossVFX/SwordEnergy_SW01Flight_"+(frame*12/30%2==0?0:3),"both flights select the approved 12 fps drawing");
- Check(Object.ReferenceEquals(a.sharedMaterial,b.sharedMaterial),"same material");
+ Check(!Object.ReferenceEquals(a.sharedMaterial,b.sharedMaterial)&&Object.ReferenceEquals(b.sharedMaterial,KarmaSwordSkillSurface.Steel),"only SW01 receives the SW03 steel grade");
 
  Check(Math.Abs(a.sprite.bounds.size.x*a.transform.localScale.x-3*1.12f/.65f)<.0001f,"world width with common unit parent");
  Check(Math.Abs(a.sprite.bounds.size.y*a.transform.localScale.y-5/.81f)<.0001f,"world height with common unit parent");
@@ -412,13 +413,25 @@ public class KarmaSwordWaveAnimation{
             for motion in ("SWBasic", "SWBasicRanged", "SW01", "SW02", "Move"):
                 meta = (ROOT / "Assets/Arts/SwordWave" / form / (motion + ".png.meta")).read_text()
                 self.assertIn("spriteMode: 2", meta)
-                self.assertIn("enableMipMap: 0", meta)
+                if motion != "Move":
+                    self.assertIn("enableMipMap: 0", meta)
                 pivots = re.findall(r"^      pivot: (.+)$", meta, re.M)
                 self.assertTrue(pivots)
                 self.assertEqual(len(set(pivots)), 1)
+            blade_sheets = ["Idle", "Move", "Backstep", "Guard", "Windup", "FollowThrough", "BasicDowncut", "SW01Cast"]
+            if form == "WaveWard":
+                blade_sheets.append("ShieldRaise")
+            for motion in blade_sheets:
+                with self.subTest(form=form, motion=motion):
+                    meta = (ROOT / "Assets/Arts/SwordWave" / form / (motion + ".png.meta")).read_text()
+                    self.assertIn("enableMipMap: 1", meta)
+                    self.assertIn("filterMode: 2", meta)
         # Runtime snapshots check the composed renderer in both directions.
         body = (SWORD / "Visuals/KarmaCharacterAnimator.SwordSW02.cs").read_text()
-        self.assertIn("picture.transform.localScale = pictureScale", method(body, "internal void RegisterSwordAppearance()"))
+        register = method(body, "internal void RegisterSwordAppearance()")
+        self.assertIn("1 / CombatSheetPacking : 1", register)
+        self.assertIn("IsVolleyDrawing(picture.sprite) ? volleyDrawingScale : swordSheetScale", register)
+        self.assertIn("Vector3.Scale(pictureScale, new Vector3(scale, scale, 1))", register)
 
     def test_late_body_color_preserves_shared_damage_flash_and_restores_idle(self):
         local = (SWORD / "Visuals/KarmaCharacterAnimator.SwordSW02.cs").read_text(encoding="utf-8-sig")
@@ -481,7 +494,7 @@ public class FlashProbe {
         basic=polish.split("public sealed class KarmaSwordBasicPresentation",1)[1].split("// SW04-only",1)[0]
         self.assertIn("KarmaSwordWaveAnimation.Flight(", method(basic, "public static void Ranged("))
         wave=(SWORD/"Visuals/KarmaSwordWaveAnimation.cs").read_text(encoding="utf-8-sig")
-        self.assertIn("picture.color = Color.white;", method(wave, "void Initialize("))
+        self.assertIn("picture.color = KarmaSwordAttackPolish.WaveTint;", method(wave, "void Initialize("))
         self.assertIn("sr.sharedMaterial = e.material; e.surface.Restart(4);",polish)
 
 

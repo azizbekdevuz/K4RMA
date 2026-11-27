@@ -157,6 +157,7 @@ Shader "K4RMA/SwordRisePolish"
                         color.a *= remaining*saturate(_Fade);
                     }
                 }
+                color.rgb *= half3(0.85h, 0.87h, 0.92h);
                 return color;
             }
             ENDHLSL

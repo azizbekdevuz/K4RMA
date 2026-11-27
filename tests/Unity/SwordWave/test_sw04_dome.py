@@ -38,9 +38,13 @@ class WardChecks(unittest.TestCase):
         self.assertIn("Mathf.Max(0.3f, Settings.counterWarning)", pattern)
         self.assertIn("Mathf.Max(0.16f, Settings.swordGuardResponseCooldown - GuardTrackingTime - GuardLockTime)", pattern)
         self.assertIn("wardVfx?.Absorb();", pattern)
-        self.assertIn("KarmaSwordWardVfx.Prepare(owner.game, owner, owner.Warning(0.7f))", pattern)
+        execute = method(pattern, "public override IEnumerator Execute()")
+        self.assertNotIn("owner.Mark(", execute)
+        self.assertLess(execute.index("SwEnergyCharge"), execute.index("yield return owner.Wait(warning)"))
+        self.assertLess(execute.index("yield return owner.Wait(warning)"), execute.index("Guarding = true"))
+        self.assertLess(execute.index("Guarding = true"), execute.index("KarmaSwordWardVfx.Create("))
         self.assertNotIn("KarmaSwordAttackPolish.Charge(", pattern)
-        self.assertIn("wardVfx?.Released(origin,aim);", pattern)
+        self.assertIn("wardVfx?.Released();", pattern)
         cleanup = method(pattern, "void ClearSwordGuard(")
         self.assertIn("if (!stopRoutine && owner.Active && owner.game.IsCombat)", cleanup)
         self.assertIn("wardVfx?.Finish();", cleanup)
@@ -144,7 +148,7 @@ namespace UnityEngine {
   public static Vector3 operator+(Vector3 a,Vector3 b){return new Vector3(a.x+b.x,a.y+b.y,a.z+b.z);}
  }
  public struct Quaternion{public static Quaternion identity;}
- public struct Color{public float r,g,b,a;public Color(float x,float y,float z,float alpha){r=x;g=y;b=z;a=alpha;}}
+ public struct Color{public float r,g,b,a;public Color(float x,float y,float z,float alpha){r=x;g=y;b=z;a=alpha;}public static Color Lerp(Color a,Color b,float t){return new Color(Mathf.Lerp(a.r,b.r,t),Mathf.Lerp(a.g,b.g,t),Mathf.Lerp(a.b,b.b,t),Mathf.Lerp(a.a,b.a,t));}}
  public struct Bounds {public Vector3 center,size;public Bounds(Vector3 c,Vector3 s){center=c;size=s;}public bool Contains(Vector3 p){return System.Math.Abs(p.x-center.x)<=size.x/2&&System.Math.Abs(p.y-center.y)<=size.y/2;}}
  public class Material{}
  public class Mesh:Object {public static int allocated;public Vector3[] vertices;public Color[] colors;public int[] triangles;public int occupied;public string name;public Bounds bounds;public Mesh(){allocated++;}public void MarkDynamic(){}public void SetVertices(Vector3[] v){vertices=v;}public void SetColors(Color[] c){colors=c;}public void SetSubMesh(int n,Rendering.SubMeshDescriptor d,Rendering.MeshUpdateFlags f){occupied=d.vertexCount;}}
@@ -179,11 +183,12 @@ namespace KarmaPrototype {
  public static class KarmaBootstrap{public const int FramesPerSecond=12;}
  public static class KarmaSpace{public const float GuardianGroundY=2.3f;}
  public static class KarmaSwordAttackPolish{public static void Core(KarmaBossAttack s){}}
- public static class KarmaSW05VFX{public static void ApplySword(SpriteRenderer s,Vector2 size,Vector2 velocity){}}
+ public static class KarmaWaveArtwork{public static void Apply(SpriteRenderer s,string pose,Vector2 size,Vector2 velocity){if(pose!="SW04_CounterBlade_v2")throw new System.Exception("wrong counter blade");}}
  public static class KarmaSwordSkillSurface{public static void Apply(SpriteRenderer s,int n){}}
  public static class KarmaSW05Energy{public static int bursts,style;public static void WardBurst(Transform root,KarmaGame g,Vector2 p,Vector2 a,float r,int s){bursts++;style=s;}}
  public static class WardProbe {
-  static object Get(object o,string n){return o.GetType().GetField(n,System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(o);}
+  static object Get(object o,string n){return o.GetType().GetField(n,System.Reflection.BindingFlags.Public|System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).GetValue(o);}
+  static void Call(object o,string n,params object[] args){o.GetType().GetMethod(n,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(o,args);}
   static void Tick(KarmaSwordWardVfx v){v.GetType().GetMethod("LateUpdate",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance).Invoke(v,null);}
   static void Check(bool b,string m){if(!b)throw new System.Exception(m);}
   static Mesh MeshOf(KarmaSwordWardVfx v,string n){return (Mesh)Get(Get(v,n),"mesh");}
@@ -196,18 +201,10 @@ namespace KarmaPrototype {
     var body=new GameObject().AddComponent<SpriteRenderer>();body.transform.SetParent(art,false);owner.transform.found=body.transform;
     var root=new GameObject().transform;root.SetParent(game.World,false);root.lossyScale=new Vector3(facing,1.7f,1);
     var blades=new SpriteRenderer[4];for(int i=0;i<4;i++){blades[i]=new GameObject().AddComponent<SpriteRenderer>();blades[i].enabled=false;}
-    var preparation=KarmaSwordWardVfx.Prepare(game,owner,.7f);Check((float)Get(preparation,"age")==0,"windup begins at ground within original warning");
-    for(int j=0;j<25;j++)Tick(preparation);Check((float)Get(preparation,"age")<.7f,"unfolding adds no attack wait");
-    for(int j=0;j<50;j++)Tick(preparation);
-    Check(Get(preparation,"shell")!=null,"completed warning survives until pattern hands over the same shell");
-    var formationMesh=Get(preparation,"shell");float formationAge=(float)Get(preparation,"age");
-    preparation.Form(root,blades);
-    Check(Get(preparation,"shell")==formationMesh&&(float)Get(preparation,"age")==formationAge,"formation preserves mesh and effect phase");
-    Check(preparation.BladeOrbitAlpha(0,1)==0,"new swords start transparent");
-    for(int j=0;j<20;j++)Tick(preparation);
-    Check(preparation.BladeOrbitAlpha(0,1)>.48f,"swords smoothly materialize on the existing shell");
-    preparation.gameObject.SetActive(false);
     var v=KarmaSwordWardVfx.Create(root,game,owner,blades);int allocated=Mesh.allocated;
+    Check(v.BladeOrbitAlpha(0,1)==0,"new swords start transparent");
+    for(int j=0;j<20;j++)Tick(v);
+    Check(v.BladeOrbitAlpha(0,1)>.48f,"swords materialize as the ward opens");
     for(int blade=0;blade<4;blade++){
      float minX=1,maxX=-1,minY=1,maxY=0;var last=v.BladeOrbitPosition(blade,0);
      for(int step=0;step<=720;step++){
@@ -240,28 +237,26 @@ namespace KarmaPrototype {
      if(step==0||step==95)Check(System.Math.Abs(rim.y)<.00001f,"both shell edges meet the floor");
     }
     Check(((MeshRenderer)Get(v,"back")).sortingOrder<body.sortingOrder&&((MeshRenderer)Get(v,"front")).sortingOrder>body.sortingOrder,"shell behind body, fine detail above");
+    if(end==0){
+     var back=Get(v,"shell");var front=Get(v,"detail");
+     back.GetType().GetMethod("Begin").Invoke(back,null);front.GetType().GetMethod("Begin").Invoke(front,null);
+     Call(v,"GroundRim",1f);
+     var rear=(Vector3[])Get(back,"vertices");var near=(Vector3[])Get(front,"vertices");
+     int segments=(int)Get(back,"count");Check(segments>1&&segments==(int)Get(front,"count"),"paired ground arcs");
+     for(int i=0;i<segments;i++){
+      int k=i*4;float rearY=(rear[k].y+rear[k+1].y)*.5f,nearY=(near[k].y+near[k+1].y)*.5f;
+      Check(rearY>=-.0001f&&nearY<=.0001f&&System.Math.Abs(rearY+nearY)<.0001f,"back above feet, front below feet");
+     }
+     int mid=(segments/2)*4,last=segments*4-2;
+     Check(System.Math.Abs(rear[0].x+rear[1].x-near[0].x-near[1].x)<.0001f&&System.Math.Abs(rear[last].y+rear[last+1].y)<.0001f,"both ends meet the dome at the floor");
+     Check(near[mid].y<-h*.06f&&((Color[])Get(front,"colors"))[mid].a>((Color[])Get(back,"colors"))[mid].a,"visible depth and brighter near edge");
+     Call(v,"Paint");
+    }
     if(cases==0){
-     var buffer=Get(v,"detail");var type=buffer.GetType();
-     var crackle=typeof(KarmaSwordWardVfx).GetMethod("Crackle",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
-     type.GetMethod("Begin").Invoke(buffer,null);crackle.Invoke(v,new object[]{1f,0f,1f});
-     int bolts=(int)type.GetField("count").GetValue(buffer);Check(bolts>=100&&bolts<=200,"bounded short electric forks and surface seams");
-     var electricPoints=(Vector3[])type.GetField("vertices").GetValue(buffer);float firstX=electricPoints[0].x;
-     type.GetMethod("Begin").Invoke(buffer,null);crackle.Invoke(v,new object[]{1f,3/24f,1f});
-     Check(System.Math.Abs(electricPoints[0].x-firstX)>.001f,"crackle changes shape between bursts");
-     var trail=typeof(KarmaSwordWardVfx).GetMethod("BladeTrails",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
-     for(int i=0;i<4;i++){blades[i].enabled=true;blades[i].transform.position=new Vector3(24+i,3+i,0);}
-     var trailBack=Get(v,"shell");type.GetMethod("Begin").Invoke(trailBack,null);
-     type.GetMethod("Begin").Invoke(buffer,null);trail.Invoke(v,new object[]{1f});
-     Check((int)type.GetField("count").GetValue(buffer)+(int)type.GetField("count").GetValue(trailBack)==96,"four visible swords each have one short trail");
-     var points=(Vector3[])type.GetField("vertices").GetValue(buffer);
-     Check(System.Math.Abs((points[0].x+points[1].x)/2-24)<.001f&&System.Math.Abs((points[0].y+points[1].y)/2-3)<.001f,"trail starts at actual sword slot");
-     v.Aim(0,new Vector2(24,3),new Vector2(1,0),new Vector2(7,5),false);
-     Check(blades[0].transform.localScale.x==1&&blades[0].sortingOrder==5,"aim restores exact authored scale and sorting");
-     type.GetMethod("Begin").Invoke(trailBack,null);
-     type.GetMethod("Begin").Invoke(buffer,null);trail.Invoke(v,new object[]{1f});
-     Check((int)type.GetField("count").GetValue(buffer)+(int)type.GetField("count").GetValue(trailBack)==72,"aiming blade has no misleading orbit trail");
-     Check(blades[0].transform.position.x==24&&blades[0].transform.position.y==3,"cosmetics never move counter origin");
-     typeof(KarmaSwordWardVfx).GetField("aiming",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(v,-1);
+     blades[0].enabled=true;blades[0].transform.position=new Vector3(24,3,0);
+     v.Aim(0,false);
+     Check(blades[0].transform.localScale.x==1&&blades[0].sortingOrder==5,"aim restores authored scale and sorting");
+     Check(blades[0].transform.position.x==24&&blades[0].transform.position.y==3,"aim leaves slot position intact");
     }
     for(int i=0;i<35;i++){Tick(v);Geometry(v);}Check(Mesh.allocated==allocated,"no meshes allocated while animating");
     var shell=Get(v,"shell");var shellMesh=(Mesh)shell.GetType().GetField("mesh").GetValue(shell);
@@ -276,8 +271,8 @@ namespace KarmaPrototype {
     float before=(float)Get(v,"age");int frame=v.FrameIndex;Check(frame==(int)System.Math.Floor(before*12)%12,"guard animation uses the 12fps clock");game.Paused=true;Tick(v);Check((float)Get(v,"age")==before&&v.FrameIndex==frame,"pause freezes dome");game.Paused=false;
     art.position=new Vector3(43,2,0);Tick(v);var foot=(Vector2)Get(v,"foot");Check(foot.x==43&&foot.y==2,"registered support follows boss translation and facing");
     int bursts=KarmaSW05Energy.bursts;v.Absorb();Check(v.Countering&&KarmaSW05Energy.bursts==bursts,"absorb stays on dome without duplicate circular burst");foreach(var b in blades)Check(b.enabled,"existing counter blades remain visible");
-    for(int i=0;i<4;i++){v.Aim(i,new Vector2(42+i,3),new Vector2(facing,0),new Vector2(7,5),false);Tick(v);v.Aim(i,new Vector2(42+i,3),new Vector2(facing,0),new Vector2(7,5),true);for(int t=0;t<20;t++)Tick(v);Geometry(v);v.Released(new Vector2(42+i,3),new Vector2(facing,0));Geometry(v);}
-    Check(KarmaSW05Energy.bursts==bursts+4,"four release cues, no extra attacks or bursts");
+    for(int i=0;i<4;i++){v.Aim(i,false);Tick(v);v.Aim(i,true);for(int t=0;t<20;t++)Tick(v);Geometry(v);v.Released();Geometry(v);}
+    Check(KarmaSW05Energy.bursts==bursts,"release keeps the aura on the sword");
     if(cases==0){
      var tick=(System.Action)System.Delegate.CreateDelegate(typeof(System.Action),v,typeof(KarmaSwordWardVfx).GetMethod("LateUpdate",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic));
      for(int j=0;j<100;j++)tick();long memory=System.GC.GetAllocatedBytesForCurrentThread();for(int j=0;j<1000;j++)tick();
@@ -296,7 +291,7 @@ namespace KarmaPrototype {
      Check(Get(v,"shell")!=null&&blades[0].color.a>0&&blades[0].color.a<.96f,"shell and unused swords share the brief exit flash");
      for(int i=0;i<10;i++)Tick(v);
     }
-    if(end==1){v.Collapse();v.Collapse();Check(KarmaSW05Energy.bursts==bursts+4,"parry adds shards without circular burst");Check(!((MeshRenderer)Get(v,"front")).enabled&&!((MeshRenderer)Get(v,"back")).enabled,"parry removes shield synchronously");v.gameObject.SetActive(false);
+    if(end==1){v.Collapse();v.Collapse();Check(KarmaSW05Energy.bursts==bursts,"parry adds shards without circular burst");Check(!((MeshRenderer)Get(v,"front")).enabled&&!((MeshRenderer)Get(v,"back")).enabled,"parry removes shield synchronously");v.gameObject.SetActive(false);
      KarmaSwordWardVfx shards=null;int tails=0;foreach(var child in game.World.children){var w=child.GetComponent<KarmaSwordWardVfx>();if(w!=null&&(bool)Get(w,"dispersing")){shards=w;tails++;}}
      Check(tails==1,"single parry shatter even if collapse repeats");
      var panels=Get(shards,"shell");var panelType=panels.GetType();

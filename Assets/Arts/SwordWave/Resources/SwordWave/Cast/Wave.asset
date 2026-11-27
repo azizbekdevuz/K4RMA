@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6c3476ff5f62048942b4602c4229f7, type: 3}
+  m_Name: Wave
+  m_EditorClassIdentifier: Assembly-CSharp::KarmaPrototype.KarmaSwordBasicArt
+  idle: {fileID: 21300000, guid: 3f34175df992fa94ca0318d1855bae3b, type: 3}
+  poses:
+  - {fileID: -121116103, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 153128446, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 566185114, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: -997867470, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 3863520, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 1717537276, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 1163459124, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: -362251895, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 2041444888, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 1750655108, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 779287496, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 263538730, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: -1274265638, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: -1404431431, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: 1480109926, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  - {fileID: -1507419237, guid: cfc0fcfdd0ebf904182e293fa53353a4, type: 3}
+  blade: {fileID: -2139218696, guid: 36a13b53e63db1245bd6874d8c078112, type: 3}
+  sockets:
+  - {x: 241.64, y: 289.14}
+  - {x: 237.37, y: 229.9}
+  - {x: 219.23, y: 224.56}
+  - {x: 178.09, y: 160.3}
+  - {x: 163.25, y: 125.97}
+  - {x: 58.35, y: 51.54}
+  - {x: 54.88, y: 90.26}
+  - {x: 92.58, y: 45.78}
+  - {x: 224.24, y: 130.25}
+  - {x: 255.1, y: 172.06}
+  - {x: 308.08, y: 290.42}
+  - {x: 315.47, y: 326.2}
+  - {x: 322.83, y: 346.72}
+  - {x: 307.4, y: 325.89}
+  - {x: 259.65, y: 339}
+  - {x: 215.46, y: 321.86}
+  angles:
+  - -38
+  - 13
+  - 65
+  - 94
+  - 129
+  - 151
+  - 200
+  - 147
+  - 121
+  - 83
+  - 32
+  - -23
+  - -29
+  - -22
+  - -27
+  - -8
+  bladeLength: 1.6933848
+  shieldInside: {fileID: 0}
+  shieldStrap: {fileID: 0}

@@ -96,37 +96,106 @@ public class Probe{
         self.assertIn('PASS 18 production warning/launch/player-intersection paths',run_cs(code,'Probe',modern=True))
 
     def test_actual_origin_and_render_offset(self):
-        source = (SWORD/'Visuals/KarmaSwordWaveAnimation.cs').read_text(encoding='utf-8-sig')
-        def expression(name):
-            match = re.search(r'internal static (?:Vector2|float) '+name+r'\([^;]+;', source)
-            return match[0]
+        source = (SWORD / "Visuals/KarmaSwordWaveAnimation.cs").read_text(encoding="utf-8-sig")
         code = r'''
 using System;
-public struct Vector2{public float x,y;public Vector2(float a,float b){x=a;y=b;}public static Vector2 operator+(Vector2 a,Vector2 b){return new Vector2(a.x+b.x,a.y+b.y);}}
-struct Vector3{public float x,y,z;public Vector3(float a,float b,float c){x=a;y=b;z=c;}public static Vector3 operator-(Vector3 a,Vector3 b){return new Vector3(a.x-b.x,a.y-b.y,a.z-b.z);}public static Vector3 operator+(Vector3 a,Vector3 b){return new Vector3(a.x+b.x,a.y+b.y,a.z+b.z);}public static Vector3 operator*(Vector3 a,float n){return new Vector3(a.x*n,a.y*n,a.z*n);}}
-static class Mathf{public static float Sign(float n){return n<0?-1:1;}public static float Clamp01(float n){return Math.Max(0,Math.Min(1,n));}public static float SmoothStep(float a,float b,float n){n=Clamp01(n);return a+(b-a)*n*n*(3-2*n);}}
-class Transform{public Vector3 position,scale=new Vector3(1,1,1);public Vector3 TransformVector(Vector3 v){return new Vector3(v.x*scale.x,v.y*scale.y,v.z*scale.z);}}
-class Renderer{public bool flipX;public Transform transform=new Transform();}
-public class Probe{
- Transform transform=new Transform();Renderer picture=new Renderer();bool basicVisualOrigin;float age;
- ORIGIN
- APPLY
- static void Check(bool b,string m){if(!b)throw new Exception(m);}
- public static void Run(){int cases=0;
- foreach(float height in new[]{2.5f,3.31f,5.6f,7f})foreach(int facing in new[]{-1,1})foreach(float x in new[]{-14f,20f,54f}){
- var origin=BasicTorsoOrigin(new Vector2(x,.3f),height,facing);
- Check(Math.Abs((origin.x-x)*facing-height*.18f)<.00001f,"mirrored torso front");Check(Math.Abs(origin.y-(.3f+height*.55f))<.00001f,"upper torso height");
- var p=new Probe();p.picture.flipX=facing<0;p.picture.transform.scale=new Vector3(facing*1.4f,1.8f,1);p.transform.position=new Vector3(origin.x,origin.y,0);p.basicVisualOrigin=true;
- p.ApplyBasicVisualOrigin();var center=p.picture.transform.TransformVector(new Vector3(0,0,0));Check(Math.Abs(p.picture.transform.position.x+center.x-origin.x)<.00001f&&Math.Abs(p.picture.transform.position.y+center.y-origin.y)<.00001f,"visible crescent center at waist");
- for(int i=0;i<=96;i++){p.age=i/96f;p.transform.position=new Vector3(origin.x+facing*10*p.age,origin.y-2*p.age,0);var root=p.transform.position;p.ApplyBasicVisualOrigin();Check(p.transform.position.x==root.x&&p.transform.position.y==root.y,"root never moved");var first=p.picture.transform.position;p.ApplyBasicVisualOrigin();Check(p.picture.transform.position.x==first.x,"offset never compounds");}
- Check(Math.Abs(p.picture.transform.position.x+center.x-p.transform.position.x)<.00001f&&Math.Abs(p.picture.transform.position.y+center.y-p.transform.position.y)<.00001f,"visual follows actual collision lane at all times");cases++;
- }Console.WriteLine("PASS "+cases+" torso origins and render-only transitions");}
+struct Vector2 {
+    public float x, y;
+    public Vector2(float x,float y){this.x=x;this.y=y;}
+    public float magnitude => (float)Math.Sqrt(x*x+y*y);
+    public Vector2 normalized => magnitude == 0 ? new Vector2() : this*(1/magnitude);
+    public static Vector2 operator+(Vector2 a,Vector2 b)=>new Vector2(a.x+b.x,a.y+b.y);
+    public static Vector2 operator-(Vector2 a,Vector2 b)=>new Vector2(a.x-b.x,a.y-b.y);
+    public static Vector2 operator*(Vector2 a,float k)=>new Vector2(a.x*k,a.y*k);
+    public static float Distance(Vector2 a,Vector2 b)=>(a-b).magnitude;
+    public static Vector2 Lerp(Vector2 a,Vector2 b,float t)=>a+(b-a)*t;
+}
+struct Vector3 {
+    public float x,y,z;
+    public Vector3(float x,float y,float z){this.x=x;this.y=y;this.z=z;}
+    public static implicit operator Vector2(Vector3 v)=>new Vector2(v.x,v.y);
+    public static implicit operator Vector3(Vector2 v)=>new Vector3(v.x,v.y,0);
+    public static Vector3 operator+(Vector3 a,Vector3 b)=>new Vector3(a.x+b.x,a.y+b.y,a.z+b.z);
+}
+static class Mathf {
+    public static float Sign(float n)=>Math.Sign(n);
+    public static float Abs(float n)=>Math.Abs(n);
+    public static float Max(float a,float b)=>Math.Max(a,b);
+    public static float Clamp01(float v)=>Math.Clamp(v,0f,1f);
+    public static float Clamp(float v,float a,float b)=>Math.Clamp(v,a,b);
+}
+static class KarmaStage {public const float ArenaLeft=-15, ArenaRight=55;}
+static class KarmaBootstrap {public const float Step=1f/12;}
+enum EnemyAttack {SWBasic, SW01}
+class Transform {
+    public Vector3 position;
+    public SpriteRenderer sword;
+    public Transform Find(string path)=>sword==null?null:this;
+    public T GetComponent<T>() where T:class=>sword as T;
+}
+class SpriteRenderer {public Transform transform=new Transform(); public Vector2 bend,tip;}
+class KarmaBossAttack {
+    public Transform transform=new Transform(); public KarmaSwordWaveAnimation art;
+    public T GetComponent<T>() where T:class=>art as T;
+}
+class KarmaSwordWaveAnimation {
+    KarmaBossAttack owner=new KarmaBossAttack();
+    Transform transform;
+    SpriteRenderer picture=new SpriteRenderer();
+    int pattern; bool basicVisualOrigin;
+    Vector2 basicFlightOrigin,basicBladeOffset,velocity;
+    float basicJoinDistance;
+    static bool BladePoints(SpriteRenderer r,out Vector2 heel,out Vector2 bend,out Vector2 tip) {
+        heel=default;bend=r?.bend??default;tip=r?.tip??default;return r!=null;
+    }
+    ORIGIN
+    ALIGN
+    APPLY
+    static void Check(bool ok,string why){if(!ok)throw new Exception(why);}
+    public static void Run() {
+        int count=0;
+        foreach(int sign in new[]{-1,1}) foreach(float dy in new[]{-.65f,0,.65f})
+        foreach(float speed in new[]{2f,41.6f,80f}) foreach(float start in new[]{-14.8f,20,54.8f}){
+            var shot=new KarmaBossAttack();
+            var p=shot.art=new KarmaSwordWaveAnimation{transform=shot.transform};
+            var axis=new Vector2(sign,dy)*(1/(float)Math.Sqrt(1+dy*dy));
+            p.velocity=axis*speed;
+            var origin=BasicTorsoOrigin(new Vector2(start-sign*.72f,0),4,sign);
+            Check(Math.Abs(origin.x-start)<.00001f&&Math.Abs(origin.y-2.2f)<.00001f,"waist origin");
+            var steel=new SpriteRenderer{bend=origin+new Vector2(sign*2,.9f),tip=origin+new Vector2(sign*4,-.4f)};
+            p.owner.transform.sword=steel;
+            shot.transform.position=new Vector3(origin.x,origin.y,1.25f);
+            AlignBasicVisual(shot);
+            var expected=Vector2.Lerp(steel.bend,steel.tip,.45f);
+            expected.x=Mathf.Clamp(expected.x,KarmaStage.ArenaLeft,KarmaStage.ArenaRight);
+            Check(Vector2.Distance(p.picture.transform.position,expected)<.00002f,"first drawing touches steel");
+            var previous=expected;
+            // A later wrist pose cannot pull a released projectile back to the owner.
+            steel.bend=steel.tip=origin-new Vector2(20*sign,4);
+            for(int i=0;i<=180;i++){
+                float distance=p.basicJoinDistance*1.2f*i/180;
+                var root=origin+axis*distance;
+                if(root.x<KarmaStage.ArenaLeft||root.x>KarmaStage.ArenaRight)break;
+                shot.transform.position=new Vector3(root.x,root.y,1.25f);
+                AlignBasicVisual(shot);p.ApplyBasicVisualOrigin();
+                Vector2 shown=p.picture.transform.position;
+                Check(Vector2.Distance(shot.transform.position,root)<.00001f&&shot.transform.position.z==1.25f,"contact path fixed");
+                Check(p.picture.transform.position.z==1.25f&&shown.x>=KarmaStage.ArenaLeft&&shown.x<=KarmaStage.ArenaRight,"same layer and inside arena");
+                Check((shown.x-previous.x)*axis.x+(shown.y-previous.y)*axis.y>=-.00002f,"visible crescent advances");
+                p.ApplyBasicVisualOrigin();
+                Check(Vector2.Distance(p.picture.transform.position,shown)<.00001f,"no compounding on repeated render");
+                if(distance>=p.basicJoinDistance)Check(Vector2.Distance(shown,root)<.00002f,"rejoins real shot");
+                previous=shown;
+            }
+            count++;
+        }
+        Console.WriteLine("PASS "+count+" blade origins and directed transitions");
+    }
 }'''
-        code=code.replace('ORIGIN',expression('BasicTorsoOrigin')).replace('APPLY',method(source,'void ApplyBasicVisualOrigin()'))
-        self.assertIn('PASS 24 torso origins',run_cs(code,'Probe',modern=True))
-        apply=method(source,'void ApplyBasicVisualOrigin()')
-        self.assertNotIn('localScale',apply)
-        self.assertNotIn('color',apply)
+        origin = re.search(r'internal static Vector2 BasicTorsoOrigin\([^;]+;', source)[0]
+        code = code.replace('ORIGIN', origin).replace('ALIGN', method(source, 'internal static void AlignBasicVisual('))
+        code = code.replace('APPLY', method(source, 'void ApplyBasicVisualOrigin()'))
+        self.assertIn('PASS 54 blade origins', run_cs(code, 'KarmaSwordWaveAnimation', modern=True))
 
     def test_attack_and_asset_wiring(self):
         source=(SWORD/'Patterns/SWBasic.cs').read_text(encoding='utf-8-sig')
@@ -141,7 +210,7 @@ public class Probe{
         self.assertNotIn('AlignBasicVisual(',source.split('IEnumerator Melee()')[1])
         flight=(SWORD/'Visuals/KarmaSwordWaveAnimation.cs').read_text(encoding='utf-8-sig')
         self.assertIn('FlightDrawings[', method(flight, 'void ApplyFlight()'))
-        self.assertIn('picture.transform.position = transform.position', method(flight, 'void ApplyBasicVisualOrigin()'))
+        self.assertIn('picture.transform.position = shown', method(flight, 'void ApplyBasicVisualOrigin()'))
 
 
 

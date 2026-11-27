@@ -38,14 +38,14 @@ namespace KarmaPrototype
                 if (swordGuardRoot != null) yield break;
                 owner.state = ActionState.Telegraph;
                 owner.animator.PlayWavePhase("Windup");
-                owner.animator.PrepareSwordBody("Counter", owner.Warning(0.7f));
-                // A non-damaging dome unfolds inside the existing warning. It
-                // needs no swept hit-area sprite or duplicate square warning.
-                var formation = KarmaSwordWardVfx.Prepare(owner.game, owner, owner.Warning(0.7f));
-                yield return owner.Wait(owner.Warning(0.7f));
+                float warning = owner.Warning(0.7f);
+                owner.animator.PrepareSwordShieldRaise(warning);
+                if (owner.game.IsCombat && owner.Alive) KarmaAudio.Play(KarmaSfxId.SwEnergyCharge, warning, owner);
+                yield return owner.Wait(warning);
                 KarmaAudio.StopSlot("sw-bed");
                 owner.state = ActionState.Attack; Guarding = true; guardResponsePending = guardResponseRunning = false;
                 owner.animator.PlayWavePhase("Guard");
+                Vector2? shieldOrigin = owner.animator.ActivateSwordShieldRaise();
                 swordGuardUntil = owner.FightSeconds + Mathf.Max(0.6f, Settings.swordGuardDuration) + 2f;
                 nextGuardResponse = owner.FightSeconds;
                 nextSwordGuard = owner.FightSeconds + Mathf.Max(8, Settings.swordGuardDuration + 4);
@@ -61,12 +61,7 @@ namespace KarmaPrototype
                     activeVolley.Blades[i] = blades[i];
                     KarmaSwordWardVfx.ApplyBlade(blades[i], sword.SwordSize(EnemyAttack.SW04), Vector2.right);
                 }
-                if (formation != null)
-                {
-                    formation.Form(swordGuardRoot,blades);
-                    wardVfx = formation;
-                }
-                else wardVfx = KarmaSwordWardVfx.Create(swordGuardRoot,owner.game,owner,blades);
+                wardVfx = KarmaSwordWardVfx.Create(swordGuardRoot,owner.game,owner,blades,shieldOrigin);
                 if (owner.Active) KarmaAudio.Play(KarmaSfxId.SwCrossingBlades);
                 swordGuardRoutine = owner.StartCoroutine(MaintainSwordGuard(blades));
                 // Only formation occupies the action slot. The buff, aim warnings
@@ -102,9 +97,9 @@ namespace KarmaPrototype
                                 aim = ((Vector2)sword.SwordPlayerBounds.center - origin).normalized;
                                 if (aim.sqrMagnitude < 0.01f) aim = Vector2.right * owner.direction;
                                 blades[i].transform.rotation = Quaternion.RotateTowards(blades[i].transform.rotation,
-                                    Quaternion.Euler(0, 0, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg + 90), 420 * Time.deltaTime);
+                                    Quaternion.Euler(0, 0, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg), 420 * Time.deltaTime);
                                 blades[i].color = new Color(0.42f, 0.86f, 1, 1);
-                                wardVfx?.Aim(i,origin,aim,size,false);
+                                wardVfx?.Aim(i, false);
                                 UpdateSwordGuardPathMark(mark, origin,
                                     origin + aim * Settings.swordSpeed * KarmaBossProjectileGeometry.SwordShotLife(origin, aim * Settings.swordSpeed, sword.WaveLife), size, false);
                                 yield return null;
@@ -115,7 +110,7 @@ namespace KarmaPrototype
                             mark = SwordGuardPathMark(slot, origin, origin + aim * Settings.swordSpeed * sword.WaveLife, size);
                             // Commit direction, not world position. The selected surface
                             // point follows the moving boss until the projectile is released.
-                            blades[i].transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg + 90);
+                            blades[i].transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg);
                             blades[i].color = Color.white;
                             float lockedUntil = owner.FightSeconds + GuardLockTime;
                             while (owner.Active && volley.Allows(i) && owner.FightSeconds < lockedUntil)
@@ -126,9 +121,8 @@ namespace KarmaPrototype
                                     origin = blades[i].transform.position;
                                     UpdateSwordGuardPathMark(mark, origin,
                                         origin + aim * Settings.swordSpeed * KarmaBossProjectileGeometry.SwordShotLife(origin, aim * Settings.swordSpeed, sword.WaveLife), size, true);
-                                    float pulse = 0.85f + 0.15f * Mathf.Sin(owner.FightSeconds * 32);
-                                    blades[i].color = new Color(pulse, 0.95f, 1, 1);
-                                    wardVfx?.Aim(i,origin,aim,size,true);
+                                    blades[i].color = Color.white;
+                                    wardVfx?.Aim(i, true);
                                 }
                                 yield return null;
                             }
@@ -144,7 +138,7 @@ namespace KarmaPrototype
                                 owner.animator.ReleaseSwordBody("Counter", i);
                             KarmaSwordWardVfx.CounterProjectile(owner.game, owner, shots[i], aim * Settings.swordSpeed, size);
                             KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shots[i]);
-                            wardVfx?.Released(origin,aim);
+                            wardVfx?.Released();
                             KarmaSwordCounterTrace.Write(Settings.sw04DebugLogging, "VolleyId=" + volley.Id + ", Projectile=" + (i + 1) + ", Result=Released, Time=" + Time.time.ToString("F4"));
                             if (i + 1 < blades.Length)
                             {
@@ -231,7 +225,7 @@ namespace KarmaPrototype
                     if (i == aiming) continue;
                     if (tangent.sqrMagnitude > 0.000001f)
                         blades[i].transform.rotation = Quaternion.RotateTowards(blades[i].transform.rotation,
-                            Quaternion.Euler(0, 0, Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg + 90),420*Time.deltaTime);
+                            Quaternion.Euler(0, 0, Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg),420*Time.deltaTime);
                     // Quiet orbiting blades leave the tracking/locked blade readable.
                     wardVfx.ApplyBladeOrbitDepth(i, owner.FightSeconds);
                     blades[i].color = new Color(0.86f, 0.95f, 1, wardVfx.BladeOrbitAlpha(i, owner.FightSeconds));
@@ -316,7 +310,7 @@ namespace KarmaPrototype
                     Vector2 target = body != null ? (Vector2)body.bounds.ClosestPoint(at) : owner.Position;
                     Vector2 delta = target - at;
                     float step = Mathf.Max(1, Settings.swordSpeed) * Time.deltaTime;
-                    blade.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg + 90);
+                    blade.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
                     blade.transform.position = Vector2.MoveTowards(at, target, step);
                     if (delta.magnitude <= step)
                     {

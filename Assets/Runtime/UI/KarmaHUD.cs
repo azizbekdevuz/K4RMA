@@ -98,6 +98,14 @@ namespace KarmaPrototype
                 if (game.Paused) DrawPauseOverlay();
                 else switch (game.Phase)
                 {
+                    case RunPhase.GuardianFallen:
+                        if (game.StageIndex < 3)
+                        {
+                            Panel(new Rect(245, 589, 790, 55));
+                            DrawSpeakerNameplate(263, 562, "수호자");
+                            Label(265, 592, 750, 48, game.GuardianLearningResult, centered);
+                        }
+                        break;
                     case RunPhase.Choosing: ChoiceScreen(); break;
                     case RunPhase.Transition:
                         StageTransitionScreen();

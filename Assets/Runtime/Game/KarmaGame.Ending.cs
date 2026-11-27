@@ -47,7 +47,7 @@ namespace KarmaPrototype
 
         static readonly EndingCaption[] endingCaptions = {
             new EndingCaption(0.7f, 2.95f, "마지막 수호자", "네 힘을 모두 내 것으로 만들었는데도…"),
-            new EndingCaption(3.05f, 5.25f, "마지막 수호자", "끝내 널 넘지 못했구나."),
+            new EndingCaption(3.05f, 5.25f, "마지막 수호자", "끝내 널 넘지는 못했군. 그래도 마지막 검은 내 것이었다."),
             new EndingCaption(10.84f, 14.85f, "스승", "내게 배운 세 기술의 원형은 이제 네 손에 없구나."),
             new EndingCaption(14.91f, 18.35f, "스승", "그래도 그 가르침은 네 검에 남아 있다."),
             new EndingCaption(18.45f, 20.84f, "스승", "어떻게 네 것이 되었는지 보여 다오."),
@@ -57,7 +57,7 @@ namespace KarmaPrototype
             new EndingCaption(EndingMasterReplyAt, 30.95f, "스승", "이제 그 기술들은 누구의 것이냐?"),
             new EndingCaption(EndingApprenticeReplyAt, 34.15f, "제자", "스승님께 배웠습니다."),
             new EndingCaption(34.25f, 36.80f, "제자", "하지만 이제는 제 방식으로 쓸 수 있습니다."),
-            new EndingCaption(EndingFarewellAt, 38.40f, "스승", "그렇다면 수련은 헛되지 않았구나."),
+            new EndingCaption(EndingFarewellAt, 38.40f, "스승", "이제 배운 기술을 네 방식으로 다루는구나."),
             new EndingCaption(38.50f, 40.44f, "스승", "이제 네 길을 가거라.")
         };
 

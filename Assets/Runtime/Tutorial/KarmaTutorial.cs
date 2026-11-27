@@ -33,7 +33,7 @@ namespace KarmaPrototype
             if (Step == KarmaTutorialStep.Practice) blockedUntil = Time.unscaledTime + 2;
         }
         static readonly string[] Lessons = { "먼저 검을 휘둘러 보아라. 나무의 중심을 정확히 노려라.", "검에 담은 기운을 앞으로 보내 보아라.", "아래에서 위로. 검을 올리는 힘에 몸을 실어라.", "이번에는 막아 보아라. 공격이 닿기 전에 보호의 힘을 펼쳐라." };
-        static readonly string[] Ending = { "내가 가르친 기술은 모두 익혔구나.", "하지만 배운 것을 그대로 쓰는 것만으로는 수련이 끝나지 않는다.", "이제 그 기술들을 너만의 것으로 만들어라." };
+        static readonly string[] Ending = { "내가 가르친 기술은 모두 익혔구나.", "내 기술을 따라 하는 것을 넘어, 자신만의 기술을 만드는 것이 중요하다.", "수련장으로 가거라. 그곳에서 너만의 검을 찾아라." };
         static readonly string[] TrainingNames = { "기본 공격", "검기", "상승베기", "방어" };
         public string Speech => Step switch
         {

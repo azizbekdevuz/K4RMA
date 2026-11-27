@@ -26,6 +26,19 @@ namespace KarmaPrototype
         Vector3 fallenGuardianPosition;
         Vector3 fallenGuardianScale;
         bool ceremonySpacingStarted, ceremonySpacingFinished;
+        internal string GuardianLearningResult
+        {
+            get
+            {
+                if (StageIndex == 0)
+                {
+                    string skill = KarmaPatternCatalog.Name(Player.Essences.MasteryLeader);
+                    return skill + "… 날 몰아붙인 그 기술, 나도 익혀 보겠다.";
+                }
+                return StageIndex == 1 ? "네가 쓰던 그대로였는데… 따라 하는 것만으로는 부족한 건가?"
+                    : "세 기술을 따로 쓰는 것만으로는 부족해. 하나로 이어 보겠다.";
+            }
+        }
         public bool GuardianInheriting => Phase == RunPhase.Transition && guardianInheriting;
         public void StartRun()
         {

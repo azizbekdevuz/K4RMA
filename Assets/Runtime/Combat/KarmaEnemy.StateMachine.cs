@@ -6,6 +6,17 @@ namespace KarmaPrototype
     {
         bool copiedTechnique;
         bool presentingCopy;
+        bool finalTechniqueReleased, finishingBlowPending;
+
+        bool TryDemonstrateFinalTechnique()
+        {
+            if (game.StageIndex != 2 || finalTechniqueReleased || Health > MaxHealth * 0.5f
+                || Position.y > KarmaSpace.GuardianGroundY + 0.1f)
+                return false;
+
+            PlayLearnedTechnique(game.Player.Essences.MasteryLeader, true);
+            return true;
+        }
         string learningLine;
         float learningLineUntil;
         internal string LearningLine => FightSeconds < learningLineUntil ? learningLine : null;
@@ -45,7 +56,7 @@ namespace KarmaPrototype
             string pose = ward ? "GrowthCopyWard" : rise ? "GrowthCopyRise" : "GrowthCopyWave";
             float windup = mastered ? 0.62f : 0.94f;
             var color = game.Config.ColorOf(technique);
-            SayLearning(mastered ? "됐다. 이제 세 기술을 하나로 이을 수 있겠어." :
+            SayLearning(mastered ? "마지막 기술… 이번엔 제대로 해 보겠다." :
                 game.StageIndex == 0 ? "방금 그 움직임… 이렇게였나?" : "이번엔 저 기술을 따라 해 보자.");
             state = ActionState.Telegraph;
             Vector2 forward = Vector2.right * Facing;
@@ -63,6 +74,7 @@ namespace KarmaPrototype
             ClearPatternObjects();
             state = ActionState.Attack;
             animator.PresentLearningMotion(pose, KarmaBootstrap.Step);
+            if (mastered) SayLearning("됐다. 이제 세 기술을 하나로 이을 수 있겠어.");
             if (ward)
             {
                 fullShield = mastered;
@@ -80,14 +92,29 @@ namespace KarmaPrototype
                     restrainedVisual: !mastered, plainTechnique: true);
             }
 
-            yield return Wait(0.22f);
-            animator.PresentLearningMotion(pose, KarmaBootstrap.Step * 2.01f);
-            yield return Wait(mastered ? 0.65f : 0.40f);
+            float releaseAge = 0;
+            float releaseDuration = mastered ? 0.87f : 0.62f;
+            Vector2 origin = Position;
+            while (releaseAge < releaseDuration && Active)
+            {
+                yield return null;
+                if (game.Paused) continue;
+                releaseAge += Time.deltaTime;
+                if (rise)
+                    transform.position = origin + Vector2.up * (Mathf.Sin(Mathf.PI * Mathf.Clamp01(releaseAge / releaseDuration))
+                        * KarmaSpace.Units(mastered ? 1.6f : 0.48f));
+                if (releaseAge >= 0.22f)
+                    animator.PresentLearningMotion(pose, KarmaBootstrap.Step * 2.01f);
+            }
+            if (!Active) yield break;
+            if (rise) transform.position = origin;
+            if (mastered) finalTechniqueReleased = true;
             fullShield = false;
             ClearPatternObjects();
             presentingCopy = running = false;
             state = ActionState.Approach;
             timer = behavior.DecisionDelay;
+            if (mastered && finishingBlowPending) ReceiveDamage(Health);
         }
 
         void FixedUpdate()
@@ -142,7 +169,7 @@ namespace KarmaPrototype
         }
         void BeginAttack()
         {
-            if (TryImitate()) return;
+            if (TryDemonstrateFinalTechnique() || TryImitate()) return;
             float distance = Mathf.Abs(game.Player.Position.x - Position.x);
             bool escape = Position.x > KarmaStage.ArenaLeft + 5 && Position.x < KarmaStage.ArenaRight - 5;
             bool sight = ClearShot(Position, game.Player.Position);
@@ -161,7 +188,10 @@ namespace KarmaPrototype
         {
             var inherited = game.Player.Essences.PersonalizationOrder;
             if (inherited.Count == 3 && behavior.IsUltimate(selected))
+            {
+                SayLearning("이제 세 기술을 하나로. 이게 내 검이다.");
                 KarmaGuardianGrowth.RecallMastery(game, this, animator);
+            }
             yield return behavior.Execute(selected);
             if (!Active) yield break;
             ClearPatternObjects();

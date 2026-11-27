@@ -51,18 +51,22 @@ namespace KarmaPrototype
             float blend = 1 - Mathf.Exp(-6 * Time.unscaledDeltaTime);
             GameCamera.orthographicSize = snap ? targetSize : Mathf.Lerp(GameCamera.orthographicSize, targetSize, blend);
             float halfWidth = GameCamera.orthographicSize * GameCamera.aspect;
-            float left = Mathf.Max(KarmaStage.ArenaLeft, stageBackgroundBounds.min.x);
-            float right = Mathf.Min(KarmaStage.ArenaRight, stageBackgroundBounds.max.x);
             float playerX = snap || Player == null ? KarmaStage.Spawn.x : Player.Position.x;
             float facing = snap || Player == null ? 1 : Player.Facing;
-            float x = right - left <= halfWidth * 2 ? (left + right) / 2
-                : Mathf.Clamp(playerX + facing * KarmaSpace.Units(2), left + halfWidth, right - halfWidth);
+            float x = FollowX(playerX + facing * KarmaSpace.Units(2), halfWidth);
             var target = encounterFocus ?? new Vector3(x, stageBackgroundBounds.center.y, -10);
             GameCamera.transform.position = snap ? target
                 : Vector3.Lerp(GameCamera.transform.position - lastShake, target,
                     blend);
             lastShake = Vector3.zero;
         }
+        float FollowX(float desiredX, float halfWidth)
+        {
+            float left = Mathf.Max(KarmaStage.ArenaLeft, paintedBackgroundBounds.min.x + halfWidth);
+            float right = Mathf.Min(KarmaStage.ArenaRight, paintedBackgroundBounds.max.x - halfWidth);
+            return left <= right ? Mathf.Clamp(desiredX, left, right) : paintedBackgroundBounds.center.x;
+        }
+
         // The combat frame is a crop of the panorama. Film edge kills against
         // the full painting, leaving room around the silhouette and its effects.
         static Vector3 InsideBackdrop(Vector3 focus, float size, float aspect, Bounds painting)
@@ -153,13 +157,7 @@ namespace KarmaPrototype
                 var wideFocus = new Vector3(Player.Position.x + Player.Facing * KarmaSpace.Units(2),
                     hasStageBackground ? stageBackgroundBounds.center.y : 4.4f, -10);
                 if (hasStageBackground)
-                {
-                    float left = Mathf.Max(KarmaStage.ArenaLeft, stageBackgroundBounds.min.x);
-                    float right = Mathf.Min(KarmaStage.ArenaRight, stageBackgroundBounds.max.x);
-                    float halfWidth = combatSize * GameCamera.aspect;
-                    wideFocus.x = right - left <= halfWidth * 2 ? (left + right) * 0.5f
-                        : Mathf.Clamp(wideFocus.x, left + halfWidth, right - halfWidth);
-                }
+                    wideFocus.x = FollowX(wideFocus.x, combatSize * GameCamera.aspect);
                 // Keep both fighters on screen while the next name is up, even
                 // if the previous fight ended with a projectile from the other wall.
                 float nameSize = combatSize;

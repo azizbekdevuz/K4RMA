@@ -6,6 +6,7 @@ namespace KarmaPrototype
     {
         static class SwordWaveVolley
         {
+            const float VolleyRange = 8 * KarmaSpace.Scale;
             sealed class AdvertisedShot
             {
                 public Vector2 origin, velocity;
@@ -21,7 +22,7 @@ namespace KarmaPrototype
                 origin = new Vector2(owner.Position.x + owner.direction * KarmaSpace.Scale,
                     KarmaSpace.Units(high ? 3.3f : 1.05f));
                 velocity = Vector2.right * owner.direction * Mathf.Max(KarmaSpace.Scale, owner.Tuning.sword.swordSpeed * 1.3f);
-                life = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
+                life = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, VolleyRange / velocity.magnitude);
                 if (mark != null)
                 {
                     mark.GetComponent<KarmaAttackWarning>().SetPath(mark, origin, origin + velocity * life, size, false, true);
@@ -58,8 +59,7 @@ namespace KarmaPrototype
                 {
                     bool high = (i % 2 != 0) ^ highFirst;
                     Vector2 origin = high ? second : first;
-                    float life = scars ? sword.WaveLife
-                        : KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
+                    float life = sword.WaveLife;
                     if (!scars) AimSW01(owner, high, null, out origin, out velocity, out life, waveSize);
                     var mark = owner.PathMark(origin, origin + velocity * life, waveSize);
                     if (!scars)
@@ -89,6 +89,7 @@ namespace KarmaPrototype
                     if (!scars)
                     {
                         sword.ReleaseSW01(origin, velocity, waveSize, life, high);
+                        owner.ShowFirstImitation("그때 네 검은 여기까지 닿았지. 내 검도 닿는군.");
                         owner.animator.ReleaseSwordBody("Volley", i);
                         sword.WaveLaunchVFX(origin, velocity, waveSize, false, high);
                     }
@@ -102,7 +103,7 @@ namespace KarmaPrototype
                 float facing = target.x < from.x ? -1 : 1;
                 Vector2 origin = from + Vector2.right * facing * KarmaSpace.Scale;
                 Vector2 velocity = Vector2.right * facing * Mathf.Max(KarmaSpace.Scale, owner.Tuning.sword.swordSpeed * (attack == EnemyAttack.SW01 ? 1.3f : 1));
-                float life = attack == EnemyAttack.SW01 ? float.MaxValue : sword.WaveLife;
+                float life = attack == EnemyAttack.SW01 ? VolleyRange / velocity.magnitude : sword.WaveLife;
                 return sword.SwordShotCanReach(new Vector2(origin.x, KarmaSpace.Units(1.05f)), velocity, sword.SwordSize(attack), life, target)
                     || sword.SwordShotCanReach(new Vector2(origin.x, KarmaSpace.Units(3.3f)), velocity, sword.SwordSize(attack), life, target);
             }

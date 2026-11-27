@@ -28,7 +28,7 @@ namespace KarmaPrototype
                 Vector2 origin = KarmaSwordWaveAnimation.BasicLaunchOrigin(owner, owner.Position, owner.direction);
                 Vector2 aim = SwordBossBehavior.SwordAim(origin, sword.SwordPlayerBounds.center, owner.direction);
                 Vector2 velocity = aim * sword.BasicSwordSpeed;
-                float flightLife = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, float.MaxValue);
+                float flightLife = KarmaBossProjectileGeometry.SwordShotLife(origin, velocity, sword.BasicSwordLife);
                 float warning = owner.Warning(0.4f);
                 var mark = owner.PathMark(origin, origin + velocity * flightLife, sword.BasicSwordSize);
                 KarmaSwordAttackPolish.Warning(mark);
@@ -38,16 +38,12 @@ namespace KarmaPrototype
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack(aim);
                 owner.animator.BeginBasicRelease(Mathf.Min(2f / 24, sword.BasicReleaseWait));
-                // Recovery clears ordinary pattern objects. Let this released
-                // wave finish at the real boundary under existing sword ownership.
                 var shot = owner.Attack(origin, velocity, sword.BasicSwordSize, flightLife,
                     Settings.basicDamageMultiplier, parent: sword.PersistentRoot);
                 KarmaSwordBasicPresentation.Ranged(owner.game, owner, shot, velocity,
                     sword.BasicSwordSize, sword.SwordSize(EnemyAttack.SW01));
                 KarmaSwordWaveAnimation.AlignBasicVisual(shot);
                 KarmaAudio.Play(KarmaSfxId.SwWaveLaunch, lifetimeOwner: shot);
-                // Keep the previous casting/recovery/selection cadence. The old
-                // ten-unit lifetime remains only the existing release wait here.
                 yield return owner.Wait(sword.BasicReleaseWait);
                 yield return owner.Recovery(0.5f);
             }

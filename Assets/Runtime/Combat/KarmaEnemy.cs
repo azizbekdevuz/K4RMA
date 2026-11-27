@@ -33,6 +33,15 @@ namespace KarmaPrototype
         public Vector2 Position { get { return transform.position; } }
         public string DisplayName { get; private set; }
         public float FightSeconds { get; private set; }
+        string imitationLine;
+        float imitationLineUntil;
+        internal string CombatImitationLine => FightSeconds < imitationLineUntil ? imitationLine : null;
+        void ShowFirstImitation(string line)
+        {
+            if (imitationLine != null || !Alive || !game.IsCombat) return;
+            imitationLine = line;
+            imitationLineUntil = FightSeconds + 2.8f;
+        }
         public bool Stunned { get { return state == ActionState.Stunned; } }
         public bool Invulnerable { get { return fullShield; } }
         public bool Armored { get { return fullShield || behavior != null && behavior.Armored; } }

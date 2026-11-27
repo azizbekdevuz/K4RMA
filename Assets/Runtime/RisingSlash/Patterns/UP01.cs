@@ -30,6 +30,7 @@ namespace KarmaPrototype
                 float fallTime = Mathf.Clamp(Mathf.Abs(start.y - landing.y) / KarmaSpace.Units(8f), 0.38f, 0.62f);
                 if (owner.Active && start.y > landing.y)
                 {
+                    owner.ShowFirstImitation("그때 네가 날 내려다봤지. 지금은 내가 위다.");
                     owner.animator.StartRisingDescent(fallTime);
                     KarmaRisingAudio.Descent(fallTime);
                 }

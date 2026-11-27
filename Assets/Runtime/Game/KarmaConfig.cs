@@ -24,6 +24,7 @@ namespace KarmaPrototype
         [Header("액티브 기술")]
         [Min(0.1f)] [InspectorName("검기 쿨타임")] public float swordWaveCooldown = 2.2f;
         [Min(1)] [InspectorName("검기 피해")] public float swordWaveDamage = 72;
+        [Min(0.1f)] [InspectorName("검기 사정거리")] public float swordWaveRange = 8 * KarmaSpace.Scale;
         [Min(1)] [InspectorName("검기 속도")] public float swordWaveSpeed = 14 * KarmaSpace.Scale;
         [Min(0.1f)] [InspectorName("상승베기 쿨타임")] public float risingSlashCooldown = 1.6f;
         [Min(0.1f)] [InspectorName("보호막 쿨타임")] public float guardCooldown = 5;

@@ -124,7 +124,10 @@ namespace KarmaPrototype
                 if (!resolvingContact || owner.game.Player.ParryCount == parriesBeforeContact)
                     KarmaRemnantVFX.Impact(owner.game, owner.Position, Essence.Guard);
                 if (AutoShieldActive)
+                {
+                    owner.ShowFirstImitation("이번엔… 아프지 않군. 네가 이렇게 막았지.");
                     KarmaAudio.Play(KarmaSfxId.GdShieldHit, gainScale: basicMelee ? 0.58f : 1f);
+                }
                 else
                     KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
             }

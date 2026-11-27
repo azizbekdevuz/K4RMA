@@ -56,7 +56,7 @@ namespace KarmaPrototype
                     readyAt[0] = Time.time + c.swordWaveCooldown;
                     player.BeginSwordWave();
                     KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * KarmaSpace.Units(0.7f),
-                        Vector2.right * player.Facing * c.swordWaveSpeed, c.swordWaveDamage, c.swordWaveColor, KarmaSpace.Units(0.25f));
+                        Vector2.right * player.Facing * c.swordWaveSpeed, c.swordWaveDamage, c.swordWaveColor, KarmaSpace.Units(0.25f), c.swordWaveRange);
                     break;
                 case Essence.RisingSlash:
                     readyAt[1] = Time.time + c.risingSlashCooldown;

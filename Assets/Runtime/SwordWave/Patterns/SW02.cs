@@ -25,8 +25,9 @@ namespace KarmaPrototype
                 KarmaStage.ArenaRight - size.x / 2 - (facing < 0 ? corridor : launchRoom)),
                 Floor + size.y / 2);
             }
+            const float AimedSlashRange = 10 * KarmaSpace.Scale;
             float AimedSlashLife(Vector2 origin, Vector2 velocity)
-            { return KarmaBossProjectileGeometry.AimedSlashBoundaryLife(origin, velocity, sword.SwordSize(EnemyAttack.SW02), float.MaxValue); }
+            { return KarmaBossProjectileGeometry.AimedSlashBoundaryLife(origin, velocity, sword.SwordSize(EnemyAttack.SW02), AimedSlashRange / velocity.magnitude); }
             float AimedSlashWarningTime(Vector2 origin, float facing, Vector2 size)
             {
                 // At an outguard-facing wall the clamped rear edge can extend behind

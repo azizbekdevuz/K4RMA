@@ -12,14 +12,15 @@ namespace KarmaPrototype
         Vector2 velocity;
         float damage, radius, remaining;
         public static void Spawn(KarmaGame game, Vector2 position, Vector2 velocity, float damage,
-            Color color, float radius = 0.2f * KarmaSpace.Scale)
+            Color color, float radius = 0.2f * KarmaSpace.Scale, float? maxDistance = null)
         {
             var sr = KarmaVisuals.Box(game.World, "Player projectile",
                 position, Vector2.one * radius * 2, color, 7);
             var shot = sr.gameObject.AddComponent<KarmaProjectile>();
             shot.trainingId = ++nextTrainingId;
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
-            shot.radius = radius; shot.remaining = 3;
+            shot.radius = radius;
+            shot.remaining = maxDistance.HasValue ? Mathf.Max(0, maxDistance.Value) / Mathf.Max(0.001f, velocity.magnitude) : 3;
             KarmaRemnantVFX.ProjectileLook(sr, velocity);
             KarmaCombatVFX.AttachAttack(sr, velocity, new Color(0.35f, 0.75f, 1));
             game.Projectiles.Add(shot);

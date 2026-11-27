@@ -68,6 +68,11 @@ namespace KarmaPrototype
             string name = enemy != null && enemy.Alive ? enemy.DisplayName :
                 game.Phase == RunPhase.GuardianFallen || game.Phase == RunPhase.Ending ? fallenBossName : null;
             if (name == null) return;
+            if (game.IsCombat && enemy != null && enemy.Alive && enemy.CombatImitationLine is string line)
+            {
+                Panel(new Rect(290, 84, 700, 44), opacity);
+                Label(300, 87, 680, 38, line, centered);
+            }
             float ratio = enemy != null ? Mathf.Clamp01(enemy.Health / Mathf.Max(1, enemy.MaxHealth)) : 0;
             // Keep the boss readable above the action, clear of the player's corner HUD.
             const float left = 330, width = 620, y = 56;

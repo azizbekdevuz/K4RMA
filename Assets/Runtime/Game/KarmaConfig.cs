@@ -37,6 +37,11 @@ namespace KarmaPrototype
         [Min(0.2f)] [InspectorName("적 공격 선택 간격")] public float enemyDecisionDelay = 1.2f;
         [Min(0.2f)] [InspectorName("기본 공격 예고 시간")] public float enemyTelegraphTime = 0.75f;
         [Min(0)] [InspectorName("고유화 후 체력 회복")] public float healAfterPersonalization = 45;
+        [Header("기술 숙련도")]
+        [Min(1)] public int swordWaveMastery = 10, risingSlashMastery = 10, guardMastery = 10;
+        [Min(1)] public int masteryGaugeTarget = 50;
+        internal int MasteryWeight(Essence essence) => Mathf.Max(1,
+            essence == Essence.SwordWave ? swordWaveMastery : essence == Essence.RisingSlash ? risingSlashMastery : guardMastery);
         [Header("화면 표시")]
         [InspectorName("한글 UI 폰트 (비우면 자동)")] public Font koreanFont;
         [InspectorName("2D 표시 재질 (빌드에 포함)")] public Material spriteMaterial;

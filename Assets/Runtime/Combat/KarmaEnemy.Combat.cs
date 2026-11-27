@@ -43,7 +43,7 @@ namespace KarmaPrototype
         public void TakeDamage(float amount, Vector2 source) { TakeDamage(amount, source, out _); }
         internal void TakeDamage(float amount, out bool reduced, bool basicMelee = false)
         { TakeDamage(amount, game.Player.Position, out reduced, basicMelee); }
-        internal void TakeDamage(float amount, Vector2 source, out bool reduced, bool basicMelee = false)
+        internal void TakeDamage(float amount, Vector2 source, out bool reduced, bool basicMelee = false, Essence? mastery = null)
         {
             reduced = false;
             if (!Alive || !game.IsCombat || amount <= 0 || stopped) return;
@@ -56,6 +56,7 @@ namespace KarmaPrototype
                 amount *= Mathf.Clamp01(behavior.Balance.shieldDamageMultiplier);
                 behavior.ReducedDamageFeedback(basicMelee);
             }
+            if (amount > 0 && mastery.HasValue) game.Player.Essences.RecordSuccess(mastery.Value);
             ReceiveDamage(amount);
         }
         void ReceiveDamage(float amount)

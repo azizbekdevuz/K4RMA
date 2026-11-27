@@ -8,16 +8,18 @@ namespace KarmaPrototype
     {
         static int nextTrainingId;
         int trainingId;
+        bool originalWave;
         KarmaGame game;
         Vector2 velocity;
         float damage, radius, remaining;
         public static void Spawn(KarmaGame game, Vector2 position, Vector2 velocity, float damage,
-            Color color, float radius = 0.2f * KarmaSpace.Scale)
+            Color color, float radius = 0.2f * KarmaSpace.Scale, bool originalWave = false)
         {
             var sr = KarmaVisuals.Box(game.World, "Player projectile",
                 position, Vector2.one * radius * 2, color, 7);
             var shot = sr.gameObject.AddComponent<KarmaProjectile>();
             shot.trainingId = ++nextTrainingId;
+            shot.originalWave = originalWave;
             shot.game = game; shot.velocity = velocity; shot.damage = damage;
             shot.radius = radius; shot.remaining = 3;
             KarmaRemnantVFX.ProjectileLook(sr, velocity);
@@ -43,7 +45,7 @@ namespace KarmaPrototype
                 var enemy = game.Enemies[i];
                 if (enemy == null || !enemy.Alive || !enemy.IntersectsDamagePath(from, to, radius)) continue;
                 float before = enemy.Health;
-                enemy.TakeDamage(damage, from, out bool reduced);
+                enemy.TakeDamage(damage, from, out bool reduced, mastery: originalWave ? Essence.SwordWave : (Essence?)null);
                 if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.SwWaveImpact);
                 // Current player projectiles stop at their first target; piercing is a melee move.
                 enabled = false; Destroy(gameObject); return;

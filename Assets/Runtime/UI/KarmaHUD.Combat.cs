@@ -31,6 +31,28 @@ namespace KarmaPrototype
             }
         }
 
+        static readonly string[] MasteryNames = { "검기", "상승베기", "방어" };
+        void DrawMastery()
+        {
+            var essences = game.Player.Essences;
+            var leader = essences.MasteryLeader;
+            const float left = 43;
+            Panel(new Rect(left - 8, 114, 221, 36 + (3 - essences.Count) * 33));
+            Label(left, 117, 205, 24, "기술 숙련도", text);
+            int y = 144;
+            for (int i = 0; i < MasteryNames.Length; i++)
+            {
+                var skill = (Essence)i;
+                if (!essences.HasActive(skill)) continue;
+                int value = essences.Mastery(skill);
+                SpriteArt(new Rect(left, y, 23, 23), KarmaArtwork.SkillIcon(skill), Color.white);
+                Label(left + 29, y - 2, 175, 23, MasteryNames[i] + "  " + value + (leader == skill && value > 0 ? "  ▲" : ""), text);
+                Fill(new Rect(left + 31, y + 22, 170, 4), HudRule);
+                Fill(new Rect(left + 31, y + 22, 170 * Mathf.Clamp01((float)value / Mathf.Max(1, game.Config.masteryGaugeTarget)), 4), game.Config.ColorOf(skill));
+                y += 33;
+            }
+        }
+
         void TopBar()
         {
             float opacity = CombatHudOpacity;
@@ -63,6 +85,9 @@ namespace KarmaPrototype
                 SpriteArt(r, KarmaArtwork.SkillIcon(essence), WithOpacity(color, opacity));
 
             }
+
+            if (game.Phase == RunPhase.Combat && game.Player.Essences.Count < 3)
+                DrawMastery();
 
             var enemy = game.Enemies.Count > 0 ? game.Enemies[0] : null;
             string name = enemy != null && enemy.Alive ? enemy.DisplayName :

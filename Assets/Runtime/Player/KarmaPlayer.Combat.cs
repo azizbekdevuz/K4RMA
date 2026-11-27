@@ -130,7 +130,8 @@ namespace KarmaPrototype
             if (to != from) SuppressLandingAudioIfGrounded();
             return to;
         }
-        public void BeginRisingSlash()
+        public void BeginRisingSlash() => BeginRisingSlash(false);
+        internal void BeginRisingSlash(bool trackMastery)
         {
             var hitSize = KarmaSpace.Units(new Vector2(4.2f, 4));
             var hitOffset = Vector2.up * KarmaSpace.Scale;
@@ -148,7 +149,9 @@ namespace KarmaPrototype
             {
                 if (enemy == null || !enemy.Alive || !enemy.OverlapsDamageArea(Position + hitOffset, hitSize)) continue;
                 float before = enemy.Health;
-                enemy.TakeDamage(game.Config.Techniques.risingDamage, out bool reduced, basicMelee: true);
+                enemy.TakeDamage(game.Config.Techniques.risingDamage, Position, out bool reduced, basicMelee: true,
+                    mastery: trackMastery ? Essence.RisingSlash : (Essence?)null);
+                if (enemy.Health < before) trackMastery = false;
                 if (enemy.Health < before && !reduced) KarmaAudio.Play(KarmaSfxId.CombatBladeHit);
             }
         }

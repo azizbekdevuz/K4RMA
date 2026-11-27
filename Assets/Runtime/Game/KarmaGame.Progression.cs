@@ -59,6 +59,7 @@ namespace KarmaPrototype
             var spawn = KarmaStage.Spawn;
             if (OpeningArrivalSpeech != null) spawn.y = KarmaSpace.PlayerHalfHeight;
             Player.ResetForRoom(spawn, fullHealth);
+            Player.Essences.ResetMastery();
             // Make the new floor available to the initial grounding query.
             if (OpeningArrivalSpeech != null) Physics2D.SyncTransforms();
             var enemyObject = new GameObject(StageIndex == 3 ? "마지막 수호자" : "수호자");
@@ -120,7 +121,15 @@ namespace KarmaPrototype
                 transitionLeft = Mathf.Max(transitionLeft, 0.3f);
             }
             if (transitionLeft <= 0)
-                Phase = RunPhase.Choosing;
+                PersonalizeMastery();
+        }
+
+        void PersonalizeMastery()
+        {
+            var essence = Player.Essences.MasteryLeader;
+            if (!Player.Essences.Preview(essence)) return;
+            Phase = RunPhase.Choosing;
+            ConfirmChoice();
         }
         public void Choose(Essence essence)
         {

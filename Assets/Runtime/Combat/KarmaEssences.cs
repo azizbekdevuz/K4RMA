@@ -20,6 +20,49 @@ namespace KarmaPrototype
             if (acquiredOrder == null) acquiredOrder = new List<Essence>();
             foreach (var essence in acquiredOrder) progression.TryInternalize(essence);
         }
+        readonly int[] mastery = new int[3];
+        bool guardCredited;
+        internal Essence? ObservedTechnique { get; private set; }
+        public int Mastery(Essence e) => mastery[(int)e];
+
+        internal void RecordSuccess(Essence e)
+        {
+            if (!game.IsCombat || game.Tutorial != null || !HasActive(e)) return;
+            mastery[(int)e] += game.Config.MasteryWeight(e);
+            ObservedTechnique = e;
+        }
+
+        internal void RecordBlock()
+        {
+            if (guardCredited || !game.IsCombat || game.Tutorial != null || !HasActive(Essence.Guard)) return;
+            guardCredited = true;
+            RecordSuccess(Essence.Guard);
+        }
+
+        internal Essence MasteryLeader
+        {
+            get
+            {
+                int best = -1;
+                var leader = Essence.SwordWave;
+                for (int i = 0; i < mastery.Length; i++)
+                {
+                    var candidate = (Essence)i;
+                    if (!HasActive(candidate) || mastery[i] <= best) continue;
+                    best = mastery[i];
+                    leader = candidate;
+                }
+                return leader;
+            }
+        }
+
+        internal void ResetMastery()
+        {
+            System.Array.Clear(mastery, 0, mastery.Length);
+            ObservedTechnique = null;
+            guardCredited = false;
+        }
+
         readonly float[] readyAt = new float[3];
         KarmaPlayer player;
         KarmaGame game;
@@ -56,13 +99,14 @@ namespace KarmaPrototype
                     readyAt[0] = Time.time + c.swordWaveCooldown;
                     player.BeginSwordWave();
                     KarmaProjectile.Spawn(game, player.Position + Vector2.right * player.Facing * KarmaSpace.Units(0.7f),
-                        Vector2.right * player.Facing * c.swordWaveSpeed, c.swordWaveDamage, c.swordWaveColor, KarmaSpace.Units(0.25f));
+                        Vector2.right * player.Facing * c.swordWaveSpeed, c.swordWaveDamage, c.swordWaveColor, KarmaSpace.Units(0.25f), originalWave: true);
                     break;
                 case Essence.RisingSlash:
                     readyAt[1] = Time.time + c.risingSlashCooldown;
-                    player.BeginRisingSlash(); break;
+                    player.BeginRisingSlash(trackMastery: true); break;
                 case Essence.Guard:
                     readyAt[2] = Time.time + c.guardCooldown;
+                    guardCredited = false;
                     player.BeginGuard(c.guardDuration); break;
             }
         }

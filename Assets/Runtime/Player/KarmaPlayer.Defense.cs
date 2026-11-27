@@ -50,6 +50,7 @@ namespace KarmaPrototype
             if (Shielded)
             {
                 KarmaAudio.Play(KarmaSfxId.CombatGuardBlock);
+                Essences.RecordBlock();
                 game.Tutorial?.GuardBlocked();
                 var blockVisual = KarmaCombatVFX.SpawnSprite(game.World, Position, "PlayerVFX", "Barrier", KarmaSpace.Units(new Vector2(1.6f, 2.1f)), 0.2f);
                 if (blockVisual != null) blockVisual.transform.parent.localScale = new Vector3(Facing, 1, 1);

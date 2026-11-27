@@ -99,7 +99,15 @@ namespace KarmaPrototype
                 else switch (game.Phase)
                 {
                     case RunPhase.Choosing: ChoiceScreen(); break;
-                    case RunPhase.Transition: StageTransitionScreen(); break;
+                    case RunPhase.Transition:
+                        StageTransitionScreen();
+                        if (!game.GuardianInheriting && game.Player != null)
+                        {
+                            Panel(new Rect(390, 515, 500, 67));
+                            Label(405, 519, 470, 55, "자동 고유화 · " + MasteryNames[(int)game.LastPersonalizedEssence]
+                                + "  " + game.Player.Essences.Mastery(game.LastPersonalizedEssence), centered);
+                        }
+                        break;
                     case RunPhase.PlayerFallen: PlayerDefeatScreen(); break;
                     case RunPhase.Defeat: EndScreen(false); break;
                     case RunPhase.Victory: EndScreen(true); break;

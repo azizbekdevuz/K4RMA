@@ -111,10 +111,12 @@ public static class KarmaPresentationChecks
                 "Approved selection sprite identity and order remain unchanged");
             foreach (Essence essence in Enum.GetValues(typeof(Essence)))
             {
-                symbolGame.StartRun(); symbolGame.Enemies[0].TakeDamage(1000000);
-                await SymbolsUntil(() => symbolGame.Phase == RunPhase.Choosing);
-                if (essence == Essence.SwordWave) await SymbolCapture("choice");
-                symbolGame.Choose(essence); symbolGame.ConfirmChoice();
+                symbolGame.StartRun();
+                typeof(KarmaEssences).GetMethod("RecordSuccess", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(symbolGame.Player.Essences, new object[] { essence });
+                if (essence == Essence.SwordWave) await SymbolCapture("mastery");
+                symbolGame.Enemies[0].TakeDamage(1000000);
+                await SymbolsUntil(() => symbolGame.Phase == RunPhase.Transition);
                 CheckCeremony(false, essence);
                 await Task.Delay(350); await SymbolCapture("personalize-" + essence);
                 await SymbolsUntil(() => symbolGame.GuardianInheriting);

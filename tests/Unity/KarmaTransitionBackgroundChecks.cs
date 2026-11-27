@@ -95,10 +95,9 @@ public static class KarmaTransitionBackgroundChecks
             if (Time.time == lastTime) return;
             lastTime = Time.time;
             if (game.World != null) InspectView();
-            if (step == 0 && game.Phase == RunPhase.Choosing)
+            if (step == 0 && game.Phase == RunPhase.Transition)
             {
-                game.Choose((Essence)scenario); game.ConfirmChoice();
-                Check(game.Phase == RunPhase.Transition, "Choice did not start personalization");
+                Check(game.LastPersonalizedEssence == (Essence)scenario, "Automatic personalization chose the wrong technique");
                 step = 1; samples = 0; began = Time.time;
             }
             if (step == 1)
@@ -144,6 +143,7 @@ public static class KarmaTransitionBackgroundChecks
         game.StartRun();
         if (!game.Player.TestInvincible) game.Player.ToggleTestInvincibility();
         game.Player.ResetForRoom(new Vector2(new[] { -12f, 20f, 52f }[scenario], KarmaSpace.PlayerHalfHeight), true);
+        typeof(KarmaEssences).GetMethod("RecordSuccess", F).Invoke(game.Player.Essences, new object[] { (Essence)scenario });
         game.Enemies[0].TakeDamage(1000000);
         step = 0; deadline = EditorApplication.timeSinceStartup + 30; lastTime = -1;
     }

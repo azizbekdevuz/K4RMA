@@ -61,13 +61,11 @@ public static class KarmaBossEntranceChecks
             typeof(KarmaGame).GetProperty("StageIndex").SetValue(game,order.Length-1);
             typeof(KarmaGame).GetMethod("LoadRoom",F).Invoke(game,new object[]{true});
         }
-        game.Enemies[0].TakeDamage(1000000);
-        await Until(()=>game.Phase==RunPhase.Choosing);
-        game.Choose(order[order.Length-1]);
+        typeof(KarmaEssences).GetMethod("RecordSuccess", F).Invoke(game.Player.Essences, new object[] { order[order.Length - 1] });
         typeof(KarmaHUD).GetMethod("UpdateChoicePreview", F)
             .Invoke(hud, new object[] { game.Player.Essences.PersonalizationOrder, order[order.Length - 1] });
         Check((string)Get(hud, "choiceGuardianName") == expected, "Choice preview matches entrance title: " + expected);
-        game.ConfirmChoice();
+        game.Enemies[0].TakeDamage(1000000);
         await Until(()=>game.GuardianInheriting);
         var enemy=game.Enemies[0];
         Check(ReferenceEquals(Get(hud,"entranceBoss"),enemy),"real transition hooks correct boss");

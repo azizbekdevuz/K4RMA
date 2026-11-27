@@ -146,6 +146,7 @@ public static class KarmaGrowthChecks
         bool edge = focusOnly && stage == 1 && route < 2;
         if (edge) await PlaceEdgeKill(route == 0, route == 1);
         float fallenX = defeated.Position.x;
+        typeof(KarmaEssences).GetMethod("RecordSuccess", F).Invoke(game.Player.Essences, new object[] { essence });
         defeated.TakeDamage(10000000);
         if (edge)
         {
@@ -153,7 +154,7 @@ public static class KarmaGrowthChecks
             await Until(() => HudOpacity == 0);
             Check(Framed(fallenX, 0.16f), "The fallen guardian is framed before skill selection");
         }
-        await Until(() => game.Phase == RunPhase.Choosing);
+        await Until(() => game.Phase == RunPhase.Transition);
         Vector2 player = game.Player.Position;
         if (focusOnly && route == 0 && stage == 2)
         {
@@ -164,7 +165,7 @@ public static class KarmaGrowthChecks
             Set(game, "fallenGuardianPosition", overlap);
         }
         var playerMaterial = game.Player.GetComponentInChildren<SpriteRenderer>().sharedMaterial;
-        game.Choose(essence); game.ConfirmChoice();
+        Check(game.LastPersonalizedEssence == essence, "Mastery picks the rehearsed technique");
         var playerPoses = new HashSet<string>();
         game.StartCoroutine(ObservePlayerProof(player, playerPoses));
         if (recordVideo && route == 0)
@@ -637,8 +638,7 @@ public static class KarmaGrowthChecks
             // Abort a real second inheritance during the failure beat, then restart.
             game.StartRun(); game.Player.ToggleTestInvincibility();
             await Transition(Essence.Guard, 1);
-            game.Enemies[0].TakeDamage(10000000); await Until(() => game.Phase == RunPhase.Choosing);
-            game.Choose(Essence.SwordWave); game.ConfirmChoice();
+            game.Enemies[0].TakeDamage(10000000); await Until(() => game.Phase == RunPhase.Transition);
             await Until(() => game.GuardianInheriting);
             var interrupted = UnityEngine.Object.FindAnyObjectByType<KarmaGuardianGrowth>();
             await Until(() => interrupted.CurrentBeat == KarmaGuardianGrowth.Beat.Falter);

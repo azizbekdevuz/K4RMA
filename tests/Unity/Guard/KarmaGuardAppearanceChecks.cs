@@ -103,6 +103,18 @@ public static partial class KarmaGuardPlayChecks
             worldPosition = picture.transform.position, worldSize = picture.bounds.size, color = picture.color
         };
         row.damageBounds = (Bounds)Call(animator, "GuardDamageBounds", picture);
+        if (label.StartsWith("GD04_"))
+        {
+            bool aligned = Get<int>(animator, "groundSlamFrame") switch
+            {
+                0 => row.sprite is "GD04_00" or "GD04_01" or "GD04_02",
+                1 => row.sprite == "GD04_03",
+                2 => row.sprite == "GD04_04" && (phase != "Live" || SlamFan() != null),
+                3 => row.sprite == "GD04_05",
+                _ => true
+            };
+            if (!aligned) appearanceIssues.Add(route + "/" + facing + ": " + row.sprite + " out of phase at " + row.pose);
+        }
         if (appearanceBaseline != null && phase == "Static" && (label.StartsWith("GD02_") || label.StartsWith("GD05_Heavy")))
         {
             var before = appearanceBaseline.samples.Find(s => s.route == route && s.facing == facing && s.phase == phase && s.label == label);
@@ -114,7 +126,16 @@ public static partial class KarmaGuardPlayChecks
                     appearanceIssues.Add(route + "/" + label + ": original attack damage bounds changed");
             }
         }
-        if (phase == "Static" && (label.StartsWith("GD02_") || label.StartsWith("GD05_Heavy")))
+        bool staticHeavy = phase == "Static" && (label.StartsWith("GD02_") || label.StartsWith("GD05_Heavy"));
+        bool trialHeavy = label.StartsWith("GD05_Heavy") || row.sprite.StartsWith("GD05Heavy_");
+        if (form == "WardFinal" && (staticHeavy || trialHeavy || row.sprite.StartsWith("GD02_")))
+        {
+            string idleLabel = trialHeavy ? "GD05_Idle" : "Idle";
+            var idle = appearanceSamples.Find(s => s.route == route && s.phase == "Static" && s.label == idleLabel && s.facing == facing);
+            if (idle == null || !FinalVisorMatchesIdle(sprite, row.worldScale.x, idle.ppu, idle.worldScale.x, trialHeavy))
+                appearanceIssues.Add(route + "/" + label + ": " + row.sprite + " visor differs from " + idleLabel);
+        }
+        else if (staticHeavy)
         {
             var idle = appearanceSamples.Find(s => s.route == route && s.phase == "Static" && s.label == "Idle" && s.facing == facing);
             if (idle == null || (row.localScale - idle.localScale * (row.ppu / (idle.ppu * 1.35f))).sqrMagnitude > 0.00001f)
@@ -140,6 +161,20 @@ public static partial class KarmaGuardPlayChecks
             finally { picture.gameObject.layer = layer; RenderTexture.active = previous; }
         }
         appearanceSamples.Add(row);
+    }
+    // Source pixels across the metal visor at the height of the eye slit, measured on
+    // the 768 px drawings. Different PPU and a bent knee both make sheet height misleading.
+    static readonly float[] finalVisorPixels = { 54.8f, 63f, 54f, 54.9f, 57f, 58.4f };
+    static readonly float[] trialVisorPixels = { 43.5f, 46.8f, 45f, 45.8f, 47.1f, 47.3f };
+    static bool FinalVisorMatchesIdle(Sprite sprite, float scaleX, float idlePpu, float idleScaleX, bool shieldAway)
+    {
+        if (!sprite.name.StartsWith(shieldAway ? "GD05Heavy_" : "GD02_")) return false;
+        int frame = sprite.name[sprite.name.Length - 1] - '0';
+        var widths = shieldAway ? trialVisorPixels : finalVisorPixels;
+        if (frame < 0 || frame >= widths.Length) return false;
+        float width = widths[frame] * Mathf.Abs(scaleX) / sprite.pixelsPerUnit;
+        float idleWidth = 226.5f * Mathf.Abs(idleScaleX) / idlePpu;
+        return Mathf.Abs(width - idleWidth) <= idleWidth * 0.04f;
     }
     static void StaticAppearancePass(Essence[] order, string route, int facing)
     {
@@ -181,6 +216,13 @@ public static partial class KarmaGuardPlayChecks
                 Set(heavy, "swingAt", Time.time - (frame == 2 ? 0.1f : 0));
                 animator.GuardianPose("Attack", away ? EnemyAttack.GD05 : EnemyAttack.GD02, false, false);
                 AppearanceShot(animator, form, route, "Static", prefix + (heat > 0 ? "Hot" : "Cool") + frame, facing, render);
+                if (away && heat > 0)
+                {
+                    string expected = "GD05Heavy_0" + (3 + frame);
+                    var sprite = Get<SpriteRenderer>(animator, "picture").sprite;
+                    if (sprite.name != expected)
+                        appearanceIssues.Add(route + "/GD05 heavy " + facing + ": expected " + expected + ", saw " + sprite.name);
+                }
                 if (dummy != null) UnityEngine.Object.DestroyImmediate(dummy);
             }
         }
@@ -213,11 +255,17 @@ public static partial class KarmaGuardPlayChecks
             foreach (string action in new[] { "Idle", "Move", "Hurt", "Stunned" })
             {
                 CleanAppearance(animator, facing);
-                var dummy = new GameObject("Audit trial shield away"); Set(animator, "guardTrialShield", dummy.AddComponent<SpriteRenderer>());
+                var dummy = new GameObject("Audit trial shield away");
+                animator.SetGuardTrialShield(dummy.AddComponent<SpriteRenderer>());
                 if (action == "Hurt") animator.Hurt();
-                if (action == "Move") Set(animator, "guardianPreviousPosition", animator.transform.position - Vector3.right * 0.1f);
+                if (action == "Move")
+                {
+                    Set(animator, "guardianPreviousPosition", animator.transform.position - Vector3.right * facing * 0.1f);
+                    Call(animator, "PresentGuardTrialStep", facing * 0.1f);
+                }
                 animator.GuardianPose(action == "Stunned" ? "Stunned" : "Approach", EnemyAttack.GD05, false, false);
                 AppearanceShot(animator, form, route, "Static", "GD05_" + action, facing, render);
+                if (action == "Move") CheckTrialStride(animator, route, facing);
                 UnityEngine.Object.DestroyImmediate(dummy);
             }
             Heavy("GD05_Heavy", true);
@@ -236,6 +284,23 @@ public static partial class KarmaGuardPlayChecks
             animator.GuardianPose("Approach", EnemyAttack.GroundStrike, false, false);
             AppearanceShot(animator, form, route, "Revival", "Revive_" + Mathf.RoundToInt(t * 100).ToString("00"), facing, render);
         }
+    }
+    static void CheckTrialStride(KarmaCharacterAnimator animator, string route, int facing)
+    {
+        var picture = Get<SpriteRenderer>(animator, "picture");
+        for (int tick = 0; tick <= 6; tick++)
+        {
+            if (tick > 0) Call(animator, "PresentGuardTrialStep", facing * 1.25f);
+            // Sample the body again without a new chase step, as a second physics tick would.
+            animator.GuardianPose("Approach", EnemyAttack.GD05, false, false);
+            string expected = "Move_" + (tick % 6).ToString("00");
+            if (picture.sprite.name != expected)
+                appearanceIssues.Add(route + "/GD05 chase " + facing + ": expected " + expected + ", saw " + picture.sprite.name);
+        }
+        Call(animator, "PresentGuardTrialStep", 0f);
+        animator.GuardianPose("Approach", EnemyAttack.GD05, false, false);
+        if (picture.sprite != KarmaArtwork.StageIdle("WardFinal_NoShield"))
+            appearanceIssues.Add(route + "/GD05 chase " + facing + ": did not settle after stopping");
     }
     static async Task LiveAppearancePass(Essence[] order, string route, int facing)
     {

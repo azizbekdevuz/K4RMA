@@ -110,6 +110,8 @@ public static partial class KarmaGuardPlayChecks
                 await Until(() => WholeShield() != null, 2);
                 // Reproduce the original hand appearance without changing the flight rules.
                 if (!verify) animator.SetGuardThrownShield(null);
+                else Check(picture.sprite == KarmaArtResource.Frames("Motions12/" + form + "/GD03")[3],
+                    "the shield leaves an open hand on its first flight frame: " + label);
                 float shieldStartedX = WholeShield().transform.position.x;
                 await Seconds(0.05f);
                 if (verify)
@@ -131,6 +133,8 @@ public static partial class KarmaGuardPlayChecks
                 CheckFlightPose(animator, picture, form, "ShieldBash");
                 await Until(() => !Get<bool>(enemy, "running"), 4);
                 Check(Get<SpriteRenderer>(animator, "guardThrownShield") == null && !animator.CurrentPose.StartsWith("GD03/ShieldAway"), "normal catch restores hand: " + label);
+                Check(picture.sprite == KarmaArtResource.Frames("Motions12/" + form + "/GD03")[2],
+                    "the normal return attaches the shield to the extended arm at contact: " + label);
                 FlightShot(mode + "-" + label + "-catch");
 
                 Place(new Vector2(20 + facing * 12, KarmaSpace.PlayerHalfHeight));
@@ -247,11 +251,14 @@ public static partial class KarmaGuardPlayChecks
         float visibleHeading = picture.transform.TransformVector(Vector3.right).x * (picture.flipX ? -1 : 1);
         Check(visibleHeading * enemy.Facing > 0, "visible shieldless facing matches throw direction: " + form + "/" + pose);
         bool hurt = pose == "Hurt";
-        string motion = form == "WardFinal" ? (hurt ? "Hurt" : "GD03Release") : (hurt ? "GD03ShieldAwayHurt" : "GD03");
-        string resource = "Motions12/" + (form == "WardFinal" ? "WardFinal_NoShield" : form) + "/" + motion;
         Sprite visible = picture.sprite;
-        Check(Array.IndexOf(KarmaArtResource.Frames(resource), visible) >= 0 &&
-            animator.CurrentPose == "GD03/ShieldAway/" + form + "/" + pose, "visible shieldless " + resource + " actual=" + visible.name);
+        string root = "Motions12/" + form;
+        bool emptyHand = hurt
+            ? Array.IndexOf(KarmaArtResource.Frames(form == "WardFinal" ? root + "_NoShield/Hurt" : root + "/GD03ShieldAwayHurt"), visible) >= 0
+            : visible == KarmaArtResource.Frames(root + "/GD03")[3] ||
+                form == "WardFinal" && visible == KarmaArtResource.Frames(root + "_NoShield/GD03Release")[0];
+        Check(emptyHand && animator.CurrentPose == "GD03/ShieldAway/" + form + "/" + pose,
+            "only the empty-hand drawing is visible during flight: " + form + "/" + visible.name);
         Check(Array.TrueForAll(enemy.GetComponentsInChildren<Transform>(true), child =>
             !child.name.Contains("FloatingWoodRing") && !child.name.Contains("Floating Wood Ring"))
             && typeof(KarmaEnemy).Assembly.GetType("KarmaPrototype.KarmaGuardFloatingRing") == null,
@@ -259,12 +266,15 @@ public static partial class KarmaGuardPlayChecks
         var damagePose = KarmaArtwork.Sprite("@Guard/Forms/" + form, hurt ? "Hurt" : "Thrust");
         Check(damagePose != null, "Original shielded damage silhouette resolves");
         var actualDamageBounds = enemy.DamageBounds;
-        picture.sprite = damagePose;
-        var originalDamageBounds = picture.bounds;
-        picture.sprite = visible;
-        Check(((Vector2)(actualDamageBounds.center - originalDamageBounds.center)).sqrMagnitude < 0.000001f
-            && ((Vector2)(actualDamageBounds.size - originalDamageBounds.size)).sqrMagnitude < 0.000001f,
-            "GD03 " + form + "/" + pose + " damage bounds: actual=" + actualDamageBounds + " old=" + originalDamageBounds + " source=" + damagePose.bounds + " scale=" + picture.transform.lossyScale);
+        // The original named pose has authored combat bounds separate from its packed sprite rectangle.
+        var bodyPoses = typeof(KarmaArtwork).Assembly.GetType("KarmaPrototype.KarmaBodyPoses");
+        var local = (Bounds)bodyPoses.GetMethod("HitBounds").Invoke(null, new object[] { damagePose });
+        Vector2 center = picture.transform.TransformPoint(local.center);
+        Vector2 size = picture.transform.TransformVector(local.size);
+        size = new Vector2(Mathf.Abs(size.x), Mathf.Abs(size.y));
+        Check(((Vector2)actualDamageBounds.center - center).sqrMagnitude < 0.000001f
+            && ((Vector2)actualDamageBounds.size - size).sqrMagnitude < 0.000001f,
+            "GD03 " + form + "/" + pose + " damage bounds: actual=" + actualDamageBounds + " expected=" + center + ", " + size);
     }
     static void RenderFlightFrame()
     {

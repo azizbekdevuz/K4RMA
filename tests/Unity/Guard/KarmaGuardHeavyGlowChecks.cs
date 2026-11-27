@@ -126,11 +126,11 @@ public static class KarmaGuardHeavyGlowChecks
             foreach(int facing in new[]{-1,1})
             {
                 Reset(facing,order);await Wait(0.1f);
-                // Miss once to inspect the impact; hitboxes still run normally.
-                var body=game.Player.GetComponent<Rigidbody2D>();body.position=new Vector2(30-facing*8,KarmaSpace.PlayerHalfHeight);
-                game.Player.transform.position=body.position;
+                const string cueDrawing = "GD02_02";
+                float healthBeforeStrike = game.Player.Health;
                 var glow=enemy.GetComponentInChildren<KarmaGuardHeavyGlow>();
                 var anim=Get<KarmaCharacterAnimator>(enemy,"animator");
+                var picture = Get<SpriteRenderer>(anim, "picture");
                 bool movie=order.Length==1&&facing==-1;
                 if(movie){recording=true;game.StartCoroutine(Record());await Wait(0.3f);}
                 float duration=(float)Call(enemy,"Warning",0.9f),begin=enemy.FightSeconds;
@@ -138,17 +138,31 @@ public static class KarmaGuardHeavyGlowChecks
                 Check(!enemy.TryQueueParry(),"charge cannot queue early parry");
                 await Wait((duration-0.3f)*0.5f);
                 Check(glow.Visible&&glow.Charge>0.05f&&glow.Charge<0.75f&&glow.Pulse==0,"progressive charge before cue");
+                Check(picture.sprite.name == cueDrawing, "holds the raised drawing before the cue");
                 if(movie)Capture("charge");
                 await Until(()=>enemy.HeavyParryWindowOpen);
                 float cue=enemy.FightSeconds;
                 Check(glow.Pulse>0.6f,"flash coincides with open parry window");
+                Check(Get<SpriteRenderer>(glow, "overlay").sprite == picture.sprite, "cue flash uses the raised sword drawing");
                 if(movie)Capture("cue");
+                await Until(() =>
+                {
+                    if (!enemy.HeavyParryWindowOpen) return true;
+                    if (picture.sprite.name != cueDrawing || game.Player.Health != healthBeforeStrike)
+                        throw new Exception("GD02 must hold its sword overhead throughout the cue: " + picture.sprite.name);
+                    return false;
+                });
                 await Until(()=>Get<object>(enemy,"state").ToString()=="Attack");
                 float hit=enemy.FightSeconds;
                 Check(Mathf.Abs(hit-cue-0.3f)<0.035f,"parry cue lasts 0.3 seconds: "+(hit-cue));
                 Check(Mathf.Abs(hit-begin-duration)<0.045f,"total windup unchanged: "+(hit-begin));
                 Check(!enemy.HeavyParryWindowOpen&&glow.Pulse>0.6f,"downstroke has impact burst and closes queue");
+                Check(picture.sprite.name == "GD02_04", "downstroke drawing on first active frame");
+                Check(Get<SpriteRenderer>(glow, "overlay").sprite == picture.sprite, "impact flash uses the downstroke drawing");
+                Check(game.Player.Health < healthBeforeStrike, "unparried GD02 hits on the downstroke");
                 if(movie){Capture("impact");Capture("game-camera",game.GameCamera);}
+                await Wait(1.5f * KarmaBootstrap.Step);
+                Check(picture.sprite.name == "GD02_05", "follows through with the blade down");
                 await Until(()=>Get<object>(enemy,"state").ToString()=="Recover");
                 Check(!glow.Visible,"recovery cleans glow");
                 if(movie){await Wait(0.3f);recording=false;}

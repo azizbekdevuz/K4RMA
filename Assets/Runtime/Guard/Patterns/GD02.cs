@@ -29,9 +29,12 @@ namespace KarmaPrototype
                     const float flightTime = 0.7f;
                     var warning = owner.PathMark(waveAt, waveAt + velocity * flightTime, waveSize);
 
-                    yield return owner.Wait(owner.Warning(0.6f));
+                    float waveWarning = owner.Warning(0.6f);
+                    owner.animator.PrepareHeavyWaveBody(waveWarning);
+                    yield return owner.Wait(waveWarning);
                     warning.gameObject.SetActive(false); Destroy(warning.gameObject);
                     owner.Attack(waveAt, velocity, waveSize, flightTime, 0.75f);
+                    owner.animator.ReleaseHeavyWaveBody();
                     yield return owner.Wait(0.75f);
                 }
                 // Do not remove steps while their child coroutines are still building colliders.

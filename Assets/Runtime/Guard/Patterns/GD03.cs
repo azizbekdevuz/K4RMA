@@ -20,7 +20,9 @@ namespace KarmaPrototype
                 Vector2 edge = new Vector2(heading < 0 ? KarmaStage.ArenaLeft + size.x / 2
                     : KarmaStage.ArenaRight - size.x / 2, origin.y);
                 var mark = owner.PathMark(origin, edge, size);
-                yield return owner.Wait(owner.Warning(0.8f));
+                float warning = owner.Warning(0.8f);
+                owner.animator.PrepareGuardThrow(warning);
+                yield return owner.Wait(warning);
                 if (!owner.Active) yield break;
                 mark.gameObject.SetActive(false); Destroy(mark.gameObject);
                 owner.state = ActionState.Attack; owner.animator.Attack();
@@ -28,6 +30,9 @@ namespace KarmaPrototype
                 var shield = KarmaVisuals.Box(owner.effectsRoot, "GD03 큰 방패 투척", origin, Vector2.one, Color.white, 26);
                 KarmaCombatVFX.ApplySprite(shield, "GuardBossVFX", "WholeHot", size, true);
                 shield.sharedMaterial = KarmaVisuals.DefaultMaterial;
+                owner.animator.SetGuardThrownShield(shield);
+                Vector2 handOffset = owner.animator.GuardThrowHand - owner.Position;
+                shield.transform.position = owner.Position + handOffset;
                 var trail = shield.gameObject.AddComponent<TrailRenderer>();
                 trail.sharedMaterial = KarmaVisuals.DefaultMaterial;
                 trail.sortingOrder = 25;
@@ -38,22 +43,35 @@ namespace KarmaPrototype
                 trail.endColor = new Color(1, 0.3f, 0.04f, 0);
                 trail.numCapVertices = trail.numCornerVertices = 2;
 
-                owner.animator.SetGuardThrownShield(shield);
                 KarmaAudio.Play(KarmaSfxId.GdShieldLaunch, lifetimeOwner: shield);
                 KarmaAudio.Play(KarmaSfxId.GdShieldFlight, lifetimeOwner: shield);
                 try
                 {
                     float speed = Mathf.Max(KarmaSpace.Units(1), Settings.shieldThrowSpeed);
+                    float handoffDistance = speed * 3 * KarmaBootstrap.Step;
+                    Vector2 flightPosition = origin;
                     bool returning = false, reflected = false;
                     var contact = new KarmaAttackContact(parryWithoutRiposte: true);
                     while (owner.Active)
                     {
                         if (owner.game.Paused) { yield return null; continue; }
-                        Vector2 before = shield.transform.position;
+                        Vector2 before = flightPosition;
                         Vector2 home = owner.Position + Vector2.up * KarmaSpace.Units(0.9f);
                         Vector2 target = returning ? home : edge;
                         Vector2 to = Vector2.MoveTowards(before, target, speed * Time.deltaTime);
-                        shield.transform.position = to;
+                        flightPosition = to;
+                        // The sweep and its contacts stay on the original lane. Only the drawn
+                        // shield bridges the short distance between that lane and the gauntlet.
+                        Vector2 drawn = to;
+                        if (!reflected)
+                        {
+                            Vector2 endpoint = returning ? home : origin;
+                            float span = Mathf.Min(handoffDistance, Vector2.Distance(edge, endpoint));
+                            float weight = 1 - Mathf.Clamp01(Vector2.Distance(to, endpoint) / Mathf.Max(0.001f, span));
+                            if (returning && weight > 0) owner.animator.ReachForGuardShield();
+                            drawn += (owner.Position + handOffset - endpoint) * weight;
+                        }
+                        shield.transform.position = drawn;
                         shield.transform.Rotate(0, 0, -heading * 720 * Time.deltaTime);
                         if (reflected)
                         {

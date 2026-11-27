@@ -9,6 +9,7 @@ namespace KarmaPrototype
         Material endingOriginalMaterial;
         Sprite endingOriginalSprite;
         bool presentingEnding;
+        System.Action<float> presentGuardianEndingDefeat;
 
         internal void BeginEndingPoses(params string[] names)
         {
@@ -75,6 +76,16 @@ namespace KarmaPrototype
 
         internal void PresentEndingDefeat(float elapsed)
         {
+            if (presentGuardianEndingDefeat != null)
+            {
+                presentGuardianEndingDefeat(elapsed);
+                return;
+            }
+            PresentEndingDefeatDrawing(elapsed, elapsed);
+        }
+
+        void PresentEndingDefeatDrawing(float elapsed, float poseElapsed)
+        {
             // The final guardian accepts the result while still present. Keep a
             // grounded kneel and lower the head instead of reviving into combat.
             deathAt = -1;
@@ -82,7 +93,7 @@ namespace KarmaPrototype
             picture.transform.localScale = pictureScale;
             picture.transform.localRotation = Quaternion.identity;
             transform.localRotation = Quaternion.identity;
-            DrawMotion(motionForm, "FinalDefeat", elapsed);
+            DrawMotion(motionForm, "FinalDefeat", poseElapsed);
             picture.color = Color.Lerp(new Color(0.72f, 0.72f, 0.76f), pictureColor,
                 KarmaGame.EndingEase(0.55f, 1.15f, elapsed));
             CurrentPose = elapsed < 2.9f ? "Ending/Reflect" : "Ending/Acknowledge";

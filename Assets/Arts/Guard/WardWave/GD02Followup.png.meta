@@ -1,0 +1,408 @@
+fileFormatVersion: 2
+guid: 35cc5b0bfbc650bd96be082fd20dbc46
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 154.239
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: GD02Followup_00
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1536
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de250a05d5fe5978b92e68ae2c1696f2
+      internalID: 84551134
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_01
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 1536
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b39ce492982c5bb6982d4916db13f9c4
+      internalID: -1830511437
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_02
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 1536
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 351b059cf46e5b9c9cbabb266da654e4
+      internalID: -1677386955
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_03
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 1536
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6fc499992b64526c9903609028fd970f
+      internalID: -1717975953
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 768
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: faf45ffa747e5faf9ff64ff96dcd6417
+      internalID: -94374662
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_05
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 768
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 84623c8de5a95341bd8db10061615c4b
+      internalID: -1925422460
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_06
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 768
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e06ce86717df53868d7c01df9428a53a
+      internalID: 1743285472
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_07
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 768
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87220696ebed5db68c7e7a2bbc9ffff8
+      internalID: -1777982841
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_08
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0fd3ee3f4f1a506db8ded20b40612cd5
+      internalID: 1072616207
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_09
+      rect:
+        serializedVersion: 2
+        x: 1024
+        y: 0
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c71d962ec8a25cc8b6b474b9a29d5f1b
+      internalID: 781589959
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_10
+      rect:
+        serializedVersion: 2
+        x: 2048
+        y: 0
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4c878f71d547562ca81abcdb798eb24e
+      internalID: 1905231692
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GD02Followup_11
+      rect:
+        serializedVersion: 2
+        x: 3072
+        y: 0
+        width: 1024
+        height: 768
+      alignment: 9
+      pivot: {x: 0.41601375, y: 0.13021}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d96a33df009f57b3877ce106583d1854
+      internalID: -550278439
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    outline: []
+    customData:
+    physicsShape: []
+    bones: []
+    spriteID: d359d86fc9c95493ad788fcd5b71b15f
+    internalID: 0
+    vertices: []
+    indices:
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      GD02Followup_00: 84551134
+      GD02Followup_01: -1830511437
+      GD02Followup_02: -1677386955
+      GD02Followup_03: -1717975953
+      GD02Followup_04: -94374662
+      GD02Followup_05: -1925422460
+      GD02Followup_06: 1743285472
+      GD02Followup_07: -1777982841
+      GD02Followup_08: 1072616207
+      GD02Followup_09: 781589959
+      GD02Followup_10: 1905231692
+      GD02Followup_11: -550278439
+  mipmapLimitGroupName:
+  pSDRemoveMatte: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

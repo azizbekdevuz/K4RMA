@@ -353,6 +353,15 @@ public static partial class KarmaGuardPlayChecks
             Check(Array.Exists(frames, frame => picture.sprite == frame && frame.name.EndsWith("_00")) &&
                 !enemy.HeavyParryWindowOpen, "GD02 starts on the first cool drawing: " + form);
             Vector3 scale = picture.transform.localScale, position = picture.transform.localPosition;
+            var finalIdle = form == "WardFinal" ? KarmaArtwork.StageIdle(form) : null;
+            var pictureScale = Get<Vector3>(animator, "pictureScale");
+            float startSoleY = 0f;
+            if (finalIdle != null)
+            {
+                Check(FinalVisorMatchesIdle(picture.sprite, scale.x, finalIdle.pixelsPerUnit, pictureScale.x, false),
+                    "Final GD02 starts at standing size");
+                startSoleY = BootWorldY(picture, 684);
+            }
             var heavyMotion = Get<object>(animator, "heavyStrike");
             var showHeavy = (Func<EnemyAttack, bool>)Delegate.CreateDelegate(typeof(Func<EnemyAttack, bool>), heavyMotion, "Show");
             Check(KarmaAllocationChecks.Count(() => { for (int i = 0; i < 120; i++) showHeavy(EnemyAttack.GD02); }) == 0,
@@ -364,8 +373,18 @@ public static partial class KarmaGuardPlayChecks
             await Until(() => glow.Visible && glow.Charge >= 0.99f && overlay.sprite == picture.sprite, 1);
             Check(Array.IndexOf(frames, picture.sprite) >= 0 && overlay.sprite == picture.sprite && effects.Find("GD02 parry cue") == null,
                 "Parry heat aligns with the displayed GD02 drawing: " + form);
-            Check(picture.transform.localScale == scale && picture.transform.localPosition == position && enemy.Facing == facing,
-                "GD02 heat swap preserves body scale, position and facing: " + form);
+            bool cueSize = finalIdle != null
+                ? FinalVisorMatchesIdle(picture.sprite, picture.transform.localScale.x, finalIdle.pixelsPerUnit, pictureScale.x, false)
+                : picture.transform.localScale == scale && picture.transform.localPosition == position;
+            Check(cueSize && enemy.Facing == facing, "GD02 heat swap preserves calibrated size and facing: " + form);
+            if (finalIdle != null)
+            {
+                Check(Mathf.Abs(BootWorldY(picture, 654) - startSoleY) < 0.002f, "Final GD02 keeps its boot on the floor during the cue");
+                var align = (Action<int, Sprite, bool>)Delegate.CreateDelegate(typeof(Action<int, Sprite, bool>), heavyMotion, "AlignBody");
+                var nativeDrawing = Get<Sprite>(glow, "registeredBounds");
+                Check(KarmaAllocationChecks.Count(() => { for (int i = 0; i < 120; i++) align(3, nativeDrawing, false); }) == 0,
+                    "Final GD02 body calibration creates no steady managed allocations");
+            }
             float clock = enemy.FightSeconds;
             var pausedFrame = picture.sprite;
             game.TogglePause(); await Task.Delay(80);
@@ -381,12 +400,19 @@ public static partial class KarmaGuardPlayChecks
             Check(animator.CurrentPose == "Idle" || animator.CurrentPose == "Guard",
                 "GD02 missed heavy recovers without a false hurt/recoil pose: " + form);
             Vector3 idleScale = picture.transform.localScale;
-            Check(Mathf.Approximately(scale.x, idleScale.x)
+            Check(Mathf.Approximately(finalIdle != null ? pictureScale.x : scale.x, idleScale.x)
                 && Mathf.Approximately(scale.x, scale.y),
                 "GD02 keeps the calibrated 12 fps body scale: " + form);
             animator.Hurt(); await Seconds(0.03f);
             Check(animator.CurrentPose == "Hurt", "GD02 recovery still shows an actual damage reaction");
         }
+    }
+
+    static float BootWorldY(SpriteRenderer picture, int soleFromTop)
+    {
+        var sprite = picture.sprite;
+        float localY = (sprite.rect.height - soleFromTop - sprite.pivot.y) / sprite.pixelsPerUnit;
+        return picture.transform.TransformPoint(Vector3.up * localY).y;
     }
 
     static SpriteRenderer WholeShield()
@@ -429,7 +455,7 @@ public static partial class KarmaGuardPlayChecks
             float edge = facing < 0 ? KarmaStage.ArenaLeft + KarmaSpace.Units(0.9f)
                 : KarmaStage.ArenaRight - KarmaSpace.Units(0.9f);
             Check(Mathf.Abs(shield.transform.position.x - edge) < 0.75f
-                && Mathf.Abs(shield.transform.position.y - from.y) < 0.01f,
+                && Mathf.Abs(shield.transform.position.y - (enemy.Position.y + KarmaSpace.Units(0.9f))) < 0.01f,
                 "GD03 reaches the arena edge at its locked height even after the player moves");
             Check(WholeShield() == shield && Get<Transform>(enemy, "effectsRoot").GetComponentsInChildren<TrailRenderer>().Length == 1,
                 "GD03 turns the same whole shield around without splitting or replacement");
@@ -520,7 +546,7 @@ public static partial class KarmaGuardPlayChecks
         {
             Reset(order ?? new[] { Essence.Guard, Essence.SwordWave });
             Vector2 playerAt = new Vector2(34, KarmaSpace.PlayerHalfHeight);
-            Place(playerAt + (phase == "reflected" ? Vector2.zero : Vector2.up * 10));
+            Place(playerAt + Vector2.up * 10);
             Force(EnemyAttack.GD03, 1);
             await Until(() => WholeShield() != null, 2);
             var shield = WholeShield();
@@ -529,6 +555,7 @@ public static partial class KarmaGuardPlayChecks
             {
                 await Until(() => Mathf.Abs(shield.transform.position.x - playerAt.x) < 4, 3);
                 Set(game.Player, "invulnerableUntil", 0f); game.Player.BeginCounter();
+                Place(new Vector2(shield.transform.position.x, KarmaSpace.PlayerHalfHeight));
                 await Until(() => shield.name.EndsWith("반사"), 1);
             }
             float bossHealth = enemy.Health;

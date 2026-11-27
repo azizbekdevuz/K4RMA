@@ -151,6 +151,21 @@ public static class KarmaGuardParryFeedbackChecks
                 await Wait(0.8f);
                 Check(!fx.Playing&&!flash.Visible,"both effects finish without residue");
                 if(movie){Capture("05-cleared");await Wait(0.3f);recording=false;}
+                var stunnedBody = Get<SpriteRenderer>(Get<KarmaCharacterAnimator>(enemy, "animator"), "picture");
+                Check(enemy.Stunned && stunnedBody.sprite.name == "Stun_01", "mid-stun pose is lowered");
+                var lowered = stunnedBody.sprite;
+                float stunnedHealth = enemy.Health;
+                enemy.TakeDamage(1, game.Player.Position);
+                Check(enemy.Health < stunnedHealth, "the stunned guard still takes damage");
+                bool stayedLow = true;
+                await Until(() =>
+                {
+                    if (!enemy.Stunned) return true;
+                    stayedLow &= stunnedBody.sprite == lowered;
+                    return false;
+                });
+                Check(stayedLow, "holds the lowered body throughout a parry stun");
+                await Until(() => stunnedBody.sprite.name == "Stun_02");
             }
             Reset(1,Essence.Guard);await Wait(0.1f);
             var barrier=enemy.GetComponent<KarmaGuardBarrierBreak>();

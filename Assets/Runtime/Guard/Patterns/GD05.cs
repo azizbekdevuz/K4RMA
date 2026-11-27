@@ -78,14 +78,17 @@ namespace KarmaPrototype
                     }
 
                     float distance = Mathf.Abs(dx);
+                    float previousX = owner.Position.x;
                     if (distance > KarmaSpace.Units(2.1f))
                     {
                         float step = Mathf.Min(distance - KarmaSpace.Units(2.1f), KarmaSpace.Units(Mathf.Max(1, Settings.trialChaseSpeed)) * Time.deltaTime);
                         float x = Mathf.Clamp(owner.Position.x + owner.direction * step, TrialCenter - limit, TrialCenter + limit);
                         owner.Move(x - owner.Position.x);
                     }
-                    if (distance <= (Settings.heavyStrikeReach - KarmaSpace.Units(0.3f))
-                        && owner.FightSeconds >= nextStrike && owner.FightSeconds + heavy.StrikeDuration < endsAt)
+                    bool striking = distance <= (Settings.heavyStrikeReach - KarmaSpace.Units(0.3f))
+                        && owner.FightSeconds >= nextStrike && owner.FightSeconds + heavy.StrikeDuration < endsAt;
+                    owner.animator.PresentGuardTrialStep(striking ? 0f : owner.Position.x - previousX);
+                    if (striking)
                     {
                         yield return heavy.Strike(true);
                         heavy.Interrupt();

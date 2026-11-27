@@ -149,9 +149,15 @@ namespace KarmaPrototype
                 growth.order[i] = inherited[i];
                 var technique = guardian.GrowthTechnique(inherited[i]);
                 growth.masteryMemories[i] = growth.Layer("Learned stance " + inherited[i], animator.GrowthSprite(technique.Release), 4);
+                growth.demonstrations[i] = growth.Layer("Learned technique " + inherited[i], OriginalEffect(inherited[i]), 7);
             }
             growth.DrawRecall();
         }
+
+        internal static Motion OriginalMovement(Essence essence) => essence == Essence.Guard ? Motion.Surround
+            : essence == Essence.RisingSlash ? Motion.Rise : Motion.Sweep;
+        internal static string OriginalCopyMotion(Essence essence) => essence == Essence.Guard ? "GrowthCopyWard"
+            : essence == Essence.RisingSlash ? "GrowthCopyRise" : "GrowthCopyWave";
 
         static Sprite OriginalEffect(Essence essence) => KarmaArtwork.Sprite("PlayerVFX",
             essence == Essence.Guard ? "Barrier" : essence == Essence.RisingSlash ? "Rising" : "Wave");
@@ -190,8 +196,12 @@ namespace KarmaPrototype
             {
                 float side = i - 1;
                 Vector2 point = guardian.Position + new Vector2(side * 2.6f * (1 - t), 1.7f + (i == 1 ? 1.8f : 0) * (1 - t));
+                float opacity = Mathf.Sin(t * Mathf.PI);
+                var tint = KarmaPersonalizationVFX.TechniqueColor(game, order[i]);
                 Display(masteryMemories[i], point, new Vector2(5, 6), 0, guardian.Facing,
-                    Mathf.Sin(t * Mathf.PI) * 0.22f, KarmaPersonalizationVFX.TechniqueColor(game, order[i]));
+                    opacity * 0.22f, tint);
+                Display(demonstrations[i], point + Vector2.up, new Vector2(2.5f, 2.8f), 0, guardian.Facing,
+                    opacity * 0.48f, tint);
             }
         }
         void Draw()
@@ -254,7 +264,7 @@ namespace KarmaPrototype
                 string pose = order[0] == Essence.Guard || (order[0] == Essence.RisingSlash && action > 0.36f)
                     ? "Windup" : "Slash";
                 animator.GrowthPose(action < 0.82f ? pose : "Recovery", true, Vector2.zero);
-                animator.ShowGrowthMotion(order[0] == Essence.Guard ? "GrowthCopyWard" : order[0] == Essence.SwordWave ? "GrowthCopyWave" : "GrowthCopyRise", true, t - FirstCopy);
+                animator.ShowGrowthMotion(OriginalCopyMotion(order[0]), true, t - FirstCopy);
                 DrawOriginal(guardian.Position, order[latest], action, 0.8f);
             }
             else if (Stage == 1)

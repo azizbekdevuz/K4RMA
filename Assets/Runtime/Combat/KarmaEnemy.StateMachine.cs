@@ -51,9 +51,10 @@ namespace KarmaPrototype
 
         IEnumerator DemonstrateTechnique(Essence technique, bool mastered)
         {
-            bool ward = technique == Essence.Guard;
-            bool rise = technique == Essence.RisingSlash;
-            string pose = ward ? "GrowthCopyWard" : rise ? "GrowthCopyRise" : "GrowthCopyWave";
+            var movement = KarmaGuardianGrowth.OriginalMovement(technique);
+            bool ward = movement == KarmaGuardianGrowth.Motion.Surround;
+            bool rise = movement == KarmaGuardianGrowth.Motion.Rise;
+            string pose = KarmaGuardianGrowth.OriginalCopyMotion(technique);
             float windup = mastered ? 0.62f : 0.94f;
             var color = game.Config.ColorOf(technique);
             SayLearning(mastered ? "마지막 기술… 이번엔 제대로 해 보겠다." :

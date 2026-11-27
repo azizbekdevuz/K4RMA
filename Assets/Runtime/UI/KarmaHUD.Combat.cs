@@ -32,6 +32,7 @@ namespace KarmaPrototype
         }
 
         static readonly string[] MasteryNames = { "검기", "상승베기", "방어" };
+        static readonly string[] GrowthStages = { "관찰", "모방", "학습", "완성" };
         void DrawMastery()
         {
             var essences = game.Player.Essences;
@@ -98,6 +99,7 @@ namespace KarmaPrototype
             string name = enemy != null && enemy.Alive ? enemy.DisplayName :
                 game.Phase == RunPhase.GuardianFallen || game.Phase == RunPhase.Ending ? fallenBossName : null;
             if (name == null) return;
+            if (game.IsCombat) name += "  ·  " + GrowthStages[game.StageIndex];
             float ratio = enemy != null ? Mathf.Clamp01(enemy.Health / Mathf.Max(1, enemy.MaxHealth)) : 0;
             // Keep the boss readable above the action, clear of the player's corner HUD.
             const float left = 330, width = 620, y = 56;

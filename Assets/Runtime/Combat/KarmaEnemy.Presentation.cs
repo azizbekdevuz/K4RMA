@@ -88,8 +88,11 @@ namespace KarmaPrototype
                 : KarmaBossGeometry.SweptBox(from.x, from.y, to.x, to.y, p.x, p.y, size.x / 2 + body.extents.x, size.y / 2 + body.extents.y, out first);
             if (hit && plainTechnique)
             {
-                if (contact.TryConsume()) player.TakeDamageAt(amount, true,
-                    segmentStart.HasValue ? segmentStart.Value + first * segmentSeconds : Time.time);
+                // Copies use the standard defense window but own no boss-pattern hooks.
+                if (!contact.TryConsume()) return;
+                float healthBefore = player.Health;
+                player.TakeDamageAt(amount, true, segmentStart.HasValue ? segmentStart.Value + first * segmentSeconds : Time.time);
+                if (player.Health < healthBefore) contact.RecordDamage();
                 return;
             }
             if (hit) ResolveAttackHit(body.center, amount, contact, stun, parryStun, shieldBreak, sourcePattern,

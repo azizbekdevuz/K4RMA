@@ -62,12 +62,6 @@ namespace KarmaPrototype
         void ReceiveDamage(float amount)
         {
             if (amount <= 0) return;
-            // Finish a banked lethal action as soon as the stage-three demonstration resolves.
-            if (game.StageIndex == 2 && !finalTechniqueReleased && amount >= Health)
-            {
-                finishingBlowPending = true;
-                amount = Mathf.Max(0, Health - 1);
-            }
             Health = Mathf.Max(0, Health - amount);
             animator.StartDamageFlash(game.Config.hitInvulnerability);
             if (Health <= 0)

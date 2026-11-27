@@ -22,14 +22,12 @@ namespace KarmaPrototype
         }
         readonly int[] mastery = new int[3];
         bool guardCredited;
-        internal Essence? ObservedTechnique { get; private set; }
         public int Mastery(Essence e) => mastery[(int)e];
 
         internal void RecordSuccess(Essence e)
         {
             if (!game.IsCombat || game.Tutorial != null || !HasActive(e)) return;
             mastery[(int)e] += game.Config.MasteryWeight(e);
-            ObservedTechnique = e;
         }
 
         internal void RecordBlock()
@@ -59,7 +57,6 @@ namespace KarmaPrototype
         internal void ResetMastery()
         {
             System.Array.Clear(mastery, 0, mastery.Length);
-            ObservedTechnique = null;
             guardCredited = false;
         }
 

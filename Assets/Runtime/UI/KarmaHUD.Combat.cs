@@ -38,7 +38,7 @@ namespace KarmaPrototype
             var essences = game.Player.Essences;
             var leader = essences.MasteryLeader;
             const float left = 43;
-            Panel(new Rect(left - 8, 114, 221, 36 + (3 - essences.Count) * 33));
+            Panel(new Rect(left - 8, 114, 233, 35 + (3 - essences.Count) * 37));
             Label(left, 117, 205, 24, "기술 숙련도", text);
             int y = 144;
             for (int i = 0; i < MasteryNames.Length; i++)
@@ -47,10 +47,10 @@ namespace KarmaPrototype
                 if (!essences.HasActive(skill)) continue;
                 int value = essences.Mastery(skill);
                 SpriteArt(new Rect(left, y, 23, 23), KarmaArtwork.SkillIcon(skill), Color.white);
-                Label(left + 29, y - 2, 175, 23, MasteryNames[i] + "  " + value + (leader == skill && value > 0 ? "  ▲" : ""), text);
-                Fill(new Rect(left + 31, y + 22, 170, 4), HudRule);
-                Fill(new Rect(left + 31, y + 22, 170 * Mathf.Clamp01((float)value / Mathf.Max(1, game.Config.masteryGaugeTarget)), 4), game.Config.ColorOf(skill));
-                y += 33;
+                Label(left + 29, y - 2, 185, 25, MasteryNames[i] + "  " + value + (leader == skill && value > 0 ? "  선두" : ""), text);
+                Fill(new Rect(left + 31, y + 24, 181, 5), HudRule);
+                Fill(new Rect(left + 31, y + 24, 181 * Mathf.Clamp01((float)value / Mathf.Max(1, game.Config.masteryGaugeTarget)), 4), game.Config.ColorOf(skill));
+                y += 37;
             }
         }
 
@@ -93,8 +93,8 @@ namespace KarmaPrototype
             var enemy = game.Enemies.Count > 0 ? game.Enemies[0] : null;
             if (game.IsCombat && enemy != null && !string.IsNullOrEmpty(enemy.LearningLine))
             {
-                Panel(new Rect(390, 90, 500, 40));
-                Label(395, 90, 490, 40, enemy.LearningLine, centered);
+                Panel(new Rect(330, 89, 620, 47));
+                Label(342, 89, 596, 47, enemy.LearningLine, centered);
             }
             string name = enemy != null && enemy.Alive ? enemy.DisplayName :
                 game.Phase == RunPhase.GuardianFallen || game.Phase == RunPhase.Ending ? fallenBossName : null;

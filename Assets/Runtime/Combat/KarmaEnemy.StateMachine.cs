@@ -4,14 +4,17 @@ namespace KarmaPrototype
 {
     public sealed partial class KarmaEnemy
     {
-        bool copiedTechnique;
+        int copiedTechniques;
+        const float LearningCooldown = 8f;
+        float nextLearningAt = 2.5f;
+        bool completedPatternSinceCopy = true;
         bool presentingCopy;
-        bool finalTechniqueReleased, finishingBlowPending;
+        bool finalTechniqueReleased;
 
         bool TryDemonstrateFinalTechnique()
         {
-            if (game.StageIndex != 2 || finalTechniqueReleased || Health > MaxHealth * 0.5f
-                || Position.y > KarmaSpace.GuardianGroundY + 0.1f)
+            if (game.StageIndex != 2 || finalTechniqueReleased || FightSeconds < nextLearningAt
+                || !CanShowLearning())
                 return false;
 
             PlayLearnedTechnique(game.Player.Essences.MasteryLeader, true);
@@ -27,21 +30,29 @@ namespace KarmaPrototype
             learningLineUntil = FightSeconds + 2.4f;
         }
 
+        bool CanShowLearning() => Position.y <= KarmaSpace.GuardianGroundY + 0.1f
+            && Mathf.Abs(Position.x - game.Player.Position.x) <= KarmaSpace.Units(7)
+            && ClearShot(Position, game.Player.Position);
+
         bool TryImitate()
         {
-            var observed = game.Player.Essences.ObservedTechnique;
-            if (game.StageIndex > 1 || copiedTechnique || !observed.HasValue || FightSeconds < 2.5f)
+            if (game.StageIndex > 1 || !completedPatternSinceCopy || FightSeconds < nextLearningAt)
                 return false;
-            if (!ClearShot(Position, game.Player.Position) || Mathf.Abs(Position.x - game.Player.Position.x) > KarmaSpace.Units(7))
+            var essences = game.Player.Essences;
+            var leader = essences.MasteryLeader;
+            int techniqueBit = 1 << (int)leader;
+            if (essences.Mastery(leader) <= 0 || (copiedTechniques & techniqueBit) != 0 || !CanShowLearning())
                 return false;
 
-            copiedTechnique = true;
-            PlayLearnedTechnique(observed.Value, false);
+            copiedTechniques |= techniqueBit;
+            completedPatternSinceCopy = false;
+            PlayLearnedTechnique(leader, false);
             return true;
         }
 
         void PlayLearnedTechnique(Essence technique, bool mastered)
         {
+            nextLearningAt = FightSeconds + LearningCooldown;
             presentingCopy = running = true;
             patternStarted = FightSeconds;
             direction = game.Player.Position.x < Position.x ? -1 : 1;
@@ -57,8 +68,9 @@ namespace KarmaPrototype
             string pose = KarmaGuardianGrowth.OriginalCopyMotion(technique);
             float windup = mastered ? 0.62f : 0.94f;
             var color = game.Config.ColorOf(technique);
-            SayLearning(mastered ? "마지막 기술… 이번엔 제대로 해 보겠다." :
-                game.StageIndex == 0 ? "방금 그 움직임… 이렇게였나?" : "이번엔 저 기술을 따라 해 보자.");
+            string skill = KarmaPatternCatalog.Name(technique);
+            SayLearning(mastered ? skill + "… 마지막 기술도 익혀 보겠다." :
+                skill + "… 이렇게 따라 하는 건가?");
             state = ActionState.Telegraph;
             Vector2 forward = Vector2.right * Facing;
             Vector2 center = Position + forward * KarmaSpace.Units(0.75f);
@@ -75,13 +87,19 @@ namespace KarmaPrototype
             ClearPatternObjects();
             state = ActionState.Attack;
             animator.PresentLearningMotion(pose, KarmaBootstrap.Step);
-            if (mastered) SayLearning("됐다. 이제 세 기술을 하나로 이을 수 있겠어.");
+            if (mastered)
+            {
+                finalTechniqueReleased = true;
+                SayLearning(skill + " 성공. 이제 세 기술을 하나로 이을 수 있겠어.");
+            }
             if (ward)
             {
                 fullShield = mastered;
-                var barrier = KarmaCombatVFX.SpawnSprite(effectsRoot, Position, "PlayerVFX", "Barrier",
-                    KarmaSpace.Units(new Vector2(mastered ? 2.6f : 1.4f, mastered ? 3.2f : 2f)), mastered ? 0.62f : 0.24f);
-                if (barrier != null) barrier.color = Color.Lerp(color, Color.white, 0.45f);
+                var barrier = KarmaArtwork.Sprite("PlayerVFX", "Barrier");
+                if (barrier != null)
+                    KarmaCombatVFX.Burst(effectsRoot, Position, barrier, "Guardian learning barrier",
+                        KarmaSpace.Units(new Vector2(mastered ? 2.6f : 1.4f, mastered ? 3.2f : 2f)),
+                        mastered ? 0.62f : 0.24f, 0, color, restrained: !mastered, emitSparks: mastered);
             }
             else
             {
@@ -109,13 +127,11 @@ namespace KarmaPrototype
             }
             if (!Active) yield break;
             if (rise) transform.position = origin;
-            if (mastered) finalTechniqueReleased = true;
             fullShield = false;
             ClearPatternObjects();
             presentingCopy = running = false;
             state = ActionState.Approach;
             timer = behavior.DecisionDelay;
-            if (mastered && finishingBlowPending) ReceiveDamage(Health);
         }
 
         void FixedUpdate()
@@ -199,6 +215,7 @@ namespace KarmaPrototype
             fullShield = false;
             behavior.EndAction(false);
             behavior.OnCompleted();
+            completedPatternSinceCopy = true;
             state = ActionState.Approach; running = false;
             timer = Mathf.Max(0.22f, behavior.DecisionDelay);
         }
@@ -265,6 +282,7 @@ namespace KarmaPrototype
         {
             StopAllCoroutines(); behavior?.Interrupt(preservePressure); ClearPatternObjects(); HideStunCue();
             behavior?.OnInterrupted();
+            if (presentingCopy) learningLineUntil = 0;
             fullShield = running = pendingParry = presentingCopy = false;
             transform.position = new Vector3(Mathf.Clamp(Position.x, KarmaStage.BossLeftWall, KarmaStage.BossRightWall), KarmaSpace.GuardianGroundY, 0);
         }
